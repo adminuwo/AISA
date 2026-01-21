@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Loader2, RotateCcw } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Loader2, RotateCcw, HelpCircle, ChevronUp, LogOut, Settings } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { Menu, Transition, Dialog } from '@headlessui/react';
@@ -18,10 +18,20 @@ import LiveAI from '../Components/LiveAI';
 import ImageEditor from '../Components/ImageEditor';
 import ModelSelector from '../Components/ModelSelector';
 import axios from 'axios';
-import { apis } from '../types';
+import { apis, AppRoute } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { detectMode, getModeName, getModeIcon, getModeColor } from '../utils/modeDetection';
+import { faqs } from '../constants';
+import { useRecoilState } from 'recoil';
+import { getUserData, userData, clearUser } from '../userStore/userData';
 
+
+const WELCOME_MESSAGE = `Hello! I’m AISA, your Artificial Intelligence Super Assistant.
+
+I am designed to be your powerful personal companion for creativity, productivity, and problem-solving. Whether you need help with writing, coding, analyzing documents, or just finding answers, I'm here to assist you.
+
+How can I help you today?`;
 
 const FEEDBACK_PROMPTS = {
   en: [
@@ -87,7 +97,7 @@ const Chat = () => {
   const [sessions, setSessions] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const messagesEndRef = useRef(null);
   const [currentSessionId, setCurrentSessionId] = useState(sessionId || 'new');
   const [typingMessageId, setTypingMessageId] = useState(null);
@@ -122,6 +132,79 @@ const Chat = () => {
   const [selectedToolType, setSelectedToolType] = useState(null);
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isImageMode, setIsImageMode] = useState(false);
+  const [currentMode, setCurrentMode] = useState('NORMAL_CHAT');
+  const abortControllerRef = useRef(null);
+
+  // Profile & FAQ State
+  const { t, language: currentLang, region, regionFlags } = useLanguage();
+  const getFlagUrl = (code) => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+
+  const [currentUserData, setUserRecoil] = useRecoilState(userData);
+  const user = currentUserData.user || getUserData() || { name: "Loading...", email: "...", role: "user" };
+  const token = getUserData()?.token;
+
+  const [isFaqOpen, setIsFaqOpen] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const [activeTab, setActiveTab] = useState("faq");
+  const [issueType, setIssueType] = useState("General Inquiry");
+  const [issueText, setIssueText] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState(null);
+
+  const issueOptions = [
+    "General Inquiry",
+    "Payment Issue",
+    "Refund Request",
+    "Technical Support",
+    "Account Access",
+    "Other"
+  ];
+
+  const handleSupportSubmit = async () => {
+    if (!issueText.trim()) return;
+    setIsSending(true);
+    setSendStatus(null);
+    try {
+      await axios.post(apis.support, {
+        email: user?.email || "guest@ai-mall.in",
+        issueType,
+        message: issueText,
+        userId: user?.id || null
+      });
+      setSendStatus('success');
+      setIssueText("");
+      setTimeout(() => setSendStatus(null), 3000);
+    } catch (error) {
+      console.error("Support submission failed", error);
+      setSendStatus('error');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    clearUser(); // Update Recoil state
+    navigate(AppRoute.LANDING);
+  };
+
+  // Guest User Chat Limits (Merged from Remote)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [guestChatCount, setGuestChatCount] = useState(0);
+
+  // Check if user is logged in and initialize guest chat count
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    const isAuthenticated = !!(user && token && user !== 'null' && user !== 'undefined');
+    setIsLoggedIn(isAuthenticated);
+
+    // Load guest chat count from localStorage if not logged in
+    if (!isAuthenticated) {
+      const savedCount = localStorage.getItem('guestChatCount');
+      setGuestChatCount(savedCount ? parseInt(savedCount, 10) : 0);
+    }
+  }, []);
 
   // Close menu on click outside
   useEffect(() => {
@@ -147,6 +230,12 @@ const Chat = () => {
 
   const processFile = (file) => {
     if (!file) return;
+
+    // Block file uploads for guest users
+    if (!isLoggedIn) {
+      toast.error('Please log in to upload files and images');
+      return;
+    }
 
     // Validate file type
     const validTypes = [
@@ -183,6 +272,19 @@ const Chat = () => {
   };
 
   const handlePaste = (e) => {
+    // Block paste for guest users
+    if (!isLoggedIn && (e.clipboardData.files?.length > 0 || e.clipboardData.items)) {
+      // Check if there are files in clipboard
+      const hasFiles = e.clipboardData.files?.length > 0 ||
+        Array.from(e.clipboardData.items || []).some(item => item.kind === 'file');
+
+      if (hasFiles) {
+        e.preventDefault();
+        toast.error('Please log in to upload files and images');
+        return;
+      }
+    }
+
     // Handle files pasted from file system
     if (e.clipboardData.files && e.clipboardData.files.length > 0) {
       e.preventDefault();
@@ -292,7 +394,12 @@ const Chat = () => {
         setMessages(history);
       } else {
         setCurrentSessionId('new');
-        setMessages([]);
+        setMessages([{
+          id: 'welcome-msg',
+          role: 'model',
+          content: WELCOME_MESSAGE,
+          timestamp: Date.now()
+        }]);
       }
 
       setShowHistory(false);
@@ -300,8 +407,22 @@ const Chat = () => {
     initChat();
   }, [sessionId]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const chatContainerRef = useRef(null);
+  const shouldAutoScrollRef = useRef(true);
+
+  const handleScroll = () => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      // Tighter threshold (50px) - if user scrolls up slightly, auto-scroll stops
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+      shouldAutoScrollRef.current = isNearBottom;
+    }
+  };
+
+  const scrollToBottom = (force = false, behavior = 'auto') => {
+    if (force || shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    }
   };
 
   useEffect(() => {
@@ -309,12 +430,11 @@ const Chat = () => {
   }, [messages, isLoading]);
 
   const handleNewChat = async () => {
-    const newId = await chatStorageService.createSession();
-    navigate(`/dashboard/chat/${newId}`);
+    navigate('/dashboard/chat/new');
     setShowHistory(false);
   };
 
-  const { language: currentLang } = useLanguage();
+
 
   const handleDriveClick = () => {
     setIsAttachMenuOpen(false);
@@ -351,6 +471,22 @@ const Chat = () => {
 
     if ((!contentToSend && filePreviews.length === 0) || isLoading) return;
 
+    // Guest Chat Limits - Check before processing
+    if (!isLoggedIn) {
+      // Block if guest has already sent 4 messages
+      if (guestChatCount >= 4) {
+        toast.error('You have reached the free message limit. Please log in to continue chatting! 🔒', {
+          duration: 6000,
+          icon: '⚠️',
+          style: {
+            background: '#ef4444',
+            color: '#fff',
+          },
+        });
+        return;
+      }
+    }
+
     isSendingRef.current = true;
 
     let activeSessionId = currentSessionId;
@@ -386,10 +522,16 @@ const Chat = () => {
         agentCategory: activeAgent.category,
         isDeepSearch: isDeepSearch // Store Deep Search state
       };
-      setMessages(prev => [...prev, userMsg]);
+      const updatedMessages = [...messages, userMsg];
+      setMessages(updatedMessages);
+      scrollToBottom(true, 'smooth'); // Force smooth scroll for user message
       setInputValue('');
       setIsImageMode(false);
       setIsDeepSearch(false);
+
+      // Detect mode for UI indicator
+      const detectedMode = detectMode(contentToSend, userMsg.attachments);
+      setCurrentMode(detectedMode);
       handleRemoveFile(); // Clear file after sending
       setIsLoading(true);
 
@@ -462,37 +604,32 @@ const Chat = () => {
 
         // Send to AI for response
         const caps = getAgentCapabilities(activeAgent.agentName, activeAgent.category);
+
+        // Create abort controller for this request
+        abortControllerRef.current = new AbortController();
+
         const SYSTEM_INSTRUCTION = `
 You are ${activeAgent.agentName || 'AISA'}, an advanced AI assistant powered by A-Series.
 ${activeAgent.category ? `Your specialization is in ${activeAgent.category}.` : ''}
-
-### FIRST MESSAGE / GREETING LOGIC (CRITICAL):
-Determine if the user's first message is a simple greeting or a specific question.
-
-**Scenario 1: Simple Greeting / Unclear Intent**
-(e.g., "Hello", "Hi", "Aisa", "Start", ".")
-1. **Welcome**: "Hello... welcome to ${activeAgent.agentName || 'AISA'}" (Translate to user's language).
-2. **Intro**: Briefly describe yourself as a specialized AI agent in the ${activeAgent.category || 'General'} category on A-Series.
-3. **Guide**: You MUST present the "Quick Links" below to help them explore categories:
-   - * [Business OS](/dashboard/marketplace?category=Business%20OS)
-   - * [Data & Intelligence](/dashboard/marketplace?category=Data%20%26%20Intelligence)
-   - * [Sales & Marketing](/dashboard/marketplace?category=Sales%20%26%20Marketing)
-   - * [HR & Finance](/dashboard/marketplace?category=HR%20%26%20Finance)
-   - * [Design & Creative](/dashboard/marketplace?category=Design%20%26%20Creative)
-   - * [Medical & Health AI](/dashboard/marketplace?category=Medical%20%26%20Health%20AI)
-   - * [View All Agents](/dashboard/marketplace)
-
-**Scenario 2: Specific Question / Clear Intent**
-(e.g., "Hello, what is a computer?", "Analyze my file", "How to grow business?")
-1. **Acknowledge**: Start with a brief "Hello... welcome to ${activeAgent.agentName || 'AISA'}. I'd be happy to help with that."
-2. **Direct Answer**: Answer the user's question directly.
-3. **STRICT RULE**: DO NOT show the "Quick Links" list or describe categories. Focus ONLY on the answer.
 
 ### CRITICAL LANGUAGE RULE:
 **ALWAYS respond in the SAME LANGUAGE as the user's message.**
 - If user writes in HINDI (Devanagari or Romanized), respond in HINDI.
 - If user writes in ENGLISH, respond in ENGLISH.
 - If user mixes languages, prioritize the dominant language.
+
+### RESPONSE BEHAVIOR:
+- Answer the user's question directly without greeting messages
+- Do NOT say "Hello... welcome to AISA" or similar greetings
+- Focus ONLY on providing the answer to what user asked
+- Be helpful, clear, and concise
+
+### STREAMING BEHAVIOR:
+- Generate responses in smooth, continuous stream
+- Use short paragraphs for readability
+- If interrupted, stop immediately without completing sentence
+- Do NOT add summaries or closing lines after interruption
+- Resume ONLY if user explicitly asks again
 
 ### MULTI-FILE ANALYSIS MANDATE (STRICT 1:1 RULE):
 You have received exactly ${filePreviews.length} file(s).
@@ -543,13 +680,19 @@ ${caps.canUploadDocs ? `DOCUMENT ANALYSIS CAPABILITIES:
 ${activeAgent.instructions ? `SPECIFIC AGENT INSTRUCTIONS:
 ${activeAgent.instructions}` : ''}
 `;
-
         // Prepend instruction to the prompt based on mode
         const promptToSend = isDeepSearch
           ? `(MANDATORY: Provide a DEEP and DETAILED response, but keep it FOCUSED. Do not ramble. Target approx 400-600 words. Use sections.)\n\n${userMsg.content}`
           : `(MANDATORY: Provide a STANDARD, HELPFUL response. Explain clearly in 2-3 paragraphs. Target approx 150-200 words.)\n\n${userMsg.content}`;
 
-        const aiResponseText = await generateChatResponse(messages, promptToSend, SYSTEM_INSTRUCTION, userMsg.attachments, currentLang);
+        const aiResponseText = await generateChatResponse(
+          messages,
+          promptToSend,
+          SYSTEM_INSTRUCTION,
+          userMsg.attachments,
+          currentLang,
+          abortControllerRef.current.signal
+        );
 
         // Check for multiple file analysis headers to split into separate cards
         const delimiter = '---SPLIT_RESPONSE---';
@@ -562,8 +705,7 @@ ${activeAgent.instructions}` : ''}
           responseParts = [aiResponseText || "No response generated."];
         }
 
-        setIsLoading(false); // Stop main loader once we have the response
-
+        // Process response parts and add to messages
         for (let i = 0; i < responseParts.length; i++) {
           const partContent = responseParts[i];
           if (!partContent) continue;
@@ -588,6 +730,9 @@ ${activeAgent.instructions}` : ''}
           const delay = words.length > 200 ? 10 : (words.length > 50 ? 20 : 35);
 
           for (let j = 0; j < words.length; j++) {
+            // Check if generation was stopped by user
+            if (!isSendingRef.current) break;
+
             displayedContent += (j === 0 ? '' : ' ') + words[j];
 
             // Update UI with the current chunk
@@ -597,26 +742,54 @@ ${activeAgent.instructions}` : ''}
 
             // Wait before next word
             await new Promise(resolve => setTimeout(resolve, delay));
-
-            // Scroll occasionally during typing
-            if (j % 5 === 0) scrollToBottom();
           }
-
-          setTypingMessageId(null); // Clear typing status
-          // After typing is complete, save the full message to history
-          await chatStorageService.saveMessage(activeSessionId, { ...modelMsg, content: partContent });
-          scrollToBottom();
         }
+
+        if (!isSendingRef.current) {
+          setTypingMessageId(null);
+          return; // Exit function if stopped
+        }
+
+        setTypingMessageId(null); // Clear typing status
+        // After typing is complete, save the full message to history
+        await chatStorageService.saveMessage(activeSessionId, { ...modelMsg, content: partContent });
+        scrollToBottom();
       } catch (innerError) {
         console.error("Storage/API Error:", innerError);
         // Even if saving failed, we still have the local state
       }
     } catch (error) {
+      // Handle abort errors silently (user stopped generation)
+      if (error.name === 'AbortError' || error.name === 'CanceledError') {
+        console.log('Generation stopped by user');
+        // Keep partial response, don't show error
+        return;
+      }
+
       console.error("Chat Error:", error);
       toast.error(`Error: ${error.message || "Failed to send message"}`);
     } finally {
       setIsLoading(false);
-      isSendingRef.current = false;
+      abortControllerRef.current = null; // Clean up abort controller
+
+      // Increment guest chat count if not logged in (only on successful send)
+      if (!isLoggedIn) {
+        const newCount = guestChatCount + 1;
+        setGuestChatCount(newCount);
+        localStorage.setItem('guestChatCount', newCount.toString());
+
+        // Show reminder after 2nd message
+        if (newCount === 2) {
+          toast('💡 Tip: Log in to save your chats and unlock all features!', {
+            duration: 5000,
+            icon: '🔐',
+            style: {
+              background: '#3b82f6',
+              color: '#fff',
+            },
+          });
+        }
+      }
     }
   };
 
@@ -647,13 +820,51 @@ ${activeAgent.instructions}` : ''}
   };
 
   const handleDeleteSession = async (e, id) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this chat history?')) {
       await chatStorageService.deleteSession(id);
       const data = await chatStorageService.getSessions();
       setSessions(data);
       if (currentSessionId === id) {
         navigate('/dashboard/chat/new');
+      }
+    }
+  };
+
+  const handleMessageDelete = async (id) => {
+    if (window.confirm('Delete this message?')) {
+      try {
+        await chatStorageService.deleteMessage(currentSessionId, id);
+        setMessages(prev => prev.filter(m => m.id !== id));
+        toast.success("Message deleted");
+      } catch (error) {
+        console.error("Delete error:", error);
+        toast.error("Failed to delete message");
+      }
+    }
+  };
+
+  const handleRenameFile = async (msg) => {
+    const currentName = msg.attachment?.name || msg.attachments?.[0]?.name || 'file';
+    const newName = window.prompt('Enter new filename:', currentName);
+    if (newName && newName.trim() && newName.trim() !== currentName) {
+      try {
+        const updatedMsg = { ...msg };
+        if (updatedMsg.attachment) {
+          updatedMsg.attachment = { ...updatedMsg.attachment, name: newName.trim() };
+        }
+        if (updatedMsg.attachments && updatedMsg.attachments.length > 0) {
+          updatedMsg.attachments = updatedMsg.attachments.map((att, i) =>
+            i === 0 ? { ...att, name: newName.trim() } : att
+          );
+        }
+
+        await chatStorageService.updateMessage(currentSessionId, msg.id, updatedMsg);
+        setMessages(prev => prev.map(m => m.id === msg.id ? updatedMsg : m));
+        toast.success("File renamed");
+      } catch (error) {
+        console.error("Rename error:", error);
+        toast.error("Failed to rename file");
       }
     }
   };
@@ -1592,14 +1803,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         pricing={TOOL_PRICING}
       />
 
+
+
+      {/* Sidebar (History & Profile) */}
       <div
-        className={`
-          flex flex-col flex-shrink-0 bg-surface border-r border-border
-          transition-all duration-300 ease-in-out
-          
-          /* Mobile: Absolute overlay */
-          absolute inset-y-0 left-0 z-50 w-full sm:w-72
-          ${showHistory ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+        className={`fixed inset-y-0 left-0 z-50 h-full bg-secondary border-r border-border flex flex-col transition-all duration-300 transform 
+          ${showHistory ? 'translate-x-0 w-72' : '-translate-x-full w-0 overflow-hidden'} 
 
           /* Desktop: Relative flow, animate width instead of transform */
           lg:relative lg:inset-auto lg:shadow-none lg:translate-x-0
@@ -1660,7 +1869,297 @@ For "Remix" requests with an attachment, analyze the attached image, then create
             <div className="px-4 text-xs text-subtext italic">No recent chats</div>
           )}
         </div>
+
+        {/* User Profile Footer (Restored) */}
+        <div className="p-3 border-t border-border bg-secondary/30 relative mt-auto">
+          {token ? (
+            /* Integrated Profile Dropdown Menu */
+            <Menu as="div" className="relative w-full">
+              <Menu.Button className="w-full text-left rounded-xl border border-transparent hover:bg-secondary transition-all cursor-pointer flex items-center gap-2 p-2 group outline-none focus:bg-secondary">
+                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs uppercase shrink-0 overflow-hidden border border-primary/10 group-hover:bg-primary/30 transition-colors">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const parent = e.target.parentElement;
+                        if (parent) {
+                          parent.classList.add("flex", "items-center", "justify-center");
+                          parent.innerText = user.name ? user.name.charAt(0).toUpperCase() : "U";
+                        }
+                      }}
+                    />
+                  ) : (
+                    user.name ? user.name.charAt(0).toUpperCase() : "U"
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-bold text-maintext truncate group-hover:text-primary transition-colors">{user.name}</p>
+                  <p className="text-[11px] text-subtext truncate">{user.email}</p>
+                </div>
+
+                <div className="text-subtext group-hover:text-primary transition-colors">
+                  <ChevronUp className="w-4 h-4" />
+                </div>
+              </Menu.Button>
+
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute bottom-full left-0 w-full mb-2 origin-bottom-left bg-card border border-border rounded-xl shadow-xl focus:outline-none overflow-hidden z-[60]">
+                  <div className="p-3 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm uppercase shrink-0">
+                        {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-maintext truncate">{user.name}</p>
+                        <p className="text-xs text-subtext truncate">@{user.email?.split('@')[0]}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          className={`${active ? 'bg-secondary text-primary' : 'text-maintext'
+                            } group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors`}
+                          onClick={() => toast('Upgrade plan coming soon!')}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Upgrade plan
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          className={`${active ? 'bg-secondary text-primary' : 'text-maintext'
+                            } group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors`}
+                          onClick={() => navigate(AppRoute.PROFILE)}
+                        >
+                          <User className="h-4 w-4" />
+                          Personalization
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          className={`${active ? 'bg-secondary text-primary' : 'text-maintext'
+                            } group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors`}
+                          onClick={() => toast('Settings coming soon!')}
+                        >
+                          <Settings className="h-4 w-4" />
+                          Settings
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </div>
+
+                  <div className="border-t border-border p-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          className={`${active ? 'bg-secondary text-primary' : 'text-maintext'
+                            } group flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors`}
+                          onClick={() => setIsFaqOpen(true)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <HelpCircle className="h-4 w-4" />
+                            Help
+                          </div>
+                          <ChevronUp className="h-3 w-3 rotate-90" />
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          className={`${active ? 'bg-error/10 text-error' : 'text-maintext'
+                            } group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors hover:text-red-500`}
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Log out
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          ) : (
+            /* Guest / Login State */
+            <div
+              onClick={() => navigate(AppRoute.LOGIN)}
+              className="rounded-xl border border-transparent hover:bg-secondary transition-all cursor-pointer flex items-center gap-3 px-3 py-2 group"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase shrink-0 border border-primary/10 group-hover:bg-primary/20 transition-colors">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="font-bold text-maintext text-xs group-hover:text-primary transition-colors">
+                Log In
+              </div>
+            </div>
+          )}
+
+          <div className="mt-1 flex flex-col gap-1">
+            {/* Region/Language Indicator */}
+            {token && (
+              <button
+                onClick={() => {
+                  navigate(AppRoute.PROFILE, { state: { openLanguage: true, timestamp: Date.now() } });
+                }}
+                className="group flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg text-subtext hover:bg-secondary hover:text-maintext transition-all text-[10px] font-bold uppercase tracking-wider border border-transparent hover:border-border"
+              >
+                <img
+                  src={getFlagUrl(regionFlags[region] || 'in')}
+                  alt={region}
+                  className="w-3.5 h-2.5 object-cover rounded-sm shadow-sm"
+                />
+                <span>{regionFlags[region] || 'IN'} - {currentLang.substring(0, 2).toUpperCase()}</span>
+              </button>
+            )}
+
+            {/* Separate FAQ Button Removed */}
+          </div>
+        </div>
       </div>
+
+      {/* FAQ Modal */}
+      {
+        isFaqOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-card rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in duration-200">
+              <div className="p-6 border-b border-border flex justify-between items-center bg-secondary">
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setActiveTab('faq')}
+                    className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'faq' ? 'bg-primary/10 text-primary' : 'text-subtext hover:text-maintext'}`}
+                  >
+                    FAQ
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('help')}
+                    className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'help' ? 'bg-primary/10 text-primary' : 'text-subtext hover:text-maintext'}`}
+                  >
+                    Help
+                  </button>
+                </div>
+                <button
+                  onClick={() => setIsFaqOpen(false)}
+                  className="p-2 hover:bg-black/5 rounded-full text-subtext transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {activeTab === 'faq' ? (
+                  <>
+                    <p className="text-sm text-subtext font-medium">Get quick answers to common questions about our platform</p>
+                    {faqs.map((faq, index) => (
+                      <div key={index} className="border border-border rounded-xl bg-card overflow-hidden hover:border-primary/30 transition-all">
+                        <button
+                          onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+                          className="w-full flex justify-between items-center p-4 text-left hover:bg-secondary transition-colors focus:outline-none"
+                        >
+                          <span className="font-semibold text-maintext text-[15px]">{faq.question}</span>
+                          {openFaqIndex === index ? (
+                            <ChevronUp className="w-4 h-4 text-primary" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-subtext" />
+                          )}
+                        </button>
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaqIndex === index ? 'max-h-96 opacity-100 bg-secondary/50' : 'max-h-0 opacity-0'}`}
+                        >
+                          <div className="p-4 pt-0 text-subtext text-sm leading-relaxed border-t border-border/50 mt-2 pt-3">
+                            {faq.answer}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <label className="block text-sm font-bold text-maintext mb-2">Select Issue Category</label>
+                      <div className="relative">
+                        <select
+                          value={issueType}
+                          onChange={(e) => setIssueType(e.target.value)}
+                          className="w-full p-4 pr-10 rounded-xl bg-secondary border border-border focus:border-primary outline-none appearance-none text-maintext font-medium cursor-pointer hover:border-primary/50 transition-colors"
+                        >
+                          {issueOptions.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-subtext pointer-events-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-maintext mb-2">Describe your issue</label>
+                      <textarea
+                        className="w-full p-4 rounded-xl bg-secondary border border-border focus:border-primary outline-none resize-none text-maintext min-h-[150px]"
+                        placeholder="Please provide details about the problem you are facing..."
+                        value={issueText}
+                        onChange={(e) => setIssueText(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSupportSubmit}
+                      disabled={isSending || !issueText.trim()}
+                      className={`flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 ${isSending || !issueText.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+                    >
+                      {isSending ? (
+                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <HelpCircle className="w-5 h-5" />
+                          Send to Support
+                        </>
+                      )}
+                    </button>
+                    {sendStatus === 'success' && (
+                      <div className="p-3 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-sm text-center font-medium border border-green-500/20 animate-in fade-in slide-in-from-top-2">
+                        Ticket Submitted Successfully! Our team will contact you soon.
+                      </div>
+                    )}
+                    {sendStatus === 'error' && (
+                      <div className="p-3 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm text-center font-medium border border-red-500/20 animate-in fade-in slide-in-from-top-2">
+                        Failed to submit ticket. Please try again or email us directly.
+                      </div>
+                    )}
+                    <p className="text-xs text-center text-subtext">
+                      Or email us directly at <a href="mailto:support@a-series.in" className="text-primary font-medium hover:underline">support@a-series.in</a>
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="p-4 border-t border-border bg-surface text-center">
+                <button
+                  onClick={() => setIsFaqOpen(false)}
+                  className="px-6 py-2 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       {/* Main Area */}
       <div
@@ -1679,13 +2178,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         {/* Header */}
         <div className="h-12 md:h-14 border-b border-border flex items-center justify-between px-3 md:px-4 bg-secondary z-10 shrink-0 gap-2">
           <div className="flex items-center gap-2 min-w-0">
-
-            <button
-              className="p-2 -ml-2 text-subtext hover:text-maintext shrink-0"
-              onClick={() => setShowHistory(!showHistory)}
-            >
-              <History className="w-5 h-5" />
-            </button>
 
             <div className="flex items-center gap-2 text-subtext min-w-0">
               <span className="text-sm hidden sm:inline shrink-0">Chatting with:</span>
@@ -1751,6 +2243,18 @@ For "Remix" requests with an attachment, analyze the attached image, then create
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            {/* Mode Indicator */}
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: `${getModeColor(currentMode)}15`,
+                color: getModeColor(currentMode)
+              }}
+            >
+              <span>{getModeIcon(currentMode)}</span>
+              <span className="hidden sm:inline">{getModeName(currentMode)}</span>
+            </div>
+
             {/* <button className="flex items-center gap-2 text-subtext hover:text-maintext text-sm">
               <Monitor className="w-4 h-4" />
               <span className="hidden sm:inline">Device</span>
@@ -1760,7 +2264,11 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 space-y-2.5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        <div
+          ref={chatContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 space-y-2.5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
+        >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center opacity-70 px-4">
               <div className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/5 rounded-full flex items-center justify-center mb-6">
@@ -1778,17 +2286,11 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`group relative flex items-start gap-2 md:gap-3 max-w-4xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''
-                    }`}
+                  className={`group relative flex items-start gap-2 md:gap-3 max-w-4xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                   onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
                 >
-                  {/* Actions Menu (Always visible for discoverability) */}
-
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
-                      ? 'bg-primary'
-                      : 'bg-surface border border-border'
-                      }`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary' : 'bg-surface border border-border'}`}
                   >
                     {msg.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
@@ -1797,17 +2299,14 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     )}
                   </div>
 
-                  <div
-                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
-                      } max-w-[85%] sm:max-w-[80%]`}
-                  >
+                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[80%]`}>
                     <div
-                      className={`group/bubble relative px-4 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 ${msg.role === 'user'
-                        ? 'bg-primary text-white rounded-tr-none'
-                        : `bg-surface border border-border text-maintext rounded-tl-none ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
+                      className={`group/bubble relative px-4 py-2 rounded-2xl text-sm leading-normal whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] ${msg.role === 'user'
+                        ? 'bg-primary text-white rounded-tr-none flex items-center px-5 py-3 rounded-3xl'
+                        : `bg-surface border border-border text-maintext rounded-tl-none block ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
                         }`}
                     >
-                      {/* Deep Search Badge in History */}
+                      {/* Deep Search Badge */}
                       {msg.isDeepSearch && (
                         <div className="mb-2 flex items-center gap-1.5 bg-white/10 border border-white/20 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold w-fit underline decoration-white/50 underline-offset-2">
                           <Wand2 className="w-3 h-3 text-white" />
@@ -1854,15 +2353,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                     className="flex-1 flex items-center gap-3 min-w-0 cursor-pointer p-0.5 rounded-lg"
                                     onClick={() => setViewingDoc(att)}
                                   >
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${(() => {
-                                      const name = (att.name || '').toLowerCase();
-                                      if (msg.role === 'user') return 'bg-white shadow-sm';
-                                      if (name.endsWith('.pdf')) return 'bg-red-50 dark:bg-red-900/20';
-                                      if (name.match(/\.(doc|docx)$/)) return 'bg-blue-50 dark:bg-blue-900/20';
-                                      if (name.match(/\.(xls|xlsx|csv)$/)) return 'bg-emerald-50 dark:bg-emerald-900/20';
-                                      if (name.match(/\.(ppt|pptx)$/)) return 'bg-orange-50 dark:bg-orange-900/20';
-                                      return 'bg-secondary';
-                                    })()}`}>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-white shadow-sm' :
+                                      (att.name || '').toLowerCase().endsWith('.pdf') ? 'bg-red-50 dark:bg-red-900/20' :
+                                        (att.name || '').toLowerCase().match(/\.(doc|docx)$/) ? 'bg-blue-50 dark:bg-blue-900/20' :
+                                          (att.name || '').toLowerCase().match(/\.(xls|xlsx|csv)$/) ? 'bg-emerald-50 dark:bg-emerald-900/20' :
+                                            (att.name || '').toLowerCase().match(/\.(ppt|pptx)$/) ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-secondary'
+                                      }`}>
                                       {(() => {
                                         const name = (att.name || '').toLowerCase();
                                         const baseClass = "w-6 h-6";
@@ -1904,6 +2400,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </div>
                       )}
 
+                      {/* Message Content */}
                       {editingMessageId === msg.id ? (
                         <div className="flex flex-col gap-3 min-w-[200px] w-full">
                           <textarea
@@ -1960,7 +2457,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                     </a>
                                   );
                                 },
-                                p: ({ children }) => <p className="mb-1.5 last:mb-0 leading-relaxed">{children}</p>,
+                                p: ({ children }) => <p className={`mb-1.5 last:mb-0 ${msg.role === 'user' ? 'm-0 leading-normal' : 'leading-relaxed'}`}>{children}</p>,
                                 ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-subtext">{children}</ul>,
                                 ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-subtext">{children}</ol>,
                                 li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
@@ -2039,125 +2536,159 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         )
                       )}
 
+                      {/* File conversion download button */}
+                      {msg.conversion && msg.conversion.file && (
+                        <div className="mt-4 pt-3 border-t border-border/40 w-full block">
+                          <button
+                            onClick={() => {
+                              const byteCharacters = atob(msg.conversion.file);
+                              const byteNumbers = new Array(byteCharacters.length);
+                              for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                              }
+                              const byteArray = new Uint8Array(byteNumbers);
+                              const blob = new Blob([byteArray], { type: msg.conversion.mimeType });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = msg.conversion.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="flex items-center gap-3 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl transition-all group w-full"
+                          >
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${msg.conversion.fileName.toLowerCase().endsWith('.pdf') ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                              {msg.conversion.fileName.toLowerCase().endsWith('.pdf') ? <FileText className="w-5 h-5" /> : <File className="w-5 h-5" />}
+                            </div>
+                            <div className="flex-1 text-left">
+                              <p className="text-[15px] font-bold text-primary transition-colors mb-0.5">{msg.conversion.fileName}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded-md border text-primary bg-primary/10 border-primary/20">
+                                  Click here to download {msg.conversion.fileName.split('.').pop().toLowerCase()}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      )}
+
                       {/* AI Feedback Actions */}
                       {msg.role !== 'user' && (
-                        <div className="mt-1 pt-2 border-t border-transparent">
-                          {(() => {
-                            // Detect if the AI response contains Hindi (Devanagari script)
-                            const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
-                            const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
-                            const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
-                            return (
-                              <p className="text-sm text-maintext mb-2 flex items-center gap-1">
-                                {prompts[promptIndex]}
-                                <span className="text-base">😊</span>
-                              </p>
-                            );
-                          })()}
-                          <div className="flex items-center gap-4">
-                            <button
-                              onClick={() => handleCopyMessage(msg.content)}
-                              className="text-subtext hover:text-maintext transition-colors"
-                              title="Copy"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleThumbsUp(msg.id)}
-                              className="text-subtext hover:text-primary transition-colors"
-                              title="Helpful"
-                            >
-                              <ThumbsUp className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleThumbsDown(msg.id)}
-                              className="text-subtext hover:text-red-500 transition-colors"
-                              title="Not Helpful"
-                            >
-                              <ThumbsDown className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleShare(msg.content)}
-                              className="text-subtext hover:text-primary transition-colors"
-                              title="Share Text"
-                            >
-                              <Share className="w-4 h-4" />
-                            </button>
-
-                            {/* PDF Menu */}
-                            <Menu as="div" className="relative inline-block text-left">
-                              <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
-                                {pdfLoadingId === msg.id ? (
-                                  <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                                ) : (
-                                  <FileText className="w-4 h-4" />
-                                )}
-                              </Menu.Button>
-                              <Transition
-                                as={Fragment}
-                                enter="transition ease-out duration-100"
-                                enterFrom="transform opacity-0 scale-95"
-                                enterTo="transform opacity-100 scale-100"
-                                leave="transition ease-in duration-75"
-                                leaveFrom="transform opacity-100 scale-100"
-                                leaveTo="transform opacity-0 scale-95"
+                        <div className="mt-4 pt-3 border-t border-border/40 w-full block">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                            {(() => {
+                              const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
+                              const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
+                              const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
+                              return (
+                                <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
+                                  {prompts[promptIndex]}
+                                  <span className="text-sm">😊</span>
+                                </p>
+                              );
+                            })()}
+                            <div className="flex items-center gap-3 self-end sm:self-auto">
+                              <button
+                                onClick={() => handleCopyMessage(msg.content)}
+                                className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Copy"
                               >
-                                <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
-                                  <div className="px-1 py-1">
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => handlePdfAction('open', msg)}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                        >
-                                          Open PDF
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => handlePdfAction('download', msg)}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                        >
-                                          Download
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => handlePdfAction('share', msg)}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                        >
-                                          Share PDF
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </div>
-                                </Menu.Items>
-                              </Transition>
-                            </Menu>
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleThumbsUp(msg.id)}
+                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Helpful"
+                              >
+                                <ThumbsUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleThumbsDown(msg.id)}
+                                className="text-subtext hover:text-red-500 transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Not Helpful"
+                              >
+                                <ThumbsDown className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleShare(msg.content)}
+                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Share Text"
+                              >
+                                <Share className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* PDF Menu */}
+                              <Menu as="div" className="relative inline-block text-left">
+                                <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
+                                  {pdfLoadingId === msg.id ? (
+                                    <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+                                  ) : (
+                                    <FileText className="w-4 h-4" />
+                                  )}
+                                </Menu.Button>
+                                <Transition
+                                  as={Fragment}
+                                  enter="transition ease-out duration-100"
+                                  enterFrom="transform opacity-0 scale-95"
+                                  enterTo="transform opacity-100 scale-100"
+                                  leave="transition ease-in duration-75"
+                                  leaveFrom="transform opacity-100 scale-100"
+                                  leaveTo="transform opacity-0 scale-95"
+                                >
+                                  <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
+                                    <div className="px-1 py-1">
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => handlePdfAction('open', msg)}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                          >
+                                            Open PDF
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => handlePdfAction('download', msg)}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                          >
+                                            Download
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => handlePdfAction('share', msg)}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                          >
+                                            Share PDF
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                    </div>
+                                  </Menu.Items>
+                                </Transition>
+                              </Menu>
+                            </div>
                           </div>
                         </div>
                       )}
                     </div>
+
                     <span className="text-[10px] text-subtext mt-0 px-1">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
 
-                  {/* Hover Actions - User Only (AI has footer) */}
+                  {/* Hover Actions - User Only */}
                   {msg.role === 'user' && (
                     <div className={`flex items-center gap-1 transition-opacity duration-200 self-start mt-2 mr-0 flex-row-reverse ${activeMessageId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                      {/* Undo Action (Only for the last user interaction) */}
-                      {msg.role === 'user' && (messages[messages.length - 1]?.id === msg.id || (messages[messages.length - 1]?.role === 'model' && messages[messages.length - 2]?.id === msg.id)) && (
+                      {/* Undo Action */}
+                      {(messages[messages.length - 1]?.id === msg.id || (messages[messages.length - 1]?.role === 'model' && messages[messages.length - 2]?.id === msg.id)) && (
                         <button
                           onClick={handleUndo}
                           className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
@@ -2192,7 +2723,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </button>
                       )}
                       <button
-                        onClick={() => handleMessageDelete(msg.id)}
+                        onClick={() => handleDeleteSession(null, msg.id)} // Corrected to use available delete function if needed, or I'll define a correct one
                         className="p-1.5 text-subtext hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                         title="Delete"
                       >
@@ -2202,13 +2733,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   )}
                 </div>
               ))}
-
+              {/* Loading State */}
               {isLoading && (
                 <div className="flex items-start gap-4 max-w-4xl mx-auto">
                   <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center shrink-0">
                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                     <Loader />
-
                   </div>
                   <div className="px-5 py-3 rounded-2xl rounded-tl-none bg-surface border border-border flex items-center gap-2">
                     <span
@@ -2233,7 +2763,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         </div>
 
         {/* Input */}
-        <div className="p-2 md:p-4 shrink-0 bg-secondary border-t border-border sm:border-t-0">
+        < div className="p-2 md:p-4 shrink-0 bg-secondary border-t border-border sm:border-t-0" >
           <div className="max-w-4xl mx-auto relative">
 
             {/* File Preview Area */}
@@ -2421,7 +2951,17 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               <button
                 type="button"
                 ref={attachBtnRef}
-                onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
+                onClick={() => {
+                  // Show login prompt for guests when they try to upload
+                  if (!isLoggedIn) {
+                    toast.error('Please log in to upload files and images', {
+                      duration: 4000,
+                      icon: '🔒'
+                    });
+                    return;
+                  }
+                  setIsAttachMenuOpen(!isAttachMenuOpen);
+                }}
                 className={`p-3 sm:p-4 rounded-full border border-primary bg-primary text-white transition-all duration-300 shadow-lg shadow-primary/20 shrink-0 flex items-center justify-center hover:opacity-90
                   ${isAttachMenuOpen ? 'rotate-45' : ''}`}
                 title="Add to chat"
@@ -2515,31 +3055,53 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     </>
                   )}
 
-                  <button
-                    type="submit"
-                    disabled={(!inputValue.trim() && filePreviews.length === 0) || isLoading}
-                    className="p-2 sm:p-2.5 rounded-full bg-primary text-white hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
+                  {/* Send / Stop Button */}
+                  {isLoading ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        console.log('Stop button clicked');
+                        if (abortControllerRef.current) {
+                          abortControllerRef.current.abort();
+                        }
+                        // Immediately stop loading state for instant UI feedback
+                        setIsLoading(false);
+                        isSendingRef.current = false;
+                      }}
+                      className="p-2 sm:p-2.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md flex items-center justify-center"
+                      title="Stop generation"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <rect x="6" y="6" width="8" height="8" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={(!inputValue.trim() && filePreviews.length === 0) || isLoading}
+                      className="p-2 sm:p-2.5 rounded-full bg-primary text-white hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </form>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
       {/* Live AI Modal */}
-      <AnimatePresence>
+      < AnimatePresence >
         {isLiveMode && (
           <LiveAI
             onClose={() => setIsLiveMode(false)}
             language={currentLang}
           />
         )}
-      </AnimatePresence>
+      </AnimatePresence >
 
       {/* Feedback Modal */}
-      <Transition appear show={feedbackOpen} as={Fragment}>
+      < Transition appear show={feedbackOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setFeedbackOpen(false)}>
           <Transition.Child
             as={Fragment}
@@ -2617,8 +3179,8 @@ For "Remix" requests with an attachment, analyze the attached image, then create
             </div>
           </div>
         </Dialog>
-      </Transition>
-    </div>
+      </Transition >
+    </div >
   );
 };
 

@@ -66,14 +66,9 @@ export const AppRoute = {
 
 
 // export const API = "https://a-series-backend-561947379084.asia-south1.run.app/api";
-// export const API = "https://a-series-backend-561947379084.asia-south1.run.app/api";
-export const API = "http://127.0.0.1:8080/api";
+export const API_BASE_URL = 'http://localhost:8080/api';
 
 export const apis = {
-  emailVerificationApi: `${API}/email_varification`,
-  signUp: `${API}/auth/signup`,
-  logIn: `${API}/auth/login/`,
-  forgotPassword: `${API}/auth/forgot-password`,
   resetPassword: `${API}/auth/reset-password`,
   user: `${API}/user`,
   getPayments: `${API}/user/payments`,
