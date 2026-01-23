@@ -13,6 +13,7 @@ import { requiresWebSearch, extractSearchQuery, processSearchResults, getWebSear
 import { performWebSearch } from "../services/searchService.js";
 import { convertFile } from "../utils/fileConversion.js";
 import { generateVideoFromPrompt } from "../controllers/videoController.js";
+import { generateImageFromPrompt } from "../controllers/image.controller.js";
 
 
 const router = express.Router();
@@ -345,27 +346,38 @@ router.post("/", verifyToken, async (req, res) => {
       language: detectedLanguage || language || 'English'
     };
 
-    // Check for Video Generation Action
+    // Check for Video or Image Generation Action
     try {
       // Regex to find JSON block if mixed with text, or just parse if full json
-      const jsonMatch = reply.match(/\{[\s\S]*"action":\s*"generate_video"[\s\S]*\}/);
+      const jsonRegex = /\{[\s\S]*"action":\s*"(generate_video|generate_image)"[\s\S]*\}/;
+      const jsonMatch = reply.match(jsonRegex);
+
       if (jsonMatch) {
         const data = JSON.parse(jsonMatch[0]);
+
         if (data.action === 'generate_video' && data.prompt) {
           console.log(`[VIDEO GEN] Detected action for prompt: ${data.prompt}`);
           const videoUrl = await generateVideoFromPrompt(data.prompt, 5, 'medium');
           if (videoUrl) {
             finalResponse.videoUrl = videoUrl;
             finalResponse.reply = `I have generated a video for you based on: "${data.prompt}"`;
-            // Clean up the JSON from the reply if it was mixed (though we asked for ONLY JSON)
-            // If strict JSON, reply is replaced.
           } else {
             finalResponse.reply = "I attempted to generate a video but encountered an error. Please try again.";
           }
         }
+        else if (data.action === 'generate_image' && data.prompt) {
+          console.log(`[IMAGE GEN] Detected action for prompt: ${data.prompt}`);
+          const imageUrl = await generateImageFromPrompt(data.prompt);
+          if (imageUrl) {
+            finalResponse.imageUrl = imageUrl;
+            finalResponse.reply = `I have generated an image for you based on: "${data.prompt}"`;
+          } else {
+            finalResponse.reply = "I attempted to generate an image but encountered an error. Please try again.";
+          }
+        }
       }
     } catch (e) {
-      console.warn("[VIDEO GEN] Failed to parse or execute video action:", e);
+      console.warn("[MEDIA GEN] Failed to parse or execute media action:", e);
     }
 
     if (voiceConfirmation) {
