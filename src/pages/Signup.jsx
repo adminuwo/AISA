@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router';
-import { Cpu, Mail, Lock, User, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Cpu, Mail, Lock, User, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { AppRoute, apis } from '../types';
 import axios from 'axios';
@@ -14,8 +14,10 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [passwordError, setPasswordError] = useState(null);
 
   const payLoad = {
     name, email, password
@@ -23,6 +25,15 @@ const Signup = () => {
   const handleSubmit = (e) => {
     setIsLoading(true)
     e.preventDefault();
+
+    // Password Validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setPasswordError("Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.");
+      setIsLoading(false);
+      return;
+    }
+
     axios.post(apis.signUp, payLoad).then((res) => {
       setUserData(res.data)
       navigate(AppRoute.E_Verification, { state: location.state });
@@ -100,14 +111,35 @@ const Signup = () => {
               <label className="text-sm font-medium text-maintext ml-1">Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 w-5 h-5 text-subtext" />
+                {passwordError && (
+                  <div className="absolute bottom-full mb-2 left-0 w-full p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs shadow-lg z-50">
+                    {passwordError}
+                    <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-red-200"></div>
+                  </div>
+                )}
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError(null);
+                  }}
                   placeholder="••••••••"
-                  className="w-full bg-surface border border-border rounded-xl py-3 pl-12 pr-4 text-maintext placeholder-subtext focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className={`w-full bg-surface border rounded-xl py-3 pl-12 pr-12 text-maintext placeholder-subtext focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${passwordError ? 'border-red-500 focus:ring-red-500' : 'border-border'
+                    }`}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-3.5 text-subtext hover:text-maintext transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             </div>
 

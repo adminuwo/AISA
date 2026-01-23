@@ -11,6 +11,8 @@ export default function VerificationForm() {
     const [verificationCode, setVerificationCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendMessage, setResendMessage] = useState('');
 
     // const [formData, setFormData] = useState({ email: Cookies.get("email"), })
     const email = getUserData("user").email
@@ -31,6 +33,25 @@ export default function VerificationForm() {
         })
 
     };
+
+
+
+    const handleResend = async () => {
+        setResendLoading(true);
+        setResendMessage("");
+        setError("");
+
+        try {
+            await axios.post(apis.resendCode, { email });
+            setResendMessage("Verification code resent successfully");
+        } catch (err) {
+            console.log(err);
+            setError(err.response?.data?.message || err.message || 'Failed to resend code');
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-surface relative overflow-hidden">
             <div className="relative z-10 w-full max-w-md">
@@ -57,6 +78,13 @@ export default function VerificationForm() {
                         <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2 text-red-500 text-sm">
                             <AlertCircle className="w-4 h-4" />
                             {error}
+                        </div>
+                    )}
+
+                    {resendMessage && (
+                        <div className="mb-6 p-3 rounded-xl bg-green-50 border border-green-100 flex items-center gap-2 text-green-600 text-sm">
+                            <CheckCircle className="w-4 h-4" />
+                            {resendMessage}
                         </div>
                     )}
 
@@ -94,8 +122,14 @@ export default function VerificationForm() {
 
                     <div className="mt-8 text-center text-sm text-subtext">
                         Didn't receive code?{' '}
-                        <button className="text-primary hover:underline font-medium">
-                            Resend
+                        Didn't receive code?{' '}
+                        <button
+                            type="button"
+                            onClick={handleResend}
+                            disabled={resendLoading}
+                            className="text-primary hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {resendLoading ? 'Sending...' : 'Resend'}
                         </button>
                     </div>
                 </div>

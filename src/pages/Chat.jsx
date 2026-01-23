@@ -260,7 +260,7 @@ const Chat = () => {
 
       setMessages(prev => [...prev, newMessage]);
       inputRef.current.value = '';
-      
+
       try {
         // Call the video generation endpoint
         const response = await axios.post(`http://localhost:8080/api/video/generate`, {
@@ -324,7 +324,7 @@ const Chat = () => {
 
       setMessages(prev => [...prev, newMessage]);
       inputRef.current.value = '';
-      
+
       try {
         // Call the image generation endpoint
         const response = await axios.post(`http://localhost:8080/api/image/generate`, {
@@ -386,7 +386,7 @@ const Chat = () => {
 
       setMessages(prev => [...prev, newMessage]);
       inputRef.current.value = '';
-      
+
       try {
         // Send message with deep search context
         const response = await generateChatResponse(query, {
@@ -707,6 +707,9 @@ ${activeAgent.instructions}` : ''}
         } else if (aiResponseData && typeof aiResponseData === 'object') {
           aiResponseText = aiResponseData.reply || "No response generated.";
           conversionData = aiResponseData.conversion || null;
+          // Extract media URLs if present
+          if (aiResponseData.videoUrl) modelMsg.videoUrl = aiResponseData.videoUrl;
+          if (aiResponseData.imageUrl) modelMsg.imageUrl = aiResponseData.imageUrl;
         } else {
           aiResponseText = "No response generated.";
         }
@@ -2016,7 +2019,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     >
 
                       {/* Attachment Display */}
-                      {(msg.attachments || msg.attachment) && (
+                      {((msg.attachments && msg.attachments.length > 0) || msg.attachment) && (
                         <div className="flex flex-col gap-3 mb-3 mt-1">
                           {(msg.attachments || (msg.attachment ? [msg.attachment] : [])).map((att, idx) => (
                             <div key={idx} className="w-full">

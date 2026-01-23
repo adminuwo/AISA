@@ -79,6 +79,7 @@ const apis = {
   signUp: `${API}/auth/signup`,
   forgotPassword: `${API}/auth/forgot-password`,
   emailVerificationApi: `${API}/auth/verify-email`,
+  resendCode: `${API}/auth/resend-code`,
 };
 
 export { API, apis };
