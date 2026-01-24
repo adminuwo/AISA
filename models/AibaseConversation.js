@@ -1,33 +1,17 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const AibaseConversationSchema = new mongoose.Schema({
-    userId: {
-        type: String,
-        default: 'admin'
-    },
-    title: {
-        type: String,
-        required: true
-    },
-    messages: [{
-        role: {
-            type: String,
-            enum: ['user', 'assistant'],
-            required: true
-        },
-        text: {
-            type: String,
-            required: true
-        },
-        timestamp: {
-            type: Date,
-            default: Date.now
-        }
-    }],
-    lastMessageAt: {
-        type: Date,
-        default: Date.now
-    }
+const messageSchema = new mongoose.Schema({
+    role: { type: String, required: true },
+    text: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now }
+});
+
+const aibaseConversationSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    title: { type: String, default: "New Conversation" },
+    messages: [messageSchema],
+    lastMessageAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-export default mongoose.model('AibaseConversation', AibaseConversationSchema);
+const AibaseConversation = mongoose.model("AibaseConversation", aibaseConversationSchema);
+export default AibaseConversation;

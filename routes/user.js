@@ -8,8 +8,8 @@ const route = express.Router()
 
 route.get("/", verifyToken, async (req, res) => {
     try {
-
-        const userId = req.user.id
+        const userId = req.user.id;
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
         // DB Down Fallback
         if (mongoose.connection.readyState !== 1) {
@@ -19,39 +19,18 @@ route.get("/", verifyToken, async (req, res) => {
                 name: req.user.name || "Demo User",
                 email: req.user.email || "demo@ai-mall.in",
                 role: "user",
-                avatar: ""
+                personalizations: {}
             });
         }
 
-        const user = await userModel.findById(userId)
-        res.status(200).json(user)
+        const user = await userModel.findById(userId).lean();
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json(user);
     } catch (error) {
-        res.send({ msg: "somthing went wrong" })
+        console.error("[GET USER ERROR]", error);
+        res.status(500).json({ msg: "Something went wrong", error: error.message });
     }
-
-})
-
-route.put("/", verifyToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { name, settings } = req.body;
-
-        const updateData = {};
-        if (name) updateData.name = name;
-        if (settings) updateData.settings = settings;
-
-        const updatedUser = await userModel.findByIdAndUpdate(
-            userId,
-            updateData,
-            { new: true } // Return the updated document
-        );
-
-        res.status(200).json(updatedUser);
-    } catch (error) {
-        console.error("Error updating user:", error);
-        res.status(500).json({ msg: "Something went wrong" });
-    }
-})
+});
 
 // PUT /api/user/personalizations - Update personalization preferences
 route.put("/personalizations", verifyToken, async (req, res) => {
@@ -59,27 +38,154 @@ route.put("/personalizations", verifyToken, async (req, res) => {
         const userId = req.user.id;
         const { personalizations } = req.body;
 
-        if (!personalizations) {
-            return res.status(400).json({ error: "No personalizations provided" });
+        console.log(`[BACKEND] Updating personalizations for user: ${userId}`, personalizations);
+
+        if (!personalizations || typeof personalizations !== 'object') {
+            return res.status(400).json({ error: "Invalid personalization data" });
         }
 
         const user = await userModel.findById(userId);
         if (!user) return res.status(404).json({ error: "User not found" });
 
-        // Deep merge or specific section update? Let's do a shallow merge for now, 
-        // or a deep merge if we want to update nested fields without clobbering.
-        // For simplicity in this implementation, we'll assume the frontend sends the relevant section or the whole object.
+        // Ensure user.personalizations is an object
+        if (!user.personalizations || typeof user.personalizations !== 'object') {
+            user.personalizations = {};
+        }
 
-        // Using object.assign or spread for the sections
-        user.personalizations = { ...user.personalizations, ...personalizations };
+        // Merge top-level sections (e.g. 'general', 'personalization')
+        Object.entries(personalizations).forEach(([section, data]) => {
+            if (data && typeof data === 'object') {
+                user.personalizations[section] = {
+                    ...(user.personalizations[section] || {}),
+                    ...data
+                };
+            }
+        });
+
+        // CRITICAL for Mongoose 'Mixed' type update detection
+        user.markModified('personalizations');
 
         await user.save();
+        console.log(`[BACKEND] Personalizations saved successfully for user: ${userId}`);
         res.status(200).json(user.personalizations);
     } catch (error) {
-        console.error("Error updating personalizations:", error);
-        res.status(500).json({ msg: "Something went wrong" });
+        console.error("[BACKEND ERROR] Failed to update personalizations:", error);
+        res.status(500).json({
+            msg: "Failed to update settings",
+            error: error.message
+        });
     }
 });
+
+// PUT /api/user/profile - Update user profile fields (like name)
+route.put("/profile", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { name } = req.body;
+        if (!name) return res.status(400).json({ error: "Name is required" });
+
+        // DB Down Fallback - Allow "Offline" updates to succeed for the session
+        if (mongoose.connection.readyState !== 1) {
+            console.log("[DB] MongoDB unreachable. Simulating profile update.");
+            return res.status(200).json({
+                _id: userId,
+                name: name,
+                email: req.user.email || "demo@ai-mall.in",
+                role: "user"
+            });
+        }
+
+        const user = await userModel.findByIdAndUpdate(userId, { name }, { new: true });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.status(200).json(user);
+    } catch (error) {
+        console.error("[BACKEND ERROR] Failed to update profile:", error);
+        res.status(500).json({ msg: "Failed to update profile", error: error.message });
+    }
+});
+
+// GET /api/user/notifications - Get notification inbox
+route.get("/notifications", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(200).json([
+                { id: 'demo_1', title: 'Offline Mode', desc: 'Running on local data.', type: 'alert', time: new Date() }
+            ]);
+        }
+
+        const user = await userModel.findById(userId).select('notificationsInbox').lean();
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        let inbox = user.notificationsInbox || [];
+
+        // If empty, return demo messages for the user
+        if (inbox.length === 0) {
+            inbox = [
+                {
+                    id: `demo_1`,
+                    title: 'Welcome to AISA!',
+                    desc: 'Start your journey with your Artificial Intelligence Super Assistant. Need help? Ask us anything!',
+                    type: 'promo',
+                    time: new Date()
+                },
+                {
+                    id: `demo_2`,
+                    title: 'AISA v2.4.0 is here!',
+                    desc: 'New features: Dynamic Accent Colors and improved Voice Synthesis are now live. Check them out in General settings.',
+                    type: 'update',
+                    time: new Date(Date.now() - 7200000)
+                },
+                {
+                    id: `demo_3`,
+                    title: 'Plan Expiring Soon',
+                    desc: 'Your "Pro" plan will end in 3 days. Renew now to keep enjoying unlimited AI access.',
+                    type: 'alert',
+                    time: new Date(Date.now() - 3600000)
+                },
+            ];
+        }
+
+        res.status(200).json(inbox);
+    } catch (error) {
+        console.error("[FETCH NOTIFICATIONS ERROR]", error);
+        res.status(500).json({ msg: "Failed to fetch notifications", error: error.message });
+    }
+});
+
+// DELETE /api/user/notifications/:notifId - Delete a notification
+route.delete("/notifications/:notifId", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { notifId } = req.params;
+        const user = await userModel.findByIdAndUpdate(userId, {
+            $pull: { notificationsInbox: { id: notifId } }
+        }, { new: true });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json({ msg: "Notification deleted" });
+    } catch (error) {
+        console.error("Delete notification error:", error);
+        res.status(500).json({ msg: "Failed to delete notification" });
+    }
+});
+
+// DELETE /api/user/notifications - Clear all notifications
+route.delete("/notifications", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await userModel.findByIdAndUpdate(userId, {
+            $set: { notificationsInbox: [] }
+        }, { new: true });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json({ msg: "All notifications cleared" });
+    } catch (error) {
+        console.error("Clear notifications error:", error);
+        res.status(500).json({ msg: "Failed to clear notifications" });
+    }
+});
+
 
 // POST /api/user/personalizations/reset - Reset personalization preferences to defaults
 route.post("/personalizations/reset", verifyToken, async (req, res) => {
@@ -115,7 +221,7 @@ route.get("/all", verifyToken, async (req, res) => {
         // Optimization: Aggregate all transactions by userId
         const transactions = await Transaction.aggregate([
             { $match: { status: 'Success' } },
-            { $group: { _id: "$userId", totalSpent: { $sum: "$amount" } } }
+            { $group: { _id: "$buyerId", totalSpent: { $sum: "$amount" } } }
         ]);
 
         const spendMap = transactions.reduce((acc, curr) => {

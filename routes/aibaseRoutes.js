@@ -38,6 +38,15 @@ router.post('/chat', async (req, res) => {
         }
 
         // Save to conversation
+        if (mongoose.connection.readyState !== 1) {
+            console.warn('[DB] MongoDB unreachable. Skipping conversation save in AIBASE.');
+            return res.status(200).json({
+                success: true,
+                data: responseText,
+                conversationId: 'demo-rag-id'
+            });
+        }
+
         let conversation;
         if (conversationId) {
             conversation = await AibaseConversation.findById(conversationId);
@@ -71,6 +80,9 @@ router.post('/chat', async (req, res) => {
 // GET /api/aibase/chat/history - Get conversation history
 router.get('/chat/history', async (req, res) => {
     try {
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(200).json({ success: true, data: [] });
+        }
         const conversations = await AibaseConversation.find({ userId: 'admin' })
             .sort({ lastMessageAt: -1 })
             .select('title lastMessageAt createdAt');

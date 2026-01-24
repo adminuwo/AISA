@@ -1,26 +1,10 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const AibaseKnowledgeSchema = new mongoose.Schema({
-    filename: {
-        type: String,
-        required: true
-    },
-    content: {
-        type: String,
-        required: true
-    },
-    uploadDate: {
-        type: Date,
-        default: Date.now
-    },
-    userId: {
-        type: String,
-        default: 'admin'
-    },
-    embedding: {
-        type: [Number],
-        required: false // Optional for now, to support legacy docs
-    }
-}, { timestamps: true, collection: 'knowledge_vectors' });
+const aibaseKnowledgeSchema = new mongoose.Schema({
+    filename: { type: String, required: true },
+    content: { type: String },
+    uploadDate: { type: Date, default: Date.now }
+}, { timestamps: true });
 
-export default mongoose.model('AibaseKnowledge', AibaseKnowledgeSchema);
+const AibaseKnowledge = mongoose.model("AibaseKnowledge", aibaseKnowledgeSchema);
+export default AibaseKnowledge;

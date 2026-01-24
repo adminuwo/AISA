@@ -50,36 +50,32 @@ const userSchema = new mongoose.Schema({
         general: {
             language: { type: String, default: 'English' },
             theme: { type: String, enum: ['Light', 'Dark', 'System'], default: 'System' },
-            fontSize: { type: String, enum: ['Small', 'Medium', 'Large'], default: 'Medium' },
             responseSpeed: { type: String, enum: ['Fast', 'Balanced', 'Detailed'], default: 'Balanced' },
-            accessibility: {
-                screenReader: { type: Boolean, default: false },
-                highContrast: { type: Boolean, default: false }
-            }
+            screenReader: { type: Boolean, default: false },
+            highContrast: { type: Boolean, default: false }
         },
 
         // Notifications
         notifications: {
-            newMessage: { type: Boolean, default: true },
-            aiTips: { type: Boolean, default: true },
-            productUpdates: { type: Boolean, default: true },
-            emailNotifications: { type: String, default: '' },
-            soundAlerts: { type: Boolean, default: true }
+            responses: { type: String, default: 'Push' }, // Push, Off
+            groupChats: { type: String, default: 'Push' }, // Push, Off
+            tasks: { type: String, default: 'Push, Email' }, // Push, Email, Off
+            projects: { type: String, default: 'Email' }, // Email, Off
+            recommendations: { type: String, default: 'Push, Email' } // Push, Email, Off
         },
 
         // Personalization (Core Feature)
         personalization: {
-            baseStyle: {
+            fontStyle: {
                 type: String,
-                enum: ['Default', 'Professional', 'Friendly', 'Casual', 'Technical', 'Mentor-like'],
+                enum: ['Default', 'Serif', 'Mono', 'Sans', 'Rounded'],
                 default: 'Default'
             },
             characteristics: {
-                warmth: { type: Number, min: 1, max: 3, default: 2 }, // 1=Low, 2=Medium, 3=High
-                enthusiasm: { type: Number, min: 1, max: 3, default: 2 },
-                formality: { type: Number, min: 1, max: 3, default: 2 },
-                creativity: { type: Number, min: 1, max: 3, default: 2 },
-                directness: { type: Number, min: 1, max: 3, default: 2 }
+                enthusiasm: { type: String, default: 'Medium' },
+                formality: { type: String, default: 'Medium' },
+                creativity: { type: String, default: 'Medium' },
+                directness: { type: String, default: 'Medium' }
             },
             headers: {
                 structuredResponses: { type: Boolean, default: true },
@@ -89,8 +85,9 @@ const userSchema = new mongoose.Schema({
             emojiUsage: {
                 type: String,
                 enum: ['None', 'Minimal', 'Moderate', 'Expressive'],
-                default: 'Minimal'
+                default: 'Moderate'
             },
+            fontSize: { type: String, default: 'Medium' }, // Added to match frontend data structure
             customInstructions: { type: String, default: '', maxlength: 1500 }
         },
 
@@ -140,8 +137,15 @@ const userSchema = new mongoose.Schema({
         razorpay_payment_id: String,
         razorpay_order_id: String,
         razorpay_signature: String
-    }
-
+    },
+    notificationsInbox: [{
+        id: String,
+        title: String,
+        desc: String,
+        type: { type: String, enum: ['promo', 'update', 'alert'], default: 'promo' },
+        time: { type: Date, default: Date.now },
+        isRead: { type: Boolean, default: false }
+    }]
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

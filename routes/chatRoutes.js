@@ -401,6 +401,10 @@ router.post("/", verifyToken, async (req, res) => {
 
     return res.status(200).json(finalResponse);
   } catch (err) {
+    if (mongoose.connection.readyState !== 1) {
+      console.warn('[DB] MongoDB unreachable during generation. Returning generic success.');
+      return res.status(200).json({ reply: "I'm having trouble connecting to my memory, but I can still chat! (Demo Mode)", detectedMode: 'NORMAL_CHAT' });
+    }
     const fs = await import('fs');
     try {
       const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -596,6 +600,10 @@ router.delete('/:sessionId', verifyToken, async (req, res) => {
   try {
     const { sessionId } = req.params;
     const userId = req.user.id;
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ message: 'History cleared (Mock)' });
+    }
 
     const session = await ChatSession.findOneAndDelete({ sessionId });
     if (session) {

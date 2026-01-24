@@ -64,6 +64,29 @@ router.post("/signup", async (req, res) => {
       email,
       password: hashedPassword,
       verificationCode,
+      notificationsInbox: [
+        {
+          id: `welcome_${Date.now()}_1`,
+          title: 'Welcome to AISA!',
+          desc: 'Start your journey with your Artificial Intelligence Super Assistant. Need help? Ask us anything!',
+          type: 'promo',
+          time: new Date()
+        },
+        {
+          id: `welcome_${Date.now()}_2`,
+          title: 'AISA v2.4.0 is here!',
+          desc: 'New features: Dynamic Accent Colors and improved Voice Synthesis are now live. Check them out in General settings.',
+          type: 'update',
+          time: new Date(Date.now() - 7200000)
+        },
+        {
+          id: `welcome_${Date.now()}_3`,
+          title: 'Plan Expiring Soon',
+          desc: 'Your "Pro" plan will end in 3 days. Renew now to keep enjoying unlimited AI access.',
+          type: 'alert',
+          time: new Date(Date.now() - 3600000)
+        },
+      ]
     });
 
     // Generate token cookie
@@ -121,13 +144,58 @@ router.post("/login", async (req, res) => {
     // Generate token
     const token = generateTokenAndSetCookies(res, user._id, user.email, user.name);
 
+    // Add welcome notifications if inbox is empty
+    if (!user.notificationsInbox || user.notificationsInbox.length === 0) {
+      user.notificationsInbox = [
+        {
+          id: `welcome_${Date.now()}_1`,
+          title: 'Welcome to AISA!',
+          desc: 'Start your journey with your Artificial Intelligence Super Assistant. Need help? Ask us anything!',
+          type: 'promo',
+          time: new Date()
+        },
+        {
+          id: `welcome_${Date.now()}_2`,
+          title: 'AISA v2.4.0 is here!',
+          desc: 'New features: Dynamic Accent Colors and improved Voice Synthesis are now live. Check them out in General settings.',
+          type: 'update',
+          time: new Date(Date.now() - 7200000)
+        },
+        {
+          id: `welcome_${Date.now()}_3`,
+          title: 'Plan Expiring Soon',
+          desc: 'Your "Pro" plan will end in 3 days. Renew now to keep enjoying unlimited AI access.',
+          type: 'alert',
+          time: new Date(Date.now() - 3600000)
+        },
+      ];
+    }
+
+    // Add "New Login" notification
+    user.notificationsInbox.unshift({
+      id: `login_${Date.now()}`,
+      title: 'New Login Detected',
+      desc: `Successfully logged in at ${new Date().toLocaleTimeString()}`,
+      type: 'alert', // efficient check icon
+      time: new Date(),
+      isRead: false
+    });
+
+    // Limit inbox size
+    if (user.notificationsInbox.length > 50) {
+      user.notificationsInbox = user.notificationsInbox.slice(0, 50);
+    }
+
+    await user.save();
+
     res.status(201).json({
       id: user._id,
       name: user.name,
       email: user.email,
       message: "LogIn Successfully",
       token: token,
-      role: user.role
+      role: user.role,
+      notifications: user.notificationsInbox
     });
 
   } catch (err) {
