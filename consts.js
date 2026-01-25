@@ -1,0 +1,1 @@
+export const dashboardUrl ="http://localhost:5173/dashboard"
