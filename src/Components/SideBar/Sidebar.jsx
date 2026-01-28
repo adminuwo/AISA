@@ -38,7 +38,7 @@ import toast from 'react-hot-toast';
 import ProfileSettingsDropdown from '../ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { t, language, region, regionFlags } = useLanguage();
+  const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
 
 
@@ -390,24 +390,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           )}
 
           <div className="mt-1 flex flex-col gap-1">
-            {/* Region/Language Indicator - Only show if logged in */}
-            {token && (
-              <button
-                onClick={() => {
-                  navigate(AppRoute.PROFILE, { state: { openLanguage: true, timestamp: Date.now() } });
-                  onClose();
-                }}
-                className="group flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg text-subtext hover:bg-secondary hover:text-maintext transition-all text-[10px] font-bold uppercase tracking-wider border border-transparent hover:border-border"
-              >
-                <img
-                  src={getFlagUrl(regionFlags[region] || 'in')}
-                  alt={region}
-                  className="w-3.5 h-2.5 object-cover rounded-sm shadow-sm"
-                />
-                <span>{regionFlags[region] || 'IN'} - {language.substring(0, 2).toUpperCase()}</span>
-              </button>
-            )}
-
             {/* FAQ Button */}
             <button
               onClick={() => setIsFaqOpen(true)}

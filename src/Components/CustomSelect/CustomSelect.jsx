@@ -17,7 +17,7 @@ const CustomSelect = ({ value, options, onChange, label, icon: Icon }) => {
     }, []);
 
     return (
-        <div className="relative w-full z-[1]" ref={containerRef}>
+        <div className={`relative w-full ${isOpen ? 'z-[50]' : 'z-[1]'}`} ref={containerRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
