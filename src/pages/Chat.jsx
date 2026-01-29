@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { Menu, Transition, Dialog } from '@headlessui/react';
@@ -103,7 +103,7 @@ const Chat = () => {
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [filePreviews, setFilePreviews] = useState([]);
-  const [activeAgent, setActiveAgent] = useState({ agentName: 'AISA', category: 'General', avatar: '/logo/AISA_Brain.png' });
+  const [activeAgent, setActiveAgent] = useState({ name: 'AISA', category: 'General' });
   const [userAgents, setUserAgents] = useState([]);
   const [toolModels, setToolModels] = useState({
     chat: 'gemini-flash',
@@ -130,10 +130,6 @@ const Chat = () => {
   const [currentMode, setCurrentMode] = useState('NORMAL_CHAT');
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isImageGeneration, setIsImageGeneration] = useState(false);
-  const [isAudioConvertMode, setIsAudioConvertMode] = useState(false);
-  const [speakingMessageId, setSpeakingMessageId] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const audioRef = useRef(null);
   const abortControllerRef = useRef(null);
 
   const [tglState, setTglState] = useRecoilState(toggleState);
@@ -416,7 +412,7 @@ const Chat = () => {
         const response = await generateChatResponse(query, {
           mode: 'deep-search',
           context: [...messages.map(m => ({ role: m.role || 'user', content: m.text || m.content })), { role: 'user', content: query }]
-        }, selectedModel, null, currentLang, t);
+        }, selectedModel);
 
         if (response) {
           // Add the deep search result
@@ -465,261 +461,6 @@ const Chat = () => {
     }
   };
 
-  // ========== VOICE OUTPUT FUNCTIONS ==========
-  const cleanTextForTTS = (text) => {
-    if (!text) return "";
-    return text
-      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F0F5}\u{1F200}-\u{1F270}]/gu, '')
-      .replace(/^#+\s+/gm, '')
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/__(.*?)__/g, '$1')
-      .replace(/~~(.*?)~~/g, '$1')
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
-      .replace(/`{3}[\s\S]*?`{3}/g, ' Code snippet. ')
-      .replace(/`(.+?)`/g, '$1')
-      .replace(/^\s*[-*+]\s+/gm, '')
-      .replace(/^\s*>\s+/gm, '')
-      .replace(/™|&trade;/g, ' tm ')
-      .replace(/©/g, ' ')
-      .replace(/\btm\b/gi, 'tum ')
-      .replace(/\bkkrh\b/gi, 'kya kar rahe ho ')
-      .replace(/\bclg\b/gi, 'college ')
-      .replace(/\bplz\b/gi, 'please ')
-      .replace(/[,\.\?;\"\\\*\/\+\-:@\[\]\(\)\|\_]/g, ' ')
-      .replace(/["']/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  };
-
-  const speakResponse = async (text, language, msgId, attachments = []) => {
-    if (speakingMessageId === msgId) {
-      if (audioRef.current) {
-        if (!audioRef.current.paused) {
-          audioRef.current.pause();
-          setIsPaused(true);
-        } else {
-          await audioRef.current.play();
-          setIsPaused(false);
-        }
-        return;
-      }
-    }
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-    if (window.currentAudio) {
-      window.currentAudio.pause();
-      window.currentAudio = null;
-    }
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-
-    setSpeakingMessageId(msgId);
-    setIsPaused(false);
-
-    try {
-      const readableAttachment = attachments && attachments.length > 0
-        ? attachments.find(a =>
-          a.type && (
-            a.type.includes('pdf') ||
-            a.type.includes('word') ||
-            a.type.includes('document') ||
-            a.type.includes('text') ||
-            a.type.startsWith('image/')
-          )
-        ) : null;
-
-      if (readableAttachment) {
-        toast.loading("Processing file & text...", { id: 'voice-loading' });
-        const fileRes = await fetch(readableAttachment.url);
-        const fileBlob = await fileRes.blob();
-        const base64Data = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result.split(',')[1]);
-          reader.readAsDataURL(fileBlob);
-        });
-
-        const response = await axios.post(apis.synthesizeFile, {
-          fileData: base64Data,
-          mimeType: readableAttachment.type || 'application/pdf',
-          text: cleanTextForTTS(text),
-          languageCode: language === 'Hindi' ? 'hi-IN' : 'en-US',
-          gender: 'FEMALE'
-        }, {
-          responseType: 'arraybuffer'
-        });
-
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-
-        toast.dismiss('voice-loading');
-        audio.onended = () => {
-          setSpeakingMessageId(null);
-          setIsPaused(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        await audio.play();
-      } else {
-        const cleanedText = cleanTextForTTS(text);
-        if (!cleanedText) {
-          setSpeakingMessageId(null);
-          return;
-        }
-
-        const response = await axios.post(apis.synthesizeVoice, {
-          text: cleanedText,
-          languageCode: /[\u0900-\u097F]/.test(text) ? 'hi-IN' : (language === 'Hindi' ? 'hi-IN' : 'en-US'),
-          gender: 'FEMALE'
-        }, {
-          responseType: 'arraybuffer'
-        });
-
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-
-        audio.onended = () => {
-          setSpeakingMessageId(null);
-          setIsPaused(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        await audio.play();
-      }
-    } catch (err) {
-      toast.dismiss('voice-loading');
-      console.error("Voice Error:", err);
-      console.log("⚠️ Using Browser TTS Fallback");
-      fallbackSpeak(text, /[\u0900-\u097F]/.test(text) ? 'hi-IN' : (language === 'Hindi' ? 'hi-IN' : 'en-US'));
-    }
-  };
-
-  const fallbackSpeak = (text, lang) => {
-    if (!('speechSynthesis' in window)) {
-      toast.error("Speech synthesis not supported in this browser");
-      setSpeakingMessageId(null);
-      return;
-    }
-
-    // Stop any existing speech
-    window.speechSynthesis.cancel();
-
-    const cleanedText = cleanTextForTTS(text);
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-    utterance.lang = lang;
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    utterance.onstart = () => {
-      setIsPaused(false);
-    };
-
-    utterance.onend = () => {
-      setSpeakingMessageId(null);
-      setIsPaused(false);
-    };
-
-    utterance.onerror = (event) => {
-      console.error("SpeechSynthesis Error:", event);
-      setSpeakingMessageId(null);
-      setIsPaused(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  };
-  // ========== END VOICE OUTPUT FUNCTIONS ==========
-
-  // ========== AUDIO CONVERSION HANDLERS ==========
-  const manualTextToAudioConversion = async (text) => {
-    if (!text || !text.trim()) {
-      toast.error('Please enter text to convert to audio');
-      return;
-    }
-
-    try {
-      toast.loading('Converting text to audio...', { id: 'audio-convert' });
-
-      const response = await axios.post(apis.synthesizeVoice, {
-        text: text,
-        languageCode: 'en-US',
-        gender: 'FEMALE',
-        tone: 'narrative'
-      }, {
-        responseType: 'arraybuffer'
-      });
-
-      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      toast.dismiss('audio-convert');
-      toast.success('Audio ready! Playing now...');
-
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      await audio.play();
-    } catch (error) {
-      toast.dismiss('audio-convert');
-      console.error('Text to audio conversion failed:', error);
-      toast.error('Failed to convert text to audio');
-    }
-  };
-
-  const manualFileToAudioConversion = async (file) => {
-    if (!file) {
-      toast.error('No file selected for audio conversion');
-      return;
-    }
-
-    try {
-      toast.loading('Processing file and converting to audio...', { id: 'file-audio-convert' });
-
-      // Convert file to base64
-      const reader = new FileReader();
-      const base64Data = await new Promise((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const response = await axios.post(apis.synthesizeFile, {
-        fileData: base64Data,
-        mimeType: file.type || 'application/pdf',
-        languageCode: null,
-        gender: 'FEMALE'
-      }, {
-        responseType: 'arraybuffer'
-      });
-
-      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      toast.dismiss('file-audio-convert');
-      toast.success('Audio ready! Playing now...');
-
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      await audio.play();
-    } catch (error) {
-      toast.dismiss('file-audio-convert');
-      console.error('File to audio conversion failed:', error);
-      toast.error('Failed to convert file to audio: ' + (error.response?.data?.error || error.message));
-    }
-  };
-  // ========== END AUDIO CONVERSION HANDLERS ==========
 
   useEffect(() => {
     const loadSessions = async () => {
@@ -738,19 +479,19 @@ const Chat = () => {
             });
             const agents = res.data?.agents || [];
             // Add default AISA agent if not present
-            const processedAgents = [{ agentName: 'AISA', category: 'General', avatar: '/logo/AISA_Brain.png' }, ...agents];
+            const processedAgents = [{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA.png' }, ...agents];
             setUserAgents(processedAgents);
           } catch (agentErr) {
             // Silently use defaults if fetch fails (no console warning)
-            setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/AISA_Brain.png' }]);
+            setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA.png' }]);
           }
         } else {
           // No user logged in, use default
-          setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/AISA_Brain.png' }]);
+          setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA.png' }]);
         }
       } catch (err) {
         // Silently handle errors
-        setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/AISA_Brain.png' }]);
+        setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA.png' }]);
       }
     };
     loadSessions();
@@ -855,24 +596,6 @@ const Chat = () => {
     if (isImageGeneration) {
       handleGenerateImage(contentToSend); // Pass content directly if needed, or handleGenerateImage uses ref/state
       isSendingRef.current = false; // Reset sending ref since handleGenerateImage might handle it differently or we want to allow next send
-      return;
-    }
-
-    // Handle Audio Convert Mode
-    if (isAudioConvertMode) {
-      if (selectedFiles.length > 0) {
-        // Convert file to audio
-        manualFileToAudioConversion(selectedFiles[0]);
-        setSelectedFiles([]);
-        setFilePreviews([]);
-      } else if (contentToSend) {
-        // Convert text to audio
-        manualTextToAudioConversion(contentToSend);
-      } else {
-        toast.error('Please enter text or upload a file to convert to audio');
-      }
-      setInputValue('');
-      isSendingRef.current = false;
       return;
     }
 
@@ -1069,7 +792,6 @@ ${deepSearchActive ? `### DEEP SEARCH MODE ENABLED (CRITICAL):
           SYSTEM_INSTRUCTION,
           userMsg.attachments,
           currentLang,
-          t,
           abortControllerRef.current.signal
         );
 
@@ -1080,15 +802,15 @@ ${deepSearchActive ? `### DEEP SEARCH MODE ENABLED (CRITICAL):
         let aiImageUrl = null;
 
         if (typeof aiResponseData === 'string') {
-          aiResponseText = t(aiResponseData);
+          aiResponseText = aiResponseData;
         } else if (aiResponseData && typeof aiResponseData === 'object') {
-          aiResponseText = t(aiResponseData.reply || "No response generated.");
+          aiResponseText = aiResponseData.reply || "No response generated.";
           conversionData = aiResponseData.conversion || null;
           // Extract media URLs if present
           aiVideoUrl = aiResponseData.videoUrl || null;
           aiImageUrl = aiResponseData.imageUrl || null;
         } else {
-          aiResponseText = t("No response generated.");
+          aiResponseText = "No response generated.";
         }
 
         // Check for multiple file analysis headers to split into separate cards
@@ -2250,18 +1972,65 @@ For "Remix" requests with an attachment, analyze the attached image, then create
             <div className="flex items-center gap-2 min-w-0">
 
               <div className="flex items-center gap-2 text-subtext min-w-0">
+                <span className="text-sm hidden sm:inline shrink-0">Chatting with:</span>
+                <Menu as="div" className="relative inline-block text-left min-w-0">
+                  <Menu.Button className="flex items-center gap-2 text-maintext bg-surface px-3 py-1.5 rounded-lg border border-border cursor-pointer hover:bg-secondary transition-colors min-w-0 w-full">
+                    <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center shrink-0">
+                      <img
+                        src={activeAgent.avatar || (activeAgent.agentName === 'AISA' ? '/AGENTS_IMG/AISA.png' : '/AGENTS_IMG/AIBOT.png')}
+                        alt=""
+                        className="w-4 h-4 rounded-sm object-cover"
+                        onError={(e) => { e.target.src = '/AGENTS_IMG/AISA.png' }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium truncate">
+                      {activeAgent.agentName || activeAgent.name} <sup>TM</sup>
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-subtext shrink-0" />
+                  </Menu.Button>
 
-
-                <div className="flex items-center gap-2.5 px-3 py-1.5 bg-surface/50 rounded-xl border border-border/50">
-                  <img
-                    src="/logo/Logo.svg"
-                    alt="AISA"
-                    className="w-6 h-6 object-contain"
-                  />
-                  <span className="text-[15px] font-bold text-maintext tracking-tight">
-                    AISA
-                  </span>
-                </div>
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-100"
+                    enterFrom="transform opacity-0 scale-95"
+                    enterTo="transform opacity-100 scale-100"
+                    leave="transition ease-in duration-75"
+                    leaveFrom="transform opacity-100 scale-100"
+                    leaveTo="transform opacity-0 scale-95"
+                  >
+                    <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden border border-border">
+                      <div className="px-1 py-1 max-h-60 overflow-y-auto custom-scrollbar">
+                        {userAgents.map((agent, idx) => (
+                          <Menu.Item key={idx}>
+                            {({ active }) => (
+                              <button
+                                onClick={() => {
+                                  setActiveAgent(agent);
+                                  toast.success(`${t('switchedTo')} ${agent.agentName || agent.name}`);
+                                }}
+                                className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                  } group flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium gap-3 transition-colors`}
+                              >
+                                <div className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${active ? 'bg-white/20' : 'bg-primary/10'}`}>
+                                  <img
+                                    src={agent.avatar || (agent.agentName === 'AISA' ? '/AGENTS_IMG/AISA.png' : '/AGENTS_IMG/AIBOT.png')}
+                                    alt=""
+                                    className="w-4 h-4 rounded-sm object-cover"
+                                    onError={(e) => { e.target.src = '/AGENTS_IMG/AISA.png' }}
+                                  />
+                                </div>
+                                <span className="truncate">{agent.agentName || agent.name}</span>
+                                {activeAgent.agentName === agent.agentName && (
+                                  <Check className={`w-3 h-3 ml-auto ${active ? 'text-white' : 'text-primary'}`} />
+                                )}
+                              </button>
+                            )}
+                          </Menu.Item>
+                        ))}
+                      </div>
+                    </Menu.Items>
+                  </Transition>
+                </Menu>
               </div>
             </div>
           </div>
@@ -2299,11 +2068,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4 animate-in fade-in duration-700">
-              <img
-                src="/logo/Logo.svg"
-                alt="AISA Logo"
-                className="w-16 h-16 sm:w-20 sm:h-20 animate-pulse object-contain mb-8"
-              />
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/5 rounded-full flex items-center justify-center mb-6">
+                <Bot className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-pulse" />
+              </div>
               <h2 className="text-xl sm:text-2xl font-semibold text-maintext max-w-2xl leading-relaxed">
                 {t('welcomeMessage')}
               </h2>
@@ -2629,68 +2396,51 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
                       {/* File Conversion Download Button */}
                       {msg.conversion && msg.conversion.file && (
-                        <div className="mt-4 pt-3 border-t border-border/40 space-y-3">
-                          {/* Integrated Audio Player for Voice Conversations */}
-                          {msg.conversion.mimeType.startsWith('audio/') && (
-                            <div className="bg-primary/5 rounded-xl p-2 border border-primary/10 mb-2">
-                              <audio
-                                controls
-                                className="w-full h-10 accent-primary rounded-lg"
-                                src={msg.conversion.blobUrl || `data:${msg.conversion.mimeType};base64,${msg.conversion.file}`}
-                              >
-                                Your browser does not support the audio element.
-                              </audio>
+                        <div className="mt-4 pt-3 border-t border-border/40">
+                          <button
+                            onClick={() => {
+                              // Create download link
+                              const byteCharacters = atob(msg.conversion.file);
+                              const byteNumbers = new Array(byteCharacters.length);
+                              for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                              }
+                              const byteArray = new Uint8Array(byteNumbers);
+                              const blob = new Blob([byteArray], { type: msg.conversion.mimeType });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = msg.conversion.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="flex items-center gap-3 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl transition-all group w-full"
+                          >
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${msg.conversion.fileName.toLowerCase().endsWith('.pdf')
+                              ? 'bg-red-50 text-red-600'
+                              : 'bg-blue-50 text-blue-600'
+                              }`}>
+                              {msg.conversion.fileName.toLowerCase().endsWith('.pdf')
+                                ? <FileText className="w-5 h-5" />
+                                : <File className="w-5 h-5" />
+                              }
                             </div>
-                          )}
-
-                          <div className="flex items-center justify-between px-1 py-1">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-maintext truncate">{msg.conversion.fileName}</p>
-                              <p className="text-[10px] text-subtext font-bold uppercase tracking-widest flex items-center gap-2">
-                                <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20">
-                                  {msg.conversion.fileSize || "Ready"}
-                                </span>
-                                AUDIO • MP3
+                            <div className="flex-1 text-left">
+                              <p className="text-[15px] font-bold text-primary transition-colors mb-0.5">
+                                {msg.conversion.fileName}
                               </p>
+                              <div className="flex items-center gap-2">
+                                <p className={`text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded-md border ${msg.conversion.fileName.toLowerCase().endsWith('.pdf')
+                                  ? 'text-primary bg-primary/10 border-primary/20'
+                                  : 'text-primary bg-primary/10 border-primary/20'
+                                  }`}>
+                                  Click here to download {msg.conversion.fileName.split('.').pop().toLowerCase()}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <button
-                              onClick={() => {
-                                const downloadToast = toast.loading("Starting download...");
-                                try {
-                                  // Create download link
-                                  const byteCharacters = atob(msg.conversion.file);
-                                  const byteNumbers = new Array(byteCharacters.length);
-                                  for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                  }
-                                  const byteArray = new Uint8Array(byteNumbers);
-                                  const blob = new Blob([byteArray], { type: msg.conversion.mimeType });
-                                  const url = URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = msg.conversion.fileName;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  setTimeout(() => {
-                                    document.body.removeChild(a);
-                                    URL.revokeObjectURL(url);
-                                    toast.dismiss(downloadToast);
-                                    toast.success("Download complete!");
-                                  }, 500);
-                                } catch (err) {
-                                  toast.dismiss(downloadToast);
-                                  toast.error("Download failed");
-                                }
-                              }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl transition-all hover:bg-primary/90 shadow-sm font-bold text-sm active:scale-95"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download Audio
-                            </button>
-                          </div>
+                          </button>
                         </div>
                       )}
 
@@ -2711,20 +2461,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               );
                             })()}
                             <div className="flex items-center gap-3 self-end sm:self-auto">
-                              <button
-                                onClick={() => speakResponse(msg.content, currentLang, msg.id, msg.attachments || [])}
-                                className={`transition-colors p-1.5 rounded-lg ${speakingMessageId === msg.id
-                                  ? 'text-primary bg-primary/10'
-                                  : 'text-subtext hover:text-primary hover:bg-surface-hover'
-                                  }`}
-                                title={speakingMessageId === msg.id && !isPaused ? "Pause" : "Speak"}
-                              >
-                                {speakingMessageId === msg.id && !isPaused ? (
-                                  <Pause className="w-3.5 h-3.5" />
-                                ) : (
-                                  <Volume2 className="w-3.5 h-3.5" />
-                                )}
-                              </button>
                               <button
                                 onClick={() => handleCopyMessage(msg.content)}
                                 className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
@@ -3088,7 +2824,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             setIsToolsMenuOpen(false);
                             setIsImageGeneration(!isImageGeneration);
                             setIsDeepSearch(false);
-                            setIsAudioConvertMode(false);
                             if (!isImageGeneration) toast.success("Image Generation Mode Enabled");
                           }}
                           className={`w-full text-left px-3 py-2.5 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isImageGeneration ? 'bg-primary/10 border border-primary/20' : 'hover:bg-primary/5'}`}
@@ -3109,7 +2844,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             setIsToolsMenuOpen(false);
                             setIsDeepSearch(!isDeepSearch);
                             setIsImageGeneration(false);
-                            setIsAudioConvertMode(false);
                             if (!isDeepSearch) toast.success("Deep Search Mode Enabled");
                           }}
                           className={`w-full text-left px-3 py-2.5 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isDeepSearch ? 'bg-primary/10 border border-primary/20' : 'hover:bg-primary/5'}`}
@@ -3122,27 +2856,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               Deep Search {isDeepSearch && '(Active)'}
                             </span>
                             <p className="text-[10px] text-subtext leading-none mt-0.5">Complex research & analysis</p>
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setIsToolsMenuOpen(false);
-                            setIsAudioConvertMode(!isAudioConvertMode);
-                            setIsImageGeneration(false);
-                            setIsDeepSearch(false);
-                            if (!isAudioConvertMode) toast.success("Convert to Audio Mode Active");
-                          }}
-                          className={`w-full text-left px-3 py-2.5 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isAudioConvertMode ? 'bg-indigo-500/10 border border-indigo-500/20' : 'hover:bg-primary/5'}`}
-                        >
-                          <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-colors shrink-0 ${isAudioConvertMode ? 'bg-indigo-500 border-indigo-500 text-white' : 'bg-surface border-border group-hover:border-primary/30 group-hover:bg-primary/10'}`}>
-                            <Mic className={`w-4 h-4 transition-colors ${isAudioConvertMode ? 'text-white' : 'text-subtext group-hover:text-primary'}`} />
-                          </div>
-                          <div className="flex-1">
-                            <span className={`text-sm font-medium transition-colors ${isAudioConvertMode ? 'text-indigo-600 dark:text-indigo-400' : 'text-maintext group-hover:text-primary'}`}>
-                              Convert to Audio {isAudioConvertMode && '(Active)'}
-                            </span>
-                            <p className="text-[10px] text-subtext leading-none mt-0.5">Text or file to speech</p>
                           </div>
                         </button>
                       </div>
@@ -3194,26 +2907,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       </button>
                     </motion.div>
                   )}
-                  {isAudioConvertMode && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 5 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                      className="absolute bottom-full left-0 mb-3 flex items-center gap-2.5 px-3 py-1.5 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 rounded-xl backdrop-blur-md shadow-lg shadow-indigo-500/5 z-20 pointer-events-auto"
-                    >
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white">
-                        <Mic size={10} strokeWidth={3} />
-                      </div>
-                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Convert to Audio Active</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsAudioConvertMode(false)}
-                        className="ml-1 p-0.5 hover:bg-indigo-500/20 rounded-md transition-colors text-indigo-600 dark:text-indigo-400"
-                      >
-                        <X size={12} />
-                      </button>
-                    </motion.div>
-                  )}
                 </AnimatePresence>
                 <textarea
                   ref={inputRef}
@@ -3225,12 +2918,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   }}
                   onKeyDown={handleKeyDown}
                   onPaste={handlePaste}
-                  placeholder={isAudioConvertMode ? "Enter text or upload a file to convert to audio..." : "Ask AISA..."}
+                  placeholder="Ask AISA..."
                   rows={1}
                   className={`w-full bg-surface border rounded-2xl py-2 md:py-3 pl-4 sm:pl-5 text-maintext placeholder-subtext focus:outline-none shadow-sm transition-all resize-none overflow-y-auto custom-scrollbar 
-                    ${isDeepSearch ? 'border-sky-500 ring-2 ring-sky-500/20' :
-                      isAudioConvertMode ? 'border-indigo-500 ring-2 ring-indigo-500/20' :
-                        'border-border focus:border-primary focus:ring-1 focus:ring-primary'} 
+                    ${isDeepSearch ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-border focus:border-primary focus:ring-1 focus:ring-primary'} 
                     ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
                       personalizations?.personalization?.fontStyle === 'Mono' ? 'font-mono' :
                         personalizations?.personalization?.fontStyle === 'Rounded' ? 'font-rounded' :

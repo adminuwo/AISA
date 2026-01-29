@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bot, Brain, X, Sparkles, MessageSquare, FileText, Image, Cloud, Camera, Mic, Share2, Scan, FileDiff, FileType, Search } from 'lucide-react';
+import { Bot, X, Sparkles, MessageSquare, FileText, Image, Cloud, Camera, Mic, Share2, Scan, FileDiff, FileType, Search } from 'lucide-react';
 
 const AboutAISA = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
@@ -8,7 +8,7 @@ const AboutAISA = ({ isOpen, onClose }) => {
     const sections = [
         {
             title: "Core Intelligence",
-            icon: <img src="/logo/AISA_Brain.png" alt="AISA Brain" className="w-6 h-6 object-contain" />,
+            icon: <Bot className="w-5 h-5 text-blue-500" />,
             content: "AISA is powered by advanced AI systems enabling context-aware conversations, multi-modal understanding, intelligent document processing, and real-time visual & voice interaction."
         },
         {
@@ -142,10 +142,7 @@ const AboutAISA = ({ isOpen, onClose }) => {
                         One Assistant. Unlimited Possibilities.
                     </p>
                     <button
-                        onClick={() => {
-                            onClose();
-                            window.location.href = '/dashboard/aisa/chat';
-                        }}
+                        onClick={onClose}
                         className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                     >
                         Explore AISA

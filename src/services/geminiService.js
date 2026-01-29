@@ -2,7 +2,7 @@ import axios from "axios";
 import { apis } from "../types";
 import { getUserData } from "../userStore/userData";
 
-export const generateChatResponse = async (history, currentMessage, systemInstruction, attachments, language, t, abortSignal = null) => {
+export const generateChatResponse = async (history, currentMessage, systemInstruction, attachments, language, abortSignal = null) => {
     try {
         const token = getUserData()?.token;
 
@@ -56,15 +56,18 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
     } catch (error) {
         console.error("Gemini API Error:", error);
         if (error.response?.status === 429) {
-            return t ? t('apiQuotaExceeded') : "apiQuotaExceeded";
+            // Allow backend detail to override if present, otherwise default
+            const detail = error.response?.data?.details || error.response?.data?.error;
+            if (detail) return `System Busy (429): ${detail}`;
+            return "The A-Series system is currently busy (Quota limit reached). Please wait 60 seconds and try again.";
         }
         // Return backend error message if available
         if (error.response?.data?.error) {
-            return `System: ${error.response.data.error}`;
+            return `System Message: ${error.response.data.error}`;
         }
         if (error.response?.data?.details) {
-            return `Error: ${error.response.data.details}`;
+            return `System Error: ${error.response.data.details}`;
         }
-        return t ? t('apiConnectionError') : "apiConnectionError";
+        return "Sorry, I am having trouble connecting to the A-Series network right now. Please check your connection.";
     }
 };

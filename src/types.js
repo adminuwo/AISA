@@ -74,7 +74,6 @@ const apis = {
   resetPasswordEmail: `${API}/auth/reset-password-email`,
   feedback: `${API}/feedback`,
   synthesizeVoice: `${API}/voice/synthesize`,
-  synthesizeFile: `${API}/voice/synthesize-file`,
   payment: `${API}/payment`,
   createOrder: `${API}/payment/create-order`,
   verifyPayment: `${API}/payment/verify-payment`,
@@ -82,7 +81,6 @@ const apis = {
   logIn: `${API}/auth/login`,
   signUp: `${API}/auth/signup`,
   forgotPassword: `${API}/auth/forgot-password`,
-  resetPasswordOTP: `${API}/auth/reset-password-otp`,
   emailVerificationApi: `${API}/auth/verify-email`,
   resendCode: `${API}/auth/resend-code`,
 };
