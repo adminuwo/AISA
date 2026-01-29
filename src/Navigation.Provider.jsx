@@ -16,7 +16,7 @@ import { AppRoute } from './types';
 import { Menu } from 'lucide-react';
 import { useRecoilState } from 'recoil';
 import { toggleState } from './userStore/userData';
-import ComingSoon from './Components/ComingSoon/ComingSoon.jsx';
+
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
@@ -143,7 +143,7 @@ const NavigateProvider = () => {
         <Route path={AppRoute.PRIVACY_POLICY} element={<PrivacyPolicy />} />
         <Route path={AppRoute.TERMS_OF_SERVICE} element={<TermsOfService />} />
         <Route path={AppRoute.COOKIE_POLICY} element={<CookiePolicy />} />
-        <Route path="/agentsoon" element={<ComingSoon />}></Route>
+
         {/* Dashboard (Protected) */}
         <Route
           path={AppRoute.DASHBOARD}
@@ -152,11 +152,7 @@ const NavigateProvider = () => {
           <Route index element={<Navigate to="chat" replace />} />
           <Route path="chat/:sessionId?" element={<Chat />} />
           <Route path="ai-personal-assistant" element={<ProtectedRoute><AiPersonalAssistantDashboard /></ProtectedRoute>} />
-          {/* <Route path="live-demos" element={
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><p className="text-subtext">Loading...</p></div>}>
-              <LiveDemoPage />
-            </Suspense>
-          } /> */}
+
           <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="security" element={
             <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
