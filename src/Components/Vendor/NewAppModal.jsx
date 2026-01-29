@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Sparkles, AlertCircle, CheckCircle, Loader2, ChevronDown, Check } from 'lucide-react';
 import axios from 'axios';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import PricingConfigModal from './PricingConfigModal';
 
 // Custom Dropdown Component

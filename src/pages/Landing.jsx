@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import {
     ArrowRight, Bot, Zap, Shield, CircleUser,
     Github,
     Linkedin, Mail, MapPin, Phone, Facebook, Instagram, Youtube, MessageSquare, MessageCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { logo, name, faqs } from '../constants';
 import { getUserData } from '../userStore/userData';
 import { AppRoute } from '../types';
@@ -14,7 +14,7 @@ import { Sun, Moon, X, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import axios from 'axios';
 import { apis } from '../types';
 import toast from 'react-hot-toast';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import PrivacyPolicyModal from '../Components/PolicyModals/PrivacyPolicyModal';
 import TermsOfServiceModal from '../Components/PolicyModals/TermsOfServiceModal';
 import CookiePolicyModal from '../Components/PolicyModals/CookiePolicyModal';

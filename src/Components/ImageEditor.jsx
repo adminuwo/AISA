@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Check, RotateCw, Pen, Eraser, Sliders, Image as ImageIcon, Undo, Redo, ZoomIn, ZoomOut, Crop } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const FILTERS = [
     { name: 'Normal', filter: 'none' },

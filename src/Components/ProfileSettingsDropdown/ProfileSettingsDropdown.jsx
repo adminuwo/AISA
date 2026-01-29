@@ -2,20 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-<<<<<<< HEAD
     Settings, Bell, Sparkles, LayoutGrid,
     Database, Shield, Lock, User,
     X, ChevronDown, Play, Globe,
     LogOut, Monitor, Mic, Check,
     ChevronLeft, Trash2, ShieldCheck, Mail, Volume2, Plus
-=======
-    Settings2, Bell, User, Shield, AppWindow,
-    Database, Lock, ChevronRight,
-    ChevronDown, X, Globe, Sun, Moon, Type,
-    Zap, Sparkles, MessageSquare, List, Hash,
-    Smile, Send, Trash2, LogOut, Check, LifeBuoy, History,
-    Settings
->>>>>>> b5f7bc49bc8c9b99fc1f8bdef2a4914825488d03
 } from 'lucide-react';
 import { usePersonalization } from '../../context/PersonalizationContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -23,7 +14,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { getUserData, getAccounts, removeAccount, setUserData, updateUser, userData } from '../../userStore/userData';
 import { useRecoilState } from 'recoil';
 import toast from 'react-hot-toast';
-<<<<<<< HEAD
 import axios from 'axios';
 import { apis } from '../../types';
 
@@ -46,21 +36,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const [isPlayingVoice, setIsPlayingVoice] = useState(false);
     const [accounts, setAccounts] = useState(getAccounts());
     const [nicknameInput, setNicknameInput] = useState('');
-=======
-import { useRecoilState } from 'recoil';
-import { toggleState, userData, getUserData } from '../../userStore/userData';
-import { Clock, Star, Settings as SettingsIcon, Infinity, Shield as ShieldIcon } from 'lucide-react';
-
-const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
-    const [tglState, setTglState] = useRecoilState(toggleState);
-    const [currentUserData] = useRecoilState(userData);
-    const user = currentUserData.user || getUserData() || { name: 'User', email: '', plan: 'Basic' };
-    const { personalizations, updatePersonalization, resetPersonalizations, isLoading } = usePersonalization();
-    const { theme, setTheme } = useTheme();
-    const { language, setLanguage, t } = useLanguage();
-    const [viewMode, setViewMode] = useState('menu'); // 'menu' or 'settings'
-    const [activeSection, setActiveSection] = useState(null);
->>>>>>> b5f7bc49bc8c9b99fc1f8bdef2a4914825488d03
 
     useEffect(() => {
         setNicknameInput(personalizations.account?.nickname || '');
@@ -421,7 +396,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
             case 'account':
                 return (
-<<<<<<< HEAD
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="space-y-4">
                             <div className="flex flex-col gap-2 relative group">
@@ -460,38 +434,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <Trash2 className="w-4 h-4" /> Permanent Delete Account
                             </button>
                         </div>
-=======
-                    <div className="p-3 space-y-5 animate-in fade-in slide-in-from-top-1">
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-maintext uppercase tracking-wider opacity-70">Preferred Name</label>
-                            <input
-                                type="text"
-                                value={personalizations.account?.nickname || ''}
-                                onChange={(e) => updatePersonalization('account', { nickname: e.target.value })}
-                                placeholder="What should AI call you?"
-                                className="w-full bg-secondary/50 text-sm p-2.5 rounded-lg border border-border outline-none focus:border-primary transition-colors"
-                            />
-                        </div>
-                        <button
-                            onClick={() => {
-                                setTglState(prev => ({ ...prev, platformSubTgl: true }));
-                                onClose();
-                            }}
-                            className="w-full p-4 rounded-xl border border-primary/20 bg-primary/5 text-left transition-all hover:bg-primary/10 group"
-                        >
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs font-bold text-primary uppercase tracking-wider">Current Plan</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">Active</span>
-                                    <ChevronRight className="w-3 h-3 text-primary group-hover:translate-x-0.5 transition-transform" />
-                                </div>
-                            </div>
-                            <p className="text-lg font-bold text-maintext">{user.plan || 'Basic'}</p>
-                        </button>
-                        <button className="w-full py-2 text-xs font-medium text-red-500 hover:underline text-left px-1">
-                            Delete Account
-                        </button>
->>>>>>> b5f7bc49bc8c9b99fc1f8bdef2a4914825488d03
                     </div>
                 );
             default:
@@ -499,7 +441,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         }
     };
 
-<<<<<<< HEAD
     return createPortal(
         <AnimatePresence>
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-[2px] p-0 sm:p-4" onClick={onClose}>
@@ -589,197 +530,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             </div>
         </AnimatePresence>,
         document.body
-=======
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute bottom-full left-0 right-0 mb-3 mx-2 bg-white dark:bg-zinc-900 border border-border shadow-2xl rounded-[28px] overflow-hidden z-[100] flex flex-col min-w-[280px]"
-        >
-            <AnimatePresence mode="wait">
-                {viewMode === 'menu' ? (
-                    <motion.div
-                        key="menu"
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        className="p-1"
-                    >
-                        {/* User Profile Info Section */}
-                        <div className="m-1 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-[22px] flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-500 font-bold text-xs uppercase shrink-0 overflow-hidden">
-                                {user.avatar ? (
-                                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    user.name ? user.name.charAt(0).toUpperCase() : "U"
-                                )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-[15px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight">{user.name}</h3>
-                                <p className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">@{user.email?.split('@')[0] || 'user'}</p>
-                            </div>
-                        </div>
-
-                        {/* Menu Items */}
-                        <div className="px-1 py-2 space-y-0.5">
-                            <button
-                                onClick={() => { setTglState(prev => ({ ...prev, platformSubTgl: true })); onClose(); }}
-                                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 group"
-                            >
-                                <Sparkles className="w-[18px] h-[18px] text-zinc-500 group-hover:text-primary transition-colors" />
-                                <span className="text-[14.5px] font-medium">Upgrade plan</span>
-                            </button>
-
-                            <button
-                                onClick={() => setViewMode('settings')}
-                                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 group"
-                            >
-                                <History className="w-[18px] h-[18px] text-zinc-500 group-hover:text-primary transition-colors" />
-                                <span className="text-[14.5px] font-medium">Personalization</span>
-                            </button>
-
-                            <button
-                                onClick={() => setViewMode('settings')}
-                                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 group"
-                            >
-                                <SettingsIcon className="w-[18px] h-[18px] text-zinc-500 group-hover:text-primary transition-colors" />
-                                <span className="text-[14.5px] font-medium">Settings</span>
-                            </button>
-
-                            <div className="h-[1px] bg-gray-100 dark:bg-zinc-800 my-2 mx-4" />
-
-                            <button
-                                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 group"
-                            >
-                                <div className="flex items-center gap-3.5">
-                                    <LifeBuoy className="w-[18px] h-[18px] text-zinc-500 group-hover:text-primary transition-colors" />
-                                    <span className="text-[14.5px] font-medium">Help</span>
-                                </div>
-                                <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-primary transition-colors" />
-                            </button>
-
-                            <button
-                                onClick={onLogout}
-                                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl hover:bg-red-50 text-red-500 transition-colors group"
-                            >
-                                <LogOut className="w-[18px] h-[18px] group-hover:scale-110 transition-transform" />
-                                <span className="text-[14.5px] font-bold">Log out</span>
-                            </button>
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="settings"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="flex flex-col max-h-[500px] bg-gray-50 dark:bg-zinc-900"
-                    >
-                        {/* Header with Back Button */}
-                        <div className="px-4 py-3 border-b border-border bg-white dark:bg-zinc-800/50 flex items-center gap-3">
-                            <button
-                                onClick={() => setViewMode('menu')}
-                                className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
-                            >
-                                <ChevronRight className="w-4 h-4 text-subtext rotate-180" />
-                            </button>
-                            <h2 className="text-sm font-bold text-maintext">Settings</h2>
-                            <button onClick={onClose} className="p-1.5 hover:bg-secondary rounded-lg transition-colors ml-auto">
-                                <X className="w-4 h-4 text-subtext" />
-                            </button>
-                        </div>
-
-                        {/* Quick Stats Header */}
-                        <div className="px-4 py-4 bg-white/50 dark:bg-zinc-800/20 border-b border-border">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="p-3 bg-white dark:bg-zinc-800 border border-border rounded-xl shadow-sm">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Clock className="w-3.5 h-3.5 text-blue-500" />
-                                        <span className="text-[10px] font-bold text-subtext uppercase tracking-wider">Sessions</span>
-                                    </div>
-                                    <div className="text-sm font-black text-maintext">128</div>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setTglState(prev => ({ ...prev, platformSubTgl: true }));
-                                        onClose();
-                                    }}
-                                    className="p-3 bg-white dark:bg-zinc-800 border border-border rounded-xl shadow-sm hover:border-primary/50 transition-colors text-left group"
-                                >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Star className="w-3.5 h-3.5 text-amber-500" />
-                                        <span className="text-[10px] font-bold text-subtext uppercase tracking-wider">Plan</span>
-                                    </div>
-                                    <div className="text-sm font-black text-maintext flex items-center justify-between">
-                                        {user.plan || 'Basic'}
-                                        <ChevronRight className="w-3 h-3 text-subtext group-hover:text-primary transition-transform group-hover:translate-x-0.5" />
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Scrollable Content Area */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-                            <div className="space-y-1">
-                                {sections.map(section => (
-                                    <div key={section.id} className="space-y-1">
-                                        <button
-                                            onClick={() => toggleSection(section.id)}
-                                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all group ${activeSection === section.id ? 'bg-white dark:bg-zinc-800 shadow-sm border border-border' : 'hover:bg-white dark:hover:bg-zinc-800 border border-transparent hover:border-border'}`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <section.icon className={`w-4 h-4 ${activeSection === section.id ? 'text-primary' : 'text-zinc-500'}`} />
-                                                <span className={`text-sm font-medium ${activeSection === section.id ? 'text-primary font-bold' : 'text-maintext'}`}>
-                                                    {section.label}
-                                                </span>
-                                            </div>
-                                            {activeSection === section.id ? (
-                                                <ChevronDown className="w-4 h-4 text-primary" />
-                                            ) : (
-                                                <ChevronRight className="w-4 h-4 text-subtext/50 group-hover:text-primary transition-colors" />
-                                            )}
-                                        </button>
-
-                                        <AnimatePresence>
-                                            {activeSection === section.id && (
-                                                <motion.div
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden bg-white dark:bg-zinc-800/50 rounded-xl mt-1 border border-border"
-                                                >
-                                                    <div className="p-1">
-                                                        {renderSectionContent()}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-3 border-t border-border bg-white dark:bg-zinc-800/50 flex gap-2">
-                            <button
-                                onClick={resetPersonalizations}
-                                className="flex-1 py-2.5 text-[11px] font-bold text-subtext hover:text-zinc-900 dark:hover:text-white rounded-xl transition-all uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800"
-                            >
-                                Reset
-                            </button>
-                            <button
-                                onClick={onLogout}
-                                className="flex-1 py-2.5 text-[11px] font-bold text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all uppercase tracking-widest bg-red-50 dark:bg-red-900/10"
-                            >
-                                Log Out
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
->>>>>>> b5f7bc49bc8c9b99fc1f8bdef2a4914825488d03
     );
 };
 

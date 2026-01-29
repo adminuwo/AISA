@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router-dom';
 
 const VendorLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);

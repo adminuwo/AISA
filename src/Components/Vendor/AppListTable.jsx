@@ -3,7 +3,7 @@ import StatusBadge from './StatusBadge';
 import PrimaryButton from './PrimaryButton';
 import NewAppModal from './NewAppModal';
 import { ChevronRight, Star } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 const AppListTable = ({ apps, onAppCreated }) => {
     const navigate = useNavigate();

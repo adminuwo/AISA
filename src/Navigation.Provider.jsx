@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, Outlet, Navigate, BrowserRouter, useNavigate, useLocation } from 'react-router';
+import { Routes, Route, Outlet, Navigate, BrowserRouter, useNavigate, useLocation } from 'react-router-dom';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -24,7 +24,7 @@ import TermsOfService from './pages/TermsOfService.jsx';
 import CookiePolicy from './pages/CookiePolicy.jsx';
 import PlatformSubscriptionModal from './Components/SubscriptionForm/PlatformSubscriptionModal.jsx';
 
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'framer-motion';
 import { lazy, Suspense } from 'react';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute.jsx';
 

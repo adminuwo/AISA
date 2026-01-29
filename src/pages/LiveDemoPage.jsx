@@ -5,7 +5,7 @@ import LiveDemoModal from '../Components/LiveDemo/LiveDemoModal';
 import SubscriptionForm from '../Components/SubscriptionForm/SubscriptionForm';
 import { useRecoilValue } from 'recoil';
 import { toggleState } from '../userStore/userData';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'framer-motion';
 
 const MOCK_DEMOS = [
     {

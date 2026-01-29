@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, Search, User, LogOut, ChevronDown, Activity, Menu } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
 
 const Topbar = ({ toggleSidebar, vendorName }) => {

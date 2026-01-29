@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Scale, FileText, DollarSign, Shield, AlertCircle, UserX } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { name } from '../../constants';
 
 const TermsOfServiceModal = ({ isOpen, onClose }) => {

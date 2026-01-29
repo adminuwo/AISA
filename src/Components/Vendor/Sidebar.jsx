@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, Box, DollarSign, Settings2, LogOut, Users, ShieldAlert, Sun, Moon } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {

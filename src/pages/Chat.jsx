@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { AnimatePresence, motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Volume2 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Volume2, Pause, Headphones, MessageCircle, ExternalLink } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { Menu, Transition, Dialog } from '@headlessui/react';
@@ -130,6 +130,8 @@ const Chat = () => {
   const [currentMode, setCurrentMode] = useState('NORMAL_CHAT');
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isImageGeneration, setIsImageGeneration] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isAudioConvertMode, setIsAudioConvertMode] = useState(false);
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
   const inputRef = useRef(null); // Ref for textarea input
@@ -258,18 +260,348 @@ const Chat = () => {
       photosInputRef.current?.click();
     } else if (type === 'drive') {
       driveInputRef.current?.click();
+    } else if (type === 'doc-voice') {
+      document.getElementById('doc-voice-upload')?.click();
+    }
+  };
+
+  const handleDocToVoiceSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsAttachMenuOpen(false);
+
+    // 1. Show User Message immediately with the file
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Content = reader.result; // Full Data URL for display
+      const base64Data = base64Content.split(',')[1]; // Raw base64 for backend
+
+      // Add User Message
+      const userMsgId = Date.now().toString();
+      const userMsg = {
+        id: userMsgId,
+        role: 'user',
+        content: `Please convert this document to audio: **${file.name}**`,
+        timestamp: new Date(),
+        attachments: [{
+          url: base64Content,
+          name: file.name,
+          type: file.type
+        }]
+      };
+      setMessages(prev => [...prev, userMsg]);
+
+      // 2. Add Processing Message from AISA
+      const aiMsgId = (Date.now() + 1).toString();
+      const processingMsg = {
+        id: aiMsgId,
+        role: 'assistant',
+        content: `⚡ **EXTRACTING CONTENT...**\nReading text from **${file.name}**...`,
+        timestamp: new Date(),
+        isProcessing: true
+      };
+      setMessages(prev => [...prev, processingMsg]);
+      scrollToBottom();
+
+      // Update UI slightly after extraction
+      setTimeout(() => {
+        setMessages(prev => prev.map(msg => msg.id === aiMsgId && msg.isProcessing ? {
+          ...msg,
+          content: `🎧 **CONVERTING TO VOICE...**\nSynthesizing natural audio for **${file.name}**. This won't take long!`
+        } : msg));
+      }, 1500);
+      scrollToBottom();
+
+      // 3. Start Conversion - Added high timeout for long docs
+      try {
+        const response = await axios.post(apis.synthesizeFile, {
+          fileData: base64Data,
+          mimeType: file.type,
+          gender: 'FEMALE'
+        }, {
+          responseType: 'arraybuffer',
+          timeout: 0 // Wait as long as needed for large "jetna bhi long" files
+        });
+
+        // 4. Success - Update AI Message with Player and Download
+        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        const reader2 = new FileReader();
+        reader2.readAsDataURL(audioBlob);
+        reader2.onloadend = () => {
+          const mp3Base64 = reader2.result.split(',')[1];
+          const rawBytes = response.data.byteLength;
+          const charCount = response.headers['x-text-length'] || 0;
+          const formattedFileSize = rawBytes > 1024 * 1024
+            ? (rawBytes / (1024 * 1024)).toFixed(1) + ' MB'
+            : (rawBytes / 1024).toFixed(1) + ' KB';
+
+          setMessages(prev => prev.map(msg => msg.id === aiMsgId ? {
+            ...msg,
+            isProcessing: false,
+            content: `✅ I have successfully converted **${file.name}** into a full audio voice.`,
+            conversion: {
+              file: mp3Base64,
+              blobUrl: audioUrl,
+              fileName: `${file.name.split('.')[0]}_Audio.mp3`,
+              mimeType: 'audio/mpeg',
+              fileSize: formattedFileSize,
+              rawSize: rawBytes,
+              charCount: charCount
+            }
+          } : msg));
+
+          toast.success("Conversion complete! 🎶");
+          scrollToBottom();
+        };
+
+      } catch (err) {
+        console.error('[DocToVoice Error]:', err);
+        let errorMsg = "Extraction Failed";
+        let errorDetail = "If this is a scanned PDF (image only), I cannot read the text yet. Please ensure it's a searchable PDF or Word file.";
+
+        if (err.response?.data) {
+          try {
+            const errorData = err.response.data instanceof ArrayBuffer
+              ? JSON.parse(new TextDecoder().decode(err.response.data))
+              : err.response.data;
+
+            errorMsg = errorData.error || errorMsg;
+            errorDetail = errorData.details || errorDetail;
+          } catch (e) { }
+        }
+
+        setMessages(prev => prev.map(msg => msg.id === aiMsgId ? {
+          ...msg,
+          isProcessing: false,
+          content: `❌ **Conversion Failed**\n**${errorMsg}**\n${errorDetail}`
+        } : msg));
+
+        toast.error("Conversion failed");
+      }
+    };
+    reader.readAsDataURL(file);
+
+    e.target.value = ''; // Always reset so user can click/upload same file again
+  };
+
+  const manualFileToAudioConversion = async (file) => {
+    if (!file) return;
+
+    // 1. Show User Message immediately with the file
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Content = reader.result;
+      const base64Data = base64Content.split(',')[1];
+
+      const userMsgId = Date.now().toString();
+      const userMsg = {
+        id: userMsgId,
+        role: 'user',
+        content: `Convert this document to audio: **${file.name}**`,
+        timestamp: new Date(),
+        attachments: [{ url: base64Content, name: file.name, type: file.type }]
+      };
+      setMessages(prev => [...prev, userMsg]);
+
+      const aiMsgId = (Date.now() + 1).toString();
+      const processingMsg = {
+        id: aiMsgId,
+        role: 'assistant',
+        content: `⚡ **EXTRACTING CONTENT...**\nReading **${file.name}**...`,
+        timestamp: new Date(),
+        isProcessing: true
+      };
+      setMessages(prev => [...prev, processingMsg]);
+      scrollToBottom();
+
+      // Second stage update
+      setTimeout(() => {
+        setMessages(prev => prev.map(msg => msg.id === aiMsgId && msg.isProcessing ? {
+          ...msg,
+          content: `🎧 **CONVERTING TO VOICE...**\nAlmost there! Preparing your audio for **${file.name}**...`
+        } : msg));
+      }, 1200);
+
+      try {
+        const response = await axios.post(apis.synthesizeFile, {
+          fileData: base64Data,
+          mimeType: file.type,
+          gender: 'FEMALE'
+        }, { responseType: 'arraybuffer', timeout: 0 });
+
+        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const reader2 = new FileReader();
+        reader2.readAsDataURL(audioBlob);
+        reader2.onloadend = () => {
+          const mp3Base64 = reader2.result.split(',')[1];
+          const rawBytes = response.data.byteLength;
+          const charCount = response.headers['x-text-length'] || 0;
+          const formattedSize = rawBytes > 1024 * 1024 ? (rawBytes / (1024 * 1024)).toFixed(1) + ' MB' : (rawBytes / 1024).toFixed(1) + ' KB';
+
+          setMessages(prev => prev.map(msg => msg.id === aiMsgId ? {
+            ...msg,
+            isProcessing: false,
+            content: `✅ Audio conversion complete for **${file.name}**.`,
+            conversion: {
+              file: mp3Base64,
+              blobUrl: audioUrl,
+              fileName: `${file.name.split('.')[0]}_Audio.mp3`,
+              mimeType: 'audio/mpeg',
+              fileSize: formattedSize,
+              rawSize: rawBytes,
+              charCount: charCount
+            }
+          } : msg));
+          toast.success("File converted successfully!");
+          scrollToBottom();
+        };
+      } catch (err) {
+        console.error('[ManualConversion Error]:', err);
+        const serverError = err.response?.data?.details || err.response?.data?.error || err.message;
+        setMessages(prev => prev.map(msg => msg.id === aiMsgId ? {
+          ...msg,
+          isProcessing: false,
+          content: `❌ **Conversion Failed**\n${serverError}`
+        } : msg));
+        toast.error("Conversion failed");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const manualTextToAudioConversion = async (text) => {
+    if (!text || !text.trim()) return;
+
+    const userMsg = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: `Convert this text to audio: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMsg]);
+
+    const aiMsgId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: aiMsgId,
+      role: 'assistant',
+      content: `🎧 **Generating voice for your text...**`,
+      timestamp: new Date(),
+      isProcessing: true
+    }]);
+    scrollToBottom();
+
+    try {
+      const response = await axios.post(apis.synthesizeFile, {
+        introText: text,
+        gender: 'FEMALE'
+      }, { responseType: 'arraybuffer', timeout: 0 });
+
+      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const reader2 = new FileReader();
+      reader2.readAsDataURL(audioBlob);
+      reader2.onloadend = () => {
+        const mp3Base64 = reader2.result.split(',')[1];
+        const rawBytes = response.data.byteLength;
+        const charCount = response.headers['x-text-length'] || 0;
+        const formattedSize = rawBytes > 1024 * 1024 ? (rawBytes / (1024 * 1024)).toFixed(1) + ' MB' : (rawBytes / 1024).toFixed(1) + ' KB';
+
+        setMessages(prev => prev.map(msg => msg.id === aiMsgId ? {
+          ...msg,
+          isProcessing: false,
+          content: `✅ Your text has been converted to voice audio.`,
+          conversion: {
+            file: mp3Base64,
+            blobUrl: audioUrl,
+            fileName: `AISA_Voice_${Date.now()}.mp3`,
+            mimeType: 'audio/mpeg',
+            fileSize: formattedSize,
+            rawSize: rawBytes,
+            charCount: charCount
+          }
+        } : msg));
+        toast.success("Text converted successfully!");
+        scrollToBottom();
+      };
+    } catch (err) {
+      console.error('[ManualTextConversion Error]:', err);
+      const serverError = err.response?.data?.details || err.response?.data?.error || err.message;
+      setMessages(prev => prev.map(msg => msg.id === aiMsgId ? {
+        ...msg,
+        isProcessing: false,
+        content: `❌ **Conversion Failed**\n${serverError}`
+      } : msg));
+      toast.error("Conversion failed");
     }
   };
 
   const handleGenerateVideo = async () => {
     try {
-      if (!inputRef.current?.value.trim()) {
-        toast.error('Please enter a prompt for video generation');
-        return;
+      if (!inputRef.current?.value.trim() && selectedFiles.length === 0) {
+        // toast.error('Please enter a prompt or select a file');
+        // Let it slide if it's voice input (handled elsewhere)
+        if (!voiceUsedRef.current) return;
       }
 
-      const prompt = inputRef.current.value;
+      const prompt = inputRef.current?.value || "";
+      const filesToSend = [...selectedFiles]; // Snapshot
+
+      // Voice Reader Mode Logic
+      if (isVoiceMode) {
+        // 1. Add User Message to UI
+        const userMsgId = Date.now().toString();
+        const newUserMsg = {
+          id: userMsgId,
+          type: 'user',
+          text: prompt,
+          role: 'user',
+          timestamp: new Date(),
+          attachments: filePreviews.map(fp => ({
+            url: fp.url,
+            name: fp.name,
+            type: fp.type
+          }))
+        };
+        setMessages(prev => [...prev, newUserMsg]);
+
+        // Clear Inputs
+        setInputValue('');
+        setSelectedFiles([]);
+        setFilePreviews([]);
+        inputRef.current.style.height = 'auto';
+
+        // 2. Trigger Voice Reading Directly
+        // We can use speakResponse, but we need to trick it into thinking it's an AI response?
+        // Or just call speakResponse with the user content? 
+        // SpeakResponse reads content using a specific message ID for state tracking.
+
+        setIsLoading(true);
+
+        // Show a "Reading..." AI bubble
+        const aiMsgId = (Date.now() + 1).toString();
+        const readingMsg = {
+          id: aiMsgId,
+          type: 'ai',
+          role: 'assistant',
+          text: "🎧 Reading content aloud...",
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, readingMsg]);
+
+        setTimeout(() => {
+          speakResponse(prompt, 'en-US', aiMsgId, newUserMsg.attachments);
+          setIsLoading(false);
+        }, 500);
+
+        return; // STOP HERE (Do not call AI API)
+      }
+
       setIsLoading(true);
+      isSendingRef.current = true; // Mark as sending
 
       // Show a message that video generation is in progress
       const newMessage = {
@@ -534,53 +866,231 @@ const Chat = () => {
     }
   };
 
+  // Helper to clean markdown for TTS
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const audioRef = useRef(null);
+
+  // Helper to clean markdown for TTS
+  const cleanTextForTTS = (text) => {
+    if (!text) return "";
+    // Remove emojis using regex range for various emoji blocks
+    return text
+      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F0F5}\u{1F200}-\u{1F270}]/gu, '')
+      // Remove headers (keep text): ### Title -> Title
+      .replace(/^#+\s+/gm, '')
+      // Remove bold: **text** -> text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      // Remove italic: *text* -> text
+      .replace(/\*(.*?)\*/g, '$1')
+      // Remove underline: __text__ -> text
+      .replace(/__(.*?)__/g, '$1')
+      // Remove strikethrough: ~~text~~ -> text
+      .replace(/~~(.*?)~~/g, '$1')
+      // Remove links: [text](url) -> text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove images: ![alt](url) -> empty
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+      // Remove code blocks (replace with brief pause/text to avoid reading syntax)
+      .replace(/`{3}[\s\S]*?`{3}/g, ' Code snippet. ')
+      // Remove inline code ticks: `text` -> text
+      .replace(/`(.+?)`/g, '$1')
+      // Remove list bullets: - text -> text
+      .replace(/^\s*[-*+]\s+/gm, '')
+      // Remove blockquotes: > text -> text
+      .replace(/^\s*>\s+/gm, '')
+      // Replace Trademark with 'tm' so it's handled by next step
+      .replace(/™|&trade;/g, ' tm ')
+      .replace(/©/g, ' ')
+      // Hinglish Normalization for natural Hindi pronunciation
+      // Ensure 'tm' is spoken as 'tum' clearly (NOT HIDDEN)
+      .replace(/\btm\b/gi, 'tum ')
+      .replace(/\bkkrh\b/gi, 'kya kar rahe ho ')
+      .replace(/\bclg\b/gi, 'college ')
+      .replace(/\bplz\b/gi, 'please ')
+      // Remove specific symbols as requested: , . ? ; " \ * / + - : @ [ ] ( ) | _
+      .replace(/[,\.\?;\"\\\*\/\+\-:@\[\]\(\)\|\_]/g, ' ')
+      // Remove quotes/dashes just in case regex above missed something or for extra safety
+      .replace(/["']/g, '')
+      // Collapse whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   // Voice Output - Speak AI Response
-  const speakResponse = async (text, language) => {
-    if (!text) return;
-    console.log(`[VOICE] Attempting to speak: "${text.substring(0, 30)}..." in ${language}`);
+  const speakResponse = async (text, language, msgId, attachments = []) => {
+    // 1. Handle Toggle on the SAME message
+    if (speakingMessageId === msgId) {
+      if (audioRef.current) {
+        if (!audioRef.current.paused) {
+          audioRef.current.pause();
+          setIsPaused(true);
+        } else {
+          await audioRef.current.play();
+          setIsPaused(false);
+        }
+        return;
+      }
+    }
 
-    const langMap = {
-      'Hindi': 'hi-IN',
-      'English': 'en-US',
-      'Spanish': 'es-ES',
-      'French': 'fr-FR',
-      'German': 'de-DE',
-      'Japanese': 'ja-JP',
-      'Hinglish': 'hi-IN'
-    };
+    // 2. Stop ANY ongoing audio (previous message or completely different source)
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0; // Reset
+      audioRef.current = null;
+    }
+    if (window.currentAudio) {
+      window.currentAudio.pause();
+      window.currentAudio = null;
+    }
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
 
-    const targetLang = langMap[language] || langMap[currentLang] || 'en-US';
-    console.log(`[VOICE] Target Language Code: ${targetLang}`);
+    // 3. Reset State
+    setSpeakingMessageId(null);
+    setIsPaused(false);
+
+    // If user clicked the same message (and we just stopped it above because ref was lost or logic reset), 
+    // simply return (effectively "Stop"). 
+    // But since we handled the "Toggle" in step 1, finding ourselves here means:
+    // A) It's a NEW message
+    // B) The previous audio object was missing but ID was set (state mismatch recovery)
+
+    // Set new active message
+    setSpeakingMessageId(msgId);
+    setIsPaused(false);
+
+
 
     try {
-      console.log(`[VOICE] Requesting synthesis from backend...`);
-      const response = await axios.post(apis.synthesizeVoice, {
-        text,
-        languageCode: targetLang,
-        gender: 'FEMALE'
-      }, {
-        responseType: 'arraybuffer'
-      });
+      let audioBlob = null;
+      let targetLang = 'en-US';
 
-      console.log(`[VOICE] Synthesis received, playing audio...`);
-      const blob = new Blob([response.data], { type: 'audio/mpeg' });
-      const url = window.URL.createObjectURL(blob);
+      // Check for readable attachments (PDF, DOCX, etc.)
+      // Logic to determine what to read:
+      // Case 1: Text + Attachment -> Read combined
+      // Case 2: Only Attachment -> Read attachment
+      // Case 3: Only Text -> Read text
+
+      const readableAttachment = attachments && attachments.length > 0
+        ? attachments.find(a =>
+        (a.type && (
+          a.type.includes('pdf') ||
+          a.type.includes('word') ||
+          a.type.includes('document') ||
+          a.type.includes('text') ||
+          a.type.startsWith('image/')
+        ))
+        ) : null;
+
+      if (readableAttachment) {
+        toast.loading("Processing file & text...", { id: 'voice-loading' });
+        console.log(`[VOICE] Reading attachment: ${readableAttachment.name}`);
+
+        // Fetch file data
+        const fileRes = await fetch(readableAttachment.url);
+        const fileBlob = await fileRes.blob();
+
+        // Convert to base64
+        const base64Data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result.split(',')[1]);
+          reader.readAsDataURL(fileBlob);
+        });
+
+        // Optional: Prepend text to file content request?
+        // Actually, the backend synthesizeFile endpoint expects fileData. 
+        // We should modify the backend to accept 'prependText' OR we handle it here by chaining?
+        // Easier: Send text to backend as well.
+
+        // Wait, synthesizeFile doesn't accept 'text' currently. 
+        // We'll update the backend to prepend text if provided.
+        // Or we can synthesize text separately? No, better one stream.
+
+        // Let's rely on a logic: Clean text is passed to backend.
+        const headerText = text ? cleanTextForTTS(text) : "";
+
+        const response = await axios.post(apis.synthesizeFile, {
+          fileData: base64Data,
+          mimeType: readableAttachment.type || 'application/pdf',
+          languageCode: null,
+          gender: 'FEMALE',
+          introText: headerText // SEND TEXT TO BACKEND
+        }, {
+          responseType: 'arraybuffer'
+        });
+
+        audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+        toast.dismiss('voice-loading');
+
+      } else {
+        // Standard Text Reading
+        if (!text) {
+          setSpeakingMessageId(null);
+          return;
+        }
+
+        const cleanText = cleanTextForTTS(text);
+        if (!cleanText) {
+          setSpeakingMessageId(null);
+          return;
+        }
+
+        const langMap = {
+          'Hindi': 'hi-IN',
+          'English': 'en-US',
+          'Hinglish': 'hi-IN'
+        };
+        targetLang = /[\u0900-\u097F]/.test(cleanText) ? 'hi-IN' : (langMap[language] || 'en-US');
+
+        console.log(`[VOICE] Requesting synthesis for text...`);
+        const response = await axios.post(apis.synthesizeVoice, {
+          text: cleanText,
+          languageCode: targetLang,
+          gender: 'FEMALE',
+          tone: 'conversational'
+        }, {
+          responseType: 'arraybuffer'
+        });
+
+        audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      }
+
+      console.log(`[VOICE] Playing audio...`);
+      const url = window.URL.createObjectURL(audioBlob);
       const audio = new Audio(url);
 
+      window.currentAudio = audio;
+      audioRef.current = audio;
+
       audio.onended = () => {
-        console.log(`[VOICE] Audio playback ended.`);
         window.URL.revokeObjectURL(url);
+        if (window.currentAudio === audio) window.currentAudio = null;
+        if (audioRef.current === audio) {
+          setSpeakingMessageId(null);
+          setIsPaused(false);
+        }
       };
 
       audio.onerror = (e) => {
         console.error(`[VOICE] Audio playback error:`, e);
-        fallbackSpeak(text, targetLang);
+        if (!readableAttachment) fallbackSpeak(cleanTextForTTS(text), targetLang); // Only fallback for text
+        toast.error("Failed to play audio");
+        setSpeakingMessageId(null);
       };
 
       await audio.play();
+
     } catch (err) {
-      console.error('[VOICE] Backend synthesis failed:', err.response?.status, err.message);
-      fallbackSpeak(text, targetLang);
+      console.error('[VOICE] Synthesis failed:', err);
+      toast.dismiss('voice-loading');
+      if (!attachments || attachments.length === 0) {
+        fallbackSpeak(cleanTextForTTS(text), 'en-US');
+      } else {
+        toast.error("Could not read file. " + (err.response?.data?.error || err.message));
+      }
+      setSpeakingMessageId(null);
     }
   };
 
@@ -727,6 +1237,30 @@ const Chat = () => {
     // Prevent duplicate sends (from voice + form race condition)
     if (isSendingRef.current) return;
 
+    if (isAudioConvertMode && !inputValue.trim() && selectedFiles.length === 0) {
+      toast.error('Please enter text or upload a file to convert to audio');
+      return;
+    }
+
+    // Special case for Audio Convert Mode: Handle files directly if present
+    if (isAudioConvertMode && selectedFiles.length > 0) {
+      const fileToConvert = selectedFiles[0]; // Take the first one for simplicity
+
+      // Simulate click on the hidden doc-voice-upload to reuse its logic
+      // But we need to pass the file. Let's instead call a manual conversion function.
+      manualFileToAudioConversion(fileToConvert);
+      setSelectedFiles([]);
+      setFilePreviews([]);
+      return;
+    }
+
+    // Special case for Audio Convert Mode: Handle text conversion
+    if (isAudioConvertMode && inputValue.trim()) {
+      manualTextToAudioConversion(inputValue);
+      setInputValue('');
+      return;
+    }
+
     // Use overrideContent if provided (for instant voice sending), otherwise fallback to state
     const contentToSend = typeof overrideContent === 'string' ? overrideContent : inputValue.trim();
 
@@ -752,6 +1286,46 @@ const Chat = () => {
       isSendingRef.current = false; // Reset sending ref since handleGenerateImage might handle it differently or we want to allow next send
       return;
     }
+
+    // Handle Voice Reader Mode - Just read, no AI response
+    if (isVoiceMode) {
+      try {
+        // 1. Add User Message to UI
+        const userMsgId = Date.now().toString();
+        const newUserMsg = {
+          id: userMsgId,
+          role: 'user',
+          content: contentToSend,
+          timestamp: new Date(),
+          attachments: filePreviews.map(fp => ({
+            url: fp.url,
+            name: fp.name,
+            type: fp.type
+          }))
+        };
+        setMessages(prev => [...prev, newUserMsg]);
+
+        // 2. Clear inputs
+        setInputValue('');
+        handleRemoveFile();
+        if (inputRef.current) inputRef.current.style.height = 'auto';
+
+        // 3. Trigger voice reading directly (no AI response)
+        setTimeout(() => {
+          console.log('[Voice Mode] Reading content with attachments:', newUserMsg.attachments);
+          speakResponse(contentToSend, 'en-US', userMsgId, newUserMsg.attachments);
+        }, 300);
+
+        isSendingRef.current = false;
+        return; // STOP - Don't call AI API
+      } catch (err) {
+        console.error('[Voice Mode Error]:', err);
+        toast.error('Failed to read content');
+        isSendingRef.current = false;
+        return;
+      }
+    }
+
 
     try {
       if (activeSessionId === 'new') {
@@ -2146,6 +2720,13 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         }`}
                     >
 
+                      {msg.isProcessing && (
+                        <div className="flex items-center gap-3 mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10 animate-pulse">
+                          <Loader size="sm" />
+                          <span className="text-xs font-semibold text-primary uppercase tracking-tighter">Preparing Audio...</span>
+                        </div>
+                      )}
+
                       {/* Attachment Display */}
                       {((msg.attachments && msg.attachments.length > 0) || msg.attachment) && (
                         <div className="flex flex-col gap-3 mb-3 mt-1">
@@ -2432,56 +3013,149 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
                       {/* File Conversion Download Button */}
                       {msg.conversion && msg.conversion.file && (
-                        <div className="mt-4 pt-3 border-t border-border/40">
-                          <button
-                            onClick={() => {
-                              // Create download link
-                              const byteCharacters = atob(msg.conversion.file);
-                              const byteNumbers = new Array(byteCharacters.length);
-                              for (let i = 0; i < byteCharacters.length; i++) {
-                                byteNumbers[i] = byteCharacters.charCodeAt(i);
-                              }
-                              const byteArray = new Uint8Array(byteNumbers);
-                              const blob = new Blob([byteArray], { type: msg.conversion.mimeType });
-                              const url = URL.createObjectURL(blob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = msg.conversion.fileName;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                              URL.revokeObjectURL(url);
-                            }}
-                            className="flex items-center gap-3 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl transition-all group w-full"
-                          >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${msg.conversion.fileName.toLowerCase().endsWith('.pdf')
-                              ? 'bg-red-50 text-red-600'
-                              : 'bg-blue-50 text-blue-600'
-                              }`}>
-                              {msg.conversion.fileName.toLowerCase().endsWith('.pdf')
-                                ? <FileText className="w-5 h-5" />
-                                : <File className="w-5 h-5" />
-                              }
+                        <div className="mt-4 pt-3 border-t border-border/40 space-y-3">
+                          {/* Integrated Audio Player for Voice Conversations */}
+                          {msg.conversion.mimeType.startsWith('audio/') && (
+                            <div className="bg-primary/5 rounded-xl p-2 border border-primary/10 mb-2">
+                              <audio
+                                controls
+                                className="w-full h-10 accent-primary rounded-lg"
+                                src={msg.conversion.blobUrl || `data:${msg.conversion.mimeType};base64,${msg.conversion.file}`}
+                              >
+                                Your browser does not support the audio element.
+                              </audio>
                             </div>
-                            <div className="flex-1 text-left">
-                              <p className="text-[15px] font-bold text-primary transition-colors mb-0.5">
-                                {msg.conversion.fileName}
+                          )}
+
+                          <div className="flex items-center justify-between px-1 py-1">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-maintext truncate">{msg.conversion.fileName}</p>
+                              <p className="text-[10px] text-subtext font-bold uppercase tracking-widest flex items-center gap-2">
+                                <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20">
+                                  {msg.conversion.fileSize || "Ready"}
+                                </span>
+                                {msg.conversion.charCount && (
+                                  <span className="px-1.5 py-0.5 bg-secondary/30 text-subtext rounded-md border border-border/50">
+                                    {msg.conversion.charCount} CHARS
+                                  </span>
+                                )}
+                                AUDIO • MP3
                               </p>
-                              <div className="flex items-center gap-2">
-                                <p className={`text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded-md border ${msg.conversion.fileName.toLowerCase().endsWith('.pdf')
-                                  ? 'text-primary bg-primary/10 border-primary/20'
-                                  : 'text-primary bg-primary/10 border-primary/20'
-                                  }`}>
-                                  Click here to download {msg.conversion.fileName.split('.').pop().toLowerCase()}
-                                </p>
-                              </div>
                             </div>
-                          </button>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <button
+                              onClick={() => {
+                                const downloadToast = toast.loading("Starting download...");
+                                try {
+                                  // Create download link
+                                  const byteCharacters = atob(msg.conversion.file);
+                                  const byteNumbers = new Array(byteCharacters.length);
+                                  for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                  }
+                                  const byteArray = new Uint8Array(byteNumbers);
+                                  const blob = new Blob([byteArray], { type: msg.conversion.mimeType });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = msg.conversion.fileName;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  setTimeout(() => {
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                    toast.dismiss(downloadToast);
+                                    toast.success("Download complete!");
+                                  }, 500);
+                                } catch (err) {
+                                  toast.dismiss(downloadToast);
+                                  toast.error("Download failed");
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl transition-all hover:bg-primary/90 shadow-sm font-bold text-sm active:scale-95"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download Audio
+                            </button>
+
+                            <Menu as="div" className="relative">
+                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-border text-maintext rounded-xl transition-all hover:bg-hover font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap">
+                                <Share className="w-4 h-4" />
+                                Share
+                              </Menu.Button>
+
+                              <Transition
+                                as={Fragment}
+                                enter="transition ease-out duration-100"
+                                enterFrom="transform opacity-0 scale-95"
+                                enterTo="transform opacity-100 scale-100"
+                                leave="transition ease-in duration-75"
+                                leaveFrom="transform opacity-100 scale-100"
+                                leaveTo="transform opacity-0 scale-95"
+                              >
+                                <Menu.Items className="absolute bottom-full right-0 mb-2 w-56 origin-bottom-right divide-y divide-border rounded-xl bg-surface shadow-2xl border border-border focus:outline-none z-[100] overflow-hidden">
+                                  <div className="px-1 py-1">
+
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => {
+                                            const text = `I've converted "${msg.conversion.fileName}" into voice audio using AISA! ${window.location.href}`;
+                                            const url = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+                                              ? `whatsapp://send?text=${encodeURIComponent(text)}`
+                                              : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                                            window.open(url, '_blank');
+                                          }}
+                                          className={`${active ? 'bg-green-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
+                                        >
+                                          <MessageCircle className="h-4 w-4" />
+                                          WhatsApp
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => {
+                                            const text = `AISA Audio Conversion: ${msg.conversion.fileName}`;
+                                            const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+                                            window.open(url, '_blank');
+                                          }}
+                                          className={`${active ? 'bg-sky-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
+                                        >
+                                          <Send className="h-4 w-4" />
+                                          Telegram
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  </div>
+                                  <div className="px-1 py-1">
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(window.location.href);
+                                            toast.success("Link copied!");
+                                          }}
+                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
+                                        >
+                                          <Copy className="h-4 w-4" />
+                                          Copy Link
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  </div>
+                                </Menu.Items>
+                              </Transition>
+                            </Menu>
+                          </div>
                         </div>
                       )}
 
                       {/* AI Feedback Actions */}
-                      {msg.role !== 'user' && (
+                      {msg.role !== 'user' && !msg.conversion && (
                         <div className="mt-4 pt-3 border-t border-border/40 w-full block">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
                             {(() => {
@@ -2499,13 +3173,21 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             <div className="flex items-center gap-3 self-end sm:self-auto">
                               <button
                                 onClick={() => {
+                                  // Pass message ID to speakResponse for tracking
                                   const isHindi = /[\u0900-\u097F]/.test(msg.content);
-                                  speakResponse(msg.content, isHindi ? 'Hindi' : 'English');
+                                  speakResponse(msg.content, isHindi ? 'Hindi' : 'English', msg.id);
                                 }}
-                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Speak"
+                                className={`transition-colors p-1.5 rounded-lg ${speakingMessageId === msg.id
+                                  ? 'text-primary bg-primary/10'
+                                  : 'text-subtext hover:text-primary hover:bg-surface-hover'
+                                  }`}
+                                title={speakingMessageId === msg.id && !isPaused ? "Pause" : "Speak"}
                               >
-                                <Volume2 className="w-3.5 h-3.5" />
+                                {speakingMessageId === msg.id && !isPaused ? (
+                                  <Pause className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                )}
                               </button>
                               <button
                                 onClick={() => handleCopyMessage(msg.content)}
@@ -2609,6 +3291,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   {/* Hover Actions - User Only (AI has footer) */}
                   {msg.role === 'user' && (
                     <div className={`flex items-center gap-1 transition-opacity duration-200 self-start mt-2 mr-0 flex-row-reverse ${activeMessageId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+
                       <button
                         onClick={() => handleCopyMessage(msg.content || msg.text)}
                         className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
@@ -2754,6 +3437,13 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                 className="hidden"
               />
               <input
+                id="doc-voice-upload"
+                type="file"
+                onChange={handleDocToVoiceSelect}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.txt"
+              />
+              <input
                 id="photos-upload"
                 type="file"
                 ref={photosInputRef}
@@ -2782,6 +3472,8 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     className="absolute bottom-full left-0 mb-3 w-60 bg-surface border border-border/50 rounded-2xl shadow-xl overflow-hidden z-30 backdrop-blur-md ring-1 ring-black/5"
                   >
                     <div className="p-1.5 space-y-0.5">
+
+
                       {getAgentCapabilities(activeAgent.agentName, activeAgent.category).canCamera && (
                         <label
                           htmlFor="camera-upload"
@@ -2824,6 +3516,29 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                           </div>
                         </label>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAudioConvertMode(!isAudioConvertMode);
+                          setIsAttachMenuOpen(false);
+                          if (!isAudioConvertMode) {
+                            toast.success("Convert to Audio Mode Active");
+                            setIsDeepSearch(false);
+                            setIsImageGeneration(false);
+                          }
+                        }}
+                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isAudioConvertMode ? 'bg-primary/10 border border-primary/20' : 'hover:bg-primary/5'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-colors shrink-0 ${isAudioConvertMode ? 'bg-primary border-primary text-white' : 'bg-surface border border-border group-hover:border-primary/30 group-hover:bg-primary/10'}`}>
+                          <Headphones className={`w-4 h-4 transition-colors ${isAudioConvertMode ? 'text-white' : 'text-subtext group-hover:text-primary'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <span className={`text-sm font-medium transition-colors ${isAudioConvertMode ? 'text-primary' : 'text-maintext group-hover:text-primary'}`}>
+                            Convert to Audio {isAudioConvertMode && '(Active)'}
+                          </span>
+                        </div>
+                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -2870,6 +3585,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             setIsToolsMenuOpen(false);
                             setIsImageGeneration(!isImageGeneration);
                             setIsDeepSearch(false);
+                            setIsAudioConvertMode(false);
                             if (!isImageGeneration) toast.success("Image Generation Mode Enabled");
                           }}
                           className={`w-full text-left px-3 py-2.5 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isImageGeneration ? 'bg-primary/10 border border-primary/20' : 'hover:bg-primary/5'}`}
@@ -2890,6 +3606,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             setIsToolsMenuOpen(false);
                             setIsDeepSearch(!isDeepSearch);
                             setIsImageGeneration(false);
+                            setIsAudioConvertMode(false);
                             if (!isDeepSearch) toast.success("Deep Search Mode Enabled");
                           }}
                           className={`w-full text-left px-3 py-2.5 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isDeepSearch ? 'bg-primary/10 border border-primary/20' : 'hover:bg-primary/5'}`}
@@ -2953,6 +3670,46 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       </button>
                     </motion.div>
                   )}
+                  {isVoiceMode && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                      className="absolute bottom-full left-0 mb-3 flex items-center gap-2.5 px-3 py-1.5 bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 rounded-xl backdrop-blur-md shadow-lg shadow-blue-500/5 z-20 pointer-events-auto"
+                    >
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white">
+                        <Volume2 size={10} strokeWidth={3} />
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Voice Reader Active</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsVoiceMode(false)}
+                        className="ml-1 p-0.5 hover:bg-blue-500/20 rounded-md transition-colors text-blue-600 dark:text-blue-400"
+                      >
+                        <X size={12} />
+                      </button>
+                    </motion.div>
+                  )}
+                  {isAudioConvertMode && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                      className="absolute bottom-full left-0 mb-3 flex items-center gap-2.5 px-3 py-1.5 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 rounded-xl backdrop-blur-md shadow-lg shadow-indigo-500/5 z-20 pointer-events-auto"
+                    >
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white">
+                        <Headphones size={10} strokeWidth={3} />
+                      </div>
+                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Convert to Audio Active</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsAudioConvertMode(false)}
+                        className="ml-1 p-0.5 hover:bg-indigo-500/20 rounded-md transition-colors text-indigo-600 dark:text-indigo-400"
+                      >
+                        <X size={12} />
+                      </button>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
                 <textarea
                   ref={inputRef}
@@ -2962,12 +3719,22 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     e.target.style.height = 'auto';
                     e.target.style.height = `${e.target.scrollHeight}px`;
                   }}
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      // Allow send if text exists OR files exist
+                      if (inputValue.trim() || selectedFiles.length > 0) {
+                        handleSendMessage(e);
+                      }
+                    }
+                  }}
                   onPaste={handlePaste}
-                  placeholder="Ask AISA..."
+                  placeholder={isAudioConvertMode ? "Enter text or paste a document to convert to audio..." : "Ask AISA..."}
                   rows={1}
                   className={`w-full bg-surface border rounded-2xl py-2 md:py-3 pl-4 sm:pl-5 text-maintext placeholder-subtext focus:outline-none shadow-sm transition-all resize-none overflow-y-auto custom-scrollbar 
-                    ${isDeepSearch ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-border focus:border-primary focus:ring-1 focus:ring-primary'} 
+                    ${isDeepSearch ? 'border-sky-500 ring-2 ring-sky-500/20' :
+                      isAudioConvertMode ? 'border-indigo-500 ring-2 ring-indigo-500/20' :
+                        'border-border focus:border-primary focus:ring-1 focus:ring-primary'} 
                     ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
                       personalizations?.personalization?.fontStyle === 'Mono' ? 'font-mono' :
                         personalizations?.personalization?.fontStyle === 'Rounded' ? 'font-rounded' :

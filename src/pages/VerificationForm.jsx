@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, CheckCircle, ArrowLeft, AlertCircle, Pencil } from 'lucide-react';
 import { AppRoute, apis } from '../types';
 import { apiService } from '../services/apiService';

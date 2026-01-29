@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Loader } from 'lucide-react';
 import axios from 'axios';
 import { apis } from '../types';
@@ -9,7 +9,7 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();

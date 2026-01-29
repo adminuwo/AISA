@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Cpu, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { AppRoute } from '../types';
 

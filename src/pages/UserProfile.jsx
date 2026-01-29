@@ -8,7 +8,7 @@ import axios from 'axios';
 import { apis, AppRoute } from '../types';
 import { getUserData, userData, setUserData } from '../userStore/userData';
 import { chatStorageService } from '../services/chatStorageService';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
 const UserProfile = () => {
