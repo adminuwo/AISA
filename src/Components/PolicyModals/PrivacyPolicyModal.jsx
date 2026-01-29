@@ -2,8 +2,10 @@ import React from 'react';
 import { X, Shield, Lock, Eye, Database, UserCheck, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { name } from '../../constants';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PrivacyPolicyModal = ({ isOpen, onClose }) => {
+    const { t } = useLanguage();
     const sections = [
         {
             icon: Database,
@@ -85,8 +87,8 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
                                 <Shield className="w-6 h-6 text-primary" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-maintext">Privacy Policy</h2>
-                                <p className="text-xs text-subtext mt-0.5">Last Updated: January 22, 2026</p>
+                                <h2 className="text-2xl font-bold text-maintext">{t('privacyPolicy')}</h2>
+                                <p className="text-xs text-subtext mt-0.5">{t('lastUpdated')}: January 22, 2026</p>
                             </div>
                         </div>
                         <button
@@ -143,7 +145,7 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
                             onClick={onClose}
                             className="px-6 py-2 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
                         >
-                            Close
+                            {t('close')}
                         </button>
                     </div>
                 </motion.div>

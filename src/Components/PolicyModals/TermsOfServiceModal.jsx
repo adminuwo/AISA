@@ -2,8 +2,10 @@ import React from 'react';
 import { X, Scale, FileText, DollarSign, Shield, AlertCircle, UserX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { name } from '../../constants';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TermsOfServiceModal = ({ isOpen, onClose }) => {
+    const { t } = useLanguage();
     const sections = [
         {
             icon: FileText,
@@ -84,8 +86,8 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
                                 <Scale className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-maintext">Terms of Service</h2>
-                                <p className="text-xs text-subtext mt-0.5">Last Updated: January 22, 2026</p>
+                                <h2 className="text-2xl font-bold text-maintext">{t('termsOfService')}</h2>
+                                <p className="text-xs text-subtext mt-0.5">{t('lastUpdated')}: January 22, 2026</p>
                             </div>
                         </div>
                         <button
@@ -142,7 +144,7 @@ const TermsOfServiceModal = ({ isOpen, onClose }) => {
                             onClick={onClose}
                             className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg shadow-indigo-600/20"
                         >
-                            Close
+                            {t('close')}
                         </button>
                     </div>
                 </motion.div>

@@ -20,6 +20,7 @@ import TermsOfServiceModal from '../Components/PolicyModals/TermsOfServiceModal'
 import CookiePolicyModal from '../Components/PolicyModals/CookiePolicyModal';
 import AboutAISA from '../Components/AboutAISA';
 import { useLanguage } from '../context/LanguageContext';
+import ProfileSettingsDropdown from '../Components/ProfileSettingsDropdown/ProfileSettingsDropdown';
 
 const Landing = () => {
     const { t } = useLanguage();
@@ -37,6 +38,13 @@ const Landing = () => {
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
     const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
     const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate(AppRoute.LANDING);
+        window.location.reload();
+    };
 
     const issueOptions = [
         "General Inquiry",
@@ -117,46 +125,58 @@ const Landing = () => {
 
 
                 <div className="flex items-center gap-2 md:gap-4">
-                    <button
-                        onClick={() => setIsAboutModalOpen(true)}
-                        className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-subtext hover:bg-secondary hover:text-primary transition-all"
-                    >
-                        <Bot className="w-4 h-4" />
-                        {/* About AISA */}
-                    </button>
 
                     {/* Theme Toggle */}
                     <button
                         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         className="p-1.5 md:p-2 rounded-full bg-white/50 dark:bg-black/50 border border-border text-subtext hover:text-primary hover:border-primary/50 transition-all shadow-sm backdrop-blur-sm"
+                        title="Toggle Theme"
                     >
                         {theme === 'dark' ? <Sun className="w-4 h-4 md:w-5 md:h-5 text-orange-400" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
                     </button>
 
-                    {user ? <Link to={AppRoute.PROFILE}><CircleUser className='h-6 w-6 md:h-7 md:w-7 text-maintext' /></Link> : <div className="flex gap-2 md:gap-4 items-center">
-                        <motion.button
-                            whileHover={{ scale: 1.05, color: "#2563eb" }} // blue-600
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate("/login")}
-                            className="text-sm md:text-base text-subtext font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                        >
-                            Sign In
-                        </motion.button>
+                    {user ? (
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                                className="p-1.5 md:p-2 rounded-full bg-white/50 dark:bg-black/50 border border-border text-subtext hover:text-primary hover:border-primary/50 transition-all shadow-sm backdrop-blur-sm"
+                                title="Profile Settings"
+                            >
+                                <CircleUser className="w-4 h-4 md:w-5 md:h-5" />
+                            </button>
+                            {isProfileMenuOpen && (
+                                <ProfileSettingsDropdown
+                                    onClose={() => setIsProfileMenuOpen(false)}
+                                    onLogout={handleLogout}
+                                />
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex gap-2 md:gap-4 items-center">
+                            <motion.button
+                                whileHover={{ scale: 1.05, color: "#2563eb" }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate("/login")}
+                                className="text-sm md:text-base text-subtext font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            >
+                                Sign In
+                            </motion.button>
 
-                        <motion.button
-                            whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.4)" }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate("/signup")}
-                            className="bg-primary text-white px-4 py-2 md:px-5 md:py-2 text-sm md:text-base rounded-full font-semibold transition-all shadow-lg shadow-primary/20 whitespace-nowrap"
-                        >
-                            Get Started
-                        </motion.button>
-                    </div>}
+                            <motion.button
+                                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.4)" }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate("/signup")}
+                                className="bg-primary text-white px-4 py-2 md:px-5 md:py-2 text-sm md:text-base rounded-full font-semibold transition-all shadow-lg shadow-primary/20 whitespace-nowrap"
+                            >
+                                Get Started
+                            </motion.button>
+                        </div>
+                    )}
                 </div>
-            </header>
+            </header >
 
             {/* Hero Section */}
-            <main className="flex-1 flex flex-col items-center justify-center text-center px-4 relative z-10 py-20">
+            < main className="flex-1 flex flex-col items-center justify-center text-center px-4 relative z-10 py-20" >
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -208,7 +228,7 @@ const Landing = () => {
                             onClick={() => navigate("/login")}
                             className="px-8 py-4 bg-white/60 dark:bg-black/40 border border-border rounded-2xl font-bold text-lg text-maintext hover:bg-white/80 dark:hover:bg-black/60 transition-all duration-300 backdrop-blur-sm"
                         >
-                            Existing User
+                            {t('existingUser')}
                         </motion.button>
                     )}
                 </motion.div>
@@ -258,13 +278,13 @@ const Landing = () => {
                         </motion.div>
                     ))}
                 </div>
-            </main>
+            </main >
 
             {/* Footer Section */}
-            <footer className="w-full bg-white/40 dark:bg-black/40 border-t border-white/20 dark:border-white/10 mt-20 relative z-10 backdrop-blur-xl rounded-t-[3rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden">
+            < footer className="w-full bg-white/40 dark:bg-black/40 border-t border-white/20 dark:border-white/10 mt-20 relative z-10 backdrop-blur-xl rounded-t-[3rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden" >
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-50/50 to-transparent dark:from-blue-900/10 pointer-events-none" />
-                <div className="max-w-6xl mx-auto px-6 pt-20 pb-10 relative z-10">
-                    <div className="flex flex-col lg:flex-row justify-start gap-20 mb-16">
+                <div className="max-w-5xl mx-auto px-6 pt-12 pb-10 relative z-10">
+                    <div className="flex flex-col lg:flex-row justify-center items-start gap-12 lg:gap-24 mb-12">
                         {/* Brand Column */}
                         <div className="space-y-6 max-w-sm">
                             <div className="flex items-center gap-3">
@@ -309,9 +329,9 @@ const Landing = () => {
                                         href={social.href}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-10 h-10 transition-transform duration-300 flex items-center justify-center shrink-0 hover:scale-110"
+                                        className="w-9 h-9 bg-white dark:bg-white/10 rounded-lg transition-all duration-300 flex items-center justify-center shrink-0 hover:scale-110 shadow-sm group"
                                     >
-                                        <img src={social.img} alt={social.alt} className="w-full h-full object-cover rounded-xl" />
+                                        <img src={social.img} alt={social.alt} className="w-5 h-5 object-contain rounded-sm" />
                                     </a>
                                 ))}
                             </div>
@@ -319,65 +339,61 @@ const Landing = () => {
 
 
 
-                        {/* Support Column */}
-                        <div>
-                            <h4 className="text-sm font-bold text-maintext uppercase tracking-widest mb-6">{t('support')}</h4>
-                            <ul className="space-y-4">
+                        <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+                            <h4 className="text-[11px] font-bold text-black uppercase tracking-[0.2em] mb-8">{t('support')}</h4>
+                            <ul className="space-y-5 flex flex-col items-center lg:items-start">
                                 {[
                                     { label: t('helpCenter'), onClick: () => setIsFaqOpen(true) },
                                     { label: t('aboutAisa'), onClick: () => setIsAboutModalOpen(true) },
                                 ].map((link, i) => (
-                                    <li key={i}>
-                                        {link.onClick ? (
-                                            <button
-                                                onClick={link.onClick}
-                                                className="text-sm text-subtext hover:text-primary transition-colors font-medium"
-                                            >
-                                                {link.label}
-                                            </button>
-                                        ) : (
-                                            <a
-                                                href={link.path}
-                                                className="text-sm text-subtext hover:text-primary transition-colors font-medium"
-                                            >
-                                                {link.label}
-                                            </a>
-                                        )}
+                                    <li key={i} className="relative group">
+                                        <button
+                                            onClick={link.onClick}
+                                            className="text-sm text-maintext hover:text-primary transition-all duration-300 font-semibold"
+                                        >
+                                            {link.label}
+                                        </button>
+                                        <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary/30 transition-all duration-300 group-hover:w-full" />
                                     </li>
                                 ))}
                             </ul>
                         </div>
 
-                        {/* Contact Column */}
-                        <div className="space-y-6">
-                            <h4 className="text-sm font-bold text-maintext uppercase tracking-widest mb-6">{t('contact')}</h4>
-                            <div className="space-y-4">
+                        <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+                            <h4 className="text-[11px] font-bold text-black uppercase tracking-[0.2em] mb-8">{t('contact')}</h4>
+                            <div className="space-y-5 flex flex-col items-center lg:items-start">
                                 <a
                                     href="https://www.google.com/maps/search/?api=1&query=Jabalpur+Madhya+Pradesh"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-start gap-3 group"
+                                    className="flex items-center gap-4 group"
                                 >
-                                    <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                                    <p className="text-sm text-subtext leading-relaxed group-hover:text-primary transition-colors">
+                                    <div className="w-9 h-9 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                        <MapPin className="w-4 h-4 text-primary group-hover:text-white transition-colors" />
+                                    </div>
+                                    <span className="text-sm text-maintext font-semibold group-hover:text-primary transition-colors">
                                         {t('city')}
-                                    </p>
+                                    </span>
                                 </a>
                                 <a
                                     href="mailto:admin@uwo24.com"
-                                    className="flex items-center gap-3 group"
+                                    className="flex items-center gap-4 group"
                                 >
-                                    <Mail className="w-5 h-5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm text-subtext group-hover:text-primary transition-colors font-medium">
+                                    <div className="w-9 h-9 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                        <Mail className="w-4 h-4 text-primary group-hover:text-white transition-colors" />
+                                    </div>
+                                    <span className="text-sm text-maintext font-semibold group-hover:text-primary transition-colors">
                                         admin@uwo24.com
                                     </span>
                                 </a>
                                 <a
                                     href="tel:+918358990909"
-                                    className="flex items-center gap-3 group"
+                                    className="flex items-center gap-4 group"
                                 >
-                                    <Phone className="w-5 h-5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm text-subtext group-hover:text-primary transition-colors font-medium">
+                                    <div className="w-9 h-9 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                        <Phone className="w-4 h-4 text-primary group-hover:text-white transition-colors" />
+                                    </div>
+                                    <span className="text-sm text-maintext font-semibold group-hover:text-primary transition-colors">
                                         +91 83589 90909
                                     </span>
                                 </a>
@@ -387,17 +403,28 @@ const Landing = () => {
 
                     {/* Bottom Bar */}
                     <div className="pt-10 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-                        <p className="text-xs text-subtext font-medium">
+                        <p className="text-xs text-maintext font-medium">
                             © {new Date().getFullYear()} {name} <sup className="text-xs">TM</sup>. {t('allRightsReserved')}
                         </p>
-                        <div className="flex items-center gap-8">
-                            <button onClick={() => setIsPrivacyModalOpen(true)} className="text-xs text-subtext hover:text-maintext transition-colors font-medium">{t('privacyPolicy')}</button>
-                            <button onClick={() => setIsTermsModalOpen(true)} className="text-xs text-subtext hover:text-maintext transition-colors font-medium">{t('termsOfService')}</button>
-                            <button onClick={() => setIsCookieModalOpen(true)} className="text-xs text-subtext hover:text-maintext transition-colors font-medium">{t('cookiePolicy')}</button>
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            <button onClick={() => setIsPrivacyModalOpen(true)} className="text-[11px] sm:text-xs text-maintext hover:text-primary transition-all font-semibold uppercase tracking-wider relative group">
+                                {t('privacyPolicy')}
+                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all duration-300 group-hover:w-full"></span>
+                            </button>
+                            <span className="w-1 h-1 rounded-full bg-border shrink-0 hidden sm:block" />
+                            <button onClick={() => setIsTermsModalOpen(true)} className="text-[11px] sm:text-xs text-maintext hover:text-primary transition-all font-semibold uppercase tracking-wider relative group">
+                                {t('termsOfService')}
+                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all duration-300 group-hover:w-full"></span>
+                            </button>
+                            <span className="w-1 h-1 rounded-full bg-border shrink-0 hidden sm:block" />
+                            <button onClick={() => setIsCookieModalOpen(true)} className="text-[11px] sm:text-xs text-maintext hover:text-primary transition-all font-semibold uppercase tracking-wider relative group">
+                                {t('cookiePolicy')}
+                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all duration-300 group-hover:w-full"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
-            </footer>
+            </footer >
 
             {/* FAQ Modal */}
             {
@@ -457,7 +484,7 @@ const Landing = () => {
                                 ) : (
                                     <div className="flex flex-col gap-6">
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-900 dark:text-white mb-2">Select Issue Category</label>
+                                            <label className="block text-sm font-bold text-gray-900 dark:text-white mb-2">{t('selectIssueCategory')}</label>
                                             <div className="relative">
                                                 <select
                                                     value={issueType}
@@ -472,10 +499,10 @@ const Landing = () => {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-900 dark:text-white mb-2">Describe your issue</label>
+                                            <label className="block text-sm font-bold text-gray-900 dark:text-white mb-2">{t('describeYourIssue')}</label>
                                             <textarea
                                                 className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-blue-600 dark:focus:border-blue-400 outline-none resize-none text-gray-900 dark:text-white min-h-[150px]"
-                                                placeholder="Please provide details about the problem you are facing..."
+                                                placeholder={t('issuePlaceholder')}
                                                 value={issueText}
                                                 onChange={(e) => setIssueText(e.target.value)}
                                             />
@@ -490,22 +517,22 @@ const Landing = () => {
                                             ) : (
                                                 <>
                                                     <HelpCircle className="w-5 h-5" />
-                                                    Send to Support
+                                                    {t('sendToSupport')}
                                                 </>
                                             )}
                                         </button>
                                         {sendStatus === 'success' && (
                                             <div className="p-3 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-sm text-center font-medium border border-green-500/20 animate-in fade-in slide-in-from-top-2">
-                                                Ticket Submitted Successfully! Our team will contact you soon.
+                                                {t('ticketSuccess')}
                                             </div>
                                         )}
                                         {sendStatus === 'error' && (
                                             <div className="p-3 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm text-center font-medium border border-red-500/20 animate-in fade-in slide-in-from-top-2">
-                                                Failed to submit ticket. Please try again or email us directly.
+                                                {t('ticketError')}
                                             </div>
                                         )}
                                         <p className="text-xs text-center text-gray-600 dark:text-gray-400">
-                                            Or email us directly at <a href="mailto:admin@uwo24.com" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">admin@uwo24.com</a>
+                                            {t('orEmailUs')} <a href="mailto:admin@uwo24.com" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">admin@uwo24.com</a>
                                         </p>
                                     </div>
                                 )}
@@ -515,7 +542,7 @@ const Landing = () => {
                                     onClick={() => setIsFaqOpen(false)}
                                     className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-blue-600/20"
                                 >
-                                    Close
+                                    {t('close')}
                                 </button>
                             </div>
                         </div>

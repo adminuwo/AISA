@@ -10,129 +10,129 @@ const TermsOfService = () => {
     const sections = [
         {
             icon: FileText,
-            title: "Acceptance of Terms",
+            title: "1. Acceptance of Terms",
             content: [
                 {
-                    subtitle: "Agreement to Terms",
-                    text: "By accessing or using AISA™, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using this service."
+                    subtitle: "Agreement",
+                    text: "By accessing or using AISA™, you agree to be bound by these Terms and all applicable laws and regulations."
                 },
                 {
                     subtitle: "Eligibility",
-                    text: "You must be at least 18 years old to use AISA™. By using our services, you represent and warrant that you meet this age requirement and have the legal capacity to enter into these terms."
+                    text: "You must be at least 18 years of age to use AISA™."
                 },
                 {
-                    subtitle: "Account Registration",
-                    text: "To access certain features, you must create an account with accurate and complete information. You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account."
+                    subtitle: "Account Responsibility",
+                    text: "You are responsible for maintaining the confidentiality, accuracy, and security of your account credentials and all activities performed under your account."
                 }
             ]
         },
         {
             icon: Scale,
-            title: "Use of Services",
+            title: "2. Use of Services",
             content: [
                 {
                     subtitle: "Permitted Use",
-                    text: "AISA™ provides AI-powered intelligent assistance through specialized agents. You may use our services for lawful purposes including business operations, creative work, research, and personal productivity."
+                    text: "AISA™ may be used for lawful purposes including, but not limited to: Business operations, Research and analysis, Creative work, Productivity, automation, and decision support."
                 },
                 {
-                    subtitle: "AI Agent Interactions",
-                    text: "Our platform offers specialized AI agents (AIBOT, AICRAFT, etc.) for specific tasks. Each agent is designed for particular use cases. You agree to use agents only for their intended purposes as described in their documentation."
+                    subtitle: "Platform Features",
+                    text: "AISA™ provides AI-powered assistance through text, voice, vision, file analysis, search, and other multimodal capabilities."
                 },
                 {
-                    subtitle: "Multimodal Features",
-                    text: "You may interact with AISA™ via text, voice, and vision inputs. By using these features, you grant us the right to process your inputs to generate AI responses. Content is processed securely and in accordance with our Privacy Policy."
+                    subtitle: "Intended Use",
+                    text: "You agree to use AISA™ only for its intended functionality and in compliance with these Terms."
                 },
                 {
                     subtitle: "Prohibited Activities",
-                    text: "You may not: (a) attempt to hack, reverse engineer, or compromise our systems; (b) use the service for illegal activities; (c) generate harmful, abusive, or misleading content; (d) violate others' intellectual property rights; (e) share your account with others; (f) use automated systems to access our services without authorization."
+                    text: "You must not use AISA™ to: Engage in illegal, fraudulent, or harmful activities; Attempt to hack, reverse engineer, or disrupt the platform; Generate or distribute malicious, abusive, or unlawful content; Violate intellectual property or privacy rights of others."
                 }
             ]
         },
         {
             icon: DollarSign,
-            title: "Subscription & Payment",
+            title: "3. Subscription & Payment",
             content: [
                 {
-                    subtitle: "Subscription Plans",
-                    text: "AISA™ operates on a flexible subscription model. You can subscribe to individual AI agents or bundled plans. Pricing and plan details are available on our website and may change with notice."
+                    subtitle: "Flexible Plans",
+                    text: "AISA™ offers subscription plans that may include individual features, bundled services, or tiered access levels."
                 },
                 {
-                    subtitle: "Billing & Payments",
-                    text: "Subscription fees are billed in advance on a monthly or annual basis depending on your selected plan. You authorize us to charge your payment method automatically for recurring subscriptions."
+                    subtitle: "Billing",
+                    text: "Subscriptions are billed on a monthly or annual basis and renew automatically unless canceled."
                 },
                 {
-                    subtitle: "Refunds & Cancellations",
-                    text: "You may cancel your subscription at any time from your account settings. Cancellations take effect at the end of the current billing period. Refunds are provided on a case-by-case basis as per our refund policy."
+                    subtitle: "Cancellation",
+                    text: "You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period."
                 },
                 {
-                    subtitle: "Free Trial & Demos",
-                    text: "We may offer free trials or demo access to new users. Free trials automatically convert to paid subscriptions unless canceled before the trial period ends."
+                    subtitle: "Refunds",
+                    text: "Refunds are provided on a case-by-case basis, in accordance with our refund policy and applicable laws."
                 }
             ]
         },
         {
             icon: Shield,
-            title: "Intellectual Property",
+            title: "4. Intellectual Property",
             content: [
                 {
-                    subtitle: "Our Content",
-                    text: "All content, features, and functionality on AISA™, including but not limited to text, graphics, logos, AI models, and software, are owned by us or our licensors and protected by intellectual property laws."
+                    subtitle: "Platform Ownership",
+                    text: "All AISA™ software, features, interfaces, branding, and underlying AI systems are owned by us and protected under applicable intellectual property laws."
                 },
                 {
                     subtitle: "User Content",
-                    text: "You retain ownership of content you input into AISA™. However, you grant us a worldwide, non-exclusive license to use, process, and store your content solely to provide and improve our services."
+                    text: "You retain ownership of the content you submit. By using AISA™, you grant us a limited license to process your content solely to provide and improve our services."
                 },
                 {
                     subtitle: "AI-Generated Content",
-                    text: "Content generated by AISA™ in response to your queries is provided to you for your use. We do not claim ownership of AI-generated outputs, but you acknowledge that similar outputs may be generated for other users."
+                    text: "AI-generated outputs are provided for your use. Similar or identical outputs may be generated for other users due to the nature of artificial intelligence."
                 },
                 {
-                    subtitle: "Trademark",
-                    text: "AISA™, our logo, and related marks are trademarks of our company. You may not use these marks without our prior written permission."
+                    subtitle: "Trademarks",
+                    text: "“AISA™” and all associated logos, names, and branding may not be used without prior written permission."
                 }
             ]
         },
         {
             icon: AlertCircle,
-            title: "Disclaimers & Limitations",
+            title: "5. Disclaimers & Limitations of Liability",
             content: [
                 {
-                    subtitle: "Service Availability",
-                    text: "We strive to provide uninterrupted service but do not guarantee 100% uptime. AISA™ is provided 'as is' and 'as available' without warranties of any kind, express or implied."
+                    subtitle: "Service Provided “As Is”",
+                    text: "AISA™ is provided without warranties of any kind, express or implied, including uptime, accuracy, or availability."
                 },
                 {
                     subtitle: "AI Accuracy",
-                    text: "While our AI models are advanced and continually improving, we do not guarantee the accuracy, completeness, or reliability of AI-generated responses. You should verify important information independently."
+                    text: "AI-generated responses may be inaccurate or incomplete and should be independently verified before reliance."
                 },
                 {
                     subtitle: "No Professional Advice",
-                    text: "AISA™ does not provide legal, medical, financial, or other professional advice. AI-generated content is for informational purposes only and should not replace consultation with qualified professionals."
+                    text: "AISA™ does not provide legal, medical, financial, or other professional advice. Always consult qualified professionals when required."
                 },
                 {
                     subtitle: "Limitation of Liability",
-                    text: "To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of AISA™, even if advised of the possibility of such damages."
+                    text: "To the maximum extent permitted by law, our liability is limited for any damages arising from your use of AISA™."
                 }
             ]
         },
         {
             icon: UserX,
-            title: "Termination & Account Suspension",
+            title: "6. Termination",
             content: [
                 {
-                    subtitle: "Termination by You",
-                    text: "You may terminate your account at any time through your account settings. Upon termination, your access to paid features will continue until the end of your billing period."
+                    subtitle: "User Termination",
+                    text: "You may terminate your account at any time through your account settings."
                 },
                 {
-                    subtitle: "Termination by Us",
-                    text: "We reserve the right to suspend or terminate your account if you violate these Terms, engage in prohibited activities, or if required by law. We will provide notice when possible."
+                    subtitle: "Platform Termination",
+                    text: "We reserve the right to suspend or terminate access to AISA™ for violations of these Terms, misuse, or legal compliance requirements."
                 },
                 {
-                    subtitle: "Effect of Termination",
-                    text: "Upon account termination, you lose access to all services and features. We may delete your data in accordance with our data retention policies, though some information may be retained as required by law."
+                    subtitle: "Data Deletion",
+                    text: "Upon termination, your data will be handled and deleted according to our data retention and privacy policies."
                 },
                 {
                     subtitle: "Survival",
-                    text: "Provisions regarding intellectual property, disclaimers, limitations of liability, and dispute resolution survive termination of your account."
+                    text: "Provisions relating to intellectual property, disclaimers, limitation of liability, and governing law shall survive termination."
                 }
             ]
         }
@@ -169,7 +169,7 @@ const TermsOfService = () => {
                         Terms of Service
                     </h1>
                     <p className="text-lg text-subtext max-w-2xl mx-auto">
-                        Please read these terms carefully before using our AI-powered platform.
+                        These Terms of Service (“Terms”) govern your access to and use of AISA™ (Artificial Intelligence Super Assistant). Please read them carefully before using our AI-powered platform.
                     </p>
                     <p className="text-sm text-subtext mt-4">
                         <strong>Last Updated:</strong> January 22, 2026
@@ -187,7 +187,7 @@ const TermsOfService = () => {
                         Welcome to {name}™. These Terms of Service ("Terms") govern your access to and use of our intelligent AI assistant platform, including all features, applications, content, and services (collectively, the "Service").
                     </p>
                     <p className="text-maintext leading-relaxed">
-                        Please read these Terms carefully. By accessing or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy.
+                        By accessing or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and all applicable laws and regulations.
                     </p>
                 </motion.div>
 
@@ -257,10 +257,9 @@ const TermsOfService = () => {
                     <p className="text-subtext leading-relaxed mb-4">
                         If you have any questions about these Terms of Service, please contact us:
                     </p>
-                    <div className="space-y-2 text-subtext">
-                        <p><strong className="text-maintext">Email:</strong> <a href="mailto:admin@uwo24.com" className="text-primary hover:underline">admin@uwo24.com</a></p>
-                        <p><strong className="text-maintext">Phone:</strong> <a href="tel:+918359890909" className="text-primary hover:underline">+91 83589 90909</a></p>
-                        <p><strong className="text-maintext">Address:</strong> Jabalpur, Madhya Pradesh, India</p>
+                    <div className="space-y-4 text-subtext">
+                        <p><strong className="text-maintext">Email:</strong> <a href="mailto:admin@uwo24.com" className="text-primary hover:underline font-medium">admin@uwo24.com</a></p>
+                        <p><strong className="text-maintext">Phone:</strong> <a href="tel:+918358990909" className="text-primary hover:underline font-medium">+91 83589 90909</a></p>
                     </div>
                 </motion.div>
             </main>

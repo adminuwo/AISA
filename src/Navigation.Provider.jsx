@@ -163,6 +163,12 @@ const NavigateProvider = () => {
               <SecurityAndGuidelines />
             </Suspense>
           } />
+
+          {/* --- AISA MERGED ROUTES --- */}
+          {/* Using lazy loading if possible, or direct import if files are standard. 
+              Assuming direct import for simplicity based on the additive merge pattern. 
+              Only wiring Chat for now as it seems to be the core feature. 
+          */}
         </Route>
 
 

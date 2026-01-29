@@ -2,8 +2,10 @@ import React from 'react';
 import { X, Cookie, Settings2, BarChart3, Shield, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { name } from '../../constants';
+import { useLanguage } from '../../context/LanguageContext';
 
 const CookiePolicyModal = ({ isOpen, onClose }) => {
+    const { t } = useLanguage();
     const sections = [
         {
             icon: Cookie,
@@ -76,8 +78,8 @@ const CookiePolicyModal = ({ isOpen, onClose }) => {
                                 <Cookie className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-maintext">Cookie Policy</h2>
-                                <p className="text-xs text-subtext mt-0.5">Last Updated: January 22, 2026</p>
+                                <h2 className="text-2xl font-bold text-maintext">{t('cookiePolicy')}</h2>
+                                <p className="text-xs text-subtext mt-0.5">{t('lastUpdated')}: January 22, 2026</p>
                             </div>
                         </div>
                         <button
@@ -136,7 +138,7 @@ const CookiePolicyModal = ({ isOpen, onClose }) => {
                             onClick={onClose}
                             className="px-6 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg shadow-purple-600/20"
                         >
-                            Close
+                            {t('close')}
                         </button>
                     </div>
                 </motion.div>

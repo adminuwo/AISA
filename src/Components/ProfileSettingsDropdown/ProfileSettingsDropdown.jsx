@@ -47,6 +47,11 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
 
+    // Password Reset (OTP System)
+    const [resetStep, setResetStep] = useState('none'); // 'none', 'otp'
+    const [resetData, setResetData] = useState({ otp: '', password: '', confirm: '' });
+    const [passwordLoading, setPasswordLoading] = useState(false);
+
     useEffect(() => {
         setNicknameInput(personalizations.account?.nickname || '');
     }, [personalizations.account?.nickname]);
@@ -116,15 +121,22 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         doc.save(`Invoice_${tx.orderId || tx._id}.pdf`);
     };
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = async (isManual = false) => {
         try {
             setLoadingHistory(true);
+            if (isManual) toast.loading("Refreshing history...", { id: 'refresh-tx' });
+
             const res = await axios.get(apis.getPaymentHistory, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
-            setTransactions(res.data.filter(tx => tx.amount > 0));
+
+            console.log("[TX] Received:", res.data);
+            setTransactions(res.data.filter(tx => tx.amount >= 0)); // Include 0 amount for Basic if needed, or just keep > 0
+
+            if (isManual) toast.success("History updated", { id: 'refresh-tx' });
         } catch (error) {
             console.error("Failed to fetch transactions", error);
+            if (isManual) toast.error("Failed to refresh", { id: 'refresh-tx' });
         } finally {
             setLoadingHistory(false);
         }
@@ -146,6 +158,47 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const handleSwitchAccount = (acc) => {
         setUserData(acc);
         window.location.reload();
+    };
+
+    const handleResetPasswordWithOTP = async (e) => {
+        e.preventDefault();
+        if (resetData.password !== resetData.confirm) {
+            return toast.error("Passwords do not match");
+        }
+        if (resetData.password.length < 8) {
+            return toast.error("Password must be at least 8 characters");
+        }
+
+        setPasswordLoading(true);
+        try {
+            await axios.post(apis.resetPasswordOTP, {
+                email: user.email,
+                otp: resetData.otp,
+                newPassword: resetData.password
+            });
+            toast.success("Password updated successfully");
+            setResetStep('none');
+            setResetData({ otp: '', password: '', confirm: '' });
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to reset password. Check your OTP.");
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
+    const handleForgotPasswordReset = async () => {
+        if (passwordLoading) return;
+        try {
+            setPasswordLoading(true);
+            toast.loading("Sending OTP...", { id: 'reset-otp' });
+            const res = await axios.post(apis.forgotPassword, { email: user.email });
+            toast.success(res.data.message || "OTP sent! Check your inbox or message above.", { id: 'reset-otp', duration: 6000 });
+            setResetStep('otp');
+        } catch (error) {
+            toast.error("Failed to send OTP", { id: 'reset-otp' });
+        } finally {
+            setPasswordLoading(false);
+        }
     };
 
     const handleSaveNickname = async () => {
@@ -176,12 +229,12 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     };
 
     const tabs = [
-        { id: 'general', label: 'General', icon: Settings },
-        { id: 'notifications', label: 'Notifications', icon: Bell },
-        { id: 'personalization', label: 'Personalization', icon: Sparkles },
-        { id: 'data', label: 'Data controls', icon: Database },
-        { id: 'security', label: 'Security', icon: Shield },
-        { id: 'account', label: 'Account', icon: User },
+        { id: 'general', label: t('general'), icon: Settings },
+        { id: 'notifications', label: t('notifications'), icon: Bell },
+        { id: 'personalization', label: t('personalization'), icon: Sparkles },
+        { id: 'data', label: t('dataControls'), icon: Database },
+        { id: 'security', label: t('security'), icon: Shield },
+        { id: 'account', label: t('account'), icon: User },
     ];
 
     // Load voices on mount
@@ -269,21 +322,21 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             case 'general':
                 return (
                     <div className="space-y-2 animate-in fade-in duration-300">
-                        {renderSettingRow("Appearance", "Choose your preferred layout theme.", renderDropdown(
+                        {renderSettingRow(t('appearance'), t('appearanceDesc'), renderDropdown(
                             theme.charAt(0).toUpperCase() + theme.slice(1),
                             ['System', 'Dark', 'Light'],
                             (e) => setTheme(e.target.value.toLowerCase()),
                             Monitor
                         ))}
 
-                        {renderSettingRow("Font Size", "Adjust text size for better readability.", renderDropdown(
+                        {renderSettingRow(t('fontSize'), t('fontSizeDesc'), renderDropdown(
                             personalizations.personalization?.fontSize || 'Medium',
                             ['Small', 'Medium', 'Large', 'Extra Large'],
                             (e) => updatePersonalization('personalization', { fontSize: e.target.value }),
                             Type
                         ))}
 
-                        {renderSettingRow("Accent color", "Personalize your AI's identity color.", (
+                        {renderSettingRow(t('accentColor'), t('accentColorDesc'), (
                             <div className="flex items-center gap-3">
                                 <div
                                     className="w-4 h-4 rounded-full shadow-sm transition-all duration-300 ring-2 ring-offset-2 ring-primary/20"
@@ -298,16 +351,11 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                             </div>
                         ))}
 
-                        {renderSettingRow("Region", "Filter languages by region.", renderDropdown(
-                            region,
-                            Object.keys(regions || {}),
-                            (e) => setRegion(e.target.value),
-                            Globe
-                        ))}
 
-                        {renderSettingRow("Language", "Select your preferred dashboard language.", renderDropdown(
+
+                        {renderSettingRow(t('language'), t('languageDesc'), renderDropdown(
                             language,
-                            regions[region] || ['English'],
+                            languages,
                             (e) => setLanguage(e.target.value),
                             Languages
                         ))}
@@ -319,13 +367,13 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                 return (
                     <div className="space-y-4 animate-in fade-in duration-300">
                         <div className="flex items-center justify-between pb-2">
-                            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Inbox ({notifications.length})</h3>
+                            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{t('inbox')} ({notifications.length})</h3>
                             {notifications.length > 0 && (
                                 <button
                                     onClick={clearAllNotifications}
                                     className="text-xs font-semibold text-primary hover:underline transition-all"
                                 >
-                                    Clear all
+                                    {t('clearAll')}
                                 </button>
                             )}
                         </div>
@@ -562,12 +610,21 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                     <History className="w-4 h-4" /> Transaction History
                                 </h4>
-                                <button
-                                    onClick={() => setShowHistory(!showHistory)}
-                                    className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-                                >
-                                    {showHistory ? 'Hide History' : 'View History'}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => fetchTransactions(true)}
+                                        className={`p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-all ${loadingHistory ? 'animate-spin' : ''}`}
+                                        title="Refresh History"
+                                    >
+                                        <RefreshCcw className="w-3.5 h-3.5 text-gray-400" />
+                                    </button>
+                                    <button
+                                        onClick={() => setShowHistory(!showHistory)}
+                                        className="text-xs font-semibold text-maintext hover:text-primary transition-colors"
+                                    >
+                                        {showHistory ? 'Hide History' : 'View History'}
+                                    </button>
+                                </div>
                             </div>
 
                             {showHistory && (
@@ -617,15 +674,70 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                             )}
                         </div >
 
-                        <div className="pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-3">
-                            <button onClick={() => { onLogout(); onClose(); }} className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors text-left flex items-center gap-2">
-                                <Plus className="w-4 h-4" /> Add or switch account
+                        <div className="pt-6 border-t border-gray-100 dark:border-white/5 flex flex-col gap-4">
+                            {resetStep === 'none' ? (
+                                <button
+                                    onClick={handleForgotPasswordReset}
+                                    className="text-sm font-semibold text-maintext hover:text-primary transition-colors text-left flex items-center gap-2"
+                                >
+                                    <RefreshCcw className="w-4 h-4" /> Forgot Password? (Request OTP)
+                                </button>
+                            ) : (
+                                <motion.form
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    onSubmit={handleResetPasswordWithOTP}
+                                    className="space-y-4 bg-gray-50 dark:bg-zinc-800/40 p-4 rounded-xl border border-gray-100 dark:border-white/5"
+                                >
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h4 className="text-sm font-bold text-maintext">Reset Password with OTP</h4>
+                                        <button type="button" onClick={() => setResetStep('none')} className="text-xs text-subtext hover:text-primary">Cancel</button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            placeholder="6-Digit OTP"
+                                            required
+                                            className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-maintext text-center tracking-[1em] font-bold outline-none focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            value={resetData.otp}
+                                            onChange={e => e.target.value.length <= 6 && setResetData({ ...resetData, otp: e.target.value })}
+                                        />
+                                        <input
+                                            type="password"
+                                            placeholder="New Password"
+                                            required
+                                            className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-maintext outline-none focus:border-primary"
+                                            value={resetData.password}
+                                            onChange={e => setResetData({ ...resetData, password: e.target.value })}
+                                        />
+                                        <input
+                                            type="password"
+                                            placeholder="Confirm New Password"
+                                            required
+                                            className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-maintext outline-none focus:border-primary"
+                                            value={resetData.confirm}
+                                            onChange={e => setResetData({ ...resetData, confirm: e.target.value })}
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={passwordLoading}
+                                        className="w-full bg-primary text-white py-2 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
+                                    >
+                                        {passwordLoading ? 'Updating...' : 'Reset Password'}
+                                    </button>
+                                </motion.form>
+                            )}
+
+                            <button onClick={() => { onLogout(); onClose(); }} className="text-sm font-semibold text-maintext hover:text-primary transition-colors text-left flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> {t('addSwitchAccount')}
                             </button>
-                            <button onClick={resetPersonalizations} className="text-sm font-semibold text-gray-600 dark:text-gray-400 hover:text-primary transition-colors text-left flex items-center gap-2">
-                                <Database className="w-4 h-4" /> Reset all settings to defaults
+                            <button onClick={resetPersonalizations} className="text-sm font-semibold text-maintext hover:text-primary transition-colors text-left flex items-center gap-2">
+                                <RefreshCcw className="w-4 h-4" /> {t('resetAllSettings')}
                             </button>
                             <button className="text-sm font-semibold text-red-600 dark:text-red-500 hover:text-red-700 transition-colors text-left flex items-center gap-2">
-                                <Trash2 className="w-4 h-4" /> Permanent Delete Account
+                                <Trash2 className="w-4 h-4" /> {t('deleteAccount')}
                             </button>
                         </div>
                     </div >
@@ -644,7 +756,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="w-full sm:max-w-[850px] h-full sm:h-[600px] bg-white dark:bg-[#1f1f1f] sm:rounded-2xl flex flex-col sm:flex-row shadow-2xl font-sans"
+                        className="w-full sm:max-w-[850px] h-[100svh] sm:h-[600px] bg-white dark:bg-[#1f1f1f] sm:rounded-2xl flex flex-col sm:flex-row shadow-2xl font-sans overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Sidebar / List View */}
@@ -656,7 +768,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <button onClick={onClose} className="p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors sm:hidden">
                                     <X className="w-6 h-6" />
                                 </button>
-                                <h2 className="text-lg font-bold text-gray-900 dark:text-white sm:ml-2">Settings</h2>
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white sm:ml-2">{t('settings')}</h2>
                                 <button onClick={onClose} className="hidden sm:block ml-auto p-1 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                                     <X className="w-5 h-5" />
                                 </button>
@@ -687,14 +799,14 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                     className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-left text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                 >
                                     <LogOut className="w-5 h-5 sm:w-4 sm:h-4" />
-                                    Log out
+                                    {t('logOut')}
                                 </button>
                             </div>
                         </div>
 
                         {/* Content Area / Detail View */}
                         <div className={`
-                        flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1f1f1f]
+                        flex-1 flex flex-col min-w-0 min-h-0 max-h-full bg-white dark:bg-[#1f1f1f]
                         ${view === 'sidebar' ? 'hidden sm:flex' : 'flex'}
                     `}>
                             {/* Mobile Header */}
@@ -715,7 +827,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 </h2>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto px-6 sm:px-8 pb-8 custom-scrollbar-light">
+                            <div className="flex-1 overflow-y-auto px-6 sm:px-8 pb-32 custom-scrollbar-light min-h-0 touch-pan-y overscroll-contain">
                                 <div className="max-w-2xl mx-auto py-2">
                                     {renderContent()}
                                 </div>

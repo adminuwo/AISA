@@ -229,8 +229,9 @@ const Sidebar = ({ isOpen, onClose }) => {
       >
         {/* Brand */}
         <div className="p-4 flex items-center justify-between">
-          <Link to="/">
-            <h1 className="text-xl font-bold text-primary">AISA <sup className="text-xs">TM</sup></h1>
+          <Link to="/" className="flex items-center gap-2 group">
+            <img src="/logo/Logo.svg" alt="AISA" className="w-10 h-10 object-contain group-hover:rotate-12 transition-transform duration-300" />
+            <span className="text-lg font-bold text-maintext tracking-tight">AISA</span>
           </Link>
 
 
@@ -356,9 +357,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <p className="text-[11px] text-subtext truncate">{user.email}</p>
                 </div>
 
-                <div className="text-subtext group-hover:text-primary transition-colors">
-                  <User className="w-4 h-4" />
-                </div>
+                {/* User icon removed */}
               </button>
 
               {/* Dropdown Menu - Replaced with Personalization System */}
@@ -414,13 +413,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                     onClick={() => setActiveTab('faq')}
                     className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'faq' ? 'bg-primary/10 text-primary' : 'text-subtext hover:text-maintext'}`}
                   >
-                    {t('faq') || 'FAQ'}
+                    {t('faq')}
                   </button>
                   <button
                     onClick={() => setActiveTab('help')}
                     className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'help' ? 'bg-primary/10 text-primary' : 'text-subtext hover:text-maintext'}`}
                   >
-                    {t('help') || 'Help'}
+                    {t('help')}
                   </button>
                 </div>
                 <button
@@ -434,7 +433,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {activeTab === 'faq' ? (
                   <>
-                    <p className="text-sm text-subtext font-medium">Get quick answers to common questions about our platform</p>
+                    <p className="text-sm text-subtext font-medium">{t('faqSubtext')}</p>
                     {faqs.map((faq, index) => (
                       <div key={index} className="border border-border rounded-xl bg-card overflow-hidden hover:border-primary/30 transition-all">
                         <button
@@ -507,18 +506,18 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                     {sendStatus === 'success' && (
                       <div className="p-3 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-sm text-center font-medium border border-green-500/20 animate-in fade-in slide-in-from-top-2">
-                        Tciket Submitted Successfully! Our team will contact you soon.
+                        {t('ticketSuccess')}
                       </div>
                     )}
 
                     {sendStatus === 'error' && (
                       <div className="p-3 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm text-center font-medium border border-red-500/20 animate-in fade-in slide-in-from-top-2">
-                        Failed to submit ticket. Please try again or email us directly.
+                        {t('ticketError')}
                       </div>
                     )}
 
                     <p className="text-xs text-center text-subtext">
-                      Or email us directly at <a href="mailto:admin@uwo24.com" className="text-primary font-medium hover:underline">admin@uwo24.com</a>
+                      {t('orEmailUs')} <a href="mailto:admin@uwo24.com" className="text-primary font-medium hover:underline">admin@uwo24.com</a>
                     </p>
                   </div>
                 )}
@@ -529,7 +528,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   onClick={() => setIsFaqOpen(false)}
                   className="px-6 py-2 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
                 >
-                  Close
+                  {t('close')}
                 </button>
               </div>
 

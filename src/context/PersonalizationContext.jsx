@@ -10,7 +10,7 @@ const DEFAULT_PREFERENCES = {
     general: {
         language: 'English',
         region: 'India',
-        theme: 'System',
+        theme: 'Light',
         responseSpeed: 'Balanced',
         screenReader: false,
         highContrast: false
