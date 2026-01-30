@@ -1801,7 +1801,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
   }, [viewingDoc]);
 
   return (
-    <div className="flex h-full w-full bg-secondary relative overflow-hidden">
+    <div className="flex h-full w-full bg-transparent relative overflow-hidden">
 
       {/* Document Viewer Modal */}
       <AnimatePresence>
@@ -1946,7 +1946,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
       {/* Main Area */}
       <div
-        className="flex-1 flex flex-col relative bg-secondary w-full min-w-0"
+        className="flex-1 flex flex-col relative bg-transparent w-full min-w-0"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -1958,8 +1958,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
           </div>
         )}
 
+        {/* Dynamic Background Overlay for Depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(85,85,255,0.08),transparent)] pointer-events-none" />
+
         {/* Header */}
-        <div className="h-12 md:h-14 border-b border-border flex items-center justify-between px-3 md:px-4 bg-secondary z-10 shrink-0 gap-2">
+        <div className="h-12 md:h-14 border-b border-border/50 flex items-center justify-between px-3 md:px-4 bg-white/40 dark:bg-black/40 backdrop-blur-md z-10 shrink-0 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={toggleSidebar}
@@ -2060,131 +2064,72 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className={`flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 space-y-2.5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
+          className={`flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
             personalizations?.personalization?.fontStyle === 'Mono' ? 'font-mono' :
               personalizations?.personalization?.fontStyle === 'Rounded' ? 'font-rounded' :
                 personalizations?.personalization?.fontStyle === 'Sans' ? 'font-sans' : ''
             } aisa-scalable-text`}
         >
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-4 animate-in fade-in duration-700">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/5 rounded-full flex items-center justify-center mb-6">
-                <Bot className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-pulse" />
-              </div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-maintext max-w-2xl leading-relaxed">
-                {t('welcomeMessage')}
-              </h2>
+            <div className="h-full flex items-center justify-center pointer-events-none opacity-[0.03] dark:opacity-[0.05] select-none">
+              <h2 className="text-[12vw] font-black tracking-tighter uppercase">AISA</h2>
             </div>
           ) : (
             <>
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`group relative flex items-start gap-2 md:gap-3 max-w-4xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''
-                    }`}
+                  className={`group relative flex items-start gap-3 md:gap-4 max-w-5xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                   onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
                 >
-                  {/* Actions Menu (Always visible for discoverability) */}
-
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
-                      ? 'bg-primary'
-                      : 'bg-surface border border-border'
-                      }`}
-                  >
-                    {msg.role === 'user' ? (
-                      <User className="w-4 h-4 text-white" />
-                    ) : (
-                      <Bot className="w-4 h-4 text-primary" />
+                  {/* Avatar */}
+                  <div className={`relative shrink-0 mt-1`}>
+                    <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${msg.role === 'user'
+                      ? 'bg-gradient-to-br from-primary to-purple-600'
+                      : 'bg-white dark:bg-black/40 border border-white/20 backdrop-blur-md'
+                      }`}>
+                      {msg.role === 'user' ? (
+                        <User className="w-5 h-5 text-white" />
+                      ) : (
+                        <Bot className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(85,85,255,0.4)]" />
+                      )}
+                    </div>
+                    {msg.role !== 'user' && (
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full shadow-sm" />
                     )}
                   </div>
 
-                  <div
-                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
-                      } max-w-[85%] sm:max-w-[80%]`}
-                  >
-                    <div
-                      className={`group/bubble relative px-4 py-2 rounded-2xl leading-normal whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] ${msg.role === 'user'
-                        ? 'bg-primary text-white rounded-tr-none block px-5 py-3 rounded-3xl'
-                        : `bg-surface border border-border text-maintext rounded-tl-none block ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
+                  {/* Message Bubble Wrapper */}
+                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[70%]`}>
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      className={`group/bubble relative px-6 py-4 rounded-[2rem] leading-relaxed whitespace-pre-wrap break-words w-fit max-w-full transition-all duration-300 shadow-sm ${msg.role === 'user'
+                        ? 'bg-gradient-to-br from-[#5555ff] to-[#7777ff] text-white rounded-tr-none shadow-xl shadow-primary/10 border border-white/10'
+                        : `bg-white/90 dark:bg-black/45 backdrop-blur-2xl border border-black/5 dark:border-white/10 text-maintext rounded-tl-none ${msg.id === typingMessageId ? 'ring-2 ring-primary/30' : ''}`
                         }`}
                     >
-
-                      {/* Attachment Display */}
+                      {/* Attachments */}
                       {((msg.attachments && msg.attachments.length > 0) || msg.attachment) && (
-                        <div className="flex flex-col gap-3 mb-3 mt-1">
+                        <div className="flex flex-col gap-3 mb-4">
                           {(msg.attachments || (msg.attachment ? [msg.attachment] : [])).map((att, idx) => (
                             <div key={idx} className="w-full">
                               {att.type === 'image' ? (
-                                <div
-                                  className="relative group/image overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-[320px]"
-                                  onClick={() => setViewingDoc(att)}
-                                >
-                                  <img
-                                    src={att.url}
-                                    alt="Attachment"
-                                    className="w-full h-auto max-h-[400px] object-contain bg-black/5"
-                                  />
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDownload(att.url, att.name);
-                                    }}
-                                    className="absolute top-2 right-2 p-2 bg-black/40 text-white rounded-full opacity-0 group-hover/image:opacity-100 transition-all hover:bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center"
-                                    title="Download"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </button>
+                                <div className="relative group/img overflow-hidden rounded-2xl border border-white/20 shadow-xl transition-transform hover:scale-[1.02] cursor-pointer" onClick={() => setViewingDoc(att)}>
+                                  <img src={att.url} alt="" className="w-full h-auto max-h-[400px] object-contain bg-black/5" />
+                                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Download className="text-white w-6 h-6" onClick={(e) => { e.stopPropagation(); handleDownload(att.url, att.name); }} />
+                                  </div>
                                 </div>
                               ) : (
-                                <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${msg.role === 'user' ? 'bg-white/10 border-white/20 hover:bg-white/20' : 'bg-secondary/30 border-border hover:bg-secondary/50'}`}>
-                                  <div
-                                    className="flex-1 flex items-center gap-3 min-w-0 cursor-pointer p-0.5 rounded-lg"
-                                    onClick={() => setViewingDoc(att)}
-                                  >
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${(() => {
-                                      const name = (att.name || '').toLowerCase();
-                                      if (msg.role === 'user') return 'bg-white shadow-sm';
-                                      if (name.endsWith('.pdf')) return 'bg-red-50 dark:bg-red-900/20';
-                                      if (name.match(/\.(doc|docx)$/)) return 'bg-blue-50 dark:bg-blue-900/20';
-                                      if (name.match(/\.(xls|xlsx|csv)$/)) return 'bg-emerald-50 dark:bg-emerald-900/20';
-                                      if (name.match(/\.(ppt|pptx)$/)) return 'bg-orange-50 dark:bg-orange-900/20';
-                                      return 'bg-secondary';
-                                    })()}`}>
-                                      {(() => {
-                                        const name = (att.name || '').toLowerCase();
-                                        const baseClass = "w-6 h-6";
-                                        if (name.match(/\.(xls|xlsx|csv)$/)) return <FileSpreadsheet className={`${baseClass} text-emerald-600`} />;
-                                        if (name.match(/\.(ppt|pptx)$/)) return <Presentation className={`${baseClass} text-orange-600`} />;
-                                        if (name.endsWith('.pdf')) return <FileText className={`${baseClass} text-red-600`} />;
-                                        if (name.match(/\.(doc|docx)$/)) return <File className={`${baseClass} text-blue-600`} />;
-                                        return <File className={`${baseClass} text-primary`} />;
-                                      })()}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="font-semibold truncate text-xs mb-0.5">{att.name || 'File'}</p>
-                                      <p className="text-[10px] opacity-70 uppercase tracking-tight font-medium">
-                                        {(() => {
-                                          const name = (att.name || '').toLowerCase();
-                                          if (name.endsWith('.pdf')) return 'PDF • Preview';
-                                          if (name.match(/\.(doc|docx)$/)) return 'WORD • Preview';
-                                          if (name.match(/\.(xls|xlsx|csv)$/)) return 'EXCEL';
-                                          if (name.match(/\.(ppt|pptx)$/)) return 'SLIDES';
-                                          return 'DOCUMENT';
-                                        })()}
-                                      </p>
-                                    </div>
+                                <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${msg.role === 'user' ? 'bg-white/10 border-white/20' : 'bg-secondary/30 border-border'} hover:bg-opacity-80 transition-all`} onClick={() => setViewingDoc(att)}>
+                                  <FileText className="w-6 h-6 text-primary" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-xs truncate">{att.name}</p>
+                                    <p className="text-[10px] opacity-60 uppercase tracking-widest leading-none mt-1">Document</p>
                                   </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDownload(att.url, att.name);
-                                    }}
-                                    className={`p-2 rounded-lg transition-colors shrink-0 ${msg.role === 'user' ? 'hover:bg-white/20 text-white' : 'hover:bg-primary/10 text-primary'}`}
-                                    title="Download"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </button>
+                                  <Download className="w-4 h-4 opacity-40 hover:opacity-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleDownload(att.url, att.name); }} />
                                 </div>
                               )}
                             </div>
@@ -2192,419 +2137,99 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </div>
                       )}
 
-                      {/* Video Display */}
+                      {/* Generated Image Rendering */}
+                      {msg.imageUrl && (
+                        <div className="mb-4 w-full">
+                          <div className="relative group/gen-img overflow-hidden rounded-2xl border border-white/20 shadow-xl transition-transform hover:scale-[1.02] cursor-pointer" onClick={() => setViewingDoc({ url: msg.imageUrl, type: 'image', name: 'Generated Image' })}>
+                            <img src={msg.imageUrl} alt="Generated" className="w-full h-auto max-h-[400px] object-cover bg-black/5" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/gen-img:opacity-100 transition-opacity flex items-center justify-center">
+                              <Download className="text-white w-6 h-6" onClick={(e) => { e.stopPropagation(); handleDownload(msg.imageUrl, 'generated-image.png'); }} />
+                            </div>
+                            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg text-[10px] text-white font-bold uppercase tracking-wider pointer-events-none">
+                              AI Generated
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Generated Video Rendering */}
                       {msg.videoUrl && (
-                        <div className="flex flex-col gap-3 mb-3 mt-1">
-                          <div className="relative group/video overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-[400px] bg-black">
+                        <div className="mb-4 w-full">
+                          <div className="relative overflow-hidden rounded-2xl border border-white/20 shadow-xl bg-black">
                             <video
                               src={msg.videoUrl}
                               controls
-                              className="w-full h-auto max-h-[500px] object-contain"
-                              autoPlay={false}
+                              className="w-full h-auto max-h-[400px]"
                             />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownload(msg.videoUrl, `video-${msg.id}.mp4`);
-                              }}
-                              className="absolute top-2 right-2 p-2 bg-black/40 text-white rounded-full opacity-0 group-hover/video:opacity-100 transition-all hover:bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center"
-                              title="Download"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
+                            <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg text-[10px] text-white font-bold uppercase tracking-wider pointer-events-none">
+                              AI Video
+                            </div>
                           </div>
                         </div>
                       )}
 
-                      {/* Image Display */}
-                      {msg.imageUrl && (
-                        <div className="flex flex-col gap-3 mb-3 mt-1">
-                          <div className="relative group/generated overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-[400px] bg-black/5">
-                            <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Image</span>
-                              </div>
-                            </div>
-                            <img
-                              src={msg.imageUrl}
-                              alt="Generated Image"
-                              className="w-full h-auto max-h-[500px] object-contain"
-                              loading="lazy"
-                              onError={(e) => {
-                                e.target.src = 'https://placehold.co/600x400?text=Image+Failed+to+Load';
-                              }}
+                      {/* Content */}
+                      <div className={`relative z-10 text-[15px] md:text-[16px] leading-relaxed`}>
+                        {editingMessageId === msg.id ? (
+                          <div className="flex flex-col gap-3 min-w-[240px]">
+                            <textarea
+                              value={editContent}
+                              onChange={(e) => setEditContent(e.target.value)}
+                              className="w-full bg-white/10 text-white rounded-2xl p-4 text-sm focus:outline-none border border-white/20"
+                              rows={3}
+                              autoFocus
                             />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownload(msg.imageUrl, `image-${msg.id}.png`);
-                              }}
-                              className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-0 group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-90 group-hover/generated:scale-100"
-                              title="Download"
-                            >
-                              <div className="flex items-center gap-2 px-1">
-                                <Download className="w-4 h-4" />
-                                <span className="text-[10px] font-bold uppercase">Download</span>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-
-                      {editingMessageId === msg.id ? (
-                        <div className="flex flex-col gap-3 min-w-[200px] w-full">
-                          <textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full bg-white/10 text-white rounded-xl p-3 text-sm focus:outline-none resize-none border border-white/20 placeholder-white/50"
-                            rows={2}
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                saveEdit(msg);
-                              }
-                              if (e.key === 'Escape') cancelEdit();
-                            }}
-                          />
-                          <div className="flex gap-3 justify-end items-center">
-                            <button
-                              onClick={cancelEdit}
-                              className="text-white/80 hover:text-white text-sm font-medium transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => saveEdit(msg)}
-                              className="bg-white text-primary px-6 py-2 rounded-full text-sm font-bold hover:bg-white/90 transition-colors shadow-sm"
-                            >
-                              Update
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        msg.content && (
-                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'text-white' : 'text-maintext'}`}>
-                            {msg.role === 'user' && msg.mode === MODES.DEEP_SEARCH && (
-                              <div className="flex items-center gap-1.5 mb-2 px-2 py-1 bg-white/20 rounded-lg w-fit">
-                                <Search size={10} className="text-white" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-white">Deep Search</span>
-                              </div>
-                            )}
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                a: ({ href, children }) => {
-                                  const isInternal = href && href.startsWith('/');
-                                  return (
-                                    <a
-                                      href={href}
-                                      onClick={(e) => {
-                                        if (isInternal) {
-                                          e.preventDefault();
-                                          navigate(href);
-                                        }
-                                      }}
-                                      className="text-primary hover:underline font-bold cursor-pointer"
-                                      target={isInternal ? "_self" : "_blank"}
-                                      rel={isInternal ? "" : "noopener noreferrer"}
-                                    >
-                                      {children}
-                                    </a>
-                                  );
-                                },
-                                p: ({ children }) => <p className={`mb-1.5 last:mb-0 ${msg.role === 'user' ? 'm-0 leading-normal' : 'leading-relaxed'}`}>{children}</p>,
-                                ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-subtext">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-subtext">{children}</ol>,
-                                li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
-                                h1: ({ children }) => <h1 className="font-bold mb-2 mt-3 block text-[1.25em]">{children}</h1>,
-                                h2: ({ children }) => <h2 className="font-bold mb-1.5 mt-2 block text-[1.15em]">{children}</h2>,
-                                h3: ({ children }) => <h3 className="font-bold mb-1 mt-1.5 block text-[1.05em]">{children}</h3>,
-                                strong: ({ children }) => <strong className="font-bold text-primary">{children}</strong>,
-                                code: ({ node, inline, className, children, ...props }) => {
-                                  const match = /language-(\w+)/.exec(className || '');
-                                  const lang = match ? match[1] : '';
-
-                                  if (!inline && match) {
-                                    return (
-                                      <div className="rounded-xl overflow-hidden my-2 border border-border bg-[#1e1e1e] shadow-md w-full max-w-full">
-                                        <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-[#404040]">
-                                          <span className="text-xs font-mono text-gray-300 lowercase">{lang}</span>
-                                          <button
-                                            onClick={() => {
-                                              navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
-                                              toast.success("Code copied!");
-                                            }}
-                                            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
-                                          >
-                                            <Copy className="w-3.5 h-3.5" />
-                                            Copy code
-                                          </button>
-                                        </div>
-                                        <div className="p-4 overflow-x-auto custom-scrollbar bg-[#1e1e1e]">
-                                          <code className={`${className} font-mono text-[0.9em] leading-relaxed text-[#d4d4d4] block min-w-full`} {...props}>
-                                            {children}
-                                          </code>
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                  return (
-                                    <code className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-primary font-bold mx-0.5" {...props}>
-                                      {children}
-                                    </code>
-                                  );
-                                },
-                                img: ({ node, ...props }) => (
-                                  <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
-                                    <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
-                                      <div className="flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                        <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
-                                      </div>
-                                    </div>
-                                    <img
-                                      {...props}
-                                      className="w-full max-w-full h-auto rounded-xl bg-black/5"
-                                      loading="lazy"
-                                      onError={(e) => {
-                                        e.target.src = 'https://placehold.co/600x400?text=Image+Generating...';
-                                      }}
-                                    />
-                                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none" />
-                                    <button
-                                      onClick={() => handleDownload(props.src, 'aisa-generated.png')}
-                                      className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-0 group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-90 group-hover/generated:scale-100"
-                                      title="Download High-Res"
-                                    >
-                                      <div className="flex items-center gap-2 px-1">
-                                        <Download className="w-4 h-4" />
-                                        <span className="text-[10px] font-bold uppercase">Download</span>
-                                      </div>
-                                    </button>
-                                  </div>
-                                )
-                              }}
-                            >
-                              {msg.content}
-                            </ReactMarkdown>
-                          </div>
-                        )
-                      )}
-
-                      {/* File Conversion Download Button */}
-                      {msg.conversion && msg.conversion.file && (
-                        <div className="mt-4 pt-3 border-t border-border/40">
-                          <button
-                            onClick={() => {
-                              // Create download link
-                              const byteCharacters = atob(msg.conversion.file);
-                              const byteNumbers = new Array(byteCharacters.length);
-                              for (let i = 0; i < byteCharacters.length; i++) {
-                                byteNumbers[i] = byteCharacters.charCodeAt(i);
-                              }
-                              const byteArray = new Uint8Array(byteNumbers);
-                              const blob = new Blob([byteArray], { type: msg.conversion.mimeType });
-                              const url = URL.createObjectURL(blob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = msg.conversion.fileName;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                              URL.revokeObjectURL(url);
-                            }}
-                            className="flex items-center gap-3 px-4 py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl transition-all group w-full"
-                          >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${msg.conversion.fileName.toLowerCase().endsWith('.pdf')
-                              ? 'bg-red-50 text-red-600'
-                              : 'bg-blue-50 text-blue-600'
-                              }`}>
-                              {msg.conversion.fileName.toLowerCase().endsWith('.pdf')
-                                ? <FileText className="w-5 h-5" />
-                                : <File className="w-5 h-5" />
-                              }
+                            <div className="flex justify-end gap-2">
+                              <button onClick={cancelEdit} className="px-4 py-2 text-xs font-bold">Cancel</button>
+                              <button onClick={() => saveEdit(msg)} className="px-5 py-2 bg-white text-primary rounded-full text-xs font-bold">Update</button>
                             </div>
-                            <div className="flex-1 text-left">
-                              <p className="text-[15px] font-bold text-primary transition-colors mb-0.5">
-                                {msg.conversion.fileName}
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <p className={`text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded-md border ${msg.conversion.fileName.toLowerCase().endsWith('.pdf')
-                                  ? 'text-primary bg-primary/10 border-primary/20'
-                                  : 'text-primary bg-primary/10 border-primary/20'
-                                  }`}>
-                                  Click here to download {msg.conversion.fileName.split('.').pop().toLowerCase()}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        </div>
-                      )}
+                          </div>
+                        ) : (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                            strong: ({ children }) => <strong className="font-bold text-[#5555ff] dark:text-[#8888ff]">{children}</strong>,
+                            code: ({ inline, children }) => inline ? <code className="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-sm text-primary">{children}</code> : <code className="block p-4 bg-[#1e1e1e] text-gray-200 rounded-xl my-3 overflow-x-auto font-mono text-sm">{children}</code>
+                          }}>
+                            {msg.content || msg.text}
+                          </ReactMarkdown>
+                        )}
+                      </div>
 
-                      {/* AI Feedback Actions */}
+                      {/* AI Feedback */}
                       {msg.role !== 'user' && (
-                        <div className="mt-4 pt-3 border-t border-border/40 w-full block">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
-                            {(() => {
-                              // Detect if the AI response contains Hindi (Devanagari script)
-                              const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
-                              const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
-                              const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
-                              return (
-                                <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
-                                  {prompts[promptIndex]}
-                                  <span className="text-sm">😊</span>
-                                </p>
-                              );
-                            })()}
-                            <div className="flex items-center gap-3 self-end sm:self-auto">
-                              <button
-                                onClick={() => handleCopyMessage(msg.content)}
-                                className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Copy"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleThumbsUp(msg.id)}
-                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Helpful"
-                              >
-                                <ThumbsUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleThumbsDown(msg.id)}
-                                className="text-subtext hover:text-red-500 transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Not Helpful"
-                              >
-                                <ThumbsDown className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleShare(msg.content)}
-                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Share Text"
-                              >
-                                <Share className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* PDF Menu */}
-                              <Menu as="div" className="relative inline-block text-left">
-                                <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
-                                  {pdfLoadingId === msg.id ? (
-                                    <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                                  ) : (
-                                    <FileText className="w-4 h-4" />
-                                  )}
-                                </Menu.Button>
-                                <Transition
-                                  as={Fragment}
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transform opacity-0 scale-95"
-                                  enterTo="transform opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transform opacity-100 scale-100"
-                                  leaveTo="transform opacity-0 scale-95"
-                                >
-                                  <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
-                                    <div className="px-1 py-1">
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => handlePdfAction('open', msg)}
-                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                          >
-                                            Open PDF
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => handlePdfAction('download', msg)}
-                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                          >
-                                            Download
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => handlePdfAction('share', msg)}
-                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                          >
-                                            Share PDF
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                    </div>
-                                  </Menu.Items>
-                                </Transition>
-                              </Menu>
-                            </div>
+                        <div className="mt-5 pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between gap-4">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleCopyMessage(msg.content)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"><Copy className="w-4 h-4 text-subtext" /></button>
+                            <button onClick={() => handleThumbsUp(msg.id)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"><ThumbsUp className="w-4 h-4 text-subtext" /></button>
+                            <button onClick={() => handleThumbsDown(msg.id)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"><ThumbsDown className="w-4 h-4 text-subtext" /></button>
                           </div>
+                          <Menu as="div" className="relative">
+                            <Menu.Button className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg"><FileText className="w-4 h-4 text-subtext" /></Menu.Button>
+                            <Menu.Items className="absolute right-0 bottom-full mb-2 w-40 bg-white dark:bg-zinc-900 border border-border rounded-xl shadow-2xl overflow-hidden z-50">
+                              {['Download PDF', 'Share PDF', 'Open View'].map(opt => (
+                                <Menu.Item key={opt}>
+                                  {({ active }) => <button className={`w-full text-left px-4 py-2.5 text-xs font-bold ${active ? 'bg-primary text-white' : 'text-maintext'}`}>{opt}</button>}
+                                </Menu.Item>
+                              ))}
+                            </Menu.Items>
+                          </Menu>
                         </div>
                       )}
+                    </motion.div>
+
+                    {/* Timestamp */}
+                    <div className="mt-1.5 px-2">
+                      <span className="text-[10px] font-bold text-subtext/60 uppercase tracking-widest">
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-subtext mt-0 px-1">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
                   </div>
 
-                  {/* Hover Actions - User Only (AI has footer) */}
+                  {/* Hover Actions */}
                   {msg.role === 'user' && (
-                    <div className={`flex items-center gap-1 transition-opacity duration-200 self-start mt-2 mr-0 flex-row-reverse ${activeMessageId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                      <button
-                        onClick={() => handleCopyMessage(msg.content || msg.text)}
-                        className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
-                        title="Copy"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                      {!msg.attachment && (
-                        <button
-                          onClick={() => startEditing(msg)}
-                          className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      {msg.attachment && (
-                        <button
-                          onClick={() => handleRenameFile(msg)}
-                          className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
-                          title="Rename"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      {/* Only show Undo for the most recent user message if it's the last or second to last message in the whole chat */}
-                      {msg.id === messages.findLast(m => m.role === 'user')?.id && (
-                        <button
-                          onClick={handleUndo}
-                          className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
-                          title="Undo"
-                        >
-                          <Undo2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleMessageDelete(msg.id)}
-                        className="p-1.5 text-subtext hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className={`flex items-center gap-1 self-start mt-2 opacity-0 group-hover:opacity-100 transition-opacity ${activeMessageId === msg.id ? 'opacity-100' : ''}`}>
+                      <button onClick={() => startEditing(msg)} className="p-2 text-subtext hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleMessageDelete(msg.id)} className="p-2 text-subtext hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   )}
                 </div>
@@ -2639,9 +2264,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-2 md:p-4 shrink-0 bg-secondary border-t border-border sm:border-t-0">
-          <div className="max-w-4xl mx-auto relative">
+        {/* Input area refined to match landing page prominence */}
+        <div className="p-4 md:p-6 shrink-0 bg-transparent relative z-20">
+          <div className="max-w-4xl mx-auto relative group">
+            {/* Ambient Glow */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-[2.5rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+
 
             {/* File Preview Area */}
             {filePreviews.length > 0 && (
@@ -2920,15 +2548,15 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   onPaste={handlePaste}
                   placeholder="Ask AISA..."
                   rows={1}
-                  className={`w-full bg-surface border rounded-2xl py-2 md:py-3 pl-4 sm:pl-5 text-maintext placeholder-subtext focus:outline-none shadow-sm transition-all resize-none overflow-y-auto custom-scrollbar 
-                    ${isDeepSearch ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-border focus:border-primary focus:ring-1 focus:ring-primary'} 
+                  className={`w-full bg-white/70 dark:bg-black/40 backdrop-blur-2xl border rounded-[2rem] py-4 md:py-5 pl-14 sm:pl-16 text-maintext placeholder-subtext/50 focus:outline-none shadow-2xl transition-all resize-none overflow-y-auto custom-scrollbar border-black/5 dark:border-white/10
+                    ${isDeepSearch ? 'border-sky-500/50 ring-4 ring-sky-500/10' : 'group-focus-within:border-primary/30 group-focus-within:ring-4 group-focus-within:ring-primary/5'} 
                     ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
                       personalizations?.personalization?.fontStyle === 'Mono' ? 'font-mono' :
                         personalizations?.personalization?.fontStyle === 'Rounded' ? 'font-rounded' :
                           personalizations?.personalization?.fontStyle === 'Sans' ? 'font-sans' : ''}
                     aisa-scalable-text
                     ${inputValue.trim() ? 'pr-20 md:pr-24' : 'pr-32 md:pr-40'}`}
-                  style={{ minHeight: '40px', maxHeight: '150px' }}
+                  style={{ minHeight: '60px', maxHeight: '200px' }}
                 />
                 <div className="absolute right-2 inset-y-0 flex items-center gap-0 sm:gap-1 z-10">
                   {isListening && (
@@ -3003,9 +2631,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       <button
                         type="submit"
                         disabled={(!inputValue.trim() && filePreviews.length === 0) || isLoading}
-                        className="p-2 sm:p-2.5 rounded-full bg-primary text-white hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center"
+                        className="p-3 sm:p-3.5 rounded-full bg-gradient-to-r from-[#5555ff] to-[#7777ff] text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-primary/30 flex items-center justify-center border border-white/20"
                       >
-                        <Send className="w-4 h-4" />
+                        <Send className="w-5 h-5" />
                       </button>
                     </>
                   )}
@@ -3105,7 +2733,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
           </div>
         </Dialog>
       </Transition>
-    </div>
+    </div >
   );
 };
 

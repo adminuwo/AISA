@@ -72,11 +72,17 @@ const Landing = () => {
     const btnClass = "px-8 py-4 bg-surface border border-border rounded-2xl font-bold text-lg text-maintext hover:bg-secondary transition-all duration-300 flex items-center justify-center gap-2";
 
     return (
-        <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-blue-100 via-blue-50 to-white dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-950">
-
-            {/* Background Shapes */}
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-400/20 rounded-full blur-[100px] pointer-events-none" />
+        <div
+            className="min-h-screen flex flex-col relative overflow-hidden bg-white dark:bg-slate-950"
+            style={{
+                backgroundImage: "url('/hero-bg.png')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed'
+            }}
+        >
+            {/* Background Overlay - Balanced Gradient (Top & Bottom) */}
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-600/20 via-white/20 to-blue-600/20 dark:from-blue-950/40 dark:via-slate-950/60 dark:to-blue-950/40 pointer-events-none" />
 
             {/* Header */}
             <header className="relative z-10 px-4 py-4 md:px-6 md:py-6 flex justify-between items-center max-w-7xl mx-auto w-full">
@@ -119,7 +125,7 @@ const Landing = () => {
                 <div className="flex items-center gap-2 md:gap-4">
                     <button
                         onClick={() => setIsAboutModalOpen(true)}
-                        className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-subtext hover:bg-secondary hover:text-primary transition-all"
+                        className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-black dark:text-white hover:bg-secondary hover:text-primary transition-all"
                     >
                         <Bot className="w-4 h-4" />
                         {/* About AISA */}
@@ -138,7 +144,7 @@ const Landing = () => {
                             whileHover={{ scale: 1.05, color: "#2563eb" }} // blue-600
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate("/login")}
-                            className="text-sm md:text-base text-subtext font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="text-sm md:text-base text-black dark:text-white font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
                         >
                             Sign In
                         </motion.button>
@@ -161,7 +167,7 @@ const Landing = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-black/40 border border-blue-200 dark:border-blue-900 text-sm text-subtext mb-8 backdrop-blur-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-black/40 border border-blue-200 dark:border-blue-900 text-sm text-black dark:text-white mb-8 backdrop-blur-sm"
                 >
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                     Powered by UWO
@@ -171,7 +177,7 @@ const Landing = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight text-maintext"
+                    className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight text-black dark:text-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]"
                 >
                     {t('heroTitle')}
                 </motion.h1>
@@ -180,7 +186,7 @@ const Landing = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-lg text-subtext max-w-2xl mb-10 leading-relaxed"
+                    className="text-lg text-black dark:text-white max-w-2xl mb-10 leading-relaxed font-medium"
                 >
                     {t('heroSubtitle')}
                 </motion.p>
@@ -251,8 +257,8 @@ const Landing = () => {
                             >
                                 <img src={feature.img} alt={feature.title} className="w-full h-full object-contain drop-shadow-md" />
                             </motion.div>
-                            <h3 className="text-xl font-bold mb-2 text-maintext">{feature.title}</h3>
-                            <p className="text-subtext leading-relaxed">
+                            <h3 className="text-xl font-bold mb-2 text-black dark:text-white">{feature.title}</h3>
+                            <p className="text-black dark:text-white leading-relaxed">
                                 {feature.desc}
                             </p>
                         </motion.div>
@@ -269,7 +275,7 @@ const Landing = () => {
                         <div className="space-y-6 max-w-sm">
                             <div className="flex items-center gap-3">
                                 <img src="/logo/Logo.svg" alt="Logo" className="w-12 h-12 object-contain" />
-                                <span className="text-2xl font-black tracking-tighter text-maintext">{name} <sup className="text-xs">TM</sup></span>
+                                <span className="text-2xl font-black tracking-tighter text-black dark:text-white">{name} <sup className="text-xs">TM</sup></span>
                             </div>
                             <div className="flex items-center gap-3 flex-wrap">
                                 {[
@@ -321,7 +327,7 @@ const Landing = () => {
 
                         {/* Support Column */}
                         <div>
-                            <h4 className="text-sm font-bold text-maintext uppercase tracking-widest mb-6">{t('support')}</h4>
+                            <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-widest mb-6">{t('support')}</h4>
                             <ul className="space-y-4">
                                 {[
                                     { label: t('helpCenter'), onClick: () => setIsFaqOpen(true) },
@@ -331,7 +337,7 @@ const Landing = () => {
                                         {link.onClick ? (
                                             <button
                                                 onClick={link.onClick}
-                                                className="text-sm text-subtext hover:text-primary transition-colors font-medium"
+                                                className="text-sm text-black dark:text-white hover:text-primary transition-colors font-medium"
                                             >
                                                 {link.label}
                                             </button>
@@ -350,7 +356,7 @@ const Landing = () => {
 
                         {/* Contact Column */}
                         <div className="space-y-6">
-                            <h4 className="text-sm font-bold text-maintext uppercase tracking-widest mb-6">{t('contact')}</h4>
+                            <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-widest mb-6">{t('contact')}</h4>
                             <div className="space-y-4">
                                 <a
                                     href="https://www.google.com/maps/search/?api=1&query=Jabalpur+Madhya+Pradesh"
@@ -359,7 +365,7 @@ const Landing = () => {
                                     className="flex items-start gap-3 group"
                                 >
                                     <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                                    <p className="text-sm text-subtext leading-relaxed group-hover:text-primary transition-colors">
+                                    <p className="text-sm text-black dark:text-white leading-relaxed group-hover:text-primary transition-colors">
                                         {t('city')}
                                     </p>
                                 </a>
@@ -368,7 +374,7 @@ const Landing = () => {
                                     className="flex items-center gap-3 group"
                                 >
                                     <Mail className="w-5 h-5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm text-subtext group-hover:text-primary transition-colors font-medium">
+                                    <span className="text-sm text-black dark:text-white group-hover:text-primary transition-colors font-medium">
                                         admin@uwo24.com
                                     </span>
                                 </a>
@@ -377,7 +383,7 @@ const Landing = () => {
                                     className="flex items-center gap-3 group"
                                 >
                                     <Phone className="w-5 h-5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm text-subtext group-hover:text-primary transition-colors font-medium">
+                                    <span className="text-sm text-black dark:text-white group-hover:text-primary transition-colors font-medium">
                                         +91 83589 90909
                                     </span>
                                 </a>
@@ -387,13 +393,13 @@ const Landing = () => {
 
                     {/* Bottom Bar */}
                     <div className="pt-10 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-                        <p className="text-xs text-subtext font-medium">
+                        <p className="text-xs text-black dark:text-white font-medium">
                             © {new Date().getFullYear()} {name} <sup className="text-xs">TM</sup>. {t('allRightsReserved')}
                         </p>
                         <div className="flex items-center gap-8">
-                            <button onClick={() => setIsPrivacyModalOpen(true)} className="text-xs text-subtext hover:text-maintext transition-colors font-medium">{t('privacyPolicy')}</button>
-                            <button onClick={() => setIsTermsModalOpen(true)} className="text-xs text-subtext hover:text-maintext transition-colors font-medium">{t('termsOfService')}</button>
-                            <button onClick={() => setIsCookieModalOpen(true)} className="text-xs text-subtext hover:text-maintext transition-colors font-medium">{t('cookiePolicy')}</button>
+                            <button onClick={() => setIsPrivacyModalOpen(true)} className="text-xs text-black dark:text-white hover:text-maintext transition-colors font-medium">{t('privacyPolicy')}</button>
+                            <button onClick={() => setIsTermsModalOpen(true)} className="text-xs text-black dark:text-white hover:text-maintext transition-colors font-medium">{t('termsOfService')}</button>
+                            <button onClick={() => setIsCookieModalOpen(true)} className="text-xs text-black dark:text-white hover:text-maintext transition-colors font-medium">{t('cookiePolicy')}</button>
                         </div>
                     </div>
                 </div>
