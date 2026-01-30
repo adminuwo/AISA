@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Shield, Lock, Eye, Database, UserCheck, FileText } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { name } from '../../constants';
 
 const PrivacyPolicyModal = ({ isOpen, onClose }) => {

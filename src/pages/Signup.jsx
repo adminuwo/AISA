@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Cpu, Mail, Lock, User, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { AppRoute, apis } from '../types';

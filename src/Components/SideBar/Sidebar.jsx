@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, useNavigate, Link } from 'react-router';
-import { AnimatePresence, motion } from 'motion/react';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   User,
   LayoutGrid,
@@ -33,7 +33,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import { chatStorageService } from '../../services/chatStorageService';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProfileSettingsDropdown from '../ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
 
