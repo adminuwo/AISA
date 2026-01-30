@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Cookie, Settings2, BarChart3, Shield, Smartphone } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { name } from '../../constants';
 
 const CookiePolicyModal = ({ isOpen, onClose }) => {

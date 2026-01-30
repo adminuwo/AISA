@@ -628,7 +628,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <Trash2 className="w-4 h-4" /> Permanent Delete Account
                             </button>
                         </div>
-                    </div >
+                    </div>
                 );
             default:
                 return null;

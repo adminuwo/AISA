@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Shield, Lock, FileText, Scale, Eye, AlertTriangle } from 'lucide-react';
 import ReportModal from '../Components/ReportModal/ReportModal';
 

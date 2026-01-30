@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertTriangle, Bug, Shield, Send } from 'lucide-react';
 import { apiService } from '../../services/apiService';
 import { getUserData } from '../../userStore/userData';

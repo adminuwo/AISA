@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { X, CheckCircle2, Sparkles, Crown, Zap } from 'lucide-react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { toggleState, userData, setUserData } from '../../userStore/userData';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apis } from '../../types';
 import axios from 'axios';
 import toast from 'react-hot-toast';

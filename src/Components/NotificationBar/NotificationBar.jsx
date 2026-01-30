@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { LaptopMinimalCheck } from 'lucide-react';
 import { toggleState } from '../../userStore/userData';
 import { useRecoilState } from 'recoil';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 const NotificationBar = ({ msg, error }) => {
   const [notifiyTgl, setNotifyTgl] = useRecoilState(toggleState)
   return (

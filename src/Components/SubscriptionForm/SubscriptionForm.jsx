@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { X } from 'lucide-react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { toggleState, userData } from '../../userStore/userData';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { apis } from '../../types';
 import axios from 'axios';
 

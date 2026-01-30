@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     CircleUser,
     Settings2,
@@ -23,7 +23,7 @@ import {
     Globe,
     CreditCard
 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AppRoute, apis } from '../types';
 import axios from 'axios';
 import { getUserData, clearUser, setUserData, userData, toggleState } from '../userStore/userData';

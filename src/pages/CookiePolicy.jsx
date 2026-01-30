@@ -1,7 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Cookie, Settings2, BarChart3, Shield, Smartphone, ArrowLeft } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { name } from '../constants';
 
 const CookiePolicy = () => {

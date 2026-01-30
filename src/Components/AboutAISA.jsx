@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Sparkles, MessageSquare, FileText, Image, Cloud, Camera, Mic, Share2, Scan, FileDiff, FileType, Search } from 'lucide-react';
 
 const AboutAISA = ({ isOpen, onClose }) => {

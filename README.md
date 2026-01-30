@@ -1,16 +1,16 @@
-# AI-Mall Frontend
+# AI-Mall Backend
 
-Welcome to the AI-Mall frontend. This application provides the interface for discovering, subscribing to, and interacting with specialized AI agents.
+This is the Node.js/Express backend server for AI-Mall.
 
-## 📁 Key Routes
-- `/` - Landing Page
-- `/dashboard/marketplace` - Browse and subscribe to agents
-- `/dashboard/chat` - Interact with your active agents
-- `/dashboard/admin` - System settings (for admins)
+## 🛠 Features
+- **Express API** for User & Agent management.
+- **MongoDB** integration for data persistence.
+- **Vertex AI** integration for power specialized agents.
+- **JWT Auth** for protected dashboard routes.
 
 ## 🚀 Getting Started
 1. Run `npm install`
-2. Configure `.env` if necessary.
-3. Run `npm run dev`
+2. Configure your `.env` file (see example in project root documentation).
+3. Run `npm run dev` (starts with nodemon).
 
-For full project details, architecture, and backend setup, see the [Project Documentation](../PROJECT_DOCUMENTATION.md) in the root directory.
+For full project details, environment variables, and architecture, see the [Project Documentation](../PROJECT_DOCUMENTATION.md) in the root directory.
