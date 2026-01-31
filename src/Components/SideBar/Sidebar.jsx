@@ -13,7 +13,7 @@ import {
   Video,
   FileText,
   Bell,
-
+  Headphones,
   HelpCircle,
   ChevronDown,
   ChevronUp,
@@ -21,7 +21,10 @@ import {
   Shield,
   Sparkles,
   ChevronRight,
-  Search
+  Search,
+  Trash2,
+  Edit2,
+  Check
 } from 'lucide-react';
 import { apis, AppRoute } from '../../types';
 import { faqs } from '../../constants'; // Import shared FAQs
@@ -36,6 +39,7 @@ import { chatStorageService } from '../../services/chatStorageService';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ProfileSettingsDropdown from '../ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
+import AdminHelpDesk from '../AdminHelpDesk.jsx';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
@@ -62,6 +66,15 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [currentSessionId, setCurrentSessionId] = useState(sessionId || 'new');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [isAdminHelpDeskOpen, setIsAdminHelpDeskOpen] = useState(false);
+
+  // Check if current user is admin - check both sources
+  const userEmail = user?.email || getUserData()?.email;
+  const isAdmin = userEmail === 'admin@uwo24.com';
+
+
 
   const issueOptions = [
     "General Inquiry",
@@ -80,17 +93,20 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     try {
       await axios.post(apis.support, {
+        name: user?.name || "Anonymous",
         email: user?.email || "guest@uwo24.com",
         issueType,
         message: issueText,
         userId: user?.id || null
       });
       setSendStatus('success');
+      toast.success('Message sent successfully!');
       setIssueText(""); // Clear text
       setTimeout(() => setSendStatus(null), 3000); // Reset status after 3s
     } catch (error) {
       console.error("Support submission failed", error);
       setSendStatus('error');
+      toast.error('Failed to send message. Please try again.');
     } finally {
       setIsSending(false);
     }
@@ -179,6 +195,28 @@ const Sidebar = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error('Failed to delete session:', error);
     }
+  };
+
+  const startRename = (e, session) => {
+    e.stopPropagation();
+    setEditingSessionId(session.sessionId);
+    setNewTitle(session.title || "New Chat");
+  };
+
+  const handleRename = async (e, sessionId) => {
+    e.stopPropagation();
+    if (newTitle.trim()) {
+      // Optimistic update
+      setSessions(prev => prev.map(s =>
+        s.sessionId === sessionId
+          ? { ...s, title: newTitle, lastModified: Date.now() }
+          : s
+      ).sort((a, b) => b.lastModified - a.lastModified)); // Re-sort immediately
+
+      await chatStorageService.updateSessionTitle(sessionId, newTitle);
+      toast.success("Chat renamed");
+    }
+    setEditingSessionId(null);
   };
 
   if (notifiyTgl.notify) {
@@ -270,43 +308,93 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {/* Chat Sessions List */}
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
-            <h3 className="px-4 py-2 text-xs font-semibold text-subtext uppercase tracking-wider">
-              {t('history')}
-            </h3>
+            {token ? (
+              <>
+                <h3 className="px-4 py-2 text-xs font-semibold text-subtext uppercase tracking-wider">
+                  {t('history')}
+                </h3>
 
-            {sessions
-              .filter(session => session.title?.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((session) => (
-                <div key={session.sessionId} className="group relative px-2">
-                  <button
-                    onClick={() => {
-                      navigate(`/dashboard/chat/${session.sessionId}`);
-                      onClose();
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-colors truncate
-                    ${currentSessionId === session.sessionId
-                        ? 'bg-white/40 dark:bg-white/10 text-primary shadow-sm border border-white/20 dark:border-white/10'
-                        : 'text-subtext hover:bg-white/20 dark:hover:bg-white/5 hover:text-maintext'
-                      }
-                  `}
-                  >
-                    <div className="font-medium truncate pr-6">{session.title}</div>
-                    <div className="text-[10px] text-subtext/70">
-                      {new Date(session.lastModified).toLocaleDateString()}
+                {sessions
+                  .filter(session => session.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((session) => (
+                    <div key={session.sessionId} className="group relative px-2">
+                      {editingSessionId === session.sessionId ? (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-lg border border-primary/20">
+                          <input
+                            autoFocus
+                            type="text"
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleRename(e, session.sessionId);
+                              if (e.key === 'Escape') setEditingSessionId(null);
+                            }}
+                            className="bg-transparent text-sm text-maintext w-full outline-none"
+                          />
+                          <button
+                            onClick={(e) => handleRename(e, session.sessionId)}
+                            className="p-1 hover:text-primary transition-colors"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              navigate(`/dashboard/chat/${session.sessionId}`);
+                              onClose();
+                            }}
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-colors truncate pr-16
+                            ${currentSessionId === session.sessionId
+                                ? 'bg-white/40 dark:bg-white/10 text-primary shadow-sm border border-white/20 dark:border-white/10'
+                                : 'text-subtext hover:bg-white/20 dark:hover:bg-white/5 hover:text-maintext'
+                              }
+                          `}
+                          >
+                            <div className="font-medium truncate">{session.title}</div>
+                            <div className="text-[10px] text-subtext/70">
+                              {new Date(session.lastModified).toLocaleDateString()}
+                            </div>
+                          </button>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                            <button
+                              onClick={(e) => startRename(e, session)}
+                              className="p-1.5 text-subtext/60 hover:text-primary transition-all hover:bg-primary/10 rounded-lg"
+                              title="Rename Chat"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteSession(e, session.sessionId)}
+                              className="p-1.5 text-subtext/60 hover:text-red-500 transition-all hover:bg-red-500/10 rounded-lg"
+                              title="Delete Chat"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  </button>
-                  <button
-                    onClick={(e) => handleDeleteSession(e, session.sessionId)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-subtext hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Delete Chat"
-                  >
-                    <Plus className="w-4 h-4 rotate-45" />
-                  </button>
-                </div>
-              ))}
+                  ))}
 
-            {sessions.length === 0 && (
-              <div className="px-4 text-xs text-subtext italic">{t('noRecentChats') || 'No recent chats'}</div>
+                {sessions.length === 0 && (
+                  <div className="px-4 text-xs text-subtext italic">{t('noRecentChats') || 'No recent chats'}</div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-48 opacity-50 px-6 text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-xs text-subtext mb-2">Login to save your chat history</p>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-xs font-bold text-primary hover:underline"
+                >
+                  Log In Now
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -321,39 +409,30 @@ const Sidebar = ({ isOpen, onClose }) => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-full rounded-xl border border-transparent hover:bg-secondary transition-all flex items-center gap-2 p-2 group"
               >
-                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs uppercase shrink-0 overflow-hidden border border-primary/10 group-hover:bg-primary/30 transition-colors">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        const parent = e.target.parentElement;
-                        if (parent) {
-                          parent.classList.add("flex", "items-center", "justify-center");
-                          parent.innerText = user.name ? user.name.charAt(0).toUpperCase() : "U";
-                        }
-                      }}
-                    />
-                  ) : (
-                    user.name ? user.name.charAt(0).toUpperCase() : "U"
-                  )}
-                </div>
 
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <p className="text-sm font-bold text-maintext truncate group-hover:text-primary transition-colors">{user.name}</p>
-                    {user.plan && user.plan !== 'Basic' && (
-                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter shrink-0 ${user.plan === 'King'
-                        ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm'
-                        : 'bg-primary text-white shadow-sm'
-                        }`}>
-                        {user.plan}
-                      </span>
-                    )}
+
+                <div className="flex-1 min-w-0 text-left flex items-center gap-3">
+                  <div className="w-9 h-9 flex items-center justify-center shrink-0">
+                    <img
+                      src="/logo/Logo.svg"
+                      alt="AISA Logo"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-                  <p className="text-[11px] text-subtext truncate">{user.email}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <p className="text-sm font-bold text-maintext truncate group-hover:text-primary transition-colors">{user.name}</p>
+                      {user.plan && user.plan !== 'Basic' && (
+                        <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter shrink-0 ${user.plan === 'King'
+                          ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm'
+                          : 'bg-primary text-white shadow-sm'
+                          }`}>
+                          {user.plan}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-subtext truncate">{user.email}</p>
+                  </div>
                 </div>
 
 
@@ -388,6 +467,18 @@ const Sidebar = ({ isOpen, onClose }) => {
           )}
 
           <div className="mt-1 flex flex-col gap-1">
+            {/* Admin Help Desk Button - Only for admin@uwo24.com */}
+            {isAdmin && (
+              <button
+                onClick={() => setIsAdminHelpDeskOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg text-amber-600 bg-amber-500/10 hover:bg-amber-500/20 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-all text-xs border border-amber-500/20 hover:border-amber-500/30 font-semibold"
+              >
+                <Headphones className="w-3.5 h-3.5" />
+                <span>Admin Help Desk</span>
+                <Shield className="w-3 h-3 opacity-70" />
+              </button>
+            )}
+
             {/* FAQ Button */}
             <button
               onClick={() => setIsFaqOpen(true)}
@@ -535,6 +626,12 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         )
       }
+
+      {/* Admin Help Desk Modal */}
+      <AdminHelpDesk
+        isOpen={isAdminHelpDeskOpen}
+        onClose={() => setIsAdminHelpDeskOpen(false)}
+      />
     </>
   );
 };

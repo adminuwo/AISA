@@ -46,6 +46,26 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const [transactions, setTransactions] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [expandedDate, setExpandedDate] = useState(null);
+
+    // Reset Password State
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetStep, setResetStep] = useState(1); // 1: Send OTP, 2: Verify & Reset
+    const [resetOtp, setResetOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [resetLoading, setResetLoading] = useState(false);
+
+    const groupedSessions = React.useMemo(() => {
+        const groups = {};
+        if (!chatSessions) return groups;
+        chatSessions.forEach(session => {
+            const d = new Date(session.lastModified);
+            const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(session);
+        });
+        return groups;
+    }, [chatSessions]);
 
     useEffect(() => {
         setNicknameInput(personalizations.account?.nickname || '');
@@ -68,7 +88,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         // Brand / Company Info
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text("AISA AI Platforms", 20, 40);
+        doc.text("AISA™ AI Platforms", 20, 40);
         doc.setFontSize(10);
         doc.text("admin@uwo24.com", 20, 45);
 
@@ -172,6 +192,47 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                     toast.success('Profile updated locally');
                 }
             }
+        }
+    };
+
+    // Reset Password Handlers
+    const handleSendOtp = async () => {
+        setResetLoading(true);
+        try {
+            // Using backend endpoint mentioned in authRoutes.js
+            await axios.post('http://localhost:5000/api/auth/forgot-password', { email: user.email });
+            toast.success('OTP sent to your email');
+            setResetStep(2);
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.error || 'Failed to send OTP');
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!resetOtp || !newPassword) {
+            toast.error('Please enter OTP and New Password');
+            return;
+        }
+        setResetLoading(true);
+        try {
+            await axios.post('http://localhost:5000/api/auth/reset-password-otp', {
+                email: user.email,
+                otp: resetOtp,
+                newPassword: newPassword
+            });
+            toast.success('Password updated successfully');
+            setShowResetModal(false);
+            setResetStep(1);
+            setResetOtp('');
+            setNewPassword('');
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.error || 'Failed to reset password');
+        } finally {
+            setResetLoading(false);
         }
     };
 
@@ -419,32 +480,66 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
                         <div className="pt-4">
                             <h4 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">{t('recentChatHistory')}</h4>
-                            <div className="max-h-[220px] overflow-y-auto space-y-2 pr-2 custom-scrollbar-light">
-                                {chatSessions && chatSessions.length > 0 ? (
-                                    chatSessions.map((session) => (
-                                        <div
-                                            key={session.sessionId}
-                                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-white/5 group hover:border-primary/30 transition-all shadow-sm"
-                                        >
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                                    {session.title || "New Chat"}
-                                                </p>
-                                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                                                    {new Date(session.lastModified).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                                </p>
+                            <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar-light">
+                                {Object.keys(groupedSessions).length > 0 ? (
+                                    Object.keys(groupedSessions)
+                                        .sort((a, b) => new Date(b) - new Date(a))
+                                        .map((date) => (
+                                            <div key={date} className="border border-gray-100 dark:border-white/5 rounded-xl overflow-hidden">
+                                                <button
+                                                    onClick={() => setExpandedDate(expandedDate === date ? null : date)}
+                                                    className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800/80 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4 text-gray-400" />
+                                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{date}</span>
+                                                        <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
+                                                            {groupedSessions[date].length}
+                                                        </span>
+                                                    </div>
+                                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${expandedDate === date ? 'rotate-180' : ''}`} />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {expandedDate === date && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: "auto", opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className="overflow-hidden"
+                                                        >
+                                                            <div className="border-t border-gray-100 dark:border-white/5 bg-white dark:bg-[#161B2E]">
+                                                                {groupedSessions[date].map((session) => (
+                                                                    <div
+                                                                        key={session.sessionId}
+                                                                        className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-all border-b border-gray-50 dark:border-white/5 last:border-0"
+                                                                    >
+                                                                        <div className="min-w-0 flex-1 pr-3">
+                                                                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                                                                                {session.title || "New Chat"}
+                                                                            </p>
+                                                                            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                                                                {new Date(session.lastModified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                            </p>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                window.location.href = `/dashboard/chat/${session.sessionId}`;
+                                                                                onClose();
+                                                                            }}
+                                                                            className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary text-[10px] font-bold rounded-lg transition-all hover:text-white shrink-0"
+                                                                        >
+                                                                            {t('view')}
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    window.location.href = `/dashboard/chat/${session.sessionId}`;
-                                                    onClose();
-                                                }}
-                                                className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary text-[10px] font-bold rounded-lg transition-all hover:text-white"
-                                            >
-                                                {t('view')}
-                                            </button>
-                                        </div>
-                                    ))
+                                        ))
                                 ) : (
                                     <div className="py-10 text-center bg-gray-50 dark:bg-zinc-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 italic">{t('noRecentChats')}</p>
@@ -477,11 +572,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 {accounts.map((acc) => (
                                     <div key={acc.email} className="group flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-white/5 hover:border-primary/20 transition-all shadow-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="relative">
-                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                                                    {acc.avatar ? <img src={acc.avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-primary" />}
-                                                </div>
-                                                {acc.email === user?.email && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-[#1f1f1f] rounded-full" title="Current Session" />}
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                <img src="/logo/Logo.svg" alt="AISA Logo" className="w-full h-full object-contain p-1" />
                                             </div>
                                             <div>
                                                 <p className="text-[14px] font-bold text-gray-900 dark:text-white leading-tight">{acc.name || 'User'}</p>
@@ -537,9 +629,17 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                             </div>
                             <div className="flex flex-col gap-1 py-1">
                                 <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{t('loginId')}</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                                    <Mail className="w-4 h-4 text-gray-400 dark:text-gray-500" /> {user?.email || 'user@example.com'}
-                                </span>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                        <Mail className="w-4 h-4 text-gray-400 dark:text-gray-500" /> {user?.email || 'user@example.com'}
+                                    </span>
+                                    <button
+                                        onClick={() => setShowResetModal(true)}
+                                        className="text-xs text-primary hover:text-primary/80 font-semibold hover:underline"
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex flex-col gap-2 pt-2">
@@ -679,7 +779,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                     <button
                                         key={tab.id}
                                         onClick={() => handleTabClick(tab.id)}
-                                        className={`w-full flex items-center justify-between sm:justify-start gap-3 px-4 py-3 sm:py-2.5 rounded-xl text-[15px] sm:text-sm text-left transition-colors font-medium ${activeTab === tab.id
+                                        className={`w-full flex items-center justify-between sm:justify-start gap-3 px-4 py-3 sm:py-2.5 rounded-xl text-[15px] sm:text-sm text-left transition-colors font-medium capitalize ${activeTab === tab.id
                                             ? 'bg-white dark:bg-[#1E2438] text-gray-900 dark:text-white shadow-sm'
                                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-gray-200'
                                             }`}
@@ -750,6 +850,80 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                         });
                     }}
                 />
+            )}
+
+            {showResetModal && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white dark:bg-[#1E2438] rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 dark:border-white/10"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Reset Password</h3>
+                            <button onClick={() => setShowResetModal(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {resetStep === 1 ? (
+                            <div className="space-y-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    We will send a One-Time Password (OTP) to your registered email address <strong>{user?.email}</strong>.
+                                </p>
+                                <button
+                                    onClick={handleSendOtp}
+                                    disabled={resetLoading}
+                                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {resetLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                                    Send Verification Code
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <p className="text-sm text-green-600 dark:text-green-400 mb-2">
+                                    OTP Sent! Please check your inbox.
+                                </p>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest block mb-1">Enter OTP</label>
+                                    <input
+                                        type="text"
+                                        value={resetOtp}
+                                        onChange={(e) => setResetOtp(e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm text-gray-900 dark:text-white focus:border-primary outline-none text-center tracking-[0.5em] font-mono font-bold"
+                                        placeholder="------"
+                                        maxLength={6}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest block mb-1">New Password</label>
+                                    <input
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-sm text-gray-900 dark:text-white focus:border-primary outline-none"
+                                        placeholder="Enter new password"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleResetPassword}
+                                    disabled={resetLoading}
+                                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                                >
+                                    {resetLoading ? 'Verifying...' : 'Verify & Reset Password'}
+                                </button>
+                                <button
+                                    onClick={() => setResetStep(1)}
+                                    className="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-primary mt-2"
+                                >
+                                    Resend OTP
+                                </button>
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
             )}
         </AnimatePresence>,
         document.body

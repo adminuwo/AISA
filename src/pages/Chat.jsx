@@ -26,7 +26,7 @@ import { getUserData, sessionsData, toggleState } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 
 
-const WELCOME_MESSAGE = "Hello! I’m AISA, your Artificial Intelligence Super Assistant.";
+const WELCOME_MESSAGE = "Hello! I’m AISA™, your Artificial Intelligence Super Assistant.";
 
 const FEEDBACK_PROMPTS = {
   en: [
@@ -104,7 +104,7 @@ const Chat = () => {
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [filePreviews, setFilePreviews] = useState([]);
-  const [activeAgent, setActiveAgent] = useState({ name: 'AISA', category: 'General' });
+  const [activeAgent, setActiveAgent] = useState({ name: 'AISA™', category: 'General' });
   const [userAgents, setUserAgents] = useState([]);
   const [toolModels, setToolModels] = useState({
     chat: 'gemini-flash',
@@ -173,7 +173,7 @@ const Chat = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isAttachMenuOpen]);
+  }, [isAttachMenuOpen, isToolsMenuOpen]);
 
   const processFile = (file) => {
     if (!file) return;
@@ -743,18 +743,21 @@ const Chat = () => {
 
       try {
         // Send message with deep search context
-        const response = await generateChatResponse(query, {
-          mode: 'deep-search',
-          context: [...messages.map(m => ({ role: m.role || 'user', content: m.text || m.content })), { role: 'user', content: query }]
-        }, selectedModel);
+        const responseData = await generateChatResponse(
+          messages,
+          query,
+          "DEEP SEARCH MODE ENABLED: Analyze the web search results comprehensively.",
+          [],
+          currentLang
+        );
 
-        if (response) {
+        if (responseData && responseData.reply) {
           // Add the deep search result
           const searchMessage = {
             id: Date.now().toString(),
             type: 'ai',
-            text: response,
-            content: response,
+            text: responseData.reply,
+            content: responseData.reply,
             timestamp: new Date(),
           };
 
@@ -1511,8 +1514,7 @@ REQUIRED OUTPUT FORMAT:
 5.  **Emojis**: Use relevant emojis.
 
 ${caps.canUploadImages ? `IMAGE ANALYSIS CAPABILITIES:
-- You have the ability to see and analyze images provided by the user.
-- If the user asks for an image, use Pollinations API: ![Image](https://image.pollinations.ai/prompt/{URL_ENCODED_DESCRIPTION}?nologo=true)` : ''}
+- You have the ability to see and analyze images provided by the user.` : ''}
 
 ${caps.canUploadDocs ? `DOCUMENT ANALYSIS CAPABILITIES:
 - You can process and extract text from PDF, Word (Docx), and Excel files provided as attachments.` : ''}
@@ -2571,19 +2573,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         >
           {messages.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pb-32 md:pb-40 animate-in fade-in duration-700">
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 mb-8 group cursor-default">
-                {/* Ambient Glow */}
-                <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl opacity-50 group-hover:opacity-70 transition-opacity duration-700" />
-
-                {/* Main Container */}
-                <div className="relative w-full h-full bg-surface/80 backdrop-blur-xl rounded-full flex items-center justify-center overflow-hidden border border-white/20 shadow-2xl ring-1 ring-black/5">
-                  <img
-                    src={activeAgent?.avatar || '/AGENTS_IMG/AISA_BRAIN_LOGO.png'}
-                    alt="AI"
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.target.src = '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }}
-                  />
-                </div>
+              <div className="mb-6 hover:scale-110 transition-transform duration-300">
+                <img
+                  src="/logo/Logo.svg"
+                  alt="AISA Icon"
+                  className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-2xl"
+                />
               </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-maintext tracking-tight max-w-2xl leading-relaxed drop-shadow-sm px-4">
                 {WELCOME_MESSAGE}
@@ -3290,7 +3285,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
         {/* Input */}
         <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-2 md:p-4 bg-transparent z-20">
-          <div className="max-w-3xl mx-auto relative">
+          <div className="max-w-2xl mx-auto relative">
 
             {/* File Preview Area */}
             {filePreviews.length > 0 && (
@@ -3339,7 +3334,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               </div>
             )}
 
-            <form onSubmit={handleSendMessage} className="relative w-full max-w-5xl mx-auto flex items-end gap-2 bg-white dark:bg-[#0a0a0a] border border-black/5 dark:border-white/10 rounded-[32px] p-2 shadow-[0_8px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.2)] transition-all duration-300 hover:shadow-[0_12px_50px_rgba(0,0,0,0.12)] hover:border-primary/20 backdrop-blur-3xl">
+            <form onSubmit={handleSendMessage} className="relative w-full max-w-2xl mx-auto flex items-end gap-1.5 bg-white dark:bg-[#0a0a0a] border border-black/5 dark:border-white/10 rounded-2xl p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:border-primary/20 backdrop-blur-3xl">
               <input
                 id="file-upload"
                 type="file"
@@ -3435,7 +3430,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   type="button"
                   ref={attachBtnRef}
                   onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${isAttachMenuOpen ? 'bg-primary text-white rotate-45' : 'bg-secondary hover:bg-primary/10 text-subtext hover:text-primary'}`}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${isAttachMenuOpen ? 'bg-primary text-white rotate-45' : 'bg-secondary hover:bg-primary/10 text-subtext hover:text-primary'}`}
                   title="Add to chat"
                 >
                   <Plus className="w-5 h-5" />
@@ -3447,7 +3442,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     type="button"
                     ref={toolsBtnRef}
                     onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${isToolsMenuOpen || isImageGeneration || isDeepSearch || isAudioConvertMode ? 'bg-primary/10 text-primary scale-110' : 'bg-transparent text-subtext hover:text-primary hover:bg-secondary'}`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${isToolsMenuOpen || isImageGeneration || isDeepSearch || isAudioConvertMode ? 'bg-primary/10 text-primary scale-110' : 'bg-transparent text-subtext hover:text-primary hover:bg-secondary'}`}
                     title="AI Capabilities"
                   >
                     <Sparkles className="w-5 h-5" />
@@ -3606,7 +3601,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       <button
                         type="button"
                         onClick={() => setIsLiveMode(true)}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors"
                         title="Live Video Call"
                       >
                         <Video className="w-5 h-5" />
@@ -3617,7 +3612,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       <button
                         type="button"
                         onClick={handleVoiceInput}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isListening ? 'bg-red-500 text-white' : 'text-subtext hover:text-primary hover:bg-secondary'}`}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${isListening ? 'bg-red-500 text-white' : 'text-subtext hover:text-primary hover:bg-secondary'}`}
                         title="Voice Input"
                       >
                         <Mic className="w-5 h-5" />
@@ -3634,7 +3629,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       setIsLoading(false);
                       isSendingRef.current = false;
                     }}
-                    className="w-11 h-11 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 hover:scale-105 transition-all"
+                    className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 hover:scale-105 transition-all"
                   >
                     <div className="w-3 h-3 bg-white rounded-sm" />
                   </button>
@@ -3644,7 +3639,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       <button
                         type="button"
                         onClick={handleUndo}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors"
                         title="Undo"
                       >
                         <Undo2 className="w-5 h-5" />
@@ -3653,7 +3648,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     <button
                       type="submit"
                       disabled={(!inputValue.trim() && filePreviews.length === 0) || isLoading}
-                      className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg ${(!inputValue.trim() && filePreviews.length === 0) ? 'bg-secondary text-subtext/50 shadow-none' : 'bg-gradient-to-tr from-primary to-indigo-600 text-white shadow-primary/30 hover:scale-105 hover:shadow-primary/40'}`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg ${(!inputValue.trim() && filePreviews.length === 0) ? 'bg-secondary text-subtext/50 shadow-none' : 'bg-gradient-to-tr from-primary to-indigo-600 text-white shadow-primary/30 hover:scale-105 hover:shadow-primary/40'}`}
                     >
                       <Send className="w-5 h-5 ml-0.5" />
                     </button>

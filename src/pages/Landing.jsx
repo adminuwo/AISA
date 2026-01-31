@@ -80,17 +80,20 @@ const Landing = () => {
     const btnClass = "px-8 py-4 bg-surface border border-border rounded-2xl font-bold text-lg text-maintext hover:bg-secondary transition-all duration-300 flex items-center justify-center gap-2";
 
     return (
-        <div
-            className="min-h-screen flex flex-col relative overflow-hidden bg-white dark:bg-slate-950"
-            style={{
-                backgroundImage: "url('/hero-bg.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundAttachment: 'fixed'
-            }}
-        >
+        <div className="min-h-screen flex flex-col relative overflow-hidden bg-white dark:bg-slate-950">
+            {/* Background Image Layer with reduced opacity */}
+            <div
+                className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20"
+                style={{
+                    backgroundImage: "url('/hero-bg.png')",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundAttachment: 'fixed'
+                }}
+            />
+
             {/* Background Overlay - Balanced Gradient (Top & Bottom) */}
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-600/20 via-white/20 to-blue-600/20 dark:from-slate-950/40 dark:via-slate-950/60 dark:to-slate-950/40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-100/40 via-transparent to-blue-100/40 dark:from-slate-950/80 dark:via-transparent dark:to-slate-950/80 pointer-events-none" />
 
             {/* Header */}
             <header className="relative z-10 px-4 py-4 md:px-6 md:py-6 flex justify-between items-center max-w-7xl mx-auto w-full">
@@ -163,7 +166,7 @@ const Landing = () => {
                     className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-black/40 border border-blue-200 dark:border-blue-900 text-sm text-black dark:text-white mb-8 backdrop-blur-sm"
                 >
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                    Powered by UWO
+                    Powered by UWO™
                 </motion.div>
 
                 <motion.h1
@@ -197,7 +200,7 @@ const Landing = () => {
                         onClick={() => navigate("/dashboard/chat/new")}
                         className="px-8 py-4 bg-primary rounded-2xl font-bold text-lg text-white shadow-xl shadow-primary/30 hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
                     >
-                        Explore AISA
+                        Explore AISA™
                     </motion.button>
 
                     {!user && (
@@ -269,12 +272,13 @@ const Landing = () => {
 
                             <div className="flex items-center gap-3 flex-wrap">
                                 {[
-                                    { img: "/icons-new/linkedin.avif", href: "https://www.linkedin.com/in/aimall-global/", label: "LinkedIn" },
-                                    { img: "/icons-new/twitter.jpg", href: "https://x.com/aimallglobal", label: "Twiter" },
-                                    { img: "/icons-new/facebook.png", href: "https://www.facebook.com/aimallglobal/", label: "Facebook" },
-                                    { img: "/icons-new/instagram.jpg", href: "https://www.instagram.com/aimall.global/", label: "Instagram" },
-                                    { img: "/icons-new/youtube.png", href: "https://www.youtube.com/@aimallglobal", label: "YouTube" },
-                                    { img: "/icons-new/whatsapp.avif", href: "https://api.whatsapp.com/send?phone=918359890909", label: "WhatsApp" }
+                                    { img: "/social-media-icons/Linkedin.svg", href: "https://www.linkedin.com/in/aimall-global/", label: "LinkedIn" },
+                                    { img: "/social-media-icons/X.svg", href: "https://x.com/aimallglobal", label: "Twiter" },
+                                    { img: "/social-media-icons/FB.svg", href: "https://www.facebook.com/aimallglobal/", label: "Facebook" },
+                                    { img: "/social-media-icons/Threads.svg", href: "https://www.threads.net/@aimall.global", label: "Threads" },
+                                    { img: "/social-media-icons/Insta.svg", href: "https://www.instagram.com/aimall.global/", label: "Instagram" },
+                                    { img: "/social-media-icons/YT.svg", href: "https://www.youtube.com/@aimallglobal", label: "YouTube" },
+                                    { img: "/social-media-icons/Whatsapp.svg", href: "https://api.whatsapp.com/send?phone=918359890909", label: "WhatsApp" }
                                 ].map((social, i) => (
                                     <a
                                         key={i}

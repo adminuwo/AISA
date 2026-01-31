@@ -209,4 +209,32 @@ export const chatStorageService = {
   async createSession() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   },
+
+  async updateSessionTitle(sessionId, title) {
+    // 1. Update Local (IndexedDB)
+    try {
+      const metaKey = `chat_meta_${sessionId}`;
+      const existingMeta = (await idbGet(metaKey)) || {};
+      const meta = {
+        ...existingMeta,
+        title: title,
+        lastModified: Date.now(),
+      };
+      await idbSet(metaKey, meta);
+    } catch (localErr) {
+      console.error("Local title update failed:", localErr);
+    }
+
+    // 2. Update Backend
+    try {
+      const token = getUserData()?.token || localStorage.getItem("token");
+      if (token) {
+        await axios.patch(`${API_BASE_URL}/chat/${sessionId}/title`, { title }, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+    } catch (error) {
+      console.warn("Backend title update failed:", error);
+    }
+  },
 };

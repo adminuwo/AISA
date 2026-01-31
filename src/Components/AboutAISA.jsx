@@ -11,12 +11,12 @@ const AboutAISA = ({ isOpen, onClose }) => {
         {
             title: "Core Intelligence",
             icon: <Bot className="w-5 h-5 text-blue-500" />,
-            content: "AISA is powered by advanced AI systems enabling context-aware conversations, multi-modal understanding, intelligent document processing, and real-time visual & voice interaction."
+            content: "AISA™ is powered by advanced AI systems enabling context-aware conversations, multi-modal understanding, intelligent document processing, and real-time visual & voice interaction."
         },
         {
             title: "Why AISA Exists",
             icon: <Sparkles className="w-5 h-5 text-purple-500" />,
-            content: "Modern users juggle too many tools. AISA solves this by offering one AI for all tasks: faster workflows, smarter understanding, and real-world usability."
+            content: "Modern users juggle too many tools. AISA™ solves this by offering one AI for all tasks: faster workflows, smarter understanding, and real-world usability."
         }
     ];
 
@@ -150,7 +150,7 @@ const AboutAISA = ({ isOpen, onClose }) => {
                         }}
                         className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                     >
-                        Explore AISA
+                        Explore AISA™
                     </button>
                 </div>
 
