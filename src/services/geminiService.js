@@ -62,6 +62,9 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
             if (detail) return `System Busy (429): ${detail}`;
             return "The A-Series system is currently busy (Quota limit reached). Please wait 60 seconds and try again.";
         }
+        if (error.response?.status === 401) {
+            return "Please [Log In](/login) to your AISA™ account to continue chatting.";
+        }
         // Return backend error message if available
         if (error.response?.data?.error) {
             return `System Message: ${error.response.data.error}`;
