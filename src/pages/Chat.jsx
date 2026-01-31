@@ -2713,65 +2713,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </div>
                       )}
 
-                      {/* Video Display */}
-                      {msg.videoUrl && (
-                        <div className="flex flex-col gap-3 mb-3 mt-1">
-                          <div className="relative group/video overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-[400px] bg-black">
-                            <video
-                              src={msg.videoUrl}
-                              controls
-                              className="w-full h-auto max-h-[500px] object-contain"
-                              autoPlay={false}
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownload(msg.videoUrl, `video-${msg.id}.mp4`);
-                              }}
-                              className="absolute top-2 right-2 p-2 bg-black/40 text-white rounded-full opacity-0 group-hover/video:opacity-100 transition-all hover:bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center"
-                              title="Download"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Image Display */}
-                      {msg.imageUrl && (
-                        <div className="flex flex-col gap-3 mb-3 mt-1">
-                          <div className="relative group/generated overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-full w-fit bg-black/5">
-                            <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Image</span>
-                              </div>
-                            </div>
-                            <img
-                              src={msg.imageUrl}
-                              alt="Generated Image"
-                              className="w-full h-auto max-h-[500px] object-contain"
-                              loading="lazy"
-                              onError={(e) => {
-                                e.target.src = 'https://placehold.co/600x400?text=Image+Failed+to+Load';
-                              }}
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownload(msg.imageUrl, `image-${msg.id}.png`);
-                              }}
-                              className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-0 group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-90 group-hover/generated:scale-100"
-                              title="Download"
-                            >
-                              <div className="flex items-center gap-2 px-1">
-                                <Download className="w-4 h-4" />
-                                <span className="text-[10px] font-bold uppercase">Download</span>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-                      )}
+
+
 
 
                       {editingMessageId === msg.id ? (
