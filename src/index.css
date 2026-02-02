@@ -237,31 +237,24 @@
   font-family: 'Outfit', sans-serif !important;
 }
 
+.font-serif {
+  font-family: 'Playfair Display', serif !important;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
 :root {
   --aisa-font-size: 16px;
   --aisa-scale: 1;
 }
 
-.aisa-scalable-text {
+/* Global Scaling System */
+html {
   font-size: var(--aisa-font-size) !important;
 }
 
-/* Ensure common elements scale */
-.aisa-scalable-text h1 {
-  font-size: calc(1.5em * var(--aisa-scale)) !important;
-}
-
-.aisa-scalable-text h2 {
-  font-size: calc(1.3em * var(--aisa-scale)) !important;
-}
-
-.aisa-scalable-text h3 {
-  font-size: calc(1.1em * var(--aisa-scale)) !important;
-}
-
-.aisa-scalable-text p,
-.aisa-scalable-text li,
-.aisa-scalable-text code,
-.aisa-scalable-text textarea {
-  font-size: 1em !important;
+.aisa-scalable-text {
+  /* Inherits from root html scaling */
 }

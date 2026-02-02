@@ -74,18 +74,18 @@ export default function VerificationForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans selection:bg-cyan-100 bg-[#f8fafc] dark:bg-[#020617]">
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden selection:bg-primary/20 bg-[#f8fafc] dark:bg-[#020617] aisa-scalable-text">
             {/* Background Blobs */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <motion.div
                     animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.2, 1] }}
                     transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[-5%] right-[-5%] w-[50%] h-[50%] bg-blue-400/20 dark:bg-blue-500/10 blur-[140px] rounded-full"
+                    className="absolute top-[-5%] right-[-5%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 blur-[140px] rounded-full"
                 />
                 <motion.div
                     animate={{ x: [0, -80, 0], y: [0, -40, 0], scale: [1, 1.1, 1] }}
                     transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-[-5%] left-[-5%] w-[50%] h-[50%] bg-purple-400/20 dark:bg-purple-500/10 blur-[140px] rounded-full"
+                    className="absolute bottom-[-5%] left-[-5%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 blur-[140px] rounded-full"
                 />
             </div>
 
@@ -97,17 +97,17 @@ export default function VerificationForm() {
                 >
                     {/* Header */}
                     <div className="mb-10">
-                        <div className="inline-flex items-center justify-center p-5 bg-blue-600 rounded-[2rem] mb-6 shadow-xl shadow-blue-600/20">
+                        <div className="inline-flex items-center justify-center p-5 bg-primary rounded-[2rem] mb-6 shadow-xl shadow-primary/20">
                             <Mail className="w-8 h-8 text-white" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter uppercase italic">Verify Your Email</h2>
+                        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter uppercase">Verify Your Email</h2>
                         <div className="flex flex-col items-center gap-1">
                             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
                                 We've sent a 6-digit code to
                             </p>
                             <div className="flex items-center gap-2 px-3 py-1 bg-white/40 dark:bg-white/5 rounded-full border border-white/40 dark:border-white/10 mt-1">
                                 <span className="text-xs font-bold text-slate-700 dark:text-white">{email}</span>
-                                <Link to="/signup" className="p-1 hover:bg-white/40 dark:hover:bg-white/10 rounded-full transition-colors text-blue-600">
+                                <Link to="/signup" className="p-1 hover:bg-white/40 dark:hover:bg-white/10 rounded-full transition-colors text-primary">
                                     <Pencil className="w-3 h-3" />
                                 </Link>
                             </div>
@@ -130,10 +130,12 @@ export default function VerificationForm() {
                     </AnimatePresence>
 
                     {/* Form */}
-                    <form onSubmit={handleVerify} className="space-y-8">
+                    <form onSubmit={handleVerify} className="space-y-8" autoComplete="off">
                         <div className="relative">
                             <input
                                 type="text"
+                                name="otp"
+                                autoComplete="one-time-code"
                                 maxLength={6}
                                 required
                                 value={verificationCode}
@@ -154,8 +156,8 @@ export default function VerificationForm() {
                             whileTap={{ scale: 0.98 }}
                             type="submit"
                             disabled={loading || verificationCode.length !== 6}
-                            className="w-full py-4.5 bg-blue-600 rounded-3xl font-black text-sm uppercase tracking-widest text-white shadow-xl shadow-blue-600/30 
-                                 hover:shadow-blue-600/50 transition-all duration-300 
+                            className="w-full py-4.5 bg-primary rounded-3xl font-black text-sm uppercase tracking-widest text-white shadow-xl shadow-primary/30 
+                                 hover:shadow-primary/50 transition-all duration-300 
                                  disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
                         >
                             {loading ? (
@@ -177,7 +179,7 @@ export default function VerificationForm() {
                             type="button"
                             onClick={handleResend}
                             disabled={resendLoading}
-                            className="text-blue-600 hover:underline text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                            className="text-primary hover:underline text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
                         >
                             {resendLoading ? 'Sending...' : 'Request New Code'}
                         </button>

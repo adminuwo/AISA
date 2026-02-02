@@ -54,18 +54,18 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans selection:bg-cyan-100 bg-[#f8fafc] dark:bg-[#020617]">
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden selection:bg-primary/20 bg-[#f8fafc] dark:bg-[#020617] aisa-scalable-text">
             {/* Background Blobs */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <motion.div
                     animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.2, 1] }}
                     transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[-5%] right-[-5%] w-[50%] h-[50%] bg-pink-400/20 dark:bg-pink-500/10 blur-[140px] rounded-full"
+                    className="absolute top-[-5%] right-[-5%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 blur-[140px] rounded-full"
                 />
                 <motion.div
                     animate={{ x: [0, -80, 0], y: [0, -40, 0], scale: [1, 1.1, 1] }}
                     transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-[-5%] left-[-5%] w-[50%] h-[50%] bg-blue-400/20 dark:bg-blue-500/10 blur-[140px] rounded-full"
+                    className="absolute bottom-[-5%] left-[-5%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 blur-[140px] rounded-full"
                 />
             </div>
 
@@ -77,10 +77,10 @@ const ForgotPassword = () => {
                 >
                     {/* Header */}
                     <div className="mb-10">
-                        <div className={`inline-flex items-center justify-center p-5 rounded-[2rem] mb-6 shadow-xl transition-all duration-500 ${step === 1 ? 'bg-blue-600 shadow-blue-600/20' : 'bg-green-600 shadow-green-600/20'}`}>
+                        <div className={`inline-flex items-center justify-center p-5 rounded-[2rem] mb-6 shadow-xl transition-all duration-500 ${step === 1 ? 'bg-primary shadow-primary/20' : 'bg-green-600 shadow-green-600/20'}`}>
                             {step === 1 ? <ShieldCheck className="w-8 h-8 text-white" /> : <Key className="w-8 h-8 text-white" />}
                         </div>
-                        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter uppercase italic">
+                        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter uppercase">
                             {step === 1 ? 'Reset Password' : 'Verify & Reset'}
                         </h2>
                         <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -97,10 +97,11 @@ const ForgotPassword = () => {
                                 exit={{ opacity: 0, x: 20 }}
                                 onSubmit={handleSendOTP}
                                 className="space-y-6"
+                                autoComplete="off"
                             >
                                 <div className="relative group">
                                     <div className="absolute inset-0 bg-white/30 dark:bg-slate-900/40 rounded-2xl blur-sm transition-all group-focus-within:bg-white/50 dark:group-focus-within:bg-slate-900/60" />
-                                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
+                                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary transition-colors z-10" />
                                     <input
                                         type="email"
                                         value={email}
@@ -116,7 +117,7 @@ const ForgotPassword = () => {
                                     whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-4.5 bg-blue-600 rounded-3xl font-black text-sm uppercase tracking-widest text-white shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+                                    className="w-full py-4.5 bg-primary rounded-3xl font-black text-sm uppercase tracking-widest text-white shadow-xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
                                 >
                                     {loading ? <Loader className="w-5 h-5 animate-spin" /> : <><span>Send OTP</span> <ArrowRight className="w-4 h-4" /></>}
                                 </motion.button>
@@ -129,11 +130,14 @@ const ForgotPassword = () => {
                                 exit={{ opacity: 0, x: -20 }}
                                 onSubmit={handleResetPassword}
                                 className="space-y-6 text-left"
+                                autoComplete="off"
                             >
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-2">Verification Code</label>
                                     <input
                                         type="text"
+                                        name="otp"
+                                        autoComplete="one-time-code"
                                         maxLength={6}
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -149,6 +153,8 @@ const ForgotPassword = () => {
                                         <Key className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-green-500 transition-colors z-10" />
                                         <input
                                             type={showPassword ? 'text' : 'password'}
+                                            name="new-password"
+                                            autoComplete="new-password"
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             placeholder="••••••••"

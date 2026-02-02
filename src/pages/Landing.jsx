@@ -97,7 +97,7 @@ const Landing = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col relative overflow-hidden bg-white dark:bg-slate-950">
+        <div className="min-h-screen flex flex-col relative overflow-hidden bg-white dark:bg-slate-950 aisa-scalable-text">
             {/* Background Image Layer with reduced opacity */}
             <motion.div
                 initial={{ scale: 1 }}
@@ -117,7 +117,7 @@ const Landing = () => {
             />
 
             {/* Background Overlay - Balanced Gradient (Top & Bottom) */}
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-100/40 via-transparent to-blue-100/40 dark:from-slate-950/80 dark:via-transparent dark:to-slate-950/80 pointer-events-none z-0" />
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10 dark:from-slate-950/80 dark:via-transparent dark:to-slate-950/80 pointer-events-none z-0" />
 
             {/* Header */}
             <header className="relative z-10 px-4 py-4 md:px-6 md:py-6 flex justify-between items-center max-w-7xl mx-auto w-full">
@@ -127,6 +127,7 @@ const Landing = () => {
                     className="relative flex items-center gap-2 md:gap-3 cursor-pointer group"
                 >
                     <img src="/logo/Logo.svg" alt="Logo" className="w-12 h-12 md:w-20 md:h-20 object-contain hover:rotate-12 transition-transform duration-300" />
+                    <span className="text-2xl font-bold text-primary tracking-tighter hidden sm:block">AISA <sup className="text-xs">TM</sup></span>
                 </motion.div>
 
                 <motion.div
@@ -186,9 +187,9 @@ const Landing = () => {
             >
                 <motion.div
                     variants={item}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-black/40 border border-blue-200 dark:border-blue-900 text-sm text-black dark:text-white mb-8 backdrop-blur-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-black/40 border border-primary/20 text-sm text-black dark:text-white mb-8 backdrop-blur-sm"
                 >
-                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                     {t('poweredByUWO')}
                 </motion.div>
 
@@ -261,7 +262,7 @@ const Landing = () => {
                             <motion.div
                                 key={i}
                                 variants={item}
-                                whileHover={{ y: -10, scale: 1.02, borderColor: "rgba(59, 130, 246, 0.4)" }}
+                                whileHover={{ y: -10, scale: 1.02, borderColor: "var(--primary)" }}
                                 className="p-6 rounded-3xl bg-white/50 dark:bg-[#161B2E] border border-white/50 dark:border-white/5 shadow-sm hover:shadow-xl transition-all group backdrop-blur-sm cursor-default"
                             >
                                 <motion.div
@@ -289,11 +290,15 @@ const Landing = () => {
                 transition={{ duration: 1, ease: "easeOut" }}
                 className="w-full bg-white/40 dark:bg-[#0B0F19] border-t border-white/20 dark:border-white/5 mt-20 relative z-10 backdrop-blur-xl rounded-t-[3rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] overflow-hidden"
             >
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-50/50 to-transparent dark:from-slate-900/40 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent dark:from-slate-900/40 pointer-events-none" />
                 <div className="max-w-6xl mx-auto px-6 pt-20 pb-10 relative z-10">
                     <div className="flex flex-col lg:flex-row justify-center gap-10 lg:gap-20 mb-12">
                         {/* Brand Column */}
                         <div className="space-y-6 max-w-sm">
+                            <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                                <img src="/logo/Logo.svg" alt="AISA Logo" className="w-12 h-12 object-contain group-hover:rotate-12 transition-transform duration-300" />
+                                <span className="text-xl font-bold text-primary tracking-tighter">AISA <sup className="text-[10px]">TM</sup></span>
+                            </div>
 
                             <div className="flex items-center gap-3 flex-wrap">
                                 {[
@@ -327,7 +332,7 @@ const Landing = () => {
 
                         {/* Support Column */}
                         <div>
-                            <h4 className="text-sm font-bold text-black dark:text-gray-200 uppercase tracking-widest mb-6">{t('support')}</h4>
+                            <h4 className="text-sm font-bold text-primary uppercase tracking-widest mb-6">{t('support')}</h4>
                             <ul className="space-y-4">
                                 {[
                                     { label: t('helpCenter'), onClick: () => setIsFaqOpen(true) },
@@ -337,7 +342,7 @@ const Landing = () => {
                                         {link.onClick ? (
                                             <button
                                                 onClick={link.onClick}
-                                                className="text-sm text-black dark:text-white hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium"
+                                                className="text-sm text-maintext hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium opacity-80 hover:opacity-100"
                                             >
                                                 {link.label}
                                             </button>
@@ -356,7 +361,7 @@ const Landing = () => {
 
                         {/* Contact Column */}
                         <div className="space-y-6">
-                            <h4 className="text-sm font-bold text-black dark:text-gray-200 uppercase tracking-widest mb-6">{t('contact')}</h4>
+                            <h4 className="text-sm font-bold text-primary uppercase tracking-widest mb-6">{t('contact')}</h4>
                             <div className="space-y-4">
                                 <a
                                     href="https://www.google.com/maps/search/?api=1&query=Jabalpur+Madhya+Pradesh"
@@ -365,7 +370,7 @@ const Landing = () => {
                                     className="flex items-start gap-3 group"
                                 >
                                     <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                                    <p className="text-sm text-black dark:text-white leading-relaxed group-hover:text-primary transition-colors">
+                                    <p className="text-sm text-maintext leading-relaxed group-hover:text-primary transition-colors opacity-80">
                                         {t('city')}
                                     </p>
                                 </a>
@@ -374,7 +379,7 @@ const Landing = () => {
                                     className="flex items-center gap-3 group"
                                 >
                                     <Mail className="w-5 h-5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm text-black dark:text-white group-hover:text-primary group-hover:underline decoration-primary underline-offset-4 transition-all font-medium">
+                                    <span className="text-sm text-maintext group-hover:text-primary group-hover:underline decoration-primary underline-offset-4 transition-all font-medium opacity-80">
                                         admin@uwo24.com
                                     </span>
                                 </a>
@@ -383,7 +388,7 @@ const Landing = () => {
                                     className="flex items-center gap-3 group"
                                 >
                                     <Phone className="w-5 h-5 text-primary shrink-0 group-hover:scale-110 transition-transform" />
-                                    <span className="text-sm text-black dark:text-white group-hover:text-primary transition-colors font-medium">
+                                    <span className="text-sm text-maintext group-hover:text-primary transition-colors font-medium opacity-80">
                                         +91 83589 90909
                                     </span>
                                 </a>
@@ -393,13 +398,13 @@ const Landing = () => {
 
                     {/* Bottom Bar */}
                     <div className="pt-10 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-                        <p className="text-xs text-black dark:text-white font-medium">
+                        <p className="text-xs text-maintext font-medium opacity-80">
                             © {new Date().getFullYear()} {name} <sup className="text-xs">TM</sup>. {t('allRightsReserved')}
                         </p>
                         <div className="flex items-center gap-8">
-                            <button onClick={() => setIsPrivacyModalOpen(true)} className="text-xs text-black dark:text-white hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium">{t('privacyPolicy')}</button>
-                            <button onClick={() => setIsTermsModalOpen(true)} className="text-xs text-black dark:text-white hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium">{t('termsOfService')}</button>
-                            <button onClick={() => setIsCookieModalOpen(true)} className="text-xs text-black dark:text-white hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium">{t('cookiePolicy')}</button>
+                            <button onClick={() => setIsPrivacyModalOpen(true)} className="text-xs text-maintext hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium opacity-80 hover:opacity-100">{t('privacyPolicy')}</button>
+                            <button onClick={() => setIsTermsModalOpen(true)} className="text-xs text-maintext hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium opacity-80 hover:opacity-100">{t('termsOfService')}</button>
+                            <button onClick={() => setIsCookieModalOpen(true)} className="text-xs text-maintext hover:text-primary hover:underline decoration-primary underline-offset-4 transition-all font-medium opacity-80 hover:opacity-100">{t('cookiePolicy')}</button>
                         </div>
                     </div>
                 </div>
@@ -414,13 +419,13 @@ const Landing = () => {
                                 <div className="flex gap-4">
                                     <button
                                         onClick={() => setActiveTab('faq')}
-                                        className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'faq' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                                        className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'faq' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                                     >
                                         {t('faq')}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('help')}
-                                        className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'help' ? 'bg-blue-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                                        className={`text-lg font-bold px-4 py-2 rounded-lg transition-colors ${activeTab === 'help' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                                     >
                                         {t('help')}
                                     </button>
@@ -438,14 +443,14 @@ const Landing = () => {
                                     <>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{t('faqSubtitle')}</p>
                                         {faqs.map((faq, index) => (
-                                            <div key={index} className="border border-gray-200 dark:border-white/5 rounded-xl bg-white dark:bg-[#121624] overflow-hidden hover:border-blue-300 dark:hover:border-primary/30 transition-all">
+                                            <div key={index} className="border border-gray-200 dark:border-white/5 rounded-xl bg-white dark:bg-[#121624] overflow-hidden hover:border-primary/30 transition-all">
                                                 <button
                                                     onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
                                                     className="w-full flex justify-between items-center p-4 text-left hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors focus:outline-none"
                                                 >
                                                     <span className="font-semibold text-gray-900 dark:text-white text-[15px]">{faq.question}</span>
                                                     {openFaqIndex === index ? (
-                                                        <ChevronUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                        <ChevronUp className="w-4 h-4 text-primary" />
                                                     ) : (
                                                         <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                                     )}
@@ -468,7 +473,7 @@ const Landing = () => {
                                                 <select
                                                     value={issueType}
                                                     onChange={(e) => setIssueType(e.target.value)}
-                                                    className="w-full p-4 pr-10 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-blue-600 dark:focus:border-blue-400 outline-none appearance-none text-gray-900 dark:text-white font-medium cursor-pointer hover:border-blue-400 transition-colors"
+                                                    className="w-full p-4 pr-10 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-primary outline-none appearance-none text-gray-900 dark:text-white font-medium cursor-pointer hover:border-primary/40 transition-colors"
                                                 >
                                                     {issueOptions.map((opt) => (
                                                         <option key={opt} value={opt}>{opt}</option>
@@ -480,7 +485,7 @@ const Landing = () => {
                                         <div>
                                             <label className="block text-sm font-bold text-gray-900 dark:text-white mb-2">{t('describeYourIssue')}</label>
                                             <textarea
-                                                className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-blue-600 dark:focus:border-blue-400 outline-none resize-none text-gray-900 dark:text-white min-h-[150px]"
+                                                className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-primary outline-none resize-none text-gray-900 dark:text-white min-h-[150px]"
                                                 placeholder={t('issuePlaceholder')}
                                                 value={issueText}
                                                 onChange={(e) => setIssueText(e.target.value)}
@@ -489,7 +494,7 @@ const Landing = () => {
                                         <button
                                             onClick={handleSupportSubmit}
                                             disabled={isSending || !issueText.trim()}
-                                            className={`flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20 ${isSending || !issueText.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+                                            className={`flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 ${isSending || !issueText.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
                                         >
                                             {isSending ? (
                                                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -519,7 +524,7 @@ const Landing = () => {
                             <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 text-center">
                                 <button
                                     onClick={() => setIsFaqOpen(false)}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-blue-600/20"
+                                    className="px-6 py-2 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20"
                                 >
                                     {t('close')}
                                 </button>

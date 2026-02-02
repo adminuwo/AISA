@@ -55,23 +55,23 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans selection:bg-cyan-100 bg-[#f8fafc] dark:bg-[#020617]">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden selection:bg-primary/20 bg-[#f8fafc] dark:bg-[#020617] aisa-scalable-text">
       {/* Background Blobs for Glassmorphism Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-5%] right-[-5%] w-[50%] h-[50%] bg-cyan-400/20 dark:bg-cyan-500/10 blur-[140px] rounded-full"
+          className="absolute top-[-5%] right-[-5%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 blur-[140px] rounded-full"
         />
         <motion.div
           animate={{ x: [0, -80, 0], y: [0, -40, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[-5%] left-[-5%] w-[50%] h-[50%] bg-purple-400/20 dark:bg-purple-500/10 blur-[140px] rounded-full"
+          className="absolute bottom-[-5%] left-[-5%] w-[50%] h-[50%] bg-primary/20 dark:bg-primary/10 blur-[140px] rounded-full"
         />
         <motion.div
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-blue-400/10 dark:bg-blue-600/5 blur-[160px] rounded-full"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-primary/10 dark:bg-primary/5 blur-[160px] rounded-full"
         />
       </div>
 
@@ -84,15 +84,15 @@ const Signup = () => {
           initial={{ opacity: 0, scale: 0.95, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-50 w-full max-w-[420px]"
+          className="relative z-50 w-full max-w-[460px] transition-all"
         >
           {/* Main Glass Card */}
-          <div className="relative overflow-hidden bg-white/10 dark:bg-white/[0.02] backdrop-blur-[32px] border border-white/40 dark:border-white/10 p-10 rounded-[3.5rem] shadow-[0_32px_120px_-20px_rgba(0,0,0,0.1)] text-center ring-1 ring-white/20 transition-all hover:bg-white/20 dark:hover:bg-white/[0.04] group/card">
+          <div className="relative overflow-hidden bg-white/10 dark:bg-white/[0.04] backdrop-blur-[64px] border border-white/60 dark:border-white/10 p-10 rounded-[3.5rem] shadow-[0_32px_120px_-20px_rgba(0,0,0,0.12)] text-center ring-1 ring-white/30 transition-all hover:bg-white/15 dark:hover:bg-white/[0.06] group/card">
             {/* Glossy Reflection Effect */}
             <div className="absolute -top-[100%] -left-[100%] w-[300%] h-[300%] bg-gradient-to-br from-white/10 via-transparent to-transparent rotate-45 pointer-events-none transition-transform duration-1000 group-hover/card:translate-x-1/2 group-hover/card:translate-y-1/2" />
 
             <div className="text-center mb-10 relative">
-              <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-1.5 tracking-tighter uppercase italic">{t('createAccount')}</h2>
+              <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-1.5 tracking-tighter uppercase">{t('createAccount')}</h2>
               <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">{t('joinAISA')}</p>
             </div>
 
@@ -116,6 +116,8 @@ const Signup = () => {
                 <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-cyan-500 transition-colors z-10" />
                 <input
                   type="text"
+                  name="name"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Full Name"
@@ -130,6 +132,8 @@ const Signup = () => {
                 <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-cyan-500 transition-colors z-10" />
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email Address"
@@ -144,6 +148,8 @@ const Signup = () => {
                 <Key className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-cyan-500 transition-colors z-10" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Secure Password"
@@ -165,7 +171,7 @@ const Signup = () => {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-4 bg-blue-600 rounded-2xl font-bold text-lg text-white shadow-xl shadow-blue-600/30 transition-all duration-300 flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                className="w-full py-4 bg-primary rounded-2xl font-bold text-lg text-white shadow-xl shadow-primary/30 transition-all duration-300 flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -176,7 +182,7 @@ const Signup = () => {
             </form>
 
             <div className="mt-10 pt-8 border-t border-white/10 dark:border-slate-800/50 text-center text-xs font-bold text-slate-400 tracking-wide uppercase relative">
-              {t('alreadyHaveAccount')}? <Link to="/login" className="text-blue-600 hover:underline ml-1 uppercase tracking-widest font-black">{t('logIn')}</Link>
+              {t('alreadyHaveAccount')}? <Link to="/login" className="text-primary hover:underline ml-1 uppercase tracking-widest font-black">{t('logIn')}</Link>
             </div>
           </div>
 

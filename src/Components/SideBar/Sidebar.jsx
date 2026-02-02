@@ -70,9 +70,10 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [newTitle, setNewTitle] = useState("");
   const [isAdminHelpDeskOpen, setIsAdminHelpDeskOpen] = useState(false);
 
-  // Check if current user is admin - check both sources
+  // Check if current user is admin - MUST have token AND correct email
+  const token = getUserData()?.token;
   const userEmail = user?.email || getUserData()?.email;
-  const isAdmin = userEmail === 'admin@uwo24.com';
+  const isAdmin = token && userEmail === 'admin@uwo24.com';
 
 
 
@@ -117,7 +118,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     localStorage.clear();
     navigate(AppRoute.LANDING);
   };
-  const token = getUserData()?.token
+  // token is already declared above
 
   useEffect(() => {
     // User data
@@ -287,7 +288,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand */}
         <div className="p-4 flex items-center justify-between border-b border-white/10">
           <Link to="/">
-            <h1 className="text-xl font-bold text-primary">AISA <sup className="text-xs">TM</sup></h1>
+            <h1 className="text-xl font-bold text-primary drop-shadow-sm flex items-center gap-2">
+              AISA <sup className="text-[10px] opacity-70">TM</sup>
+            </h1>
           </Link>
 
 
@@ -319,7 +322,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div className="p-3">
             <button
               onClick={handleNewChat}
-              className="w-full bg-gradient-to-r from-[#5555ff] to-[#7777ff] hover:opacity-90 hover:scale-[1.02] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/25 text-sm border border-white/20"
+              className="w-full bg-primary hover:opacity-90 hover:scale-[1.02] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/25 text-sm border border-white/20"
             >
               <Plus className="w-4 h-4" /> {t('newChat')}
             </button>
@@ -329,7 +332,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
             {token ? (
               <>
-                <h3 className="px-4 py-2 text-xs font-semibold text-subtext uppercase tracking-wider">
+                <h3 className="px-4 py-2 text-xs font-bold text-primary/70 uppercase tracking-widest">
                   {t('history')}
                 </h3>
 
@@ -366,8 +369,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                             }}
                             className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-colors truncate pr-16
                             ${currentSessionId === session.sessionId
-                                ? 'bg-white/40 dark:bg-white/10 text-primary shadow-sm border border-white/20 dark:border-white/10'
-                                : 'text-subtext hover:bg-white/20 dark:hover:bg-white/5 hover:text-maintext'
+                                ? 'bg-primary/10 text-primary shadow-sm border border-primary/20'
+                                : 'text-subtext hover:bg-primary/5 hover:text-primary'
                               }
                           `}
                           >
@@ -647,10 +650,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       }
 
       {/* Admin Help Desk Modal */}
-      <AdminHelpDesk
-        isOpen={isAdminHelpDeskOpen}
-        onClose={() => setIsAdminHelpDeskOpen(false)}
-      />
+      {isAdmin && (
+        <AdminHelpDesk
+          isOpen={isAdminHelpDeskOpen}
+          onClose={() => setIsAdminHelpDeskOpen(false)}
+        />
+      )}
     </>
   );
 };

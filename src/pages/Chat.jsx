@@ -18,7 +18,7 @@ import LiveAI from '../Components/LiveAI';
 import ImageEditor from '../Components/ImageEditor';
 import ModelSelector from '../Components/ModelSelector';
 import axios from 'axios';
-import { apis, API } from '../types';
+import { apis } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
@@ -133,6 +133,7 @@ const Chat = () => {
   const [isImageGeneration, setIsImageGeneration] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isAudioConvertMode, setIsAudioConvertMode] = useState(false);
+  const [isDocumentConvert, setIsDocumentConvert] = useState(false);
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
   const inputRef = useRef(null); // Ref for textarea input
@@ -602,26 +603,17 @@ const Chat = () => {
       }
 
       setIsLoading(true);
-      setLoadingText("Generating Video... 🎥");
       isSendingRef.current = true; // Mark as sending
-
-      // Create User Message
-      const userMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: prompt,
-        timestamp: new Date(),
-      };
 
       // Show a message that video generation is in progress
       const newMessage = {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString(),
         type: 'ai',
         text: `🎬 Generating video from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`,
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, userMessage, newMessage]);
+      setMessages(prev => [...prev, newMessage]);
       inputRef.current.value = '';
 
       try {
@@ -636,8 +628,8 @@ const Chat = () => {
           // Add the generated video to the message
           const videoMessage = {
             id: Date.now().toString(),
-            role: 'model',
-            content: `🎬 Video generated successfully!`,
+            type: 'ai',
+            text: `🎥 Video generated successfully!`,
             videoUrl: response.data.videoUrl,
             timestamp: new Date(),
           };
@@ -676,51 +668,16 @@ const Chat = () => {
 
       const prompt = overridePrompt || inputRef.current.value;
       setIsLoading(true);
-      setLoadingText("Generating Image... 🎨");
-
-      // Handle Session Creation
-      let activeSessionId = currentSessionId;
-      let isFirstMessage = false;
-
-      if (activeSessionId === 'new') {
-        try {
-          activeSessionId = await chatStorageService.createSession();
-          isFirstMessage = true;
-        } catch (error) {
-          console.error("Failed to create session:", error);
-          toast.error("Failed to start new chat session");
-          return;
-        }
-      }
-
-      if (isFirstMessage) {
-        isNavigatingRef.current = true;
-        setCurrentSessionId(activeSessionId);
-        navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
-      }
-
-      // Create User Message
-      const userMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: prompt,
-        timestamp: Date.now(),
-      };
-
-      // Save User Message
-      if (activeSessionId && activeSessionId !== 'new') {
-        await chatStorageService.saveMessage(activeSessionId, userMessage);
-      }
 
       // Show a message that image generation is in progress
       const newMessage = {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString(),
         type: 'ai',
         text: `🎨 Generating image from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`,
-        timestamp: Date.now(),
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, userMessage, newMessage]);
+      setMessages(prev => [...prev, newMessage]);
       inputRef.current.value = '';
 
       try {
@@ -729,21 +686,15 @@ const Chat = () => {
           prompt: prompt
         });
 
-        const imageUrl = response.data.data || response.data.imageUrl;
-        if (imageUrl) {
+        if (response.data.imageUrl) {
           // Add the generated image to the message
           const imageMessage = {
             id: Date.now().toString(),
-            role: 'model',
-            content: `🖼️ Image generated successfully!`,
-            imageUrl: imageUrl,
-            timestamp: Date.now(),
+            type: 'ai',
+            text: `🖼️ Image generated successfully!`,
+            imageUrl: response.data.imageUrl,
+            timestamp: new Date(),
           };
-
-          // Save AI Message
-          if (activeSessionId && activeSessionId !== 'new') {
-            await chatStorageService.saveMessage(activeSessionId, imageMessage);
-          }
 
           setMessages(prev => {
             const updated = [...prev];
@@ -779,25 +730,16 @@ const Chat = () => {
 
       const query = inputRef.current.value;
       setIsLoading(true);
-      setLoadingText("Deep Searching... 🔍");
-
-      // Create User Message
-      const userMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: query,
-        timestamp: new Date(),
-      };
 
       // Show a message that deep search is in progress
       const newMessage = {
-        id: (Date.now() + 1).toString(),
+        id: Date.now().toString(),
         type: 'ai',
         text: `🔍 Performing deep search for: "${query}"\n\nSearching the web and analyzing results... This may take a moment...`,
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, userMessage, newMessage]);
+      setMessages(prev => [...prev, newMessage]);
       inputRef.current.value = '';
 
       try {
@@ -1213,19 +1155,19 @@ const Chat = () => {
             });
             const agents = res.data?.agents || [];
             // Add default AISA agent if not present
-            const processedAgents = [{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }, ...agents];
+            const processedAgents = [{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }, ...agents];
             setUserAgents(processedAgents);
           } catch (agentErr) {
             // Silently use defaults if fetch fails (no console warning)
-            setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }]);
+            setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
           }
         } else {
           // No user logged in, use default
-          setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }]);
+          setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
         }
       } catch (err) {
         // Silently handle errors
-        setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }]);
+        setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
       }
     };
     loadSessions();
@@ -1317,6 +1259,11 @@ const Chat = () => {
 
     if (isAudioConvertMode && !inputValue.trim() && selectedFiles.length === 0) {
       toast.error('Please enter text or upload a file to convert to audio');
+      return;
+    }
+
+    if (isDocumentConvert && selectedFiles.length === 0) {
+      toast.error('Please upload a PDF or DOCX file to convert');
       return;
     }
 
@@ -1414,7 +1361,7 @@ const Chat = () => {
       const userMsg = {
         id: Date.now().toString(),
         role: 'user',
-        content: contentToSend || (filePreviews.length > 0 ? "Analyze these files" : ""),
+        content: contentToSend || (filePreviews.length > 0 ? (isDocumentConvert ? "Convert this document" : "Analyze these files") : ""),
         timestamp: Date.now(),
         attachments: filePreviews.map(p => ({
           url: p.url,
@@ -1437,9 +1384,11 @@ const Chat = () => {
       // Capture deep search state before resetting
       const deepSearchActive = isDeepSearch;
       if (isDeepSearch) setIsDeepSearch(false);
+      const documentConvertActive = isDocumentConvert;
+      if (isDocumentConvert) setIsDocumentConvert(false);
 
       // Detect mode for UI indicator
-      const detectedMode = deepSearchActive ? MODES.DEEP_SEARCH : detectMode(contentToSend, userMsg.attachments);
+      const detectedMode = deepSearchActive ? MODES.DEEP_SEARCH : (documentConvertActive ? MODES.FILE_CONVERSION : detectMode(contentToSend, userMsg.attachments));
       setCurrentMode(detectedMode);
 
       // Update user message with the detected mode
@@ -1454,6 +1403,8 @@ const Chat = () => {
         setLoadingText("Generating Image... 🎨");
       } else if (lowerContent.includes('video')) {
         setLoadingText("Generating Video... 🎥");
+      } else if (documentConvertActive) {
+        setLoadingText("Converting Document... 🔄");
       } else {
         setLoadingText("Thinking...");
       }
@@ -1603,6 +1554,23 @@ ${deepSearchActive ? `### DEEP SEARCH MODE ENABLED (CRITICAL):
 - YOU MUST perform extensive web searching to gather every relevant detail.
 - Do NOT be brief. Expand on every point. Use multiple sections and subsections.
 - Clearly structure your findings with professional formatting and cite sources if possible.` : ''}
+
+${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
+- The user wants to convert the uploaded document.
+- Identify the source file format (PDF/DOCX) and the requested target format.
+- IF the user does NOT specify a target format:
+  - If source is PDF, suggest converting to DOCX.
+  - If source is DOCX, suggest converting to PDF.
+- YOU MUST provide the conversion parameters in the following JSON format:
+\`\`\`json
+{
+  "action": "file_conversion",
+  "source_format": "pdf",
+  "target_format": "docx",
+  "file_name": "original_filename.pdf"
+}
+\`\`\`
+- Keep the response text brief, explaining what you are doing.` : ''}
 `;
         const aiResponseData = await generateChatResponse(
           messages,
@@ -1610,7 +1578,8 @@ ${deepSearchActive ? `### DEEP SEARCH MODE ENABLED (CRITICAL):
           SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
           userMsg.attachments,
           currentLang,
-          abortControllerRef.current.signal
+          abortControllerRef.current.signal,
+          detectedMode
         );
 
         // Handle response - could be string (old format) or object (new format with conversion)
@@ -2448,7 +2417,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
   }, [viewingDoc]);
 
   return (
-    <div className="flex h-full w-full bg-secondary relative overflow-hidden">
+    <div className="flex h-full w-full bg-secondary relative overflow-hidden aisa-scalable-text">
 
       {/* Document Viewer Modal */}
       <AnimatePresence>
@@ -2643,11 +2612,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className={`relative flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 pb-32 md:pb-40 space-y-2.5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
-            personalizations?.personalization?.fontStyle === 'Mono' ? 'font-mono' :
-              personalizations?.personalization?.fontStyle === 'Rounded' ? 'font-rounded' :
-                personalizations?.personalization?.fontStyle === 'Sans' ? 'font-sans' : ''
-            } aisa-scalable-text`}
+          className="relative flex-1 overflow-y-auto p-1 sm:p-2 md:p-3 pb-32 md:pb-40 space-y-2.5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent aisa-scalable-text"
         >
           {messages.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pb-32 md:pb-40 animate-in fade-in duration-700">
@@ -2658,7 +2623,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-2xl"
                 />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-maintext tracking-tight max-w-2xl leading-relaxed drop-shadow-sm px-4">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-maintext tracking-tight max-w-4xl leading-relaxed drop-shadow-sm px-4">
                 {t('welcomeMessage')}
               </h2>
             </div>
@@ -2667,7 +2632,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`group relative flex items-start gap-2 md:gap-3 w-full max-w-3xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''
+                  className={`group relative flex items-start gap-2 md:gap-3 w-full max-w-5xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''
                     }`}
                   onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
                 >
@@ -2682,18 +2647,18 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     {msg.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <img src="/logo/Logo.svg" alt="AISA" className="w-5 h-5 object-contain" />
+                      <Bot className="w-4 h-4 text-primary" />
                     )}
                   </div>
 
                   <div
                     className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
-                      } max-w-[90%] sm:max-w-[85%] md:max-w-[80%]`}
+                      } max-w-[85%] sm:max-w-[80%] md:max-w-[75%]`}
                   >
                     <div
-                      className={`group/bubble relative px-4 sm:px-6 py-3 sm:py-4 leading-relaxed whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] hover:scale-[1.005] ${msg.role === 'user'
-                        ? 'bg-gradient-to-br from-primary to-[#6366f1] text-white rounded-[1.5rem] rounded-tr-none shadow-md shadow-primary/20'
-                        : `bg-surface border border-border/40 text-maintext rounded-[1.5rem] rounded-tl-none shadow-sm hover:shadow-md ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
+                      className={`group/bubble relative px-3 py-2.5 sm:px-5 sm:py-4 rounded-2xl sm:rounded-[1.5rem] leading-relaxed whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] hover:scale-[1.002] ${msg.role === 'user'
+                        ? 'bg-primary text-white rounded-tr-sm shadow-md shadow-primary/20 text-sm sm:text-base'
+                        : `bg-surface border border-border/40 text-maintext rounded-tl-sm shadow-sm hover:shadow-md text-sm sm:text-base ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
                         }`}
                     >
 
@@ -2904,7 +2869,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                       <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
                                         <div className="flex items-center gap-2">
                                           <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA GENERATED ASSET</span>
+                                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
                                         </div>
                                       </div>
                                       <img
@@ -2940,7 +2905,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                 <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none">
                                   <div className="flex items-center gap-2">
                                     <Video className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA GENERATED VIDEO</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Video</span>
                                   </div>
                                 </div>
 
@@ -2970,12 +2935,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             )}
 
                             {/* Dynamic Image Rendering (if not in markdown) */}
-                            {msg.imageUrl && (!msg.content || !msg.content.includes(msg.imageUrl)) && (
+                            {msg.imageUrl && !msg.content.includes(msg.imageUrl) && (
                               <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
                                 <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
                                   <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA GENERATED ASSET</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
                                   </div>
                                 </div>
                                 <img
@@ -3027,7 +2992,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                     {msg.conversion.charCount} CHARS
                                   </span>
                                 )}
-                                AUDIO • MP3
+                                {msg.conversion.mimeType.includes('audio') ? 'AUDIO • MP3' : msg.conversion.mimeType.includes('pdf') ? 'PDF • DOCUMENT' : 'WORD • DOCUMENT'}
                               </p>
                             </div>
                           </div>
@@ -3065,7 +3030,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl transition-all hover:bg-primary/90 shadow-sm font-bold text-sm active:scale-95"
                             >
                               <Download className="w-4 h-4" />
-                              Download Audio
+                              Download {msg.conversion.mimeType.includes('audio') ? 'Audio' : msg.conversion.mimeType.includes('pdf') ? 'PDF' : 'Document'}
                             </button>
 
                             <Menu as="div" className="relative">
@@ -3142,134 +3107,132 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </div>
                       )}
 
-                    </div>
-
-                    {/* AI Feedback Actions - MOVED OUTSIDE BUBBLE */}
-                    {msg.role !== 'user' && !msg.conversion && (
-                      <div className="mt-2 pl-2 w-full block">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
-                          {(() => {
-                            // Detect if the AI response contains Hindi (Devanagari script)
-                            const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
-                            const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
-                            const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
-                            return (
-                              <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
-                                {prompts[promptIndex]}
-                                <span className="text-sm">😊</span>
-                              </p>
-                            );
-                          })()}
-                          <div className="flex items-center gap-3 self-end sm:self-auto">
-                            <button
-                              onClick={() => {
-                                // Pass message ID to speakResponse for tracking
-                                const isHindi = /[\u0900-\u097F]/.test(msg.content);
-                                speakResponse(msg.content, isHindi ? 'Hindi' : 'English', msg.id);
-                              }}
-                              className={`transition-colors p-1.5 rounded-lg ${speakingMessageId === msg.id
-                                ? 'text-primary bg-primary/10'
-                                : 'text-subtext hover:text-primary hover:bg-surface-hover'
-                                }`}
-                              title={speakingMessageId === msg.id && !isPaused ? "Pause" : "Speak"}
-                            >
-                              {speakingMessageId === msg.id && !isPaused ? (
-                                <Pause className="w-3.5 h-3.5" />
-                              ) : (
-                                <Volume2 className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleCopyMessage(msg.content)}
-                              className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                              title="Copy"
-                            >
-                              <Copy className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleThumbsUp(msg.id)}
-                              className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                              title="Helpful"
-                            >
-                              <ThumbsUp className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleThumbsDown(msg.id)}
-                              className="text-subtext hover:text-red-500 transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                              title="Not Helpful"
-                            >
-                              <ThumbsDown className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleShare(msg.content)}
-                              className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                              title="Share Text"
-                            >
-                              <Share className="w-3.5 h-3.5" />
-                            </button>
-
-                            {/* PDF Menu */}
-                            <Menu as="div" className="relative inline-block text-left">
-                              <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
-                                {pdfLoadingId === msg.id ? (
-                                  <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                                ) : (
-                                  <FileText className="w-4 h-4" />
-                                )}
-                              </Menu.Button>
-                              <Transition
-                                as={Fragment}
-                                enter="transition ease-out duration-100"
-                                enterFrom="transform opacity-0 scale-95"
-                                enterTo="transform opacity-100 scale-100"
-                                leave="transition ease-in duration-75"
-                                leaveFrom="transform opacity-100 scale-100"
-                                leaveTo="transform opacity-0 scale-95"
+                      {/* AI Feedback Actions */}
+                      {msg.role !== 'user' && !msg.conversion && (
+                        <div className="mt-4 pt-3 border-t border-border/40 w-full block">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                            {(() => {
+                              // Detect if the AI response contains Hindi (Devanagari script)
+                              const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
+                              const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
+                              const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
+                              return (
+                                <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
+                                  {prompts[promptIndex]}
+                                  <span className="text-sm">😊</span>
+                                </p>
+                              );
+                            })()}
+                            <div className="flex items-center gap-3 self-end sm:self-auto">
+                              <button
+                                onClick={() => {
+                                  // Pass message ID to speakResponse for tracking
+                                  const isHindi = /[\u0900-\u097F]/.test(msg.content);
+                                  speakResponse(msg.content, isHindi ? 'Hindi' : 'English', msg.id);
+                                }}
+                                className={`transition-colors p-1.5 rounded-lg ${speakingMessageId === msg.id
+                                  ? 'text-primary bg-primary/10'
+                                  : 'text-subtext hover:text-primary hover:bg-surface-hover'
+                                  }`}
+                                title={speakingMessageId === msg.id && !isPaused ? "Pause" : "Speak"}
                               >
-                                <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
-                                  <div className="px-1 py-1">
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => handlePdfAction('open', msg)}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                        >
-                                          Open PDF
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => handlePdfAction('download', msg)}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                        >
-                                          Download
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => handlePdfAction('share', msg)}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                        >
-                                          Share PDF
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </div>
-                                </Menu.Items>
-                              </Transition>
-                            </Menu>
+                                {speakingMessageId === msg.id && !isPaused ? (
+                                  <Pause className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleCopyMessage(msg.content)}
+                                className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Copy"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleThumbsUp(msg.id)}
+                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Helpful"
+                              >
+                                <ThumbsUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleThumbsDown(msg.id)}
+                                className="text-subtext hover:text-red-500 transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Not Helpful"
+                              >
+                                <ThumbsDown className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleShare(msg.content)}
+                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                                title="Share Text"
+                              >
+                                <Share className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* PDF Menu */}
+                              <Menu as="div" className="relative inline-block text-left">
+                                <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
+                                  {pdfLoadingId === msg.id ? (
+                                    <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+                                  ) : (
+                                    <FileText className="w-4 h-4" />
+                                  )}
+                                </Menu.Button>
+                                <Transition
+                                  as={Fragment}
+                                  enter="transition ease-out duration-100"
+                                  enterFrom="transform opacity-0 scale-95"
+                                  enterTo="transform opacity-100 scale-100"
+                                  leave="transition ease-in duration-75"
+                                  leaveFrom="transform opacity-100 scale-100"
+                                  leaveTo="transform opacity-0 scale-95"
+                                >
+                                  <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
+                                    <div className="px-1 py-1">
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => handlePdfAction('open', msg)}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                          >
+                                            Open PDF
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => handlePdfAction('download', msg)}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                          >
+                                            Download
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => handlePdfAction('share', msg)}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                          >
+                                            Share PDF
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                    </div>
+                                  </Menu.Items>
+                                </Transition>
+                              </Menu>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-
+                      )}
+                    </div>
                     <span className="text-[10px] text-subtext mt-0 px-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -3278,7 +3241,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     </span>
                   </div>
 
-
+                  {/* Hover Actions - User Only (AI has footer) */}
                   {msg.role === 'user' && (
                     <div className={`flex items-center gap-1 transition-opacity duration-200 self-start mt-2 mr-0 flex-row-reverse ${activeMessageId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
 
@@ -3365,7 +3328,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
         {/* Input */}
         <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-2 md:p-4 bg-transparent z-20">
-          <div className="max-w-2xl mx-auto relative">
+          <div className="max-w-5xl mx-auto relative px-1 sm:px-2">
 
             {/* File Preview Area */}
             {filePreviews.length > 0 && (
@@ -3414,7 +3377,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               </div>
             )}
 
-            <form onSubmit={handleSendMessage} className="relative w-full max-w-2xl mx-auto flex items-end gap-1.5 sm:gap-2 bg-white dark:bg-[#0a0a0a] border border-black/5 dark:border-white/10 rounded-2xl p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:border-primary/20 backdrop-blur-3xl px-2">
+            <form onSubmit={handleSendMessage} className="relative w-full max-w-5xl mx-auto flex items-center gap-1 bg-white dark:bg-[#0a0a0a] border border-black/5 dark:border-white/10 rounded-2xl p-0.5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:border-primary/20 backdrop-blur-3xl px-1">
               <input
                 id="file-upload"
                 type="file"
@@ -3457,7 +3420,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               />
 
               {/* Left Actions Group */}
-              <div className="flex items-center gap-1 pl-1 pb-1.5">
+              <div className="flex items-center gap-0.5 pl-0.5 shrink-0">
                 <AnimatePresence>
                   {isAttachMenuOpen && (
                     <motion.div
@@ -3521,7 +3484,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     type="button"
                     ref={toolsBtnRef}
                     onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${isToolsMenuOpen || isImageGeneration || isDeepSearch || isAudioConvertMode ? 'bg-primary/10 text-primary scale-110' : 'bg-transparent text-subtext hover:text-primary hover:bg-secondary'}`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${isToolsMenuOpen || isImageGeneration || isDeepSearch || isAudioConvertMode || isDocumentConvert ? 'bg-primary/10 text-primary scale-110' : 'bg-transparent text-subtext hover:text-primary hover:bg-secondary'}`}
                     title="AI Capabilities"
                   >
                     <Sparkles className="w-5 h-5" />
@@ -3548,6 +3511,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               setIsImageGeneration(!isImageGeneration);
                               setIsDeepSearch(false);
                               setIsAudioConvertMode(false);
+                              setIsDocumentConvert(false);
                               if (!isImageGeneration) toast.success("Image Generation Mode Enabled");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isImageGeneration ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3567,6 +3531,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               setIsDeepSearch(!isDeepSearch);
                               setIsImageGeneration(false);
                               setIsAudioConvertMode(false);
+                              setIsDocumentConvert(false);
                               if (!isDeepSearch) toast.success("Deep Search Mode Enabled");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isDeepSearch ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3586,6 +3551,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               setIsAudioConvertMode(!isAudioConvertMode);
                               setIsDeepSearch(false);
                               setIsImageGeneration(false);
+                              setIsDocumentConvert(false);
                               if (!isAudioConvertMode) toast.success("Convert to Audio Mode Active");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isAudioConvertMode ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3598,6 +3564,26 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               <span className="text-[10px] text-subtext">Turn documents into speech</span>
                             </div>
                           </button>
+
+                          <button
+                            onClick={() => {
+                              setIsToolsMenuOpen(false);
+                              setIsDocumentConvert(!isDocumentConvert);
+                              setIsDeepSearch(false);
+                              setIsImageGeneration(false);
+                              setIsAudioConvertMode(false);
+                              if (!isDocumentConvert) toast.success("Document Converter Mode Active");
+                            }}
+                            className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isDocumentConvert ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
+                          >
+                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors shrink-0 ${isDocumentConvert ? 'bg-primary border-primary text-white' : 'bg-surface border-border group-hover:border-primary/30 group-hover:bg-primary/10'}`}>
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm font-bold text-maintext block">Convert Documents</span>
+                              <span className="text-[10px] text-subtext">PDF ↔ Word conversion</span>
+                            </div>
+                          </button>
                         </div>
                       </motion.div>
                     )}
@@ -3606,9 +3592,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               </div>
 
               {/* Input Area */}
-              <div className="relative flex-1 min-w-0 py-2">
+              <div className="relative flex-1 min-w-0 py-1 px-1">
                 <AnimatePresence>
-                  {(isDeepSearch || isImageGeneration || isVoiceMode || isAudioConvertMode) && (
+                  {(isDeepSearch || isImageGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert) && (
                     <div className="absolute bottom-full left-0 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-full">
                       {isDeepSearch && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-sky-500/10 text-sky-600 rounded-full text-xs font-bold border border-sky-500/20 backdrop-blur-md whitespace-nowrap shrink-0">
@@ -3634,6 +3620,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                           <button onClick={() => setIsAudioConvertMode(false)} className="ml-1 hover:text-indigo-800"><X size={12} /></button>
                         </motion.div>
                       )}
+                      {isDocumentConvert && (
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-bold border border-emerald-500/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                          <FileText size={12} strokeWidth={3} /> <span className="hidden sm:inline">Doc Convert</span>
+                          <button onClick={() => setIsDocumentConvert(false)} className="ml-1 hover:text-emerald-800"><X size={12} /></button>
+                        </motion.div>
+                      )}
                     </div>
                   )}
                 </AnimatePresence>
@@ -3655,18 +3647,15 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     }
                   }}
                   onPaste={handlePaste}
-                  placeholder={isAudioConvertMode ? "Enter text..." : "Ask AISA..."}
+                  placeholder={isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA..."}
                   rows={1}
-                  className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 text-maintext placeholder-subtext/50 resize-none overflow-y-auto custom-scrollbar leading-relaxed ${personalizations?.personalization?.fontStyle === 'Serif' ? 'font-serif' :
-                    personalizations?.personalization?.fontStyle === 'Mono' ? 'font-mono' :
-                      personalizations?.personalization?.fontStyle === 'Rounded' ? 'font-rounded' :
-                        personalizations?.personalization?.fontStyle === 'Sans' ? 'font-sans' : ''} aisa-scalable-text`}
-                  style={{ minHeight: '24px', maxHeight: '150px' }}
+                  className="w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 text-maintext text-left placeholder-subtext/50 resize-none overflow-y-auto custom-scrollbar leading-relaxed aisa-scalable-text flex items-center"
+                  style={{ minHeight: '24px', maxHeight: '150px', lineHeight: '24px' }}
                 />
               </div>
 
               {/* Right Actions Group */}
-              <div className="flex items-center gap-1.5 sm:gap-2 pr-1 pb-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 pr-0.5 shrink-0">
                 {isListening && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 rounded-full border border-red-500/20 mr-2">
                     <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
@@ -3714,16 +3703,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   </button>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    {messages.length > 1 && !inputValue.trim() && (
-                      <button
-                        type="button"
-                        onClick={handleUndo}
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors"
-                        title="Undo"
-                      >
-                        <Undo2 className="w-5 h-5" />
-                      </button>
-                    )}
+
                     <button
                       type="submit"
                       disabled={(!inputValue.trim() && filePreviews.length === 0) || isLoading}

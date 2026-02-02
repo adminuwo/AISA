@@ -60,7 +60,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="fixed inset-0 flex bg-transparent text-maintext overflow-hidden font-sans">
+    <div className="fixed inset-0 flex bg-transparent text-maintext overflow-hidden aisa-scalable-text">
       {/* Animated Atmospheric Background */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-[#f8fafc] via-[#eef2ff] to-[#fce7f3] dark:from-[#020617] dark:via-[#0f172a] dark:to-[#1e1b4b] overflow-hidden">
         <motion.div
@@ -70,7 +70,7 @@ const DashboardLayout = () => {
             scale: [1, 1.1, 1]
           }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-300/30 dark:bg-purple-900/10 blur-[120px]"
+          className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-primary/20 dark:bg-primary/5 blur-[120px]"
         />
         <motion.div
           animate={{
@@ -79,14 +79,14 @@ const DashboardLayout = () => {
             scale: [1, 1.2, 1]
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-300/30 dark:bg-blue-900/10 blur-[120px]"
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/20 dark:bg-primary/5 blur-[120px]"
         />
         <motion.div
           animate={{
             opacity: [0.1, 0.3, 0.1]
           }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[30%] left-[20%] w-[40%] h-[40%] rounded-full bg-pink-300/20 dark:bg-pink-900/5 blur-[100px]"
+          className="absolute top-[30%] left-[20%] w-[40%] h-[40%] rounded-full bg-primary/10 dark:bg-primary/5 blur-[100px]"
         />
       </div>
 
@@ -104,7 +104,7 @@ const DashboardLayout = () => {
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <span className="font-bold text-lg text-primary">A-Series</span>
+              <span className="font-bold text-lg text-primary">AISA <sup className="text-[10px]">TM</sup></span>
             </div>
 
             <div

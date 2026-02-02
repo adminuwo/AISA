@@ -138,29 +138,32 @@ export const PersonalizationProvider = ({ children }) => {
         }
     };
 
-    const applyDynamicStyles = (prefs = personalizations) => {
+    const applyDynamicStyles = (prefs) => {
+        const p = prefs || personalizations;
+        if (!p?.personalization) return;
+
         // Font Size
-        const fontSize = prefs?.personalization?.fontSize || 'Medium';
+        const fontSize = p.personalization.fontSize || 'Medium';
         const fontSizeMap = {
-            'Small': '14px',
-            'Medium': '16px',
-            'Large': '20px',
-            'Extra Large': '24px'
+            'Small': '13px',
+            'Medium': '15px',
+            'Large': '18px',
+            'Extra Large': '22px'
         };
-        document.documentElement.style.setProperty('--aisa-font-size', fontSizeMap[fontSize]);
-        const scaleMap = { 'Small': '0.9', 'Medium': '1', 'Large': '1.2', 'Extra Large': '1.4' };
-        document.documentElement.style.setProperty('--aisa-scale', scaleMap[fontSize]);
+
+        const scaleMap = { 'Small': '0.85', 'Medium': '1', 'Large': '1.15', 'Extra Large': '1.3' };
+
+        document.documentElement.style.setProperty('--aisa-font-size', fontSizeMap[fontSize] || '15px');
+        document.documentElement.style.setProperty('--aisa-scale', scaleMap[fontSize] || '1');
 
         // Font Style
-        const fontStyle = prefs?.personalization?.fontStyle || 'Default';
-        const fontMap = {
-            'Default': '"Outfit", sans-serif',
-            'Serif': '"Playfair Display", serif',
-            'Mono': '"JetBrains Mono", monospace',
-            'Sans': '"Outfit", sans-serif',
-            'Rounded': '"Quicksand", sans-serif'
-        };
-        document.documentElement.style.setProperty('--active-font-family', fontMap[fontStyle]);
+        const fontStyle = p.personalization.fontStyle || 'Default';
+        const fontClasses = ['font-serif', 'font-mono', 'font-rounded', 'font-sans'];
+        document.body.classList.remove(...fontClasses);
+        const fontClassName = fontStyle === 'Serif' ? 'font-serif' : fontStyle === 'Mono' ? 'font-mono' : fontStyle === 'Rounded' ? 'font-rounded' : 'font-sans';
+        document.body.classList.add(fontClassName);
+
+        document.body.classList.add('aisa-scalable-text');
     };
 
     useEffect(() => {

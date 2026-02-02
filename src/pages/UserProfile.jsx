@@ -120,12 +120,12 @@ const UserProfile = () => {
     if (!user) return null;
 
     return (
-        <div className="h-full w-full overflow-y-auto bg-secondary font-sans scrollbar-thin scrollbar-thumb-border">
+        <div className="h-full w-full overflow-y-auto bg-secondary scrollbar-thin scrollbar-thumb-border aisa-scalable-text">
             <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
 
             {/* Banner Area */}
             <div className="relative h-60 w-full overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-primary to-blue-600 opacity-90"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-primary/60 opacity-90"></div>
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
                 <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
                 <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>

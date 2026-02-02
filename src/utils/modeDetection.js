@@ -9,7 +9,8 @@ export const MODES = {
     CONTENT_WRITING: 'CONTENT_WRITING',
     CODING_HELP: 'CODING_HELP',
     TASK_ASSISTANT: 'TASK_ASSISTANT',
-    DEEP_SEARCH: 'DEEP_SEARCH'
+    DEEP_SEARCH: 'DEEP_SEARCH',
+    DOCUMENT_CONVERT: 'DOCUMENT_CONVERT'
 };
 
 const CODING_KEYWORDS = [
@@ -79,7 +80,8 @@ export function getModeName(mode) {
         [MODES.CONTENT_WRITING]: 'Content Writing',
         [MODES.CODING_HELP]: 'Coding Help',
         [MODES.TASK_ASSISTANT]: 'Task Assistant',
-        [MODES.DEEP_SEARCH]: 'Deep Search'
+        [MODES.DEEP_SEARCH]: 'Deep Search',
+        [MODES.DOCUMENT_CONVERT]: 'Document Convert'
     };
     return names[mode] || 'Chat';
 }
@@ -91,7 +93,8 @@ export function getModeIcon(mode) {
         [MODES.CONTENT_WRITING]: '✍️',
         [MODES.CODING_HELP]: '💻',
         [MODES.TASK_ASSISTANT]: '📋',
-        [MODES.DEEP_SEARCH]: '🔍'
+        [MODES.DEEP_SEARCH]: '🔍',
+        [MODES.DOCUMENT_CONVERT]: '🔄'
     };
     return icons[mode] || '💬';
 }
@@ -103,7 +106,8 @@ export function getModeColor(mode) {
         [MODES.CONTENT_WRITING]: '#ec4899',
         [MODES.CODING_HELP]: '#10b981',
         [MODES.TASK_ASSISTANT]: '#f59e0b',
-        [MODES.DEEP_SEARCH]: '#0ea5e9'
+        [MODES.DEEP_SEARCH]: '#0ea5e9',
+        [MODES.DOCUMENT_CONVERT]: '#10b981'
     };
     return colors[mode] || '#6366f1';
 }

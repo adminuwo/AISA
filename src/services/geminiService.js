@@ -2,7 +2,7 @@ import axios from "axios";
 import { apis } from "../types";
 import { getUserData } from "../userStore/userData";
 
-export const generateChatResponse = async (history, currentMessage, systemInstruction, attachments, language, abortSignal = null) => {
+export const generateChatResponse = async (history, currentMessage, systemInstruction, attachments, language, abortSignal = null, mode = null) => {
     try {
         const token = getUserData()?.token;
 
@@ -40,7 +40,8 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
             systemInstruction: combinedSystemInstruction,
             image: images,
             document: documents,
-            language: language || 'English'
+            language: language || 'English',
+            mode: mode
         };
 
         const result = await axios.post(apis.chatAgent, payload, {
