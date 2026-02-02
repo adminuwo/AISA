@@ -31,7 +31,7 @@ const PlatformSubscriptionModal = () => {
         },
         {
             name: 'Pro',
-            price: 499,
+            price: 2,
             icon: Sparkles,
             color: 'from-purple-500 to-indigo-600',
             popular: true,
@@ -45,7 +45,7 @@ const PlatformSubscriptionModal = () => {
         },
         {
             name: 'King',
-            price: 1499,
+            price: 5,
             icon: Crown,
             color: 'from-amber-400 to-orange-500',
             features: [
@@ -91,7 +91,7 @@ const PlatformSubscriptionModal = () => {
 
             // 2. Open Razorpay
             const options = {
-                key: order.keyId,
+                key: order.key,
                 amount: order.amount,
                 currency: order.currency,
                 name: "AISA Premium",

@@ -14,6 +14,7 @@ import remarkGfm from 'remark-gfm';
 import Loader from '../Components/Loader/Loader';
 import toast from 'react-hot-toast';
 import LiveAI from '../Components/LiveAI';
+import { apiService } from '../services/apiService';
 
 import ImageEditor from '../Components/ImageEditor';
 import ModelSelector from '../Components/ModelSelector';
@@ -550,7 +551,7 @@ const Chat = () => {
       }
 
       const prompt = inputRef.current?.value || "";
-      const filesToSend = [...selectedFiles]; // Snapshot
+      // const filesToSend = [...selectedFiles]; // Snapshot // This variable is not used
 
       // Voice Reader Mode Logic
       if (isVoiceMode) {
@@ -558,9 +559,8 @@ const Chat = () => {
         const userMsgId = Date.now().toString();
         const newUserMsg = {
           id: userMsgId,
-          type: 'user',
-          text: prompt,
-          role: 'user',
+          role: 'user', // Ensure role user
+          content: prompt, // Use content
           timestamp: new Date(),
           attachments: filePreviews.map(fp => ({
             url: fp.url,
@@ -574,7 +574,7 @@ const Chat = () => {
         setInputValue('');
         setSelectedFiles([]);
         setFilePreviews([]);
-        inputRef.current.style.height = 'auto';
+        if (inputRef.current) inputRef.current.style.height = 'auto';
 
         // 2. Trigger Voice Reading Directly
         // We can use speakResponse, but we need to trick it into thinking it's an AI response?
@@ -587,9 +587,8 @@ const Chat = () => {
         const aiMsgId = (Date.now() + 1).toString();
         const readingMsg = {
           id: aiMsgId,
-          type: 'ai',
-          role: 'assistant',
-          text: "🎧 Reading content aloud...",
+          role: 'assistant', // Ensure role assistant
+          content: "🎧 Reading content aloud...", // Use content
           timestamp: new Date()
         };
         setMessages(prev => [...prev, readingMsg]);
@@ -603,52 +602,41 @@ const Chat = () => {
       }
 
       setIsLoading(true);
-      isSendingRef.current = true; // Mark as sending
+      // isSendingRef.current = true; // Mark as sending // This variable is not defined in the provided context
 
       // Show a message that video generation is in progress
+      const tempId = Date.now().toString();
       const newMessage = {
-        id: Date.now().toString(),
-        type: 'ai',
-        text: `🎬 Generating video from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`,
+        id: tempId,
+        role: 'assistant',
+        content: `🎬 Generating video from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`, // Use content
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, newMessage]);
-      inputRef.current.value = '';
+      if (inputRef.current) inputRef.current.value = '';
 
       try {
-        // Call the video generation endpoint
-        const response = await axios.post(`${API}/video/generate`, {
-          prompt: prompt,
-          duration: 5, // default 5 seconds
-          quality: 'medium'
-        });
+        // Use apiService
+        const data = await apiService.generateVideo(prompt);
 
-        if (response.data.videoUrl) {
+        if (data.videoUrl) {
           // Add the generated video to the message
           const videoMessage = {
-            id: Date.now().toString(),
-            type: 'ai',
-            text: `🎥 Video generated successfully!`,
-            videoUrl: response.data.videoUrl,
+            id: tempId, // Keep same ID so we replace the correct one (or just update)
+            role: 'assistant',
+            content: `🎥 Video generated successfully!`, // Use content
+            videoUrl: data.videoUrl,
             timestamp: new Date(),
           };
 
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = videoMessage;
-            return updated;
-          });
+          setMessages(prev => prev.map(msg => msg.id === tempId ? videoMessage : msg));
 
           toast.success('Video generated successfully!');
         }
       } catch (error) {
         const errorMsg = error.response?.data?.message || 'Failed to generate video';
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1].text = `❌ ${errorMsg}`;
-          return updated;
-        });
+        setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: `❌ ${errorMsg}` } : msg)); // Use content
         toast.error(errorMsg);
       }
     } catch (error) {
@@ -670,47 +658,39 @@ const Chat = () => {
       setIsLoading(true);
 
       // Show a message that image generation is in progress
+      const tempId = Date.now().toString();
       const newMessage = {
-        id: Date.now().toString(),
-        type: 'ai',
-        text: `🎨 Generating image from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`,
+        id: tempId,
+        role: 'assistant',
+        content: `🎨 Generating image from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`, // Use content
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, newMessage]);
-      inputRef.current.value = '';
+      if (inputRef.current) inputRef.current.value = '';
 
       try {
-        // Call the image generation endpoint
-        const response = await axios.post(`${API}/image/generate`, {
-          prompt: prompt
-        });
+        // Use apiService
+        const data = await apiService.generateImage(prompt);
 
-        if (response.data.imageUrl) {
-          // Add the generated image to the message
+        if (data && (data.imageUrl || data.data)) {
+          const finalUrl = data.imageUrl || data.data; // Handle different response structures
           const imageMessage = {
-            id: Date.now().toString(),
-            type: 'ai',
-            text: `🖼️ Image generated successfully!`,
-            imageUrl: response.data.imageUrl,
+            id: tempId, // Keep same ID
+            role: 'assistant',
+            content: `🖼️ Image generated successfully!`, // Use content
+            imageUrl: finalUrl,
             timestamp: new Date(),
           };
 
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = imageMessage;
-            return updated;
-          });
+          setMessages(prev => prev.map(msg => msg.id === tempId ? imageMessage : msg));
 
           toast.success('Image generated successfully!');
         }
       } catch (error) {
-        const errorMsg = error.response?.data?.message || 'Failed to generate image';
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1].text = `❌ ${errorMsg}`;
-          return updated;
-        });
+        console.error("Image Gen Error Details:", error);
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to generate image';
+        setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: `❌ ${errorMsg}` } : msg)); // Use content
         toast.error(errorMsg);
       }
     } catch (error) {
@@ -2417,7 +2397,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
   }, [viewingDoc]);
 
   return (
-    <div className="flex h-full w-full bg-secondary relative overflow-hidden aisa-scalable-text">
+    <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text overscroll-none h-[100dvh] fixed inset-0 lg:static lg:h-full">
 
       {/* Document Viewer Modal */}
       <AnimatePresence>
@@ -2616,11 +2596,13 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         >
           {messages.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pb-32 md:pb-40 animate-in fade-in duration-700">
-              <div className="mb-6 hover:scale-110 transition-transform duration-300">
+              <div className="mb-6 select-none">
                 <img
                   src="/logo/Logo.svg"
                   alt="AISA Icon"
-                  className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-2xl"
+                  className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-2xl pointer-events-none"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                 />
               </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-maintext tracking-tight max-w-4xl leading-relaxed drop-shadow-sm px-4">
@@ -2647,7 +2629,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     {msg.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <Bot className="w-4 h-4 text-primary" />
+                      <img src="/logo/Logo.svg" alt="AISA" className="w-5 h-5 object-contain" />
                     )}
                   </div>
 
@@ -2866,10 +2848,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                   // Actual Dynamic Video/Image rendering is handled by the msg properties check below.
                                   return (
                                     <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
-                                      <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
+                                      <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
                                         <div className="flex items-center gap-2">
                                           <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
+                                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA Generated Asset</span>
                                         </div>
                                       </div>
                                       <img
@@ -2883,7 +2865,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none" />
                                       <button
                                         onClick={() => handleDownload(props.src, 'aisa-generated.png')}
-                                        className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-0 group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-90 group-hover/generated:scale-100"
+                                        className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100"
                                         title="Download High-Res"
                                       >
                                         <div className="flex items-center gap-2 px-1">
@@ -2902,10 +2884,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             {/* Dynamic Video Rendering */}
                             {msg.videoUrl && (
                               <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
-                                <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none">
+                                <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity pointer-events-none">
                                   <div className="flex items-center gap-2">
                                     <Video className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Video</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA Generated Video</span>
                                   </div>
                                 </div>
 
@@ -2923,7 +2905,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
                                 <button
                                   onClick={() => handleDownload(msg.videoUrl, 'aisa-generated-video.mp4')}
-                                  className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-0 group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-90 group-hover/generated:scale-100 z-20"
+                                  className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100 z-20"
                                   title="Download Video"
                                 >
                                   <div className="flex items-center gap-2 px-1">
@@ -2935,12 +2917,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             )}
 
                             {/* Dynamic Image Rendering (if not in markdown) */}
-                            {msg.imageUrl && !msg.content.includes(msg.imageUrl) && (
+                            {msg.imageUrl && !(msg.content || msg.text || "").includes(msg.imageUrl) && (
                               <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
-                                <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
+                                <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
                                   <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA Generated Asset</span>
                                   </div>
                                 </div>
                                 <img
@@ -2950,7 +2932,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                 />
                                 <button
                                   onClick={() => handleDownload(msg.imageUrl, 'aisa-generated.png')}
-                                  className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-0 group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-90 group-hover/generated:scale-100"
+                                  className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100"
                                   title="Download High-Res"
                                 >
                                   <div className="flex items-center gap-2 px-1">

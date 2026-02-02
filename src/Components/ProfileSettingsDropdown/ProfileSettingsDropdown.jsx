@@ -6,7 +6,7 @@ import {
     Database, Shield, Lock, User,
     X, ChevronDown, Play, Globe,
     LogOut, Monitor, Mic, Check,
-    ChevronLeft, Trash2, ShieldCheck, Mail, Volume2, Plus,
+    ChevronLeft, ChevronRight, Trash2, ShieldCheck, Mail, Volume2, Plus,
     Palette, Type, RefreshCcw, Languages, Crown, History, Calendar, CreditCard, Download
 } from 'lucide-react';
 import { jsPDF } from "jspdf";
@@ -396,26 +396,40 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             {!showPricingModal && (
                 <div key="settings-main-overlay" className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[2px]" onClick={onClose}>
                     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="w-full sm:max-w-[850px] h-full sm:h-[600px] bg-white dark:bg-[#161B2E] flex flex-col sm:flex-row shadow-2xl sm:rounded-[2rem] overflow-hidden" onClick={e => e.stopPropagation()}>
-                        <div className="w-full sm:w-[240px] bg-gray-50 dark:bg-black/20 flex flex-col border-r border-gray-100 dark:border-white/5">
+                        <div className={`w-full sm:w-[240px] bg-gray-50 dark:bg-black/20 flex-col border-r border-gray-100 dark:border-white/5 ${view === 'detail' ? 'hidden sm:flex' : 'flex'}`}>
                             <div className="p-5 flex justify-between items-center">
                                 <h2 className="text-lg font-bold">Settings</h2>
-                                <button onClick={onClose} className="sm:hidden"><X /></button>
+                                <button onClick={onClose} className="sm:hidden p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
                             </div>
                             <nav className="flex-1 px-2 space-y-1">
                                 {tabs.map(tab => (
-                                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors ${activeTab === tab.id ? 'bg-white dark:bg-[#1E2438] shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}>
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            setView('detail');
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 rounded-xl text-sm transition-colors ${activeTab === tab.id ? 'bg-white dark:bg-[#1E2438] shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                                    >
                                         <tab.icon className="w-4 h-4" />
                                         {tab.label}
+                                        <ChevronRight className="w-4 h-4 ml-auto sm:hidden opacity-50" />
                                     </button>
                                 ))}
                             </nav>
                             <div className="p-4 border-t border-gray-100 dark:border-white/5">
-                                <button onClick={onLogout} className="flex items-center gap-3 text-red-500 text-sm px-4 py-2"><LogOut className="w-4 h-4" /> {t('logOut')}</button>
+                                <button onClick={onLogout} className="flex items-center gap-3 text-red-500 text-sm px-4 py-2 w-full hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"><LogOut className="w-4 h-4" /> {t('logOut')}</button>
                             </div>
                         </div>
-                        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#161B2E]">
-                            <div className="px-8 py-6 pb-2"><h2 className="text-xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h2></div>
-                            <div className="flex-1 overflow-y-auto px-8 pb-8">{renderContent()}</div>
+                        <div className={`flex-1 flex-col min-w-0 bg-white dark:bg-[#161B2E] ${view === 'sidebar' ? 'hidden sm:flex' : 'flex'}`}>
+                            <div className="px-5 py-4 sm:px-8 sm:py-6 border-b sm:border-b-0 border-gray-100 dark:border-white/5 flex items-center gap-3">
+                                <button onClick={() => setView('sidebar')} className="sm:hidden p-1 -ml-1 hover:bg-black/5 rounded-full">
+                                    <ChevronLeft className="w-6 h-6" />
+                                </button>
+                                <h2 className="text-lg sm:text-xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h2>
+                                <button onClick={onClose} className="ml-auto sm:hidden p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto px-5 sm:px-8 pb-8">{renderContent()}</div>
                         </div>
                     </motion.div>
                 </div>

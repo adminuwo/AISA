@@ -118,7 +118,7 @@ const PrivacyPolicyModal = ({ isOpen, onClose }) => {
                                     </div>
                                     <h3 className="text-lg font-bold text-maintext pt-1">{section.title}</h3>
                                 </div>
-                                <ul className="ml-13 space-y-2">
+                                <ul className="ml-1 sm:ml-14 space-y-2">
                                     {section.items.map((item, idx) => (
                                         <li key={idx} className="flex items-start gap-2 text-sm text-subtext">
                                             <span className="text-primary mt-1">•</span>

@@ -127,7 +127,7 @@ const Landing = () => {
                     className="relative flex items-center gap-2 md:gap-3 cursor-pointer group"
                 >
                     <img src="/logo/Logo.svg" alt="Logo" className="w-12 h-12 md:w-20 md:h-20 object-contain hover:rotate-12 transition-transform duration-300" />
-                    <span className="text-2xl font-bold text-primary tracking-tighter hidden sm:block">AISA <sup className="text-xs">TM</sup></span>
+
                 </motion.div>
 
                 <motion.div
@@ -321,7 +321,7 @@ const Landing = () => {
                                         <img
                                             src={social.img}
                                             alt={social.label}
-                                            className="w-full h-full object-cover"
+                                            className={`w-full h-full object-cover ${['Twiter', 'Threads'].includes(social.label) ? 'dark:invert' : ''}`}
                                         />
                                     </a>
                                 ))}

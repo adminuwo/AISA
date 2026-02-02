@@ -23,7 +23,7 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
         {
             id: 'pro',
             name: 'Pro',
-            price: 499,
+            price: 2,
             description: 'Advanced capabilities for professionals',
             features: [
                 'Access to advanced models',
@@ -40,7 +40,7 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
         {
             id: 'king',
             name: 'King',
-            price: 1499,
+            price: 5,
             description: 'Ultimate power for power users',
             features: [
                 'Access to all models (including Beta)',
@@ -119,8 +119,8 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
                                             onClick={() => !isCurrent && onUpgrade(plan)}
                                             disabled={isCurrent}
                                             className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-sm ${isCurrent
-                                                    ? 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
-                                                    : 'bg-primary hover:bg-primary/90 text-white hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98]'
+                                                ? 'bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed'
+                                                : 'bg-primary hover:bg-primary/90 text-white hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98]'
                                                 }`}
                                         >
                                             {isCurrent ? 'Current Plan' : plan.price === 0 ? 'Downgrade' : 'Upgrade'}
