@@ -29,3 +29,4 @@ dist-ssr
 *.sw?
 geminiService1.js
 oldGeminiService.js
+.env.production
