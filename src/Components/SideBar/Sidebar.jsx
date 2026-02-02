@@ -434,12 +434,18 @@ const Sidebar = ({ isOpen, onClose }) => {
 
 
                 <div className="flex-1 min-w-0 text-left flex items-center gap-3">
-                  <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                    <img
-                      src="/logo/Logo.svg"
-                      alt="AISA Logo"
-                      className="w-full h-full object-contain"
-                    />
+                  <div className="w-9 h-9 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-secondary border border-white/10">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-primary text-white font-bold text-sm uppercase">
+                        {user.name ? user.name.charAt(0) : "U"}
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 overflow-hidden">
