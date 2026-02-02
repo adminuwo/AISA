@@ -18,7 +18,7 @@ import LiveAI from '../Components/LiveAI';
 import ImageEditor from '../Components/ImageEditor';
 import ModelSelector from '../Components/ModelSelector';
 import axios from 'axios';
-import { apis } from '../types';
+import { apis, API } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
@@ -602,17 +602,26 @@ const Chat = () => {
       }
 
       setIsLoading(true);
+      setLoadingText("Generating Video... 🎥");
       isSendingRef.current = true; // Mark as sending
+
+      // Create User Message
+      const userMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: prompt,
+        timestamp: new Date(),
+      };
 
       // Show a message that video generation is in progress
       const newMessage = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         type: 'ai',
         text: `🎬 Generating video from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`,
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, newMessage]);
+      setMessages(prev => [...prev, userMessage, newMessage]);
       inputRef.current.value = '';
 
       try {
@@ -627,8 +636,8 @@ const Chat = () => {
           // Add the generated video to the message
           const videoMessage = {
             id: Date.now().toString(),
-            type: 'ai',
-            text: `🎥 Video generated successfully!`,
+            role: 'model',
+            content: `🎬 Video generated successfully!`,
             videoUrl: response.data.videoUrl,
             timestamp: new Date(),
           };
@@ -667,16 +676,51 @@ const Chat = () => {
 
       const prompt = overridePrompt || inputRef.current.value;
       setIsLoading(true);
+      setLoadingText("Generating Image... 🎨");
+
+      // Handle Session Creation
+      let activeSessionId = currentSessionId;
+      let isFirstMessage = false;
+
+      if (activeSessionId === 'new') {
+        try {
+          activeSessionId = await chatStorageService.createSession();
+          isFirstMessage = true;
+        } catch (error) {
+          console.error("Failed to create session:", error);
+          toast.error("Failed to start new chat session");
+          return;
+        }
+      }
+
+      if (isFirstMessage) {
+        isNavigatingRef.current = true;
+        setCurrentSessionId(activeSessionId);
+        navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+      }
+
+      // Create User Message
+      const userMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: prompt,
+        timestamp: Date.now(),
+      };
+
+      // Save User Message
+      if (activeSessionId && activeSessionId !== 'new') {
+        await chatStorageService.saveMessage(activeSessionId, userMessage);
+      }
 
       // Show a message that image generation is in progress
       const newMessage = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         type: 'ai',
         text: `🎨 Generating image from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`,
-        timestamp: new Date(),
+        timestamp: Date.now(),
       };
 
-      setMessages(prev => [...prev, newMessage]);
+      setMessages(prev => [...prev, userMessage, newMessage]);
       inputRef.current.value = '';
 
       try {
@@ -685,15 +729,21 @@ const Chat = () => {
           prompt: prompt
         });
 
-        if (response.data.imageUrl) {
+        const imageUrl = response.data.data || response.data.imageUrl;
+        if (imageUrl) {
           // Add the generated image to the message
           const imageMessage = {
             id: Date.now().toString(),
-            type: 'ai',
-            text: `🖼️ Image generated successfully!`,
-            imageUrl: response.data.imageUrl,
-            timestamp: new Date(),
+            role: 'model',
+            content: `🖼️ Image generated successfully!`,
+            imageUrl: imageUrl,
+            timestamp: Date.now(),
           };
+
+          // Save AI Message
+          if (activeSessionId && activeSessionId !== 'new') {
+            await chatStorageService.saveMessage(activeSessionId, imageMessage);
+          }
 
           setMessages(prev => {
             const updated = [...prev];
@@ -729,16 +779,25 @@ const Chat = () => {
 
       const query = inputRef.current.value;
       setIsLoading(true);
+      setLoadingText("Deep Searching... 🔍");
+
+      // Create User Message
+      const userMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: query,
+        timestamp: new Date(),
+      };
 
       // Show a message that deep search is in progress
       const newMessage = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         type: 'ai',
         text: `🔍 Performing deep search for: "${query}"\n\nSearching the web and analyzing results... This may take a moment...`,
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, newMessage]);
+      setMessages(prev => [...prev, userMessage, newMessage]);
       inputRef.current.value = '';
 
       try {
@@ -1154,19 +1213,19 @@ const Chat = () => {
             });
             const agents = res.data?.agents || [];
             // Add default AISA agent if not present
-            const processedAgents = [{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }, ...agents];
+            const processedAgents = [{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }, ...agents];
             setUserAgents(processedAgents);
           } catch (agentErr) {
             // Silently use defaults if fetch fails (no console warning)
-            setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
+            setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }]);
           }
         } else {
           // No user logged in, use default
-          setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
+          setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }]);
         }
       } catch (err) {
         // Silently handle errors
-        setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
+        setUserAgents([{ agentName: 'AISA', category: 'General', avatar: '/logo/Logo.svg' }]);
       }
     };
     loadSessions();
@@ -2623,7 +2682,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     {msg.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <Bot className="w-4 h-4 text-primary" />
+                      <img src="/logo/Logo.svg" alt="AISA" className="w-5 h-5 object-contain" />
                     )}
                   </div>
 
@@ -2632,9 +2691,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       } max-w-[90%] sm:max-w-[85%] md:max-w-[80%]`}
                   >
                     <div
-                      className={`group/bubble relative px-4 sm:px-6 py-3 sm:py-4 rounded-[1.5rem] sm:rounded-[2rem] leading-relaxed whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] hover:scale-[1.005] ${msg.role === 'user'
-                        ? 'bg-gradient-to-br from-primary to-[#6366f1] text-white rounded-tr-sm shadow-md shadow-primary/20'
-                        : `bg-surface border border-border/40 text-maintext rounded-tl-sm shadow-sm hover:shadow-md ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
+                      className={`group/bubble relative px-4 sm:px-6 py-3 sm:py-4 leading-relaxed whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] hover:scale-[1.005] ${msg.role === 'user'
+                        ? 'bg-gradient-to-br from-primary to-[#6366f1] text-white rounded-[1.5rem] rounded-tr-none shadow-md shadow-primary/20'
+                        : `bg-surface border border-border/40 text-maintext rounded-[1.5rem] rounded-tl-none shadow-sm hover:shadow-md ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
                         }`}
                     >
 
@@ -2845,7 +2904,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                       <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
                                         <div className="flex items-center gap-2">
                                           <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
+                                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA GENERATED ASSET</span>
                                         </div>
                                       </div>
                                       <img
@@ -2881,7 +2940,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                 <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none">
                                   <div className="flex items-center gap-2">
                                     <Video className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Video</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA GENERATED VIDEO</span>
                                   </div>
                                 </div>
 
@@ -2911,12 +2970,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             )}
 
                             {/* Dynamic Image Rendering (if not in markdown) */}
-                            {msg.imageUrl && !msg.content.includes(msg.imageUrl) && (
+                            {msg.imageUrl && (!msg.content || !msg.content.includes(msg.imageUrl)) && (
                               <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
                                 <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/generated:opacity-100 transition-opacity">
                                   <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Generated Asset</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA GENERATED ASSET</span>
                                   </div>
                                 </div>
                                 <img
@@ -3083,132 +3142,134 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </div>
                       )}
 
-                      {/* AI Feedback Actions */}
-                      {msg.role !== 'user' && !msg.conversion && (
-                        <div className="mt-4 pt-3 border-t border-border/40 w-full block">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
-                            {(() => {
-                              // Detect if the AI response contains Hindi (Devanagari script)
-                              const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
-                              const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
-                              const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
-                              return (
-                                <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
-                                  {prompts[promptIndex]}
-                                  <span className="text-sm">😊</span>
-                                </p>
-                              );
-                            })()}
-                            <div className="flex items-center gap-3 self-end sm:self-auto">
-                              <button
-                                onClick={() => {
-                                  // Pass message ID to speakResponse for tracking
-                                  const isHindi = /[\u0900-\u097F]/.test(msg.content);
-                                  speakResponse(msg.content, isHindi ? 'Hindi' : 'English', msg.id);
-                                }}
-                                className={`transition-colors p-1.5 rounded-lg ${speakingMessageId === msg.id
-                                  ? 'text-primary bg-primary/10'
-                                  : 'text-subtext hover:text-primary hover:bg-surface-hover'
-                                  }`}
-                                title={speakingMessageId === msg.id && !isPaused ? "Pause" : "Speak"}
-                              >
-                                {speakingMessageId === msg.id && !isPaused ? (
-                                  <Pause className="w-3.5 h-3.5" />
-                                ) : (
-                                  <Volume2 className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleCopyMessage(msg.content)}
-                                className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Copy"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleThumbsUp(msg.id)}
-                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Helpful"
-                              >
-                                <ThumbsUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleThumbsDown(msg.id)}
-                                className="text-subtext hover:text-red-500 transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Not Helpful"
-                              >
-                                <ThumbsDown className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleShare(msg.content)}
-                                className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
-                                title="Share Text"
-                              >
-                                <Share className="w-3.5 h-3.5" />
-                              </button>
+                    </div>
 
-                              {/* PDF Menu */}
-                              <Menu as="div" className="relative inline-block text-left">
-                                <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
-                                  {pdfLoadingId === msg.id ? (
-                                    <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                                  ) : (
-                                    <FileText className="w-4 h-4" />
-                                  )}
-                                </Menu.Button>
-                                <Transition
-                                  as={Fragment}
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transform opacity-0 scale-95"
-                                  enterTo="transform opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transform opacity-100 scale-100"
-                                  leaveTo="transform opacity-0 scale-95"
-                                >
-                                  <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
-                                    <div className="px-1 py-1">
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => handlePdfAction('open', msg)}
-                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                          >
-                                            Open PDF
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => handlePdfAction('download', msg)}
-                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                          >
-                                            Download
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => handlePdfAction('share', msg)}
-                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'
-                                              } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
-                                          >
-                                            Share PDF
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                    </div>
-                                  </Menu.Items>
-                                </Transition>
-                              </Menu>
-                            </div>
+                    {/* AI Feedback Actions - MOVED OUTSIDE BUBBLE */}
+                    {msg.role !== 'user' && !msg.conversion && (
+                      <div className="mt-2 pl-2 w-full block">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                          {(() => {
+                            // Detect if the AI response contains Hindi (Devanagari script)
+                            const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
+                            const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
+                            const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
+                            return (
+                              <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
+                                {prompts[promptIndex]}
+                                <span className="text-sm">😊</span>
+                              </p>
+                            );
+                          })()}
+                          <div className="flex items-center gap-3 self-end sm:self-auto">
+                            <button
+                              onClick={() => {
+                                // Pass message ID to speakResponse for tracking
+                                const isHindi = /[\u0900-\u097F]/.test(msg.content);
+                                speakResponse(msg.content, isHindi ? 'Hindi' : 'English', msg.id);
+                              }}
+                              className={`transition-colors p-1.5 rounded-lg ${speakingMessageId === msg.id
+                                ? 'text-primary bg-primary/10'
+                                : 'text-subtext hover:text-primary hover:bg-surface-hover'
+                                }`}
+                              title={speakingMessageId === msg.id && !isPaused ? "Pause" : "Speak"}
+                            >
+                              {speakingMessageId === msg.id && !isPaused ? (
+                                <Pause className="w-3.5 h-3.5" />
+                              ) : (
+                                <Volume2 className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleCopyMessage(msg.content)}
+                              className="text-subtext hover:text-maintext transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                              title="Copy"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleThumbsUp(msg.id)}
+                              className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                              title="Helpful"
+                            >
+                              <ThumbsUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleThumbsDown(msg.id)}
+                              className="text-subtext hover:text-red-500 transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                              title="Not Helpful"
+                            >
+                              <ThumbsDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleShare(msg.content)}
+                              className="text-subtext hover:text-primary transition-colors p-1.5 hover:bg-surface-hover rounded-lg"
+                              title="Share Text"
+                            >
+                              <Share className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* PDF Menu */}
+                            <Menu as="div" className="relative inline-block text-left">
+                              <Menu.Button className="text-subtext hover:text-red-500 transition-colors flex items-center" disabled={pdfLoadingId === msg.id}>
+                                {pdfLoadingId === msg.id ? (
+                                  <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+                                ) : (
+                                  <FileText className="w-4 h-4" />
+                                )}
+                              </Menu.Button>
+                              <Transition
+                                as={Fragment}
+                                enter="transition ease-out duration-100"
+                                enterFrom="transform opacity-0 scale-95"
+                                enterTo="transform opacity-100 scale-100"
+                                leave="transition ease-in duration-75"
+                                leaveFrom="transform opacity-100 scale-100"
+                                leaveTo="transform opacity-0 scale-95"
+                              >
+                                <Menu.Items className="absolute bottom-full left-0 mb-2 w-36 origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
+                                  <div className="px-1 py-1">
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => handlePdfAction('open', msg)}
+                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                        >
+                                          Open PDF
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => handlePdfAction('download', msg)}
+                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                        >
+                                          Download
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                      {({ active }) => (
+                                        <button
+                                          onClick={() => handlePdfAction('share', msg)}
+                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'
+                                            } group flex w-full items-center rounded-md px-2 py-2 text-xs font-medium`}
+                                        >
+                                          Share PDF
+                                        </button>
+                                      )}
+                                    </Menu.Item>
+                                  </div>
+                                </Menu.Items>
+                              </Transition>
+                            </Menu>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
+
                     <span className="text-[10px] text-subtext mt-0 px-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -3217,7 +3278,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     </span>
                   </div>
 
-                  {/* Hover Actions - User Only (AI has footer) */}
+
                   {msg.role === 'user' && (
                     <div className={`flex items-center gap-1 transition-opacity duration-200 self-start mt-2 mr-0 flex-row-reverse ${activeMessageId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
 

@@ -381,34 +381,48 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
                         <div className="space-y-3">
                             {notifications.length > 0 ? (
-                                notifications.map((notif) => (
-                                    <div
-                                        key={notif.id}
-                                        className="group p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-white/5 relative hover:border-primary/20 transition-all shadow-sm"
-                                    >
-                                        <div className="flex justify-between items-start gap-4">
-                                            <div className="flex flex-col gap-1 pr-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`w-2 h-2 rounded-full ${notif.type === 'alert' ? 'bg-red-500' : notif.type === 'update' ? 'bg-blue-500' : 'bg-primary'}`} />
-                                                    <h4 className="text-[15px] font-bold text-gray-900 dark:text-white leading-tight">{notif.title}</h4>
+                                notifications.map((notif) => {
+                                    let title = notif.title;
+                                    let desc = notif.desc;
+
+                                    if (title === "New Login Detected") {
+                                        title = t('newLoginDetected');
+                                    }
+                                    const successLoginPrefix = "Successfully logged in at";
+                                    if (desc && desc.startsWith(successLoginPrefix)) {
+                                        const timePart = desc.replace(successLoginPrefix, "").trim();
+                                        desc = `${t('successfullyLoggedInAt')} ${timePart}`;
+                                    }
+
+                                    return (
+                                        <div
+                                            key={notif.id}
+                                            className="group p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-white/5 relative hover:border-primary/20 transition-all shadow-sm"
+                                        >
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div className="flex flex-col gap-1 pr-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`w-2 h-2 rounded-full ${notif.type === 'alert' ? 'bg-red-500' : notif.type === 'update' ? 'bg-blue-500' : 'bg-primary'}`} />
+                                                        <h4 className="text-[15px] font-bold text-gray-900 dark:text-white leading-tight">{title}</h4>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mt-1">
+                                                        {desc}
+                                                    </p>
+                                                    <span className="text-[11px] text-gray-400 mt-2 font-medium">
+                                                        {new Date(notif.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                    </span>
                                                 </div>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mt-1">
-                                                    {notif.desc}
-                                                </p>
-                                                <span className="text-[11px] text-gray-400 mt-2 font-medium">
-                                                    {new Date(notif.time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                                </span>
+                                                <button
+                                                    onClick={() => deleteNotification(notif.id)}
+                                                    className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={() => deleteNotification(notif.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors bg-white dark:bg-zinc-800 rounded-lg border border-gray-100 dark:border-white/10 shrink-0"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-20 px-8 text-center grayscale opacity-60">
                                     <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4 text-gray-400">
