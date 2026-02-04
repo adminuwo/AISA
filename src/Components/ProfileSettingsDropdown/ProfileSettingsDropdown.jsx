@@ -7,7 +7,7 @@ import {
     X, ChevronDown, Play, Globe,
     LogOut, Monitor, Mic, Check,
     ChevronLeft, ChevronRight, Trash2, ShieldCheck, Mail, Volume2, Plus,
-    Palette, Type, RefreshCcw, Languages, Crown, History, Calendar, CreditCard, Download
+    Palette, Type, RefreshCcw, Languages, Crown, History, Calendar, CreditCard, Download, Search
 } from 'lucide-react';
 import { jsPDF } from "jspdf";
 import { usePersonalization } from '../../context/PersonalizationContext';
@@ -214,51 +214,361 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         </div>
     );
 
-    const renderToggle = (section, field, value) => (
+    const renderToggle = (value, onToggle) => (
         <button
-            onClick={() => updatePersonalization(section, { [field]: !value })}
+            onClick={() => onToggle(!value)}
             className={`w-11 h-6 rounded-full p-1 transition-all duration-300 shrink-0 ${value ? 'bg-primary' : 'bg-gray-200 dark:bg-zinc-700'}`}
         >
             <div className={`w-4 h-4 rounded-full transition-transform duration-300 shadow-sm bg-white ${value ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
     );
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Memoized Settings Data for Search & Rendering
+    const allSettings = useMemo(() => {
+        const settings = [];
+
+        // 1. Personalization Settings
+        settings.push({
+            id: 'theme',
+            tab: 'personalization',
+            label: t('appearance'),
+            description: t('appearanceDesc'),
+            keywords: 'dark mode light mode system theme display color',
+            component: renderSettingRow(t('appearance'), t('appearanceDesc'), renderDropdown(
+                t(theme),
+                [t('system'), t('dark'), t('light')],
+                (e) => setTheme(e.target.value === t('system') ? 'system' : e.target.value === t('dark') ? 'dark' : 'light'),
+                Monitor
+            ))
+        });
+
+        settings.push({
+            id: 'accent',
+            tab: 'personalization',
+            label: t('accentColor'),
+            description: t('accentColorDesc'),
+            keywords: 'color design brand purple blue green orange pink',
+            component: renderSettingRow(t('accentColor'), t('accentColorDesc'), (
+                <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: `hsl(${ACCENT_COLORS[accentColor] || ACCENT_COLORS['Default']})` }} />
+                    {renderDropdown(accentColor, Object.keys(ACCENT_COLORS || {}), (e) => setAccentColor(e.target.value), Palette)}
+                </div>
+            ))
+        });
+
+        settings.push({
+            id: 'language',
+            tab: 'personalization',
+            label: t('language'),
+            description: t('languageDesc'),
+            keywords: 'locale translate english hindi french spanish',
+            component: renderSettingRow(t('language'), t('languageDesc'), renderDropdown(language, languages || ['English'], (e) => setLanguage(e.target.value), Languages))
+        });
+
+        settings.push({
+            id: 'fontSize',
+            tab: 'personalization',
+            label: t('fontSize'),
+            description: t('fontSizeDesc'),
+            keywords: 'text size large small medium extra large',
+            component: renderSettingRow(t('fontSize'), t('fontSizeDesc'), renderDropdown(
+                t(personalizations.personalization?.fontSize?.toLowerCase() || 'medium'),
+                [t('small'), t('medium'), t('large'), t('extraLarge')],
+                (e) => {
+                    const sizeMap = { [t('small')]: 'Small', [t('medium')]: 'Medium', [t('large')]: 'Large', [t('extraLarge')]: 'Extra Large' };
+                    updatePersonalization('personalization', { fontSize: sizeMap[e.target.value] });
+                },
+                Type
+            ))
+        });
+
+        settings.push({
+            id: 'fontStyle',
+            tab: 'personalization',
+            label: t('fontStyle'),
+            description: t('fontStyleDesc'),
+            keywords: 'typography font family serif sans mono rounded',
+            component: renderSettingRow(t('fontStyle'), t('fontStyleDesc'), renderDropdown(
+                t(personalizations.personalization?.fontStyle?.toLowerCase() || 'default'),
+                [t('default'), t('serif'), t('mono'), t('sans'), t('rounded')],
+                (e) => {
+                    const styleMap = { [t('default')]: 'Default', [t('serif')]: 'Serif', [t('mono')]: 'Mono', [t('sans')]: 'Sans', [t('rounded')]: 'Rounded' };
+                    updatePersonalization('personalization', { fontStyle: styleMap[e.target.value] });
+                },
+                RefreshCcw
+            ))
+        });
+
+        // 2. Data Settings
+        settings.push({
+            id: 'chatHistory',
+            tab: 'data',
+            label: t('chatHistory'),
+            description: t('chatHistoryDesc'),
+            keywords: 'save toggle privacy training',
+            component: renderSettingRow(t('chatHistory'), t('chatHistoryDesc'), renderToggle(
+                personalizations.dataControls?.chatHistory === 'On',
+                (val) => updatePersonalization('dataControls', { chatHistory: val ? 'On' : 'Off' })
+            ))
+        });
+
+        // 2b. Recent Chat History (Data)
+        settings.push({
+            id: 'chatHistoryList',
+            tab: 'data',
+            label: t('recentChatHistory') || 'Recent Chat History',
+            description: 'View and manage your past conversations',
+            keywords: 'past sessions conversations view open',
+            component: (
+                <div className="pt-4 animate-in fade-in duration-300">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase mb-4">{t('recentChatHistory')}</h4>
+                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                        {Object.keys(groupedSessions).length > 0 ? (
+                            Object.keys(groupedSessions).sort((a, b) => new Date(b) - new Date(a)).map(date => (
+                                <div key={date} className="border border-gray-100 dark:border-white/5 rounded-xl">
+                                    <button onClick={() => setExpandedDate(expandedDate === date ? null : date)} className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50">
+                                        <span className="text-sm font-semibold">{date}</span>
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${expandedDate === date ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    {expandedDate === date && (
+                                        <div className="p-2 space-y-1">
+                                            {groupedSessions[date].map(session => (
+                                                <div key={session.sessionId} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg">
+                                                    <span className="text-sm truncate pr-4">{session.title || "New Chat"}</span>
+                                                    <button onClick={() => { window.location.href = `/dashboard/chat/${session.sessionId}`; onClose(); }} className="px-2 py-1 bg-primary/10 text-primary text-[10px] rounded">View</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : <p className="text-center text-sm text-gray-500 py-10">No chats found</p>}
+                    </div>
+                </div>
+            )
+        });
+
+        // 3. Account Settings
+        settings.push({
+            id: 'nickname',
+            tab: 'account',
+            label: t('displayName'),
+            description: 'Change your display name',
+            keywords: 'name profile identity edit update',
+            component: (
+                <div className="flex flex-col gap-2 py-4 border-b border-gray-100 dark:border-white/5">
+                    <label className="text-xs font-bold text-gray-500 uppercase">{t('displayName')}</label>
+                    <div className="relative">
+                        <input type="text" value={nicknameInput} onChange={e => setNicknameInput(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 border rounded-xl p-3 text-sm" />
+                        <button onClick={handleSaveNickname} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-white text-[10px] rounded-lg">Save</button>
+                    </div>
+                </div>
+            )
+        });
+
+        settings.push({
+            id: 'password',
+            tab: 'account',
+            label: 'Password',
+            description: 'Reset your password',
+            keywords: 'login access forgot reset change secure',
+            component: (
+                <div className="flex flex-col gap-1 py-4 border-b border-gray-100 dark:border-white/5">
+                    <span className="text-xs font-bold text-gray-500 uppercase">{t('loginId')}</span>
+                    <div className="flex justify-between items-center text-sm">
+                        <span>{user?.email}</span>
+                        <button onClick={() => setShowResetModal(true)} className="text-primary font-semibold">Forgot Password?</button>
+                    </div>
+                </div>
+            )
+        });
+
+        settings.push({
+            id: 'plan',
+            tab: 'account',
+            label: 'Subscription Plan',
+            description: 'Manage your subscription',
+            keywords: 'upgrade billing pro max ultra payment',
+            component: (
+                <div className="p-4 bg-primary/10 rounded-xl flex justify-between items-center border border-primary/20 mt-2">
+                    <div>
+                        <p className="font-bold capitalize">{user?.plan || 'Basic'} Plan</p>
+                        <p className="text-xs text-gray-500">Your current subscription</p>
+                    </div>
+                    <button onClick={() => setShowPricingModal(true)} className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-lg shadow-primary/20">Upgrade</button>
+                </div>
+            )
+        });
+
+        // 3b. Transaction History (Account)
+        settings.push({
+            id: 'transactions',
+            tab: 'account',
+            label: 'Transaction History',
+            description: 'View your payment history',
+            keywords: 'invoice receipt download billing payments',
+            component: (
+                <div className="pt-4 border-t border-gray-100 dark:border-white/5 mt-4">
+                    <button onClick={() => setShowHistory(!showHistory)} className="text-sm text-primary font-semibold flex items-center gap-2"><History className="w-4 h-4" /> Transaction History</button>
+                    {showHistory && (
+                        <div className="mt-4 space-y-2">
+                            {transactions.length > 0 ? transactions.map(tx => (
+                                <div key={tx._id} className="flex justify-between p-3 bg-gray-50 rounded-lg text-sm">
+                                    <span>{new Date(tx.createdAt).toLocaleDateString()}</span>
+                                    <span className="font-bold">₹{tx.amount}</span>
+                                    <button onClick={() => generateInvoice(tx)} className="text-primary"><Download className="w-4 h-4" /></button>
+                                </div>
+                            )) : <p className="text-center text-xs text-gray-400 py-4">No transactions found</p>}
+                        </div>
+                    )}
+                </div>
+            )
+        });
+
+        // 4. Notifications
+        settings.push({
+            id: 'notifications',
+            tab: 'notifications',
+            label: t('notifications') || 'Notifications',
+            description: 'View your latest alerts and messages',
+            keywords: 'inbox alerts messages clear all delete remove',
+            component: (
+                <div className="space-y-4 animate-in fade-in duration-300 py-2">
+                    <div className="flex items-center justify-between pb-2">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('inbox')} ({notifications.length})</h3>
+                        {notifications.length > 0 && <button onClick={clearAllNotifications} className="text-xs font-semibold text-primary">{t('clearAllNotifications')}</button>}
+                    </div>
+                    <div className="space-y-3">
+                        {notifications.length > 0 ? (
+                            notifications.map((notif) => (
+                                <div key={notif.id} className="group p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-white/5 relative">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="flex flex-col gap-1">
+                                            <h4 className="text-[15px] font-bold">{notif.title}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">{notif.desc}</p>
+                                            <span className="text-[11px] text-gray-400">{new Date(notif.time).toLocaleString()}</span>
+                                        </div>
+                                        <button onClick={() => deleteNotification(notif.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="py-20 text-center opacity-60">
+                                <Bell className="w-8 h-8 mx-auto mb-4 text-gray-400" />
+                                <h4 className="font-bold">{t('youreAllCaughtUp')}</h4>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        });
+
+        // 5. Security
+        settings.push({
+            id: 'security',
+            tab: 'security',
+            label: t('security') || 'Security',
+            description: 'Manage active sessions and account security',
+            keywords: 'sessions login devices logout switch account',
+            component: (
+                <div className="space-y-4 animate-in fade-in duration-300 py-2">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('activeSessions')}</h4>
+                    <div className="space-y-3">
+                        {accounts.map((acc) => (
+                            <div key={acc.email} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20 shrink-0">
+                                        {(acc.avatar || (acc.email === user.email && user.avatar)) ? (
+                                            <img src={acc.avatar || user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-primary font-bold text-sm">{(acc.name || 'U').charAt(0).toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold">{acc.name || 'User'}</p>
+                                        <p className="text-[11px] text-gray-500">{acc.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    {acc.email !== user?.email && <button onClick={() => handleSwitchAccount(acc)} className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-lg">Switch</button>}
+                                    <button onClick={() => handleAccountLogout(acc.email)} className="p-2 text-gray-400 hover:text-red-500"><LogOut className="w-4 h-4" /></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+        });
+
+        // 6. Log Out (Global)
+        settings.push({
+            id: 'logout_global',
+            tab: 'account',
+            label: t('logOut'),
+            description: 'Sign out of your account',
+            keywords: 'sign out exit leave',
+            component: (
+                <div className="py-4 border-t border-gray-100 dark:border-white/5 mt-2">
+                    <button onClick={onLogout} className="flex items-center gap-3 text-red-500 text-sm px-4 py-3 w-full bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-xl transition-colors font-bold">
+                        <LogOut className="w-4 h-4" /> {t('logOut')}
+                    </button>
+                </div>
+            )
+        });
+
+        return settings;
+    }, [theme, accentColor, language, personalizations, nicknameInput, user, t, languages, ACCENT_COLORS, notifications, accounts, groupedSessions, expandedDate, showHistory, transactions, showResetModal]);
+
     const renderContent = () => {
+        // Search View
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+
+            const results = allSettings.filter(item => {
+                // 1. Match Item Label or Description
+                const itemMatch = item.label.toLowerCase().includes(query) ||
+                    (item.description && item.description.toLowerCase().includes(query));
+
+                // 2. Match Category Name (Tab Label)
+                const tabLabel = tabs.find(t => t.id === item.tab)?.label.toLowerCase();
+                const categoryMatch = tabLabel && tabLabel.includes(query);
+
+                // 3. Match Keywords (Actions)
+                const keywordMatch = item.keywords && item.keywords.toLowerCase().includes(query);
+
+                return itemMatch || categoryMatch || keywordMatch;
+            });
+
+            return (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Search Results ({results.length})</h3>
+                    </div>
+
+                    {results.length > 0 ? (
+                        results.map(item => (
+                            <div key={item.id}>
+                                {item.component}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-10 opacity-50">
+                            <Search className="w-10 h-10 mb-2" />
+                            <p>No settings found for "{searchQuery}"</p>
+                            <p className="text-xs text-center mt-2 max-w-[200px]">Try searching for "Dark Mode", "Upgrade", "Invoice", or "Log Out"</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         switch (activeTab) {
             case 'personalization':
                 return (
                     <div className="space-y-2 animate-in fade-in duration-300">
-                        {renderSettingRow(t('appearance'), t('appearanceDesc'), renderDropdown(
-                            t(theme),
-                            [t('system'), t('dark'), t('light')],
-                            (e) => setTheme(e.target.value === t('system') ? 'system' : e.target.value === t('dark') ? 'dark' : 'light'),
-                            Monitor
-                        ))}
-                        {renderSettingRow(t('accentColor'), t('accentColorDesc'), (
-                            <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: `hsl(${ACCENT_COLORS[accentColor] || ACCENT_COLORS['Default']})` }} />
-                                {renderDropdown(accentColor, Object.keys(ACCENT_COLORS || {}), (e) => setAccentColor(e.target.value), Palette)}
-                            </div>
-                        ))}
-                        {renderSettingRow(t('language'), t('languageDesc'), renderDropdown(language, languages || ['English'], (e) => setLanguage(e.target.value), Languages))}
-                        {renderSettingRow(t('fontSize'), t('fontSizeDesc'), renderDropdown(
-                            t(personalizations.personalization?.fontSize?.toLowerCase() || 'medium'),
-                            [t('small'), t('medium'), t('large'), t('extraLarge')],
-                            (e) => {
-                                const sizeMap = { [t('small')]: 'Small', [t('medium')]: 'Medium', [t('large')]: 'Large', [t('extraLarge')]: 'Extra Large' };
-                                updatePersonalization('personalization', { fontSize: sizeMap[e.target.value] });
-                            },
-                            Type
-                        ))}
-                        {renderSettingRow(t('fontStyle'), t('fontStyleDesc'), renderDropdown(
-                            t(personalizations.personalization?.fontStyle?.toLowerCase() || 'default'),
-                            [t('default'), t('serif'), t('mono'), t('sans'), t('rounded')],
-                            (e) => {
-                                const styleMap = { [t('default')]: 'Default', [t('serif')]: 'Serif', [t('mono')]: 'Mono', [t('sans')]: 'Sans', [t('rounded')]: 'Rounded' };
-                                updatePersonalization('personalization', { fontStyle: styleMap[e.target.value] });
-                            },
-                            RefreshCcw
-                        ))}
+                        {allSettings.filter(s => s.tab === 'personalization').map(s => <div key={s.id}>{s.component}</div>)}
                     </div>
                 );
             case 'notifications':
@@ -294,7 +604,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             case 'data':
                 return (
                     <div className="space-y-6 animate-in fade-in duration-300">
-                        {renderSettingRow(t('chatHistory'), t('chatHistoryDesc'), renderToggle('dataControls', 'chatHistory', personalizations.dataControls?.chatHistory === 'On'))}
+                        {allSettings.filter(s => s.tab === 'data').map(s => <div key={s.id}>{s.component}</div>)}
                         <div className="pt-4">
                             <h4 className="text-xs font-bold text-gray-400 uppercase mb-4">{t('recentChatHistory')}</h4>
                             <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
@@ -330,7 +640,13 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                             {accounts.map((acc) => (
                                 <div key={acc.email} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
                                     <div className="flex items-center gap-3">
-                                        <img src="/logo/Logo.svg" alt="Logo" className="w-8 h-8" />
+                                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20 shrink-0">
+                                            {(acc.avatar || (acc.email === user.email && user.avatar)) ? (
+                                                <img src={acc.avatar || user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-primary font-bold text-sm">{(acc.name || 'U').charAt(0).toUpperCase()}</span>
+                                            )}
+                                        </div>
                                         <div>
                                             <p className="text-sm font-bold">{acc.name || 'User'}</p>
                                             <p className="text-[11px] text-gray-500">{acc.email}</p>
@@ -349,27 +665,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                 return (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="space-y-4">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">{t('displayName')}</label>
-                                <div className="relative">
-                                    <input type="text" value={nicknameInput} onChange={e => setNicknameInput(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 border rounded-xl p-3 text-sm" />
-                                    <button onClick={handleSaveNickname} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-white text-[10px] rounded-lg">Save</button>
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-bold text-gray-500 uppercase">{t('loginId')}</span>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span>{user?.email}</span>
-                                    <button onClick={() => setShowResetModal(true)} className="text-primary font-semibold">Forgot Password?</button>
-                                </div>
-                            </div>
-                            <div className="p-4 bg-primary/10 rounded-xl flex justify-between items-center border border-primary/20">
-                                <div>
-                                    <p className="font-bold capitalize">{user?.plan || 'Basic'} Plan</p>
-                                    <p className="text-xs text-gray-500">Your current subscription</p>
-                                </div>
-                                <button onClick={() => setShowPricingModal(true)} className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-lg shadow-primary/20">Upgrade</button>
-                            </div>
+                            {allSettings.filter(s => s.tab === 'account').map(s => <div key={s.id}>{s.component}</div>)}
                         </div>
                         <div className="pt-4 border-t border-gray-100 dark:border-white/5">
                             <button onClick={() => setShowHistory(!showHistory)} className="text-sm text-primary font-semibold flex items-center gap-2"><History className="w-4 h-4" /> Transaction History</button>
@@ -401,7 +697,32 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <h2 className="text-lg font-bold">Settings</h2>
                                 <button onClick={onClose} className="sm:hidden p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
                             </div>
-                            <nav className="flex-1 px-2 space-y-1">
+
+                            {/* Search Bar */}
+                            <div className="px-4 pb-3">
+                                <div className="relative group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+                                    <input
+                                        className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-gray-400"
+                                        placeholder="Search..."
+                                        value={searchQuery}
+                                        onChange={e => {
+                                            setSearchQuery(e.target.value);
+                                            if (e.target.value) setView('detail'); // Auto-switch to results view on mobile
+                                        }}
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <nav className="flex-1 px-2 space-y-1 overflow-y-auto">
                                 {tabs.map(tab => (
                                     <button
                                         key={tab.id}
@@ -426,8 +747,12 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <button onClick={() => setView('sidebar')} className="sm:hidden p-1 -ml-1 hover:bg-black/5 rounded-full">
                                     <ChevronLeft className="w-6 h-6" />
                                 </button>
-                                <h2 className="text-lg sm:text-xl font-bold">{tabs.find(t => t.id === activeTab)?.label}</h2>
-                                <button onClick={onClose} className="ml-auto sm:hidden p-2 hover:bg-black/5 rounded-full"><X size={20} /></button>
+                                <h2 className="text-lg sm:text-xl font-bold">
+                                    {searchQuery ? 'Search Results' : tabs.find(t => t.id === activeTab)?.label}
+                                </h2>
+                                <button onClick={onClose} className="ml-auto p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-colors">
+                                    <X size={20} className="text-gray-500" />
+                                </button>
                             </div>
                             <div className="flex-1 overflow-y-auto px-5 sm:px-8 pb-8">{renderContent()}</div>
                         </div>
