@@ -57,7 +57,7 @@ export const AppRoute = {
 };
 
 // API Base URL
-const API = import.meta.env.AISA_BACKEND_API;
+const API = window._env_?.AISA_BACKEND_API || import.meta.env.AISA_BACKEND_API;
 console.log(API);
 
 const apis = {
