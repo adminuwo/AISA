@@ -126,7 +126,7 @@ const Landing = () => {
                     animate={{ opacity: 1, x: 0 }}
                     className="relative flex items-center gap-2 md:gap-3 cursor-pointer group"
                 >
-                    <img src="/logo/AISA.gif" alt="Logo" className="w-12 h-12 md:w-20 md:h-20 object-contain hover:rotate-12 transition-transform duration-300" />
+                    <img src="/logo/AISA.gif" alt="AISA Logo" className="w-12 h-12 md:w-20 md:h-20 object-contain hover:rotate-12 transition-transform duration-300" />
 
                 </motion.div>
 
