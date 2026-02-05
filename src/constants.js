@@ -1,4 +1,4 @@
-export const logo = "/logo/Logo.png";
+export const logo = "/logo/AISA.gif";
 export const name = "AISA";
 
 export const faqs = [

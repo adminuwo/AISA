@@ -160,7 +160,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   }, [token])
 
-  // Fetch chat sessions
+  // Fetch chat sessions (Works for both guests and logged-in users)
   useEffect(() => {
     const fetchSessions = async () => {
       try {
@@ -170,9 +170,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         console.error("Failed to fetch sessions:", err);
       }
     };
-    if (token) {
-      fetchSessions();
-    }
+    fetchSessions();
   }, [token, sessionId, setSessions]);
 
   // Update currentSessionId when sessionId changes
@@ -330,7 +328,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {/* Chat Sessions List */}
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
-            {token ? (
+            {(token || sessions.length > 0) ? (
               <>
                 <h3 className="px-4 py-2 text-xs font-bold text-primary/70 uppercase tracking-widest">
                   {t('history')}
@@ -379,7 +377,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                               {new Date(session.lastModified).toLocaleDateString()}
                             </div>
                           </button>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
                             <button
                               onClick={(e) => startRename(e, session)}
                               className="p-1.5 text-blue-500 hover:text-primary transition-all hover:bg-primary/10 rounded-lg"
@@ -392,7 +390,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                               className="p-1.5 text-red-500 hover:text-red-600 transition-all hover:bg-red-500/10 rounded-lg"
                               title="Delete Chat"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </>

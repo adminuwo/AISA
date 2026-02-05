@@ -23,9 +23,9 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
         {
             id: 'pro',
             name: 'Pro',
-            price: 149,
-            originalPrice: 499,
-            offer: 'LAUNCHING OFFER',
+            price: 499,
+            originalPrice: 999,
+            offer: '70% OFF',
             description: 'Advanced capabilities for professionals',
             features: [
                 'Access to advanced models',
@@ -42,9 +42,9 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
         {
             id: 'king',
             name: 'King',
-            price: 449,
-            originalPrice: 1499,
-            offer: 'LAUNCHING OFFER',
+            price: 1499,
+            originalPrice: 4999,
+            offer: '70% OFF',
             description: 'Ultimate power for power users',
             features: [
                 'Access to all models (including Beta)',
@@ -69,19 +69,19 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-white dark:bg-[#18181b] w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                    className="bg-white dark:bg-[#18181b] w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]"
                 >
-                    <div className="p-6 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
+                    <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-white/10 flex justify-between items-center shrink-0">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Upgrade your Plan</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Choose the plan that fits your needs.</p>
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Upgrade your Plan</h2>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Choose the plan that fits your needs.</p>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
-                            <X className="w-6 h-6 text-gray-500" />
+                            <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" />
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-[#121212]">
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50 dark:bg-[#121212] custom-scrollbar">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {plans.map((plan) => {
                                 const isCurrent = currentPlan?.toLowerCase() === plan.id;
@@ -114,7 +114,7 @@ const PricingModal = ({ onClose, currentPlan, onUpgrade }) => {
                                         {plan.offer && (
                                             <div className="text-[11px] font-bold text-blue-500 dark:text-blue-400 mb-1 flex items-center gap-1.5 uppercase tracking-wide">
                                                 <Sparkles className="w-3 h-3" />
-                                                Launching Offer
+                                                {plan.offer} Launching Offer
                                             </div>
                                         )}
 

@@ -1,11 +1,14 @@
 import axios from "axios";
 import { apis } from "../types";
 import { getUserData } from "../userStore/userData";
+import { getDeviceFingerprint } from "../utils/fingerprint";
 
 export const generateChatResponse = async (history, currentMessage, systemInstruction, attachments, language, abortSignal = null, mode = null) => {
     try {
         const token = getUserData()?.token;
-        const headers = {};
+        const headers = {
+            'X-Device-Fingerprint': getDeviceFingerprint()
+        };
         if (token && token !== 'undefined' && token !== 'null') {
             headers.Authorization = `Bearer ${token}`;
         }
@@ -50,7 +53,8 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
 
         const result = await axios.post(apis.chatAgent, payload, {
             headers: headers,
-            signal: abortSignal
+            signal: abortSignal,
+            withCredentials: true
         });
 
         // Return full response data (includes reply and potentially conversion data)
@@ -67,6 +71,9 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
         }
         if (error.response?.status === 401) {
             return "Please [Log In](/login) to your AISA™ account to continue chatting.";
+        }
+        if (error.response?.data?.error === "LIMIT_REACHED") {
+            return { error: "LIMIT_REACHED", reason: error.response.data.reason };
         }
         // Return backend error message if available
         if (error.response?.data?.error) {

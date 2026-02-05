@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
@@ -86,6 +86,7 @@ const TOOL_PRICING = {
 const Chat = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { personalizations, getSystemPromptExtensions } = usePersonalization();
 
   const [messages, setMessages] = useState([]);
@@ -104,8 +105,10 @@ const Chat = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLimitReached, setIsLimitReached] = useState(false);
   const [filePreviews, setFilePreviews] = useState([]);
-  const [activeAgent, setActiveAgent] = useState({ name: 'AISA™', category: 'General' });
+  const [activeAgent, setActiveAgent] = useState({ agentName: 'AISA', category: 'General' });
   const [userAgents, setUserAgents] = useState([]);
   const [toolModels, setToolModels] = useState({
     chat: 'gemini-flash',
@@ -1619,15 +1622,37 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
 \`\`\`
 - Keep the response text brief, explaining what you are doing.` : ''}
 `;
-        const aiResponseData = await generateChatResponse(
-          messages,
-          userMsg.content,
-          SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
-          userMsg.attachments,
-          currentLang,
-          abortControllerRef.current.signal,
-          detectedMode
-        );
+        // Check for greeting to send the specific welcome message
+        const lowerInput = (contentToSend || "").toLowerCase().trim();
+        const isGreeting = ['hi', 'hello', 'hey', 'namaste', 'नमस्ते', 'greetings', 'hi aisa', 'hello aisa'].includes(lowerInput);
+
+        let aiResponseData;
+
+        if (isGreeting) {
+          // Respond with the welcome message for greetings
+          aiResponseData = {
+            reply: WELCOME_MESSAGE,
+            language: currentLang
+          };
+        } else {
+          // Default AI message sending
+          aiResponseData = await generateChatResponse(
+            messages,
+            userMsg.content,
+            SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
+            userMsg.attachments,
+            currentLang,
+            abortControllerRef.current.signal,
+            detectedMode
+          );
+        }
+
+        if (aiResponseData && aiResponseData.error === "LIMIT_REACHED") {
+          setIsLimitReached(true);
+          setIsLoading(false);
+          isSendingRef.current = false;
+          return;
+        }
 
         // Handle response - could be string (old format) or object (new format with conversion)
         let aiResponseText = '';
@@ -2647,7 +2672,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pb-32 md:pb-40 animate-in fade-in duration-700">
               <div className="mb-6 select-none">
                 <img
-                  src="/logo/Logo.svg"
+                  src="/logo/AISA.gif"
                   alt="AISA Icon"
                   className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-2xl pointer-events-none"
                   draggable={false}
@@ -2678,7 +2703,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     {msg.role === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <img src="/logo/Logo.svg" alt="AISA" className="w-5 h-5 object-contain" />
+                      <img src="/logo/AISA.gif" alt="AISA" className="w-5 h-5 object-contain" />
                     )}
                   </div>
 
@@ -3677,6 +3702,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                 <textarea
                   ref={inputRef}
                   value={inputValue}
+                  disabled={isLoading || isLimitReached}
                   onChange={(e) => {
                     setInputValue(e.target.value);
                     e.target.style.height = 'auto';
@@ -3691,9 +3717,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     }
                   }}
                   onPaste={handlePaste}
-                  placeholder={isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA..."}
+                  placeholder={isLimitReached ? "Chat limit reached. Sign in to continue." : (isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA...")}
                   rows={1}
-                  className="w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 text-maintext text-left placeholder-subtext/50 resize-none overflow-y-auto custom-scrollbar leading-relaxed aisa-scalable-text flex items-center"
+                  className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 text-maintext text-left placeholder-subtext/50 resize-none overflow-y-auto custom-scrollbar leading-relaxed aisa-scalable-text flex items-center ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
                   style={{ minHeight: '24px', maxHeight: '150px', lineHeight: '24px' }}
                 />
               </div>
@@ -3847,6 +3873,67 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       >
                         {isSubmittingFeedback && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                         {isSubmittingFeedback ? 'Submitting...' : 'Submit'}
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
+
+        {/* Limit Reached Modal */}
+        <Transition show={isLimitReached} as={Fragment}>
+          <Dialog as="div" className="relative z-[200]" onClose={() => { }}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-md" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-border p-8 text-center shadow-2xl transition-all">
+                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+                    </div>
+
+                    <Dialog.Title as="h3" className="text-2xl font-black text-maintext mb-2 tracking-tight uppercase">
+                      Chat Limit Reached
+                    </Dialog.Title>
+
+                    <p className="text-subtext mb-8 leading-relaxed text-sm">
+                      You've reached the guest limit of 10 sessions and 5 messages per session.
+                      Sign in to unlock **unlimited chat**, image generation, and more!
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={() => navigate('/login', { state: { from: location.pathname } })}
+                        className="w-full py-4 bg-primary text-white rounded-2xl font-bold text-sm tracking-widest hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 active:scale-95 uppercase"
+                      >
+                        Sign In Now
+                      </button>
+                      <button
+                        onClick={() => navigate('/signup')}
+                        className="w-full py-4 bg-black/5 dark:bg-white/5 border border-border text-maintext rounded-2xl font-bold text-sm tracking-widest hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 uppercase"
+                      >
+                        Create Free Account
                       </button>
                     </div>
                   </Dialog.Panel>

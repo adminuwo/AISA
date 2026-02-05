@@ -21,6 +21,7 @@ import { apis } from '../../types';
 import CustomSelect from '../CustomSelect/CustomSelect';
 import PricingModal from '../Pricing/PricingModal';
 import usePayment from '../../hooks/usePayment';
+import { apiService } from '../../services/apiService';
 
 const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const [currentUserData, setUserRecoil] = useRecoilState(userData);
@@ -50,6 +51,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
     // Reset Password State
     const [showResetModal, setShowResetModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [resetStep, setResetStep] = useState(1); // 1: Send OTP, 2: Verify & Reset
     const [resetOtp, setResetOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -182,6 +185,23 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             toast.error(error.response?.data?.error || 'Failed to reset password');
         } finally {
             setResetLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setDeleteLoading(true);
+        try {
+            const userId = user.id || user._id;
+            if (!userId) throw new Error('User ID not found');
+            await apiService.deleteUser(userId);
+            toast.success('Account deleted successfully');
+            localStorage.clear();
+            window.location.href = '/login';
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to delete account');
+        } finally {
+            setDeleteLoading(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -711,24 +731,39 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                         {renderContent()}
                                     </div>
                                 ) : (
-                                    tabs.map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => {
-                                                setActiveTab(tab.id);
-                                                setView('detail');
-                                            }}
-                                            className={`w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 rounded-xl text-sm transition-colors ${activeTab === tab.id ? 'bg-white dark:bg-[#1E2438] shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
-                                        >
-                                            <tab.icon className="w-4 h-4" />
-                                            {tab.label}
-                                            <ChevronRight className="w-4 h-4 ml-auto sm:hidden opacity-50" />
-                                        </button>
-                                    ))
+                                    <>
+                                        {tabs.map(tab => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => {
+                                                    setActiveTab(tab.id);
+                                                    setView('detail');
+                                                }}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 rounded-xl text-sm transition-colors ${activeTab === tab.id ? 'bg-white dark:bg-[#1E2438] shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+                                            >
+                                                <tab.icon className="w-4 h-4" />
+                                                {tab.label}
+                                                <ChevronRight className="w-4 h-4 ml-auto sm:hidden opacity-50" />
+                                            </button>
+                                        ))}
+                                    </>
                                 )}
                             </nav>
-                            <div className="p-4 border-t border-gray-100 dark:border-white/5">
-                                <button onClick={onLogout} className="flex items-center gap-3 text-red-500 text-sm px-4 py-2 w-full hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"><LogOut className="w-4 h-4" /> {t('logOut')}</button>
+                            <div className="p-4 space-y-1 border-t border-gray-100 dark:border-white/5">
+                                <button
+                                    onClick={onLogout}
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors font-medium text-left"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    {t('logOut')}
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteModal(true)}
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors font-medium text-left"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Account
+                                </button>
                             </div>
                         </div>
                         <div className={`flex-1 flex-col min-w-0 bg-white dark:bg-[#161B2E] ${view === 'sidebar' ? 'hidden sm:flex' : 'flex'}`}>
@@ -823,6 +858,40 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 </button>
                             </form>
                         )}
+                    </motion.div>
+                </div>
+            )}
+
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowDeleteModal(false)}>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-[#1E2438] p-8 rounded-3xl w-full max-w-sm text-center shadow-2xl"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Trash2 className="w-8 h-8 text-red-500" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">Delete Account?</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                            This action is permanent and cannot be undone. All your data, chats, and subscriptions will be deleted forever.
+                        </p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 bg-gray-100 dark:bg-white/5 py-3 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-white/10 transition-all"
+                            >
+                                No, Keep it
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteLoading}
+                                className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50"
+                            >
+                                {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             )}

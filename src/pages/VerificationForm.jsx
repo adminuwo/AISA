@@ -89,7 +89,7 @@ export default function VerificationForm() {
                 />
             </div>
 
-            <div className="relative w-full max-w-[440px] px-4">
+            <div className="relative w-full max-w-[420px] px-4">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -98,17 +98,17 @@ export default function VerificationForm() {
                     {/* Header */}
                     <div className="mb-10">
                         <div className="inline-flex items-center justify-center p-5 bg-primary rounded-[2rem] mb-6 shadow-xl shadow-primary/20">
-                            <Mail className="w-8 h-8 text-white" />
+                            <Mail className="w-7 h-7 text-white" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter uppercase">Verify Your Email</h2>
+                        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter uppercase leading-tight">Verify Your Email</h2>
                         <div className="flex flex-col items-center gap-1">
-                            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-black uppercase tracking-[0.2em]">
                                 We've sent a 6-digit code to
                             </p>
-                            <div className="flex items-center gap-2 px-3 py-1 bg-white/40 dark:bg-white/5 rounded-full border border-white/40 dark:border-white/10 mt-1">
-                                <span className="text-xs font-bold text-slate-700 dark:text-white">{email}</span>
+                            <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-white/40 dark:bg-white/5 rounded-full border border-white/40 dark:border-white/10 mt-2">
+                                <span className="text-base font-bold text-slate-700 dark:text-white">{email}</span>
                                 <Link to="/signup" className="p-1 hover:bg-white/40 dark:hover:bg-white/10 rounded-full transition-colors text-primary">
-                                    <Pencil className="w-4 h-4" />
+                                    <Pencil className="w-3.5 h-3.5" />
                                 </Link>
                             </div>
                         </div>
@@ -121,9 +121,9 @@ export default function VerificationForm() {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mb-6 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 justify-center backdrop-blur-md"
+                                className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-widest flex items-center gap-2 justify-center backdrop-blur-md"
                             >
-                                <AlertCircle className="w-3.5 h-3.5" />
+                                <AlertCircle className="w-4 h-4" />
                                 {error}
                             </motion.div>
                         )}
@@ -144,9 +144,9 @@ export default function VerificationForm() {
                                     if (val.length <= 6) setVerificationCode(val);
                                 }}
                                 placeholder="······"
-                                className="w-full text-center text-5xl tracking-[0.4em] py-8 bg-white/30 dark:bg-slate-900/40 border border-white/50 dark:border-white/10 rounded-3xl 
+                                className="w-full text-center text-5xl tracking-[0.4em] py-7 bg-white/30 dark:bg-slate-900/40 border border-white/50 dark:border-white/10 rounded-[2rem] 
                                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                                     transition-all text-slate-800 dark:text-white font-black placeholder:text-slate-400/30 placeholder:tracking-normal backdrop-blur-md shadow-inner"
+                                     transition-all text-slate-800 dark:text-white font-black placeholder:text-slate-400/50 placeholder:tracking-normal backdrop-blur-md shadow-inner"
                                 autoFocus
                             />
                         </div>
@@ -156,7 +156,7 @@ export default function VerificationForm() {
                             whileTap={{ scale: 0.98 }}
                             type="submit"
                             disabled={loading || verificationCode.length !== 6}
-                            className="w-full py-4.5 bg-primary rounded-3xl font-black text-sm uppercase tracking-widest text-white shadow-xl shadow-primary/30 
+                            className="w-full py-5 bg-primary rounded-[2rem] font-black text-sm uppercase tracking-widest text-white shadow-xl shadow-primary/30 
                                  hover:shadow-primary/50 transition-all duration-300 
                                  disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
                         >
@@ -165,21 +165,21 @@ export default function VerificationForm() {
                             ) : (
                                 <>
                                     <span>Verify Email</span>
-                                    <ArrowRight className="w-4 h-4" />
+                                    <ArrowRight className="w-5 h-5" />
                                 </>
                             )}
                         </motion.button>
                     </form>
 
                     <div className="mt-10 pt-8 border-t border-white/10 dark:border-slate-800/50 text-center">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
                             Didn't receive the code?
                         </p>
                         <button
                             type="button"
                             onClick={handleResend}
                             disabled={resendLoading}
-                            className="text-primary hover:underline text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                            className="text-primary hover:underline text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
                         >
                             {resendLoading ? 'Sending...' : 'Request New Code'}
                         </button>

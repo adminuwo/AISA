@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API } from "../types";
 import { getUserData } from "../userStore/userData";
+import { getDeviceFingerprint } from "../utils/fingerprint";
 
 const API_BASE_URL = API;
 
@@ -20,16 +21,6 @@ const getDB = () => new Promise((resolve, reject) => {
   request.onsuccess = () => resolve(request.result);
   request.onerror = () => reject(request.error);
 });
-
-const dbAction = (type, mode, callback) => {
-  return getDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, mode);
-    const store = tx.objectStore(STORE_NAME);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-    callback(store, resolve, reject);
-  }));
-};
 
 const idbGet = (key) => new Promise((resolve, reject) => {
   getDB().then(db => {
@@ -71,28 +62,31 @@ const idbGetAllKeys = () => new Promise((resolve, reject) => {
   });
 });
 
+// Helper for authorized/anonymous requests
+const getAuthHeaders = () => {
+  const token = getUserData()?.token || localStorage.getItem("token");
+  const headers = {
+    'X-Device-Fingerprint': getDeviceFingerprint()
+  };
+  if (token && token !== 'undefined' && token !== 'null') {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 // --- Service ---
 
 export const chatStorageService = {
 
   async getSessions() {
     try {
-      const token = getUserData()?.token || localStorage.getItem("token");
-
-      if (!token || token === 'undefined' || token === 'null') {
-        throw new Error("No token");
-      }
-
-      // Try Backend First
-      const response = await fetch(`${API_BASE_URL}/chat`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axios.get(`${API_BASE_URL}/chat`, {
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
-      if (!response.ok) throw new Error("Backend failed");
-      return await response.json();
+      return response.data;
     } catch (error) {
-      if (error.message !== "No token") {
-        console.warn("Using IndexedDB storage fallback.");
-      }
+      console.warn("Backend sessions fetch failed, using local:", error);
       const sessions = [];
       const keys = await idbGetAllKeys();
 
@@ -114,31 +108,14 @@ export const chatStorageService = {
   async getHistory(sessionId) {
     if (sessionId === "new") return [];
     try {
-      const token = getUserData()?.token || localStorage.getItem("token");
-
-      if (!token || token === 'undefined' || token === 'null') {
-        throw new Error("No token");
-      }
-
-      const response = await fetch(`${API_BASE_URL}/chat/${sessionId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axios.get(`${API_BASE_URL}/chat/${sessionId}`, {
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
-      if (response.status === 404) {
-        // Fallback to local if backend says 404 (maybe backend lost data but we have it?)
-        const local = await idbGet(`chat_history_${sessionId}`);
-        if (local && local.length > 0) return local;
-        return [];
-      }
-      if (!response.ok) throw new Error("Backend error");
-      const data = await response.json();
-      console.log(`[STORAGE] Fetched data for ${sessionId}:`, data);
-      const msgs = data.messages || [];
-      console.log(`[STORAGE] Messages array length: ${msgs.length}`);
-      return msgs;
+      console.log(`[STORAGE] Fetched data for ${sessionId}:`, response.data);
+      return response.data.messages || [];
     } catch (error) {
-      if (error.message !== "No token") {
-        console.warn("Backend history fetch failed, using local:", error);
-      }
+      console.warn("Backend history fetch failed, using local:", error);
       const local = await idbGet(`chat_history_${sessionId}`);
       return local || [];
     }
@@ -171,24 +148,25 @@ export const chatStorageService = {
       console.error("Local save failed:", localErr);
     }
 
-    // 2. Try to sync with Backend
+    // 2. Sync with Backend
     try {
-      const token = getUserData()?.token;
-      if (!token) return; // Silent return for guests
-
       await axios.post(`${API_BASE_URL}/chat/${sessionId}/message`, { message, title }, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
     } catch (error) {
-      console.warn("Backend save failed:", error);
+      console.warn("Backend save failed:", error.response?.data || error.message);
+      if (error.response?.data?.error === "LIMIT_REACHED") {
+        throw error; // Re-throw to handle in UI
+      }
     }
   },
 
   async deleteSession(sessionId) {
     try {
-      const token = getUserData()?.token;
       await axios.delete(`${API_BASE_URL}/chat/${sessionId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
     } catch (error) {
       await idbDel(`chat_history_${sessionId}`);
@@ -198,12 +176,10 @@ export const chatStorageService = {
 
   async deleteMessage(sessionId, messageId) {
     try {
-      const token = getUserData()?.token;
-      if (token) {
-        await axios.delete(`${API_BASE_URL}/chat/${sessionId}/message/${messageId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-      }
+      await axios.delete(`${API_BASE_URL}/chat/${sessionId}/message/${messageId}`, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
     } catch (e) {
       console.warn("Backend delete failed, converting to local update");
     }
@@ -245,17 +221,15 @@ export const chatStorageService = {
 
     // 2. Update Backend
     try {
-      const token = getUserData()?.token || localStorage.getItem("token");
-      if (token) {
-        await axios.patch(`${API_BASE_URL}/chat/${sessionId}/title`, { title }, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        return true;
-      }
-      return false;
+      await axios.patch(`${API_BASE_URL}/chat/${sessionId}/title`, { title }, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
+      return true;
     } catch (error) {
       console.error("Backend title update failed:", error.response?.data || error.message);
       return false;
     }
   },
 };
+
