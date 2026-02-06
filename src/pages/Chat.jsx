@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { Menu, Transition, Dialog } from '@headlessui/react';
@@ -81,6 +81,136 @@ const TOOL_PRICING = {
       { id: 'gemini-flash', name: 'Gemini Flash', price: 0, speed: 'Fast', description: 'Standard voice recognition' }
     ]
   }
+};
+
+
+const ImageViewer = ({ src, alt }) => {
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [lastTouchDistance, setLastTouchDistance] = useState(null);
+  const imgRef = useRef(null);
+
+  const handleZoomIn = () => setScale(s => Math.min(s + 0.5, 5));
+  const handleZoomOut = () => setScale(s => Math.max(s - 0.5, 1));
+  const handleReset = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const delta = e.deltaY > 0 ? -0.2 : 0.2;
+    setScale(s => Math.min(Math.max(1, s + delta), 5));
+  };
+
+  const handleMouseDown = (e) => {
+    if (scale > 1) {
+      setIsDragging(true);
+      setStartPos({ x: e.clientX - position.x, y: e.clientY - position.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && scale > 1) {
+      e.preventDefault();
+      setPosition({
+        x: e.clientX - startPos.x,
+        y: e.clientY - startPos.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Touch Handlers for Mobile/iOS
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      // Pinch start
+      const dist = Math.hypot(
+        e.touches[0].pageX - e.touches[1].pageX,
+        e.touches[0].pageY - e.touches[1].pageY
+      );
+      setLastTouchDistance(dist);
+    } else if (e.touches.length === 1 && scale > 1) {
+      // Drag start
+      setIsDragging(true);
+      setStartPos({
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y
+      });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && lastTouchDistance) {
+      // Pinch Zoom
+      const dist = Math.hypot(
+        e.touches[0].pageX - e.touches[1].pageX,
+        e.touches[0].pageY - e.touches[1].pageY
+      );
+      const delta = dist / lastTouchDistance;
+      setScale(s => Math.min(Math.max(1, s * delta), 5));
+      setLastTouchDistance(dist);
+    } else if (e.touches.length === 1 && isDragging && scale > 1) {
+      // Pan
+      e.preventDefault(); // Prevent scroll
+      setPosition({
+        x: e.touches[0].clientX - startPos.x,
+        y: e.touches[0].clientY - startPos.y
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setLastTouchDistance(null);
+  };
+
+  // Reset position if zoomed out to 1
+  useEffect(() => {
+    if (scale === 1) setPosition({ x: 0, y: 0 });
+  }, [scale]);
+
+  return (
+    <div className="relative w-full h-full flex flex-col overflow-hidden bg-black/90 select-none">
+      {/* Zoom Controls */}
+      <div
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 border border-white/10 shadow-xl"
+        onClick={(e) => e.stopPropagation()} // Prevent closing modal
+      >
+        <button onClick={handleZoomOut} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"><Minus className="w-5 h-5" /></button>
+        <span className="text-white text-sm font-bold font-mono min-w-[3rem] text-center">{Math.round(scale * 100)}%</span>
+        <button onClick={handleZoomIn} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"><Plus className="w-5 h-5" /></button>
+        <div className="w-px h-6 bg-white/20 mx-2"></div>
+        <button onClick={handleReset} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors" title="Reset"><RotateCcw className="w-4 h-4" /></button>
+      </div>
+
+      <div
+        className="flex-1 w-full h-full flex items-center justify-center overflow-hidden touch-none"
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+            cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+          }}
+          className="max-w-full max-h-full object-contain pointer-events-none"
+          draggable={false}
+        />
+      </div>
+    </div>
+  );
 };
 
 const Chat = () => {
@@ -2486,7 +2616,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-card w-full max-w-6xl h-full max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
+              className="bg-card w-full max-w-4xl h-full max-h-[80vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between p-4 border-b border-border bg-secondary">
@@ -2524,10 +2654,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               {/* Viewer Content */}
               <div className="flex-1 bg-gray-100 dark:bg-gray-900 relative flex items-center justify-center overflow-hidden">
                 {viewingDoc.type === 'image' || viewingDoc.name.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || viewingDoc.url.startsWith('data:image/') ? (
-                  <img
+                  <ImageViewer
                     src={viewingDoc.url}
                     alt="Preview"
-                    className="max-w-full max-h-full object-contain p-2"
                   />
                 ) : viewingDoc.name.match(/\.(docx|doc)$/i) ? (
                   <div
@@ -2682,6 +2811,58 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-maintext tracking-tight max-w-4xl leading-relaxed drop-shadow-sm px-4">
                 {t('welcomeMessage')}
               </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-lg px-6 animate-in hover:none">
+                {[
+                  {
+                    icon: <ImageIcon className="w-5 h-5 text-purple-500" />,
+                    title: "Generate Image",
+                    desc: "Create visuals from text",
+                    action: () => {
+                      if (inputRef.current) {
+                        inputRef.current.value = "Generate an image of ";
+                        inputRef.current.focus();
+                      }
+                    }
+                  },
+                  {
+                    icon: <Search className="w-5 h-5 text-blue-500" />,
+                    title: "Deep Search",
+                    desc: "Research complex topics",
+                    action: () => {
+                      setIsDeepSearch(true);
+                      if (inputRef.current) inputRef.current.focus();
+                      toast.success("Deep Search Mode Enabled");
+                    }
+                  },
+                  {
+                    icon: <FileText className="w-5 h-5 text-orange-500" />,
+                    title: "Analyze Document",
+                    desc: "Chat with PDFs & Docs",
+                    action: () => uploadInputRef.current?.click()
+                  },
+                  {
+                    icon: <Mic className="w-5 h-5 text-green-500" />,
+                    title: "Voice Chat",
+                    desc: "Talk to AISA naturally",
+                    action: () => handleVoiceInput()
+                  }
+                ].map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={item.action}
+                    className="flex items-center gap-4 p-4 bg-surface/50 hover:bg-surface border border-border/50 hover:border-primary/30 rounded-2xl text-left transition-all duration-200 group active:scale-95 shadow-sm hover:shadow-md backdrop-blur-sm"
+                  >
+                    <div className="p-2.5 bg-background rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-maintext text-sm">{item.title}</h3>
+                      <p className="text-xs text-subtext font-medium">{item.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <>
@@ -2921,7 +3102,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                   // For now, we assume this renderer handles static images from markdown.
                                   // Actual Dynamic Video/Image rendering is handled by the msg properties check below.
                                   return (
-                                    <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
+                                    <div
+                                      className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm cursor-zoom-in max-w-md"
+                                      onClick={() => setViewingDoc({ url: props.src, type: 'image', name: 'Generated Image' })}
+                                    >
                                       <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
                                         <div className="flex items-center gap-2">
                                           <Sparkles className="w-4 h-4 text-primary animate-pulse" />
@@ -2938,7 +3122,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                       />
                                       <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none" />
                                       <button
-                                        onClick={() => handleDownload(props.src, 'aisa-generated.png')}
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Prevent opening modal when clicking download
+                                          handleDownload(props.src, 'aisa-generated.png');
+                                        }}
                                         className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100"
                                         title="Download High-Res"
                                       >
@@ -2992,7 +3179,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
                             {/* Dynamic Image Rendering (if not in markdown) */}
                             {msg.imageUrl && !(msg.content || msg.text || "").includes(msg.imageUrl) && (
-                              <div className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm">
+                              <div
+                                className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm cursor-zoom-in max-w-md"
+                                onClick={() => setViewingDoc({ url: msg.imageUrl, type: 'image', name: 'Generated Image' })}
+                              >
                                 <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
                                   <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
@@ -3005,7 +3195,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                   loading="lazy"
                                 />
                                 <button
-                                  onClick={() => handleDownload(msg.imageUrl, 'aisa-generated.png')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent opening modal handling
+                                    handleDownload(msg.imageUrl, 'aisa-generated.png');
+                                  }}
                                   className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100"
                                   title="Download High-Res"
                                 >
@@ -3364,8 +3557,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               {isLoading && (
                 <div className="flex items-start gap-4 max-w-4xl mx-auto">
                   <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                    <Loader />
+                    <img src="/logo/AISA.gif?v=3" alt="AISA" className="w-5 h-5 object-contain" />
 
                   </div>
                   <div className="px-5 py-3 rounded-2xl rounded-tl-none bg-surface border border-border flex items-center gap-3">
