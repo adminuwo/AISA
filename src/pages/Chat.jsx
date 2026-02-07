@@ -343,7 +343,17 @@ const Chat = () => {
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
     files.forEach(file => processFile(file));
+    setIsAttachMenuOpen(false); // Close menu after selection
+
+    // [PROACTIVE FEATURE]: If this is a new chat (no messages), automatically trigger analysis
+    if (messages.length === 0 && !isLoading) {
+      setTimeout(() => {
+        handleSendMessage();
+      }, 1000); // 1s delay to ensure FileReader (in processFile) has finished
+    }
   };
 
   const handlePaste = (e) => {
@@ -1806,13 +1816,13 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         if (typeof aiResponseData === 'string') {
           aiResponseText = aiResponseData;
         } else if (aiResponseData && typeof aiResponseData === 'object') {
-          aiResponseText = aiResponseData.reply || "No response generated.";
+          aiResponseText = aiResponseData.reply || "No response generated. (Object received without reply)";
           conversionData = aiResponseData.conversion || null;
           // Extract media URLs if present
           aiVideoUrl = aiResponseData.videoUrl || null;
           aiImageUrl = aiResponseData.imageUrl || null;
         } else {
-          aiResponseText = "No response generated.";
+          aiResponseText = "Sorry, I encountered an issue while generating a response. Please try again.";
         }
 
         if (aiResponseText === "dbDemoModeMessage") {
@@ -2899,8 +2909,8 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                         if (name.match(/\.(xls|xlsx|csv)$/)) return <FileSpreadsheet className={`${baseClass} text-emerald-600`} />;
                                         if (name.match(/\.(ppt|pptx)$/)) return <Presentation className={`${baseClass} text-orange-600`} />;
                                         if (name.endsWith('.pdf')) return <FileText className={`${baseClass} text-red-600`} />;
-                                        if (name.match(/\.(doc|docx)$/)) return <File className={`${baseClass} text-blue-600`} />;
-                                        return <File className={`${baseClass} text-primary`} />;
+                                        if (name.match(/\.(doc|docx)$/)) return <FileIcon className={`${baseClass} text-blue-600`} />;
+                                        return <FileIcon className={`${baseClass} text-primary`} />;
                                       })()}
                                     </div>
                                     <div className="min-w-0 flex-1">
