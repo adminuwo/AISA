@@ -3549,9 +3549,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
         {/* Welcome Screen - Absolute Overlay */}
         {messages.length === 0 && (
-          <div className="absolute inset-0 z-0 flex flex-col items-center justify-center text-center px-4 pt-20 pb-40 overflow-y-auto no-scrollbar pointer-events-auto">
-            <div className="flex flex-col items-center justify-center my-auto w-full max-w-4xl">
-              <div className="mb-6 select-none shrink-0">
+          <div className="absolute inset-0 z-0 flex flex-col items-center overflow-y-auto overflow-x-hidden no-scrollbar pointer-events-auto" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 'max(12rem, env(safe-area-inset-bottom) + 12rem)' }}>
+            <div className="flex flex-col items-center w-full max-w-4xl px-4 py-2 text-center">
+              <div className="select-none flex items-center justify-center w-full" style={{ minHeight: '4rem', marginTop: '2rem', marginBottom: '1rem' }}>
                 <img
                   src="/logo/AISA.gif?v=3"
                   alt="AISA Icon"
@@ -3561,11 +3561,11 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   onDragStart={(e) => e.preventDefault()}
                 />
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-maintext tracking-tight w-full leading-relaxed drop-shadow-sm px-4 shrink-0">
+              <h2 className="font-bold text-maintext tracking-tight w-full px-4" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.875rem)', lineHeight: '1.4', marginBottom: '0.75rem' }}>
                 {t('welcomeMessage')}
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-lg px-6 animate-in hover:none shrink-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md px-4 animate-in hover:none pb-4" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
                 {[
                   {
                     icon: <ImageIcon className="w-5 h-5 text-purple-500" />,
@@ -3604,7 +3604,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   <button
                     key={index}
                     onClick={item.action}
-                    className="flex items-center gap-4 p-4 bg-surface/50 hover:bg-surface border border-border/50 hover:border-primary/30 rounded-2xl text-left transition-all duration-200 group active:scale-95 shadow-sm hover:shadow-md backdrop-blur-sm"
+                    className="flex items-center gap-3 p-3 sm:p-4 bg-surface/50 hover:bg-surface border border-border/50 hover:border-primary/30 rounded-2xl text-left transition-all duration-200 group active:scale-95 shadow-sm hover:shadow-md backdrop-blur-sm w-full"
                   >
                     <div className="p-2.5 bg-background rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-sm">
                       {item.icon}
@@ -3621,7 +3621,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         )}
 
         {/* Input */}
-        <div className="absolute bottom-0 left-0 right-0 p-1.5 sm:p-2 md:p-4 bg-transparent z-20">
+        <div className="absolute bottom-0 left-0 right-0 bg-transparent z-20" style={{ padding: 'max(0.375rem, env(safe-area-inset-bottom, 0.375rem)) max(0.5rem, env(safe-area-inset-right, 0.5rem)) max(0.375rem, 0.375rem) max(0.5rem, env(safe-area-inset-left, 0.5rem))' }}>
           <div className="max-w-5xl mx-auto relative px-1 sm:px-2">
 
             {/* File Preview Area */}
@@ -3782,14 +3782,15 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         exit={{ opacity: 0, scale: 0.9, y: 10 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         ref={toolsMenuRef}
-                        className="absolute bottom-full left-0 mb-4 w-72 bg-surface/95 dark:bg-[#1a1a1a]/95 border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-30 backdrop-blur-xl ring-1 ring-black/5 max-h-[calc(100vh-200px)]"
+                        className="absolute bottom-full left-0 mb-2 w-64 sm:w-72 bg-surface/95 dark:bg-[#1a1a1a]/95 border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-30 backdrop-blur-xl ring-1 ring-black/5"
+                        style={{ maxHeight: 'calc(100svh - 140px)' }}
                       >
                         <div className="p-3 bg-secondary/30 border-b border-border/50 mb-1 shrink-0">
                           <h3 className="text-xs font-bold text-subtext uppercase tracking-wider flex items-center gap-2">
                             <Sparkles className="w-3 h-3 text-primary" /> AISA Magic Tools
                           </h3>
                         </div>
-                        <div className="p-1.5 space-y-0.5 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar">
+                        <div className="p-1.5 space-y-0.5 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100svh - 200px)' }}>
                           <button
                             onClick={() => {
                               setIsToolsMenuOpen(false);
@@ -3965,7 +3966,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   placeholder={isLimitReached ? "Chat limit reached. Sign in to continue." : (isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA...")}
                   rows={1}
                   className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 text-maintext text-left placeholder-subtext/50 resize-none overflow-y-auto custom-scrollbar leading-relaxed aisa-scalable-text flex items-center ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
-                  style={{ minHeight: '24px', maxHeight: '150px', lineHeight: '24px' }}
+                  style={{ minHeight: '1.5rem', maxHeight: '150px', lineHeight: '1.5rem' }}
                 />
               </div>
 
@@ -3984,10 +3985,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       <button
                         type="button"
                         onClick={() => setIsLiveMode(true)}
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors"
+                        className="w-9 h-9 min-w-[2.25rem] rounded-full flex items-center justify-center text-subtext hover:text-primary hover:bg-secondary transition-colors shrink-0"
                         title="Live Video Call"
                       >
-                        <Video className="w-5 h-5" />
+                        <Video className="w-5 h-5 shrink-0" />
                       </button>
                     )}
 
@@ -3995,10 +3996,10 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       <button
                         type="button"
                         onClick={handleVoiceInput}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${isListening ? 'bg-red-500 text-white' : 'text-subtext hover:text-primary hover:bg-secondary'}`}
+                        className={`w-9 h-9 min-w-[2.25rem] rounded-full flex items-center justify-center transition-colors shrink-0 ${isListening ? 'bg-red-500 text-white' : 'text-subtext hover:text-primary hover:bg-secondary'}`}
                         title="Voice Input"
                       >
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-5 h-5 shrink-0" />
                       </button>
                     )}
                   </>
