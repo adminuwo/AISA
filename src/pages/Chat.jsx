@@ -3555,7 +3555,8 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                 <img
                   src="/logo/AISA.gif?v=3"
                   alt="AISA Icon"
-                  className="w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-2xl pointer-events-none"
+                  className="object-contain drop-shadow-2xl pointer-events-none shrink-0"
+                  style={{ width: '4rem', height: '4rem', minWidth: '3rem', minHeight: '3rem', maxWidth: '6rem', maxHeight: '6rem' }}
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
                 />
@@ -3781,14 +3782,14 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         exit={{ opacity: 0, scale: 0.9, y: 10 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         ref={toolsMenuRef}
-                        className="absolute bottom-full left-0 mb-4 w-72 bg-surface/95 dark:bg-[#1a1a1a]/95 border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-30 backdrop-blur-xl ring-1 ring-black/5"
+                        className="absolute bottom-full left-0 mb-4 w-72 bg-surface/95 dark:bg-[#1a1a1a]/95 border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-30 backdrop-blur-xl ring-1 ring-black/5 max-h-[calc(100vh-200px)]"
                       >
-                        <div className="p-3 bg-secondary/30 border-b border-border/50 mb-1">
+                        <div className="p-3 bg-secondary/30 border-b border-border/50 mb-1 shrink-0">
                           <h3 className="text-xs font-bold text-subtext uppercase tracking-wider flex items-center gap-2">
                             <Sparkles className="w-3 h-3 text-primary" /> AISA Magic Tools
                           </h3>
                         </div>
-                        <div className="p-1.5 space-y-0.5">
+                        <div className="p-1.5 space-y-0.5 overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar">
                           <button
                             onClick={() => {
                               setIsToolsMenuOpen(false);
