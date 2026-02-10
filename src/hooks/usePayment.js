@@ -48,7 +48,7 @@ const usePayment = () => {
                 key: orderData.key, // Razorpay Key ID from backend
                 amount: orderData.amount, // Amount in paise
                 currency: orderData.currency,
-                name: 'AI-MALL',
+                name: 'AISA',
                 description: `${plan.name} Plan Subscription`,
                 order_id: orderData.id,
                 handler: async function (response) {

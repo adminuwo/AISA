@@ -86,7 +86,7 @@ const SubscriptionForm = ({ id }) => {
           key: keyId,
           amount: amount * 100,
           currency: currency,
-          name: "AI-MALL",
+          name: "AISA",
           description: `Subscription for Agent ${agent?.agentName || id}`,
           order_id: orderId,
           handler: function (response) {
