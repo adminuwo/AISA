@@ -93,7 +93,16 @@ const usePayment = () => {
 
             razorpayInstance.on('payment.failed', function (response) {
                 console.error('Payment failed:', response.error);
-                toast.error(`Payment failed: ${response.error.description}`);
+
+                if (response.error.description?.includes('website does not match registered website(s)')) {
+                    const currentUrl = window.location.origin;
+                    toast.error(`Domain Blocked! You MUST add "${currentUrl}" to Razorpay Dashboard > Settings > Website Settings.`, {
+                        duration: 8000,
+                        icon: '🚫'
+                    });
+                } else {
+                    toast.error(`Payment failed: ${response.error.description}`);
+                }
                 setLoading(false);
             });
 
