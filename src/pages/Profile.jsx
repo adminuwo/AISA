@@ -57,9 +57,17 @@ const Profile = () => {
                 const res = await axios.get(apis.user, {
                     headers: { 'Authorization': `Bearer ${user.token}` }
                 });
-                if (res.data.settings) {
-                    setUserSettings(res.data.settings);
-                    localStorage.setItem('user_settings', JSON.stringify(res.data.settings));
+                if (res.data) {
+                    // Update user settings
+                    if (res.data.settings) {
+                        setUserSettings(res.data.settings);
+                        localStorage.setItem('user_settings', JSON.stringify(res.data.settings));
+                    }
+
+                    // Update main user data (to sync plan, name, etc.)
+                    const updatedUser = { ...user, ...res.data };
+                    setUserData(updatedUser);
+                    setUserRecoil({ user: updatedUser });
                 }
             } catch (error) {
                 console.error("Failed to fetch settings", error);

@@ -253,8 +253,8 @@ const UserProfile = () => {
                     />
                     <StatsCard
                         icon={<Zap className="w-6 h-6 text-yellow-600" />}
-                        label="Pro Features"
-                        value={user.plan === 'pro' ? 'Active' : 'Inactive'}
+                        label="Premium Features"
+                        value={(user.plan?.toLowerCase() === 'pro' || user.plan?.toLowerCase() === 'king') ? 'Active' : 'Inactive'}
                         subLabel="Subscription status"
                         color="bg-yellow-500/10"
                         borderColor="group-hover:border-yellow-500/30"

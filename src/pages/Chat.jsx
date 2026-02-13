@@ -270,6 +270,7 @@ const Chat = () => {
   const [isAudioConvertMode, setIsAudioConvertMode] = useState(false);
   const [isDocumentConvert, setIsDocumentConvert] = useState(false);
   const [isCodeWriter, setIsCodeWriter] = useState(false);
+  const [isVideoGeneration, setIsVideoGeneration] = useState(false);
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
   const inputRef = useRef(null); // Ref for textarea input
@@ -687,15 +688,15 @@ const Chat = () => {
     }
   };
 
-  const handleGenerateVideo = async () => {
+  const handleGenerateVideo = async (overridePrompt) => {
     try {
-      if (!inputRef.current?.value.trim() && selectedFiles.length === 0) {
+      if (!inputRef.current?.value.trim() && !overridePrompt && selectedFiles.length === 0) {
         // toast.error('Please enter a prompt or select a file');
         // Let it slide if it's voice input (handled elsewhere)
         if (!voiceUsedRef.current) return;
       }
 
-      const prompt = inputRef.current?.value || "";
+      const prompt = overridePrompt || inputRef.current?.value || "";
       // const filesToSend = [...selectedFiles]; // Snapshot // This variable is not used
 
       // Voice Reader Mode Logic
@@ -784,7 +785,7 @@ const Chat = () => {
         if (data.videoUrl) {
           // Add the generated video to the message
           const videoMessage = {
-            id: tempId, // Keep same ID so we replace the correct one (or just update)
+            id: tempId, // Keep same ID
             role: 'assistant',
             content: `🎥 Video generated successfully!`, // Use content
             videoUrl: data.videoUrl,
@@ -792,12 +793,38 @@ const Chat = () => {
           };
 
           setMessages(prev => prev.map(msg => msg.id === tempId ? videoMessage : msg));
-
           toast.success('Video generated successfully!');
+
+        } else if (data.imageUrl) {
+          // Add image fallback
+          const imageMessage = {
+            id: tempId, // Keep same ID
+            role: 'assistant',
+            content: `🖼️ ${data.message || 'Video generation limit reached. Generated a preview image instead.'}`,
+            imageUrl: data.imageUrl,
+            timestamp: new Date(),
+          };
+
+          setMessages(prev => prev.map(msg => msg.id === tempId ? imageMessage : msg));
+          toast.success('Generated preview image');
         }
       } catch (error) {
         const errorMsg = error.response?.data?.message || 'Failed to generate video';
-        setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: `❌ ${errorMsg}` } : msg)); // Use content
+
+        // If we got an image URL even with error (sometimes happens with 200 fallback but let's be safe)
+        if (error.response?.data?.imageUrl) {
+          const imageMessage = {
+            id: tempId,
+            role: 'assistant',
+            content: `🖼️ ${error.response.data.message || 'Video generation failed. Generated preview.'}`,
+            imageUrl: error.response.data.imageUrl,
+            timestamp: new Date(),
+          };
+          setMessages(prev => prev.map(msg => msg.id === tempId ? imageMessage : msg));
+          return;
+        }
+
+        setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, content: `❌ ${errorMsg}` } : msg));
         toast.error(errorMsg);
       }
     } catch (error) {
@@ -1577,6 +1604,13 @@ const Chat = () => {
     if (isImageGeneration) {
       handleGenerateImage(contentToSend); // Pass content directly if needed, or handleGenerateImage uses ref/state
       isSendingRef.current = false; // Reset sending ref since handleGenerateImage might handle it differently or we want to allow next send
+      return;
+    }
+
+    // Handle Video Generation Mode
+    if (isVideoGeneration) {
+      handleGenerateVideo(contentToSend);
+      isSendingRef.current = false;
       return;
     }
 
@@ -3870,9 +3904,11 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             onClick={() => {
                               setIsToolsMenuOpen(false);
                               setIsImageGeneration(!isImageGeneration);
+                              setIsVideoGeneration(false);
                               setIsDeepSearch(false);
                               setIsAudioConvertMode(false);
                               setIsDocumentConvert(false);
+                              setIsCodeWriter(false);
                               if (!isImageGeneration) toast.success("Image Generation Mode Enabled");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isImageGeneration ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3889,10 +3925,34 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                           <button
                             onClick={() => {
                               setIsToolsMenuOpen(false);
-                              setIsDeepSearch(!isDeepSearch);
+                              setIsVideoGeneration(!isVideoGeneration);
                               setIsImageGeneration(false);
+                              setIsDeepSearch(false);
                               setIsAudioConvertMode(false);
                               setIsDocumentConvert(false);
+                              setIsCodeWriter(false);
+                              if (!isVideoGeneration) toast.success("Video Generation Mode Enabled");
+                            }}
+                            className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isVideoGeneration ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
+                          >
+                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors shrink-0 ${isVideoGeneration ? 'bg-primary border-primary text-white' : 'bg-surface border-border group-hover:border-primary/30 group-hover:bg-primary/10'}`}>
+                              <Video className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm font-bold text-maintext block">Generate Video</span>
+                              <span className="text-[10px] text-subtext">Create AI videos from text</span>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setIsToolsMenuOpen(false);
+                              setIsDeepSearch(!isDeepSearch);
+                              setIsImageGeneration(false);
+                              setIsVideoGeneration(false);
+                              setIsAudioConvertMode(false);
+                              setIsDocumentConvert(false);
+                              setIsCodeWriter(false);
                               if (!isDeepSearch) toast.success("Deep Search Mode Enabled");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isDeepSearch ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3912,7 +3972,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               setIsAudioConvertMode(!isAudioConvertMode);
                               setIsDeepSearch(false);
                               setIsImageGeneration(false);
+                              setIsVideoGeneration(false);
                               setIsDocumentConvert(false);
+                              setIsCodeWriter(false);
                               if (!isAudioConvertMode) toast.success("Convert to Audio Mode Active");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isAudioConvertMode ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3932,7 +3994,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               setIsDocumentConvert(!isDocumentConvert);
                               setIsDeepSearch(false);
                               setIsImageGeneration(false);
+                              setIsVideoGeneration(false);
                               setIsAudioConvertMode(false);
+                              setIsCodeWriter(false);
                               if (!isDocumentConvert) toast.success("Document Converter Mode Active");
                             }}
                             className={`w-full text-left px-3 py-3 flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isDocumentConvert ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
@@ -3952,6 +4016,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               setIsCodeWriter(!isCodeWriter);
                               setIsDeepSearch(false);
                               setIsImageGeneration(false);
+                              setIsVideoGeneration(false);
                               setIsAudioConvertMode(false);
                               setIsDocumentConvert(false);
                               if (!isCodeWriter) toast.success("Code Writer Mode Enabled");
@@ -3976,7 +4041,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               {/* Input Area */}
               <div className="relative flex-1 min-w-0 py-1 px-1">
                 <AnimatePresence>
-                  {(isDeepSearch || isImageGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter) && (
+                  {(isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter) && (
                     <div className="absolute bottom-full left-0 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-full">
                       {isDeepSearch && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
@@ -3988,6 +4053,12 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-pink-500/10 text-pink-600 rounded-full text-xs font-bold border border-pink-500/20 backdrop-blur-md whitespace-nowrap shrink-0">
                           <ImageIcon size={12} strokeWidth={3} /> <span className="hidden sm:inline">Image Gen</span>
                           <button onClick={() => setIsImageGeneration(false)} className="ml-1 hover:text-pink-800"><X size={12} /></button>
+                        </motion.div>
+                      )}
+                      {isVideoGeneration && (
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-xs font-bold border border-red-500/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                          <Video size={12} strokeWidth={3} /> <span className="hidden sm:inline">Video Gen</span>
+                          <button onClick={() => setIsVideoGeneration(false)} className="ml-1 hover:text-red-800"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isVoiceMode && (
@@ -4038,7 +4109,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                     }
                   }}
                   onPaste={handlePaste}
-                  placeholder={isLimitReached ? "Chat limit reached. Sign in to continue." : (isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA")}
+                  placeholder={isLimitReached ? "Chat limit reached. Sign in to continue." : (isVideoGeneration ? "Describe the video you want to generate..." : isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA")}
                   rows={1}
                   className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 text-maintext text-left placeholder-subtext/50 resize-none overflow-y-auto custom-scrollbar leading-relaxed aisa-scalable-text ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
                   style={{ minHeight: '1.5em', height: '1.5em', maxHeight: '150px', lineHeight: '1.5' }}

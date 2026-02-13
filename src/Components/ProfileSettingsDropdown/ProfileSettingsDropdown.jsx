@@ -77,6 +77,16 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     useEffect(() => {
         if (activeTab === 'account' && user?.token) {
             fetchTransactions();
+
+            // Sync user profile to ensure plan is up to date
+            axios.get(apis.user, {
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            }).then(res => {
+                if (res.data) {
+                    const mergedData = setUserData(res.data);
+                    setUserRecoil(prev => ({ ...prev, user: mergedData }));
+                }
+            }).catch(err => console.error("Profile sync failed", err));
         }
     }, [activeTab]);
 
