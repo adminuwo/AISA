@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Download } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Download } from 'lucide-react';
 
 const CustomVideoPlayer = ({ src }) => {
     const videoRef = useRef(null);
@@ -206,10 +206,6 @@ const CustomVideoPlayer = ({ src }) => {
                         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                     </button>
 
-                    {/* Settings / Sliders */}
-                    <button className="text-white/80 hover:text-white transition-colors shrink-0 hidden md:block">
-                        <Settings className="w-5 h-5" />
-                    </button>
 
                     {/* Fullscreen Toggle */}
                     <button
