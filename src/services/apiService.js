@@ -58,11 +58,11 @@ export const apiService = {
     }
   },
 
-  async generateVideo(prompt, duration = 5, quality = 'medium') {
+  async generateVideo(prompt, duration = 5, quality = 'medium', aspectRatio = '16:9') {
     try {
-      console.log("[Frontend] Generating video for prompt:", prompt);
+      console.log(`[Frontend] Generating video for prompt: ${prompt}, Ratio: ${aspectRatio}`);
       // Increased timeout to 120s for video generation as it takes longer
-      const response = await apiClient.post('/video/generate', { prompt, duration, quality }, { timeout: 120000 });
+      const response = await apiClient.post('/video/generate', { prompt, duration, quality, aspectRatio }, { timeout: 120000 });
       console.log("[Frontend] Video generation success:", response.data);
       return response.data;
     } catch (error) {

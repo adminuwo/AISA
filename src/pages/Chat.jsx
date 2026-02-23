@@ -272,6 +272,7 @@ const Chat = () => {
   const [isDocumentConvert, setIsDocumentConvert] = useState(false);
   const [isCodeWriter, setIsCodeWriter] = useState(false);
   const [isVideoGeneration, setIsVideoGeneration] = useState(false);
+  const [videoAspectRatio, setVideoAspectRatio] = useState('');
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
   const inputRef = useRef(null); // Ref for textarea input
@@ -781,7 +782,7 @@ const Chat = () => {
 
       try {
         // Use apiService
-        const data = await apiService.generateVideo(prompt);
+        const data = await apiService.generateVideo(prompt, 5, 'medium', videoAspectRatio);
 
         if (data.videoUrl) {
           // Add the generated video to the message
@@ -4029,8 +4030,19 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </motion.div>
                       )}
                       {isVideoGeneration && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-xs font-bold border border-red-500/20 backdrop-blur-md whitespace-nowrap shrink-0">
-                          <Video size={12} strokeWidth={3} /> <span className="hidden sm:inline">Video Gen</span>
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-xs font-bold border border-red-500/20 backdrop-blur-md shrink-0">
+                          <Video size={12} strokeWidth={3} />
+                          <select
+                            className="bg-transparent outline-none appearance-none cursor-pointer font-bold px-1"
+                            value={videoAspectRatio}
+                            onChange={(e) => setVideoAspectRatio(e.target.value)}
+                          >
+                            <option value="">Default (16:9)</option>
+                            <option value="16:9">16:9 Video</option>
+                            <option value="9:16">9:16 Video</option>
+                            <option value="1:1">1:1 Video</option>
+                          </select>
+                          <ChevronDown size={12} className="-ml-1 hidden sm:block" />
                           <button onClick={() => setIsVideoGeneration(false)} className="ml-1 hover:text-red-800"><X size={12} /></button>
                         </motion.div>
                       )}

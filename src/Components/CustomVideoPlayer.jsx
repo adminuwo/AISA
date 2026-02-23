@@ -13,6 +13,7 @@ const CustomVideoPlayer = ({ src }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [skipAnim, setSkipAnim] = useState(null);
+    const [aspectRatio, setAspectRatio] = useState('aspect-video');
 
     const fadeTimeoutRef = useRef(null);
     const lastTapTimeRef = useRef(0);
@@ -84,6 +85,17 @@ const CustomVideoPlayer = ({ src }) => {
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
             setDuration(videoRef.current.duration);
+            const w = videoRef.current.videoWidth;
+            const h = videoRef.current.videoHeight;
+            if (w && h) {
+                if (h > w) {
+                    setAspectRatio('aspect-[9/16]');
+                } else if (h === w) {
+                    setAspectRatio('aspect-square');
+                } else {
+                    setAspectRatio('aspect-video');
+                }
+            }
         }
     };
 
@@ -214,7 +226,7 @@ const CustomVideoPlayer = ({ src }) => {
     return (
         <div
             ref={containerRef}
-            className={`relative w-full overflow-hidden bg-black/95 rounded-2xl border border-white/5 shadow-2xl group flex flex-col justify-center ${isFullscreen ? 'h-full rounded-none border-none' : 'aspect-video'}`}
+            className={`relative w-full overflow-hidden bg-black/95 rounded-2xl border border-white/5 shadow-2xl group flex flex-col justify-center ${isFullscreen ? 'h-full rounded-none border-none' : aspectRatio}`}
             onMouseMove={handleInteraction}
             onMouseLeave={handleMouseLeave}
             onTouchStart={handleInteraction}
