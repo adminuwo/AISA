@@ -10,8 +10,15 @@ export const MODES = {
     CODING_HELP: 'CODING_HELP',
     TASK_ASSISTANT: 'TASK_ASSISTANT',
     DEEP_SEARCH: 'DEEP_SEARCH',
-    DOCUMENT_CONVERT: 'DOCUMENT_CONVERT'
+    DOCUMENT_CONVERT: 'DOCUMENT_CONVERT',
+    IMAGE_EDIT: 'IMAGE_EDIT'
 };
+
+const EDIT_KEYWORDS = [
+    'edit', 'modify', 'change', 'remove', 'add', 'background', 'enhance', 'remix', 'clean up',
+    'background remove', 'bg remove', 'remix this', 'enhance this', 'is image me', 'is photo me',
+    'badal do', 'hata do', 'saaf kar do'
+];
 
 const CODING_KEYWORDS = [
     'code', 'function', 'class', 'debug', 'error', 'bug', 'programming',
@@ -41,6 +48,13 @@ export function detectMode(message = '', attachments = []) {
     const lowerMessage = message.toLowerCase().trim();
 
     if (attachments && attachments.length > 0) {
+        const hasImages = attachments.some(a => (a.type && a.type.startsWith('image')) || (a.mimeType && a.mimeType.startsWith('image')));
+
+        if (hasImages) {
+            const matchedEdit = EDIT_KEYWORDS.find(keyword => lowerMessage.includes(keyword));
+            if (matchedEdit) return MODES.IMAGE_EDIT;
+        }
+
         return MODES.FILE_ANALYSIS;
     }
 
@@ -81,7 +95,8 @@ export function getModeName(mode) {
         [MODES.CODING_HELP]: 'Coding Help',
         [MODES.TASK_ASSISTANT]: 'Task Assistant',
         [MODES.DEEP_SEARCH]: 'Deep Search',
-        [MODES.DOCUMENT_CONVERT]: 'Document Convert'
+        [MODES.DOCUMENT_CONVERT]: 'Document Convert',
+        [MODES.IMAGE_EDIT]: 'Image Edit'
     };
     return names[mode] || 'Chat';
 }
@@ -94,7 +109,8 @@ export function getModeIcon(mode) {
         [MODES.CODING_HELP]: '💻',
         [MODES.TASK_ASSISTANT]: '📋',
         [MODES.DEEP_SEARCH]: '🔍',
-        [MODES.DOCUMENT_CONVERT]: '🔄'
+        [MODES.DOCUMENT_CONVERT]: '🔄',
+        [MODES.IMAGE_EDIT]: '🎨'
     };
     return icons[mode] || '💬';
 }
@@ -107,7 +123,8 @@ export function getModeColor(mode) {
         [MODES.CODING_HELP]: '#10b981',
         [MODES.TASK_ASSISTANT]: '#f59e0b',
         [MODES.DEEP_SEARCH]: '#0ea5e9',
-        [MODES.DOCUMENT_CONVERT]: '#10b981'
+        [MODES.DOCUMENT_CONVERT]: '#10b981',
+        [MODES.IMAGE_EDIT]: '#f43f5e'
     };
     return colors[mode] || '#6366f1';
 }
