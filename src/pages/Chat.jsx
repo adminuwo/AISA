@@ -2199,15 +2199,20 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
     // Instant Share if PDF is already pre-generated
     if (action === 'share' && pregeneratedPdfs[msg.id]) {
       const file = pregeneratedPdfs[msg.id];
+      // Try native share (works on mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file] });
-          return; // Success
+          return;
         } catch (err) {
-          if (err.name === 'AbortError') return;
-          console.warn("Pregenerated share failed, falling back to regeneration:", err);
+          if (err.name === 'AbortError') return; // User cancelled
+          // Native share failed for other reason — open in new tab as fallback
         }
       }
+      // Desktop / unsupported: open PDF in new tab (NO download)
+      const blobUrl = URL.createObjectURL(file);
+      window.open(blobUrl, '_blank');
+      return;
     }
 
     const isPregeneration = action === 'pregenerate';
@@ -2254,23 +2259,19 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
               toast.success("PDF sent to share menu!", { id: shareToastId });
             } catch (shareErr) {
               if (shareErr.name !== 'AbortError') {
+                // Share failed — open in new tab instead of downloading
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
-                toast.success("Download started (Share unavailable)", { id: shareToastId });
+                window.open(url, '_blank');
+                toast.dismiss(shareToastId);
               } else {
                 toast.dismiss(shareToastId);
               }
             }
           } else {
+            // Not supported — open in new tab (NO forced download)
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            toast.success("Native share unavailable, downloaded", { id: shareToastId });
+            window.open(url, '_blank');
+            toast.dismiss(shareToastId);
           }
         }
         return;
@@ -2335,27 +2336,41 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         return;
       }
 
-      const imgData = canvas.toDataURL('image/png', 0.8);
+      // ===== PROPER PER-PAGE CANVAS SLICING =====
+      // Each PDF page gets its OWN canvas slice — zero overlap, zero repeat guaranteed
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
       const margin = 8;
-      const pdfWidth = pdf.internal.pageSize.getWidth() - (margin * 2);
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      // FIX: use pageHeight - margin (not margin*2) so pages align perfectly with no overlap
-      // Page 1 starts at y=margin, so each page shows (pageHeight - margin) mm of content
-      const contentHeightPerPage = pageHeight - margin;
+      const pageW = pdf.internal.pageSize.getWidth();   // 210mm
+      const pageH = pdf.internal.pageSize.getHeight();  // 297mm
+      const printW = pageW - margin * 2;  // 194mm printable width
+      const printH = pageH - margin * 2;  // 281mm printable height per page
 
-      let heightLeft = pdfHeight;
-      let pos = margin;
-      pdf.addImage(imgData, 'PNG', margin, pos, pdfWidth, pdfHeight);
-      heightLeft -= contentHeightPerPage;
-      while (heightLeft > 0) {
-        pos = margin - (pdfHeight - heightLeft);
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', margin, pos, pdfWidth, pdfHeight);
-        heightLeft -= contentHeightPerPage;
+      // How many canvas pixels = 1mm of PDF width?
+      const pxPerMm = canvas.width / printW;
+      // How many canvas pixels fit in one page's printable height?
+      const pageHeightPx = Math.floor(printH * pxPerMm);
+      const totalPages = Math.ceil(canvas.height / pageHeightPx);
+
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+
+        const srcY = i * pageHeightPx;
+        const srcH = Math.min(pageHeightPx, canvas.height - srcY); // last page may be shorter
+
+        // Create a fresh canvas for just this page slice
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = srcH;
+        const ctx = pageCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        const pageImg = pageCanvas.toDataURL('image/png', 0.92);
+        const sliceHeightMm = srcH / pxPerMm; // actual mm height of this slice
+        pdf.addImage(pageImg, 'PNG', margin, margin, printW, sliceHeightMm);
       }
+      // ===== END PER-PAGE SLICING =====
 
       const filename = `AISA.pdf`;
       const blob = pdf.output('blob');
@@ -2380,15 +2395,19 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             if (processToastId) toast.success("PDF sent to share menu!", { id: processToastId });
           } catch (shareErr) {
             if (shareErr.name !== 'AbortError') {
-              pdf.save(filename);
-              if (processToastId) toast.success("Download started (Share timed out)", { id: processToastId });
+              // Share failed — open in new tab instead of downloading
+              const blobUrl = URL.createObjectURL(blob);
+              window.open(blobUrl, '_blank');
+              if (processToastId) toast.dismiss(processToastId);
             } else {
               if (processToastId) toast.dismiss(processToastId);
             }
           }
         } else {
-          pdf.save(filename);
-          if (processToastId) toast.success("Native share unavailable, downloaded", { id: processToastId });
+          // Desktop: open in new tab — no forced download
+          const blobUrl = URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+          if (processToastId) toast.dismiss(processToastId);
         }
       }
     } catch (err) {
@@ -2406,6 +2425,22 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
     }
   }, [inputValue]);
+
+  // ===== AUTO PRE-GENERATE PDF for latest AI message =====
+  // Start PDF generation in background right after AI responds
+  // so by the time user clicks the PDF icon, it's already ready (instant share!)
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.role !== 'model' || !lastMsg.content) return;
+    if (pregeneratedPdfs[lastMsg.id]) return; // Already generated
+
+    // Wait 1.5s for DOM to render, then silently pre-generate
+    const timer = setTimeout(() => {
+      handlePdfAction('pregenerate', lastMsg);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [messages]);
 
   const handleThumbsDown = (msgId) => {
     setFeedbackMsgId(msgId);
@@ -2472,16 +2507,30 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         }
       });
 
+      // ===== PER-PAGE CANVAS SLICING (same as main PDF gen) =====
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png', 0.8);
-      const imgProps = pdf.getImageProperties(imgData);
-      const m = 8, w = pdf.internal.pageSize.getWidth() - m * 2;
-      const h = (imgProps.height * w) / imgProps.width;
-      // FIX: use pageHeight - m (not m*2) — page 1 starts at y=m, so step = pageH - m
-      const ph = pdf.internal.pageSize.getHeight() - m;
-      let left = h, pos = m;
-      pdf.addImage(imgData, 'PNG', m, pos, w, h); left -= ph;
-      while (left > 0) { pos = m - (h - left); pdf.addPage(); pdf.addImage(imgData, 'PNG', m, pos, w, h); left -= ph; }
+      const margin = 8;
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const printW = pageW - margin * 2;
+      const printH = pageH - margin * 2;
+      const pxPerMm = canvas.width / printW;
+      const pageHeightPx = Math.floor(printH * pxPerMm);
+      const totalPages = Math.ceil(canvas.height / pageHeightPx);
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        const srcY = i * pageHeightPx;
+        const srcH = Math.min(pageHeightPx, canvas.height - srcY);
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = srcH;
+        const ctx = pageCanvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+        const pageImg = pageCanvas.toDataURL('image/png', 0.92);
+        pdf.addImage(pageImg, 'PNG', margin, margin, printW, srcH / pxPerMm);
+      }
 
       // 2. Upload PDF blob to Cloudinary via backend
       toast.loading("Uploading PDF...", { id: toastId });
@@ -3578,77 +3627,21 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                   <Share className="w-3.5 h-3.5" />
                                 </button>
 
-                                {/* PDF Share Menu */}
-                                <Menu as="div" className="relative inline-block text-left">
-                                  <Menu.Button
-                                    className="text-red-500 hover:text-red-600 transition-all p-1.5 hover:bg-red-50/10 rounded-lg flex items-center active:scale-95 translate-y-[1px]"
-                                    disabled={pdfLoadingId === msg.id && !pregeneratedPdfs[msg.id]}
-                                    onMouseEnter={() => handlePdfAction('pregenerate', msg)}
-                                    onFocus={() => handlePdfAction('pregenerate', msg)}
-                                    title="Share PDF"
-                                  >
-                                    {pdfLoadingId === msg.id && !pregeneratedPdfs[msg.id] ? (
-                                      <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                                    ) : (
-                                      <FileText className="w-4 h-4" />
-                                    )}
-                                  </Menu.Button>
-                                  <Portal>
-                                    <Transition
-                                      as={Fragment}
-                                      enter="transition ease-out duration-100"
-                                      enterFrom="transform opacity-0 scale-95"
-                                      enterTo="transform opacity-100 scale-100"
-                                      leave="transition ease-in duration-75"
-                                      leaveFrom="transform opacity-100 scale-100"
-                                      leaveTo="transform opacity-0 scale-95"
-                                    >
-                                      <Menu.Items
-                                        anchor="bottom end"
-                                        className="w-56 mt-2 origin-top-right rounded-xl bg-card shadow-2xl ring-1 ring-black ring-opacity-10 focus:outline-none z-50 overflow-hidden backdrop-blur-xl border border-border/50"
-                                      >
-                                        <div className="px-1.5 py-1.5">
-                                          <Menu.Item>
-                                            {({ active }) => (
-                                              <button
-                                                onClick={() => handlePdfAction('share', msg)}
-                                                className={`${active ? 'bg-primary text-white shadow-md' : 'text-maintext hover:bg-primary/5'
-                                                  } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
-                                              >
-                                                <Share className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-primary'}`} />
-                                                <span className="flex-1 text-left">
-                                                  {pdfLoadingId === msg.id && !pregeneratedPdfs[msg.id]
-                                                    ? "Preparing PDF..."
-                                                    : (pregeneratedPdfs[msg.id] ? "Share PDF (WhatsApp/Other)" : "Share PDF")}
-                                                </span>
-                                                {pregeneratedPdfs[msg.id] && (
-                                                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                )}
-                                              </button>
-                                            )}
-                                          </Menu.Item>
-
-                                          {/* WhatsApp In-App Share */}
-                                          <Menu.Item>
-                                            {({ active }) => (
-                                              <button
-                                                onClick={() => handleWhatsAppPdfShare(msg)}
-                                                className={`${active ? 'bg-[#25D366] text-white shadow-md' : 'text-maintext hover:bg-[#25D366]/10'
-                                                  } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
-                                              >
-                                                {/* WhatsApp SVG Icon */}
-                                                <svg className={`w-3.5 h-3.5 flex-shrink-0 ${active ? 'text-white' : 'text-[#25D366]'}`} viewBox="0 0 24 24" fill="currentColor">
-                                                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                                                </svg>
-                                                <span className="flex-1 text-left">WhatsApp pe Bhejo</span>
-                                              </button>
-                                            )}
-                                          </Menu.Item>
-                                        </div>
-                                      </Menu.Items>
-                                    </Transition>
-                                  </Portal>
-                                </Menu>
+                                {/* PDF Share — Direct 1-click */}
+                                <button
+                                  onClick={() => handlePdfAction('share', msg)}
+                                  onMouseEnter={() => handlePdfAction('pregenerate', msg)}
+                                  onFocus={() => handlePdfAction('pregenerate', msg)}
+                                  className="text-red-500 hover:text-red-600 transition-all p-1.5 hover:bg-red-50/10 rounded-lg flex items-center gap-1 active:scale-95"
+                                  title={pregeneratedPdfs[msg.id] ? "Share PDF ✓ Ready" : "Share PDF"}
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  {pdfLoadingId === msg.id && !pregeneratedPdfs[msg.id] ? (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                                  ) : pregeneratedPdfs[msg.id] ? (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                  ) : null}
+                                </button>
                               </div>
 
 
