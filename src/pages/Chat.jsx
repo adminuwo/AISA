@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Send, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
-import { Menu, Transition, Dialog } from '@headlessui/react';
+import { Menu, Transition, Dialog, Portal } from '@headlessui/react';
 import { generateChatResponse } from '../services/geminiService';
 import { chatStorageService } from '../services/chatStorageService';
 import { useLanguage } from '../context/LanguageContext';
@@ -2269,20 +2269,32 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
-          logging: true, // Enable logging for debugging
           backgroundColor: '#ffffff',
           onclone: (clonedDoc) => {
             const clonedEl = clonedDoc.getElementById(`msg-text-${msg.id}`);
             if (clonedEl) {
-              clonedEl.style.padding = '40px';
+              // Add simple AISA header
+              const header = clonedDoc.createElement('div');
+              header.style.marginBottom = '20px';
+              header.style.paddingBottom = '10px';
+              header.style.borderBottom = '1px solid #eee';
+              header.style.fontSize = '12px';
+              header.style.color = '#888';
+              header.style.fontWeight = 'bold';
+              header.innerText = 'AISA AI RESPONSE';
+              clonedEl.insertBefore(header, clonedEl.firstChild);
+
+              clonedEl.style.padding = '20px';
               clonedEl.style.color = '#000000';
               clonedEl.style.backgroundColor = '#ffffff';
-              clonedEl.style.width = '700px';
+              clonedEl.style.width = '800px';
+              clonedEl.style.lineHeight = '1.4';
 
-              // Ensure all text is black for clarity in PDF
+              // Ensure all text is black and compact
               const all = clonedEl.querySelectorAll('*');
               Array.from(all).forEach(el => {
                 el.style.color = '#000000';
+                if (el.tagName === 'P') el.style.marginBottom = '6px';
                 if (el.tagName === 'A') el.style.color = '#0000ff';
               });
             }
@@ -2301,11 +2313,11 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         return;
       }
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 0.8);
       const pdf = new jsPDF('p', 'mm', 'a4');
 
       const imgProps = pdf.getImageProperties(imgData);
-      const margin = 15; // 15mm margin
+      const margin = 8; // 8mm margin for compression
       const pdfWidth = pdf.internal.pageSize.getWidth() - (margin * 2);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -2326,7 +2338,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         heightLeft -= contentHeightPerPage;
       }
 
-      const filename = `aisa-response-${msg.id}.pdf`;
+      const filename = `AISA.pdf`;
 
       if (action === 'download') {
         pdf.save(filename);
@@ -2336,28 +2348,43 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         window.open(blobUrl, '_blank');
         toast.dismiss(processToastId);
       } else if (action === 'share') {
-        const blob = pdf.output('blob');
-        const file = new window.File([blob], filename, { type: 'application/pdf' });
+        try {
+          const blob = pdf.output('blob');
+          const file = new File([blob], filename, {
+            type: 'application/pdf',
+            lastModified: new Date().getTime()
+          });
 
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'AI Response',
-              text: 'Here is the response from A-Series AI.'
-            });
-            toast.success("Shared successfully!", { id: processToastId });
-          } catch (shareErr) {
-            if (shareErr.name !== 'AbortError') {
-              pdf.save(filename);
-              toast.success("Sharing failed, downloaded instead", { id: processToastId });
+          // Check if native sharing is available
+          if (navigator.share) {
+            // Some browsers support share() but not canShare() or canShare() with files
+            const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+
+            if (canShareFiles || !navigator.canShare) {
+              await navigator.share({
+                files: [file],
+                title: 'AISA AI Response',
+                text: 'Sharing my AI response from AISA.'
+              });
+              toast.success("Shared successfully!", { id: processToastId });
             } else {
-              toast.dismiss(processToastId);
+              // Fallback for when canShare({files}) returns false
+              pdf.save(filename);
+              toast.success("Direct share not supported, downloaded instead.", { id: processToastId });
             }
+          } else {
+            // Fallback for browsers without Web Share API
+            pdf.save(filename);
+            toast.success("Sharing not supported on this browser, downloaded instead.", { id: processToastId });
           }
-        } else {
-          pdf.save(filename);
-          toast.success("Native share not supported, downloaded instead.", { id: processToastId });
+        } catch (shareErr) {
+          if (shareErr.name !== 'AbortError') {
+            console.error("Sharing error:", shareErr);
+            pdf.save(filename);
+            toast.success("Sharing failed, document downloaded.", { id: processToastId });
+          } else {
+            toast.dismiss(processToastId);
+          }
         }
       }
     } catch (err) {
@@ -2937,20 +2964,23 @@ For "Remix" requests with an attachment, analyze the attached image, then create
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`group relative flex items-start gap-2 md:gap-3 w-full max-w-5xl mx-auto cursor-pointer ${msg.role === 'user' ? 'flex-row-reverse' : ''
+                  className={`group relative flex items-start gap-2 md:gap-3 w-full max-w-5xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''
                     }`}
-                  onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
+                  onClick={() => {
+                    if (window.getSelection().toString()) return;
+                    setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
+                  }}
                 >
                   {/* Actions Menu (Always visible for discoverability) */}
 
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
-                      ? 'bg-primary/80 backdrop-blur-md shadow-sm'
-                      : 'bg-surface border border-border shadow-sm'
+                      ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 shadow-sm'
+                      : 'bg-transparent'
                       }`}
                   >
                     {msg.role === 'user' ? (
-                      <User className="w-4 h-4 text-white" />
+                      <User className="w-4 h-4 text-slate-800 dark:text-slate-200" />
                     ) : (
                       <img src="/logo/AISA.gif?v=3" alt="AISA" className="w-5 h-5 object-contain" />
                     )}
@@ -2961,9 +2991,9 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       } max-w-[85%] sm:max-w-[80%] md:max-w-[75%]`}
                   >
                     <div
-                      className={`group/bubble relative px-3 py-2.5 sm:px-5 sm:py-4 rounded-2xl sm:rounded-[1.5rem] leading-relaxed whitespace-pre-wrap break-words shadow-sm w-fit max-w-full transition-all duration-300 min-h-[40px] hover:scale-[1.002] ${msg.role === 'user'
-                        ? 'bg-primary/80 backdrop-blur-md border border-white/20 text-white rounded-tr-sm shadow-lg shadow-primary/20 text-sm sm:text-base'
-                        : `bg-surface border border-border/40 text-maintext rounded-tl-sm shadow-sm hover:shadow-md text-sm sm:text-base ${msg.id === typingMessageId ? 'ai-typing-glow ai-typing-shimmer outline outline-offset-1 outline-primary/20' : ''}`
+                      className={`group/bubble relative transition-all duration-300 min-h-[40px] w-fit max-w-full ${msg.role === 'user'
+                        ? 'px-3 py-2.5 sm:px-5 sm:py-4 rounded-2xl sm:rounded-[1.5rem] bg-white/20 dark:bg-white/5 backdrop-blur-xl border border-white/30 text-slate-900 dark:text-white rounded-tr-sm shadow-xl shadow-black/5 text-sm sm:text-base hover:scale-[1.002] leading-relaxed whitespace-pre-wrap break-words'
+                        : `text-maintext text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words`
                         }`}
                     >
 
@@ -3094,7 +3124,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </div>
                       ) : (
                         msg.content && (
-                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'text-white' : 'text-maintext'}`}>
+                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'text-slate-900 dark:text-white' : 'text-maintext'}`}>
                             {msg.role === 'user' && msg.mode === MODES.DEEP_SEARCH && (
                               <div className="flex items-center gap-1.5 mb-2 px-2 py-1 bg-white/20 rounded-lg w-fit">
                                 <Search size={10} className="text-white" />
@@ -3124,13 +3154,13 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                   );
                                 },
                                 p: ({ children }) => <p className={`mb-1.5 last:mb-0 ${msg.role === 'user' ? 'm-0 leading-normal' : 'leading-relaxed'}`}>{children}</p>,
-                                ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-primary transition-all">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-primary transition-all">{children}</ol>,
+                                ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-subtext transition-all">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-1.5 marker:text-subtext transition-all">{children}</ol>,
                                 li: ({ children }) => <li className="mb-1 last:mb-0 transition-colors">{children}</li>,
-                                h1: ({ children }) => <h1 className="font-bold mb-2 mt-3 block text-[1.4em] text-primary tracking-tight">{children}</h1>,
-                                h2: ({ children }) => <h2 className="font-bold mb-1.5 mt-2 block text-[1.2em] text-primary tracking-tight">{children}</h2>,
-                                h3: ({ children }) => <h3 className="font-bold mb-1 mt-1.5 block text-[1.1em] text-primary tracking-tight">{children}</h3>,
-                                strong: ({ children }) => <strong className="font-bold text-[#5555ff]">{children}</strong>,
+                                h1: ({ children }) => <h1 className="font-bold mb-2 mt-3 block text-[1.4em] text-maintext tracking-tight">{children}</h1>,
+                                h2: ({ children }) => <h2 className="font-bold mb-1.5 mt-2 block text-[1.2em] text-maintext tracking-tight">{children}</h2>,
+                                h3: ({ children }) => <h3 className="font-bold mb-1 mt-1.5 block text-[1.1em] text-maintext tracking-tight">{children}</h3>,
+                                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
                                 mark: ({ children }) => <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">{children}</mark>,
                                 code: ({ node, inline, className, children, ...props }) => {
                                   const match = /language-(\w+)/.exec(className || '');
@@ -3329,69 +3359,73 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                 Share
                               </Menu.Button>
 
-                              <Transition
-                                as={Fragment}
-                                enter="transition ease-out duration-100"
-                                enterFrom="transform opacity-0 scale-95"
-                                enterTo="transform opacity-100 scale-100"
-                                leave="transition ease-in duration-75"
-                                leaveFrom="transform opacity-100 scale-100"
-                                leaveTo="transform opacity-0 scale-95"
-                              >
-                                <Menu.Items className="absolute bottom-full right-0 mb-2 w-56 origin-bottom-right divide-y divide-border rounded-xl bg-surface shadow-2xl border border-border focus:outline-none z-[100] overflow-hidden">
-                                  <div className="px-1 py-1">
-
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => {
-                                            const text = `I've converted "${msg.conversion.fileName}" into voice audio using AISA! ${window.location.href}`;
-                                            const url = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-                                              ? `whatsapp://send?text=${encodeURIComponent(text)}`
-                                              : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-                                            window.open(url, '_blank');
-                                          }}
-                                          className={`${active ? 'bg-green-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
-                                        >
-                                          <MessageCircle className="h-4 w-4" />
-                                          WhatsApp
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => {
-                                            const text = `AISA Audio Conversion: ${msg.conversion.fileName}`;
-                                            const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
-                                            window.open(url, '_blank');
-                                          }}
-                                          className={`${active ? 'bg-sky-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
-                                        >
-                                          <Send className="h-4 w-4" />
-                                          Telegram
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </div>
-                                  <div className="px-1 py-1">
-                                    <Menu.Item>
-                                      {({ active }) => (
-                                        <button
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(window.location.href);
-                                            toast.success("Link copied!");
-                                          }}
-                                          className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
-                                        >
-                                          <Copy className="h-4 w-4" />
-                                          Copy Link
-                                        </button>
-                                      )}
-                                    </Menu.Item>
-                                  </div>
-                                </Menu.Items>
-                              </Transition>
+                              <Portal>
+                                <Transition
+                                  as={Fragment}
+                                  enter="transition ease-out duration-100"
+                                  enterFrom="transform opacity-0 scale-95"
+                                  enterTo="transform opacity-100 scale-100"
+                                  leave="transition ease-in duration-75"
+                                  leaveFrom="transform opacity-100 scale-100"
+                                  leaveTo="transform opacity-0 scale-95"
+                                >
+                                  <Menu.Items
+                                    anchor="bottom end"
+                                    className="w-56 mt-2 origin-top-right divide-y divide-border rounded-xl bg-surface shadow-2xl border border-border focus:outline-none z-[100] overflow-hidden"
+                                  >
+                                    <div className="px-1 py-1">
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => {
+                                              const text = `I've converted "${msg.conversion.fileName}" into voice audio using AISA! ${window.location.href}`;
+                                              const url = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+                                                ? `whatsapp://send?text=${encodeURIComponent(text)}`
+                                                : `https://web.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                                              window.open(url, '_blank');
+                                            }}
+                                            className={`${active ? 'bg-green-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
+                                          >
+                                            <MessageCircle className="h-4 w-4" />
+                                            WhatsApp
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => {
+                                              const text = `AISA Audio Conversion: ${msg.conversion.fileName}`;
+                                              const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+                                              window.open(url, '_blank');
+                                            }}
+                                            className={`${active ? 'bg-sky-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
+                                          >
+                                            <Send className="h-4 w-4" />
+                                            Telegram
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                    </div>
+                                    <div className="px-1 py-1">
+                                      <Menu.Item>
+                                        {({ active }) => (
+                                          <button
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(window.location.href);
+                                              toast.success("Link copied!");
+                                            }}
+                                            className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
+                                          >
+                                            <Copy className="h-4 w-4" />
+                                            Copy Link
+                                          </button>
+                                        )}
+                                      </Menu.Item>
+                                    </div>
+                                  </Menu.Items>
+                                </Transition>
+                              </Portal>
                             </Menu>
                           </div>
                         </div>
@@ -3399,7 +3433,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
                       {/* AI Feedback Actions */}
                       {msg.role !== 'user' && !msg.conversion && (
-                        <div className="mt-4 pt-3 border-t border-border/40 w-full block">
+                        <div className="mt-4 w-full block">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
                             {(() => {
                               // Detect if the AI response contains Hindi (Devanagari script)
@@ -3477,56 +3511,37 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                       <FileText className="w-4 h-4" />
                                     )}
                                   </Menu.Button>
-                                  <Transition
-                                    as={Fragment}
-                                    enter="transition ease-out duration-100"
-                                    enterFrom="transform opacity-0 scale-95"
-                                    enterTo="transform opacity-100 scale-100"
-                                    leave="transition ease-in duration-75"
-                                    leaveFrom="transform opacity-100 scale-100"
-                                    leaveTo="transform opacity-0 scale-95"
-                                  >
-                                    <Menu.Items className="absolute bottom-full right-0 sm:left-0 mb-2 w-44 origin-bottom-right sm:origin-bottom-left divide-y divide-border rounded-xl bg-card shadow-2xl ring-1 ring-black ring-opacity-10 focus:outline-none z-50 overflow-hidden backdrop-blur-xl border border-border/50">
-                                      <div className="px-1.5 py-1.5">
-                                        <Menu.Item>
-                                          {({ active }) => (
-                                            <button
-                                              onClick={() => handlePdfAction('open', msg)}
-                                              className={`${active ? 'bg-primary text-white shadow-md' : 'text-maintext hover:bg-primary/5'
-                                                } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
-                                            >
-                                              <Eye className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-primary'}`} />
-                                              Open PDF
-                                            </button>
-                                          )}
-                                        </Menu.Item>
-                                        <Menu.Item>
-                                          {({ active }) => (
-                                            <button
-                                              onClick={() => handlePdfAction('download', msg)}
-                                              className={`${active ? 'bg-primary text-white shadow-md' : 'text-maintext hover:bg-primary/5'
-                                                } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
-                                            >
-                                              <Download className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-primary'}`} />
-                                              Download PDF
-                                            </button>
-                                          )}
-                                        </Menu.Item>
-                                        <Menu.Item>
-                                          {({ active }) => (
-                                            <button
-                                              onClick={() => handlePdfAction('share', msg)}
-                                              className={`${active ? 'bg-primary text-white shadow-md' : 'text-maintext hover:bg-primary/5'
-                                                } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
-                                            >
-                                              <Share className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-primary'}`} />
-                                              Share PDF
-                                            </button>
-                                          )}
-                                        </Menu.Item>
-                                      </div>
-                                    </Menu.Items>
-                                  </Transition>
+                                  <Portal>
+                                    <Transition
+                                      as={Fragment}
+                                      enter="transition ease-out duration-100"
+                                      enterFrom="transform opacity-0 scale-95"
+                                      enterTo="transform opacity-100 scale-100"
+                                      leave="transition ease-in duration-75"
+                                      leaveFrom="transform opacity-100 scale-100"
+                                      leaveTo="transform opacity-0 scale-95"
+                                    >
+                                      <Menu.Items
+                                        anchor="bottom end"
+                                        className="w-44 mt-2 origin-top-right divide-y divide-border rounded-xl bg-card shadow-2xl ring-1 ring-black ring-opacity-10 focus:outline-none z-50 overflow-hidden backdrop-blur-xl border border-border/50"
+                                      >
+                                        <div className="px-1.5 py-1.5">
+                                          <Menu.Item>
+                                            {({ active }) => (
+                                              <button
+                                                onClick={() => handlePdfAction('share', msg)}
+                                                className={`${active ? 'bg-primary text-white shadow-md' : 'text-maintext hover:bg-primary/5'
+                                                  } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
+                                              >
+                                                <Share className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-primary'}`} />
+                                                Share PDF
+                                              </button>
+                                            )}
+                                          </Menu.Item>
+                                        </div>
+                                      </Menu.Items>
+                                    </Transition>
+                                  </Portal>
                                 </Menu>
                               </div>
 
@@ -3599,11 +3614,11 @@ For "Remix" requests with an attachment, analyze the attached image, then create
 
               {isLoading && !typingMessageId && (
                 <div className="flex items-start gap-4 max-w-4xl mx-auto">
-                  <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
                     <img src="/logo/AISA.gif?v=3" alt="AISA" className="w-5 h-5 object-contain" />
 
                   </div>
-                  <div className="px-5 py-3 rounded-2xl rounded-tl-none bg-surface border border-border flex items-center gap-3">
+                  <div className="p-1 flex items-center gap-3">
                     <span className="text-sm font-medium text-subtext animate-pulse">
                       {loadingText}
                     </span>
@@ -3631,77 +3646,79 @@ For "Remix" requests with an attachment, analyze the attached image, then create
         </div>
 
         {/* Welcome Screen - Absolute Overlay */}
-        {messages.length === 0 && (
-          <div className="absolute inset-0 z-0 flex flex-col items-center overflow-y-auto overflow-x-hidden no-scrollbar pointer-events-auto" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 'max(12rem, env(safe-area-inset-bottom) + 12rem)' }}>
-            <div className="flex flex-col items-center w-full max-w-4xl px-4 py-2 text-center">
-              <div className="select-none flex items-center justify-center w-full" style={{ minHeight: '4rem', marginTop: '2rem', marginBottom: '1rem' }}>
-                <img
-                  src="/logo/AISA.gif?v=3"
-                  alt="AISA Icon"
-                  className="object-contain drop-shadow-2xl pointer-events-none shrink-0"
-                  style={{ width: '4rem', height: '4rem', minWidth: '3rem', minHeight: '3rem', maxWidth: '6rem', maxHeight: '6rem' }}
-                  draggable={false}
-                  onDragStart={(e) => e.preventDefault()}
-                />
-              </div>
-              <h2 className="font-bold text-maintext tracking-tight w-full px-4" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.875rem)', lineHeight: '1.4', marginBottom: '0.75rem' }}>
-                {t('welcomeMessage')}
-              </h2>
+        {
+          messages.length === 0 && (
+            <div className="absolute inset-0 z-0 flex flex-col items-center overflow-y-auto overflow-x-hidden no-scrollbar pointer-events-auto" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 'max(12rem, env(safe-area-inset-bottom) + 12rem)' }}>
+              <div className="flex flex-col items-center w-full max-w-4xl px-4 py-2 text-center">
+                <div className="select-none flex items-center justify-center w-full" style={{ minHeight: '4rem', marginTop: '2rem', marginBottom: '1rem' }}>
+                  <img
+                    src="/logo/AISA.gif?v=3"
+                    alt="AISA Icon"
+                    className="object-contain drop-shadow-2xl pointer-events-none shrink-0"
+                    style={{ width: '4rem', height: '4rem', minWidth: '3rem', minHeight: '3rem', maxWidth: '6rem', maxHeight: '6rem' }}
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                  />
+                </div>
+                <h2 className="font-bold text-maintext tracking-tight w-full px-4" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.875rem)', lineHeight: '1.4', marginBottom: '0.75rem' }}>
+                  {t('welcomeMessage')}
+                </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md px-4 animate-in hover:none pb-4" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-                {[
-                  {
-                    icon: <ImageIcon className="w-5 h-5 text-purple-500" />,
-                    title: "Generate Image",
-                    desc: "Create visuals from text",
-                    action: () => {
-                      if (inputRef.current) {
-                        inputRef.current.value = "Generate an image of ";
-                        inputRef.current.focus();
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md px-4 animate-in hover:none pb-4" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+                  {[
+                    {
+                      icon: <ImageIcon className="w-5 h-5 text-purple-500" />,
+                      title: "Generate Image",
+                      desc: "Create visuals from text",
+                      action: () => {
+                        if (inputRef.current) {
+                          inputRef.current.value = "Generate an image of ";
+                          inputRef.current.focus();
+                        }
                       }
+                    },
+                    {
+                      icon: <Search className="w-5 h-5 text-blue-500" />,
+                      title: "Deep Search",
+                      desc: "Research complex topics",
+                      action: () => {
+                        setIsDeepSearch(true);
+                        if (inputRef.current) inputRef.current.focus();
+                        toast.success("Deep Search Mode Enabled");
+                      }
+                    },
+                    {
+                      icon: <FileText className="w-5 h-5 text-orange-500" />,
+                      title: "Analyze Document",
+                      desc: "Chat with PDFs & Docs",
+                      action: () => uploadInputRef.current?.click()
+                    },
+                    {
+                      icon: <Mic className="w-5 h-5 text-green-500" />,
+                      title: "Voice Chat",
+                      desc: "Talk to AISA naturally",
+                      action: () => handleVoiceInput()
                     }
-                  },
-                  {
-                    icon: <Search className="w-5 h-5 text-blue-500" />,
-                    title: "Deep Search",
-                    desc: "Research complex topics",
-                    action: () => {
-                      setIsDeepSearch(true);
-                      if (inputRef.current) inputRef.current.focus();
-                      toast.success("Deep Search Mode Enabled");
-                    }
-                  },
-                  {
-                    icon: <FileText className="w-5 h-5 text-orange-500" />,
-                    title: "Analyze Document",
-                    desc: "Chat with PDFs & Docs",
-                    action: () => uploadInputRef.current?.click()
-                  },
-                  {
-                    icon: <Mic className="w-5 h-5 text-green-500" />,
-                    title: "Voice Chat",
-                    desc: "Talk to AISA naturally",
-                    action: () => handleVoiceInput()
-                  }
-                ].map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={item.action}
-                    className="flex items-center gap-3 p-3 sm:p-4 bg-surface/50 hover:bg-surface border border-border/50 hover:border-primary/30 rounded-2xl text-left transition-all duration-200 group active:scale-95 shadow-sm hover:shadow-md backdrop-blur-sm w-full"
-                  >
-                    <div className="p-2.5 bg-background rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-maintext text-sm">{item.title}</h3>
-                      <p className="text-xs text-subtext font-medium">{item.desc}</p>
-                    </div>
-                  </button>
-                ))}
+                  ].map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={item.action}
+                      className="flex items-center gap-3 p-3 sm:p-4 bg-surface/50 hover:bg-surface border border-border/50 hover:border-primary/30 rounded-2xl text-left transition-all duration-200 group active:scale-95 shadow-sm hover:shadow-md backdrop-blur-sm w-full"
+                    >
+                      <div className="p-2.5 bg-background rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-maintext text-sm">{item.title}</h3>
+                        <p className="text-xs text-subtext font-medium">{item.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* Input */}
         <div className="absolute bottom-0 left-0 right-0 bg-transparent z-20" style={{ padding: 'max(0.375rem, env(safe-area-inset-bottom, 0.375rem)) max(0.5rem, env(safe-area-inset-right, 0.5rem)) max(0.375rem, 0.375rem) max(0.5rem, env(safe-area-inset-left, 0.5rem))' }}>

@@ -54,7 +54,8 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
         const result = await axios.post(apis.chatAgent, payload, {
             headers: headers,
             signal: abortSignal,
-            withCredentials: true
+            withCredentials: true,
+            timeout: 60000 // 60s timeout to match backend
         });
 
         // Return full response data (includes reply and potentially conversion data)

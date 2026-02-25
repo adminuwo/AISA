@@ -126,10 +126,11 @@
 
   /* Marked/Highlighted text styling */
   mark {
-    background-color: #5555ff;
-    color: white;
-    padding: 0.1em 0.3em;
+    background-color: rgba(85, 85, 255, 0.1);
+    color: inherit;
+    padding: 0.1em 0.2em;
     border-radius: 0.2em;
+    border-bottom: 2px solid #5555ff;
   }
 
   .dark mark {
@@ -220,19 +221,16 @@
 
   0%,
   100% {
-    box-shadow: 0 0 0 0px rgba(85, 85, 255, 0.4);
-    border-color: rgba(85, 85, 255, 0.5);
+    opacity: 0.8;
   }
 
   50% {
-    box-shadow: 0 0 0 4px rgba(85, 85, 255, 0);
-    border-color: rgba(85, 85, 255, 0.8);
+    opacity: 1;
   }
 }
 
 .ai-typing-glow {
-  animation: pulse-glow 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-  border-width: 1px;
+  animation: pulse-glow 2s infinite ease-in-out;
 }
 
 .font-serif {
