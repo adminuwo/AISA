@@ -237,6 +237,12 @@ const Chat = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [pdfLoadingId, setPdfLoadingId] = useState(null);
   const [pregeneratedPdfs, setPregeneratedPdfs] = useState({}); // Stores { msgId: FileObject }
+  // WhatsApp Share Modal State
+  const [waShareModal, setWaShareModal] = useState(false);
+  const [waPhone, setWaPhone] = useState('');
+  const [waPdfUrl, setWaPdfUrl] = useState('');
+  const [waUploading, setWaUploading] = useState(false);
+  const [waMsgContent, setWaMsgContent] = useState('');
   const [isEditingImage, setIsEditingImage] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -2336,7 +2342,9 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       const pdfWidth = pdf.internal.pageSize.getWidth() - (margin * 2);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const contentHeightPerPage = pageHeight - (margin * 2);
+      // FIX: use pageHeight - margin (not margin*2) so pages align perfectly with no overlap
+      // Page 1 starts at y=margin, so each page shows (pageHeight - margin) mm of content
+      const contentHeightPerPage = pageHeight - margin;
 
       let heightLeft = pdfHeight;
       let pos = margin;
@@ -2439,6 +2447,78 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       handleCopyMessage(content);
       toast("Content copied to clipboard", { icon: '📋' });
     }
+  };
+
+  // WhatsApp In-App PDF Share — uploads PDF to cloud, then lets user pick contact IN-APP
+  const handleWhatsAppPdfShare = async (msg) => {
+    const toastId = toast.loading("Preparing PDF for WhatsApp...");
+    try {
+      // 1. Generate PDF from message
+      const element = document.getElementById(`msg-text-${msg.id}`);
+      if (!element) { toast.error("Content not found", { id: toastId }); return; }
+
+      const canvas = await html2canvas(element, {
+        scale: 2, useCORS: true, backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById(`msg-text-${msg.id}`);
+          if (el) {
+            const hdr = clonedDoc.createElement('div');
+            hdr.style.cssText = 'margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #eee;font-size:12px;color:#888;font-weight:bold;';
+            hdr.innerText = 'AISA AI RESPONSE';
+            el.insertBefore(hdr, el.firstChild);
+            el.style.cssText = 'padding:20px;color:#000;background:#fff;width:800px;line-height:1.4;';
+            el.querySelectorAll('*').forEach(e => { e.style.color = '#000'; });
+          }
+        }
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png', 0.8);
+      const imgProps = pdf.getImageProperties(imgData);
+      const m = 8, w = pdf.internal.pageSize.getWidth() - m * 2;
+      const h = (imgProps.height * w) / imgProps.width;
+      // FIX: use pageHeight - m (not m*2) — page 1 starts at y=m, so step = pageH - m
+      const ph = pdf.internal.pageSize.getHeight() - m;
+      let left = h, pos = m;
+      pdf.addImage(imgData, 'PNG', m, pos, w, h); left -= ph;
+      while (left > 0) { pos = m - (h - left); pdf.addPage(); pdf.addImage(imgData, 'PNG', m, pos, w, h); left -= ph; }
+
+      // 2. Upload PDF blob to Cloudinary via backend
+      toast.loading("Uploading PDF...", { id: toastId });
+      const blob = pdf.output('blob');
+      const formData = new FormData();
+      formData.append('pdf', blob, 'AISA.pdf');
+
+      const { BASE_URL } = await import('../types');
+      const uploadRes = await axios.post(`${BASE_URL}/api/chat/upload-pdf`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true
+      });
+
+      const pdfUrl = uploadRes.data?.url;
+      if (!pdfUrl) throw new Error("Upload failed");
+
+      toast.dismiss(toastId);
+
+      // 3. Show in-app WhatsApp contact picker modal
+      setWaPdfUrl(pdfUrl);
+      setWaMsgContent(`🤖 *AISA AI Response*\n\nYeh dekho meri AISA se baat: ${pdfUrl}`);
+      setWaPhone('');
+      setWaShareModal(true);
+
+    } catch (err) {
+      console.error("WhatsApp PDF Share error:", err);
+      toast.error("WhatsApp share failed. Try again.", { id: toastId });
+    }
+  };
+
+  const sendWhatsAppMessage = () => {
+    const cleaned = waPhone.replace(/\D/g, '');
+    if (cleaned.length < 7) { toast.error("Valid phone number daalo!"); return; }
+    const text = encodeURIComponent(waMsgContent);
+    window.open(`https://wa.me/${cleaned}?text=${text}`, '_blank', 'noopener,noreferrer');
+    setWaShareModal(false);
+    toast.success("WhatsApp mein message open ho gaya! 📤");
   };
 
   const submitFeedback = async () => {
@@ -3547,6 +3627,23 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                               </button>
                                             )}
                                           </Menu.Item>
+
+                                          {/* WhatsApp In-App Share */}
+                                          <Menu.Item>
+                                            {({ active }) => (
+                                              <button
+                                                onClick={() => handleWhatsAppPdfShare(msg)}
+                                                className={`${active ? 'bg-[#25D366] text-white shadow-md' : 'text-maintext hover:bg-[#25D366]/10'
+                                                  } group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-bold transition-all duration-200`}
+                                              >
+                                                {/* WhatsApp SVG Icon */}
+                                                <svg className={`w-3.5 h-3.5 flex-shrink-0 ${active ? 'text-white' : 'text-[#25D366]'}`} viewBox="0 0 24 24" fill="currentColor">
+                                                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                                </svg>
+                                                <span className="flex-1 text-left">WhatsApp pe Bhejo</span>
+                                              </button>
+                                            )}
+                                          </Menu.Item>
                                         </div>
                                       </Menu.Items>
                                     </Transition>
@@ -4344,6 +4441,89 @@ For "Remix" requests with an attachment, analyze the attached image, then create
           setTimeout(() => window.location.reload(), 500);
         }}
       />
+
+      {/* ===== WHATSAPP IN-APP SHARE MODAL ===== */}
+      {waShareModal && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border/50 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            {/* Header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40" style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}>
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-white font-bold text-sm">WhatsApp pe Share Karo</h3>
+                <p className="text-white/70 text-xs">PDF link bhejein — bina app chhode</p>
+              </div>
+              <button onClick={() => setWaShareModal(false)} className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4">
+              {/* Phone Input */}
+              <div>
+                <label className="text-xs font-semibold text-subtext mb-1.5 block">📱 Phone Number (Country Code ke saath)</label>
+                <div className="flex gap-2">
+                  <div className="flex items-center bg-surface-hover rounded-xl px-3 border border-border/50 text-sm text-maintext font-mono">+</div>
+                  <input
+                    type="tel"
+                    value={waPhone}
+                    onChange={e => setWaPhone(e.target.value)}
+                    placeholder="91 9876543210"
+                    className="flex-1 bg-surface-hover border border-border/50 rounded-xl px-3 py-2.5 text-sm text-maintext placeholder-subtext focus:outline-none focus:border-[#25D366] focus:ring-1 focus:ring-[#25D366] transition-all"
+                    autoFocus
+                  />
+                </div>
+                <p className="text-[10px] text-subtext mt-1">Example: 91 9876543210 (India), 1 2025551234 (USA)</p>
+              </div>
+
+              {/* Message Preview */}
+              <div>
+                <label className="text-xs font-semibold text-subtext mb-1.5 block">💬 Message Preview</label>
+                <textarea
+                  value={waMsgContent}
+                  onChange={e => setWaMsgContent(e.target.value)}
+                  rows={3}
+                  className="w-full bg-surface-hover border border-border/50 rounded-xl px-3 py-2.5 text-xs text-maintext focus:outline-none focus:border-[#25D366] focus:ring-1 focus:ring-[#25D366] transition-all resize-none"
+                />
+              </div>
+
+              {/* PDF Link */}
+              {waPdfUrl && (
+                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+                  <span className="text-xs text-green-600 font-medium truncate">PDF Ready: {waPdfUrl.split('/').pop()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex gap-3 px-5 pb-5">
+              <button
+                onClick={() => setWaShareModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-border/50 text-sm text-subtext hover:bg-surface-hover transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendWhatsAppMessage}
+                disabled={waUploading || !waPhone}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+                WhatsApp pe Bhejo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 };
