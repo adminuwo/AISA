@@ -318,10 +318,23 @@ const Chat = () => {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
+    const handleGlobalPaste = (e) => {
+      // Avoid intercepting if user is in an input/textarea other than our chat input
+      const target = e.target;
+      if (target.tagName === 'INPUT' || (target.tagName === 'TEXTAREA' && target !== inputRef.current)) {
+        return;
+      }
+      handlePaste(e);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('paste', handleGlobalPaste);
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('paste', handleGlobalPaste);
     };
-  }, [isAttachMenuOpen, isToolsMenuOpen]);
+  }, [isAttachMenuOpen, isToolsMenuOpen, messages.length, isLoading]);
 
   const processFile = (file) => {
     if (!file) return;
@@ -370,26 +383,34 @@ const Chat = () => {
   };
 
   const handlePaste = (e) => {
-    // Handle files pasted from file system
-    if (e.clipboardData.files && e.clipboardData.files.length > 0) {
-      e.preventDefault();
-      const files = Array.from(e.clipboardData.files);
-      files.forEach(file => processFile(file));
-      return;
-    }
+    // Only handle if there are files (blobs) or items in clipboard
+    const items = e.clipboardData?.items;
+    const files = e.clipboardData?.files;
+    let handled = false;
 
-    // Handle pasted data items
-    if (e.clipboardData.items) {
-      const items = e.clipboardData.items;
+    if (items) {
       for (let i = 0; i < items.length; i++) {
         if (items[i].kind === 'file') {
           const file = items[i].getAsFile();
           if (file) {
-            e.preventDefault();
             processFile(file);
+            handled = true;
           }
         }
       }
+    }
+
+    // Fallback for older browsers or specific mobile behaviors
+    if (!handled && files && files.length > 0) {
+      Array.from(files).forEach(file => {
+        processFile(file);
+        handled = true;
+      });
+    }
+
+    if (handled) {
+      e.preventDefault(); // Don't paste the filename as text if we handled the file
+      toast.success("File pasted! 📎");
     }
   };
 
@@ -4293,7 +4314,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       }
                     }
                   }}
-                  onPaste={handlePaste}
                   placeholder={isLimitReached ? "Chat limit reached. Sign in to continue." : (isVideoGeneration ? "Describe the video you want to generate..." : isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : "Ask AISA")}
                   rows={1}
                   className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none p-0 py-2 text-maintext text-left placeholder-subtext/40 resize-none overflow-y-auto custom-scrollbar leading-relaxed text-[15px] ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
