@@ -6,21 +6,26 @@ import { ToastProvider } from './Components/Toast/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PersonalizationProvider } from './context/PersonalizationContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import ErrorBoundary from './Components/ErrorBoundary';
 
+const GOOGLE_CLIENT_ID = import.meta.env.AISA_GOOGLE_CLIENT_ID;
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ErrorBoundary>
-      <ToastProvider>
-        <PersonalizationProvider>
-          <ThemeProvider>
-            <LanguageProvider>
-              <App />
-            </LanguageProvider>
-          </ThemeProvider>
-        </PersonalizationProvider>
-      </ToastProvider>
-    </ErrorBoundary>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <ErrorBoundary>
+        <ToastProvider>
+          <PersonalizationProvider>
+            <ThemeProvider>
+              <LanguageProvider>
+                <App />
+              </LanguageProvider>
+            </ThemeProvider>
+          </PersonalizationProvider>
+        </ToastProvider>
+      </ErrorBoundary>
+    </GoogleOAuthProvider>
   </StrictMode>,
 )
