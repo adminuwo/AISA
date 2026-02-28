@@ -4585,30 +4585,6 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                             <span className="text-[10px] text-subtext block leading-tight truncate mt-0.5">Write & debug code with AISA</span>
                           </div>
                         </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsToolsMenuOpen(false);
-                            setIsMagicEditing(!isMagicEditing);
-                            setIsCodeWriter(false);
-                            setIsDeepSearch(false);
-                            setIsImageGeneration(false);
-                            setIsVideoGeneration(false);
-                            setIsAudioConvertMode(false);
-                            setIsDocumentConvert(false);
-                            if (!isMagicEditing) toast.success("Magic Image Editing Enabled");
-                          }}
-                          className={`w-full text-left px-3 py-2 flex items-center gap-3 rounded-2xl transition-all group cursor-pointer ${isMagicEditing ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
-                        >
-                          <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors shrink-0 ${isMagicEditing ? 'bg-primary border-primary text-white' : 'bg-surface border-border group-hover:border-primary/30 group-hover:bg-primary/10'}`}>
-                            <Wand2 className="w-4.5 h-4.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[14px] font-bold text-maintext block leading-tight">Magic Image Editing</span>
-                            <span className="text-[10px] text-subtext block leading-tight truncate mt-0.5">Edit & modify images with AI</span>
-                          </div>
-                        </button>
                       </div>
                     </motion.div>
                   )}
