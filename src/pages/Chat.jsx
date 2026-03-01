@@ -3356,6 +3356,36 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {(viewingDoc.type === 'image' || viewingDoc.name?.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || viewingDoc.url?.startsWith('data:image/')) && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(viewingDoc.url);
+                          const blob = await response.blob();
+                          const pngBlob = blob.type === 'image/png' ? blob : await new Promise((resolve) => {
+                            const img = new Image();
+                            img.crossOrigin = 'anonymous';
+                            img.onload = () => {
+                              const canvas = document.createElement('canvas');
+                              canvas.width = img.naturalWidth;
+                              canvas.height = img.naturalHeight;
+                              canvas.getContext('2d').drawImage(img, 0, 0);
+                              canvas.toBlob(resolve, 'image/png');
+                            };
+                            img.src = viewingDoc.url;
+                          });
+                          await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+                          toast.success('Image copied!');
+                        } catch (err) {
+                          toast.error('Could not copy image');
+                        }
+                      }}
+                      className="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors text-subtext"
+                      title="Copy Image"
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDownload(viewingDoc.url, viewingDoc.name)}
                     className="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors text-subtext"
@@ -3853,19 +3883,50 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                                     }
                                   }}
                                 />
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDownload(msg.imageUrl, 'aisa-generated.png');
-                                  }}
-                                  className="absolute bottom-3 right-3 p-2.5 bg-primary text-white rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all hover:bg-primary/90 shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100"
-                                  title="Download High-Res"
-                                >
-                                  <div className="flex items-center gap-2 px-1">
-                                    <Download className="w-4 h-4" />
-                                    <span className="text-[10px] font-bold uppercase">Download</span>
-                                  </div>
-                                </button>
+                                <div className="absolute bottom-3 right-3 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all scale-100 sm:scale-90 sm:group-hover/generated:scale-100">
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const response = await fetch(msg.imageUrl);
+                                        const blob = await response.blob();
+                                        const pngBlob = blob.type === 'image/png' ? blob : await new Promise((resolve) => {
+                                          const img = new Image();
+                                          img.crossOrigin = 'anonymous';
+                                          img.onload = () => {
+                                            const canvas = document.createElement('canvas');
+                                            canvas.width = img.naturalWidth;
+                                            canvas.height = img.naturalHeight;
+                                            canvas.getContext('2d').drawImage(img, 0, 0);
+                                            canvas.toBlob(resolve, 'image/png');
+                                          };
+                                          img.src = msg.imageUrl;
+                                        });
+                                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+                                        toast.success('Image copied!');
+                                      } catch (err) {
+                                        toast.error('Could not copy image');
+                                      }
+                                    }}
+                                    className="p-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 shadow-lg border border-white/20"
+                                    title="Copy Image"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownload(msg.imageUrl, 'aisa-generated.png');
+                                    }}
+                                    className="p-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 shadow-lg border border-white/20"
+                                    title="Download High-Res"
+                                  >
+                                    <div className="flex items-center gap-2 px-1">
+                                      <Download className="w-4 h-4" />
+                                      <span className="text-[10px] font-bold uppercase">Download</span>
+                                    </div>
+                                  </button>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -4020,7 +4081,7 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                       )}
 
                       {/* AI Feedback Actions */}
-                      {msg.role !== 'user' && !msg.conversion && (
+                      {msg.role !== 'user' && !msg.conversion && !msg.imageUrl && (
                         <div className="mt-4 w-full block">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
                             {(() => {
