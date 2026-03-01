@@ -7,7 +7,7 @@ import { getUserData } from '../../userStore/userData';
 import { useNavigate } from 'react-router-dom';
 
 const UpgradeModal = () => {
-    const { isUpgradeModalOpen, setIsUpgradeModalOpen, plan } = useSubscription();
+    const { isUpgradeModalOpen, setIsUpgradeModalOpen } = useSubscription();
     const { handlePayment, loading } = usePayment();
     const navigate = useNavigate();
     const user = getUserData();
@@ -59,33 +59,46 @@ const UpgradeModal = () => {
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                {/* Backdrop */}
+            {/*
+              Outer wrapper: fixed + overflow-y-auto so the entire overlay scrolls
+              on very small phones if the modal is taller than the viewport.
+            */}
+            <div className="fixed inset-0 z-[9999] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+
+                {/* Backdrop — click to close */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setIsUpgradeModalOpen(false)}
-                    className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-md"
                 />
 
-                {/* Modal Container */}
+                {/*
+                  Modal card:
+                  • max-h-[92vh] + overflow-y-auto  → scrolls inside on medium phones
+                  • my-4 so it has breathing room when scrolling
+                  • flex-col (mobile) → flex-row (md+)
+                */}
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="relative w-full max-w-4xl bg-secondary border border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+                    className="relative z-10 w-full max-w-4xl my-4
+                               bg-secondary border border-border rounded-3xl shadow-2xl
+                               flex flex-col md:flex-row
+                               max-h-[92vh] overflow-y-auto"
                 >
                     {/* Close Button */}
                     <button
                         onClick={() => setIsUpgradeModalOpen(false)}
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface transition-colors z-10"
+                        className="absolute top-3 right-3 p-2 rounded-full hover:bg-surface transition-colors z-20"
                     >
                         <X className="w-5 h-5 text-subtext" />
                     </button>
 
-                    {/* Left Side: Illustration / Branding */}
-                    <div className="w-full md:w-1/3 bg-gradient-to-br from-primary/10 to-primary/5 p-8 flex flex-col justify-center items-center text-center">
+                    {/* ── Left Side: Branding — hidden on mobile to save vertical space ── */}
+                    <div className="hidden md:flex w-1/3 bg-gradient-to-br from-primary/10 to-primary/5 p-8 flex-col justify-center items-center text-center flex-shrink-0">
                         <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
                             <Rocket className="w-10 h-10 text-primary" />
                         </div>
@@ -106,30 +119,48 @@ const UpgradeModal = () => {
                         </div>
                     </div>
 
-                    {/* Right Side: Plans */}
-                    <div className="flex-1 p-6 pt-12 md:p-8 md:pt-14 grid grid-cols-1 md:grid-cols-2 gap-6 bg-secondary">
+                    {/* ── Mobile-only compact header ── */}
+                    <div className="flex md:hidden items-center gap-3 p-4 pt-5 pb-3 border-b border-border flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+                            <Rocket className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-maintext leading-tight">Upgrade Your Plan</h2>
+                            <p className="text-xs text-subtext">Unlock more power with premium</p>
+                        </div>
+                    </div>
+
+                    {/* ── Plans Grid ── */}
+                    <div className="flex-1 p-4 pt-5 md:p-8 md:pt-14 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 content-start bg-secondary">
                         {plans.map((p, idx) => (
                             <motion.div
                                 key={idx}
-                                whileHover={{ y: -5 }}
-                                className={`relative p-6 rounded-2xl border-2 flex flex-col ${p.featured ? 'border-amber-500 bg-amber-500/5' : 'border-border bg-surface/30'}`}
+                                whileHover={{ y: -3 }}
+                                className={`relative p-5 rounded-2xl border-2 flex flex-col
+                                    ${p.featured
+                                        ? 'border-amber-500 bg-amber-500/5'
+                                        : 'border-border bg-surface/30'
+                                    }`}
                             >
+                                {/* Most Popular badge */}
                                 {p.featured && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
                                         Most Popular
                                     </div>
                                 )}
-                                <div className="flex items-center justify-between mb-4">
+
+                                <div className="flex items-center justify-between mb-3">
                                     <div className="p-2 rounded-lg bg-surface">{p.icon}</div>
                                     <span className="text-xs text-subtext font-medium">{p.bestFor}</span>
                                 </div>
+
                                 <h3 className="text-xl font-bold text-maintext mb-1">{p.name}</h3>
-                                <div className="flex items-baseline gap-1 mb-6">
+                                <div className="flex items-baseline gap-1 mb-4">
                                     <span className="text-2xl font-bold text-maintext">{p.price}</span>
                                     <span className="text-subtext text-sm">{p.period}</span>
                                 </div>
 
-                                <ul className="space-y-3 mb-8 flex-1">
+                                <ul className="space-y-2 mb-6 flex-1">
                                     {p.features.map((f, fIdx) => (
                                         <li key={fIdx} className="flex items-start gap-2 text-sm text-subtext">
                                             <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
@@ -153,9 +184,14 @@ const UpgradeModal = () => {
                                             window.location.reload();
                                         });
                                     }}
-                                    className={`w-full py-3 rounded-xl font-bold text-white transition-all transform active:scale-95 bg-gradient-to-r ${p.color} shadow-lg hover:shadow-xl flex items-center justify-center gap-2`}
+                                    className={`w-full py-3 rounded-xl font-bold text-white transition-all
+                                        transform active:scale-95 bg-gradient-to-r ${p.color}
+                                        shadow-lg hover:shadow-xl flex items-center justify-center gap-2`}
                                 >
-                                    {(loading && processingPlanId === p.name) ? <Loader className="w-5 h-5 animate-spin" /> : `Choose ${p.name}`}
+                                    {(loading && processingPlanId === p.name)
+                                        ? <Loader className="w-5 h-5 animate-spin" />
+                                        : `Choose ${p.name}`
+                                    }
                                 </button>
                             </motion.div>
                         ))}

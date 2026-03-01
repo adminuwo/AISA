@@ -64,9 +64,10 @@ export const SubscriptionProvider = ({ children }) => {
     }, [fetchSubscriptionStatus]);
 
     // Function to check limit on frontend before calling API
+    // -1 from backend means "unlimited" (Infinity can't be JSON serialised)
     const checkLimitLocally = (feature) => {
         const { usage, planLimits } = subscription;
-        if (!usage || !planLimits) return true; // Fail safe
+        if (!usage || !planLimits) return true; // Fail safe — allow if data missing
 
         const keyMap = {
             'image': 'imageCount',
@@ -78,8 +79,14 @@ export const SubscriptionProvider = ({ children }) => {
             'chat': 'chatCount'
         };
         const key = keyMap[feature] || feature;
-        
-        if (planLimits[key] !== undefined && planLimits[key] !== Infinity && usage[key] >= planLimits[key]) {
+        const limit = planLimits[key];
+
+        // -1 or Infinity or missing = unlimited — never block
+        if (limit === undefined || limit === null || limit === -1 || limit === Infinity) {
+            return true;
+        }
+
+        if (usage[key] >= limit) {
             setIsUpgradeModalOpen(true);
             return false;
         }
