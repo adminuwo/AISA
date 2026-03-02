@@ -300,6 +300,7 @@ const Chat = () => {
   const [isCodeWriter, setIsCodeWriter] = useState(false);
   const [isVideoGeneration, setIsVideoGeneration] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState('');
+  const [imageAspectRatio, setImageAspectRatio] = useState('1:1');
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
   const inputRef = useRef(null); // Ref for textarea input
@@ -1082,7 +1083,7 @@ const Chat = () => {
 
       try {
         // Use apiService
-        const data = await apiService.generateImage(prompt);
+        const data = await apiService.generateImage(prompt, imageAspectRatio);
 
         if (data && (data.imageUrl || data.data)) {
           const finalUrl = data.imageUrl || data.data; // Handle different response structures
@@ -4912,25 +4913,40 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                         </motion.div>
                       )}
                       {isImageGeneration && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-pink-500/10 text-pink-600 rounded-full text-xs font-bold border border-pink-500/20 backdrop-blur-md whitespace-nowrap shrink-0">
-                          <ImageIcon size={12} strokeWidth={3} /> <span className="hidden sm:inline">Image Gen</span>
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-pink-500/10 text-pink-600 rounded-full text-xs font-bold border border-pink-500/20 backdrop-blur-md shrink-0">
+                          <ImageIcon size={12} strokeWidth={3} />
+                          <div className="relative flex items-center">
+                            <select
+                              className="bg-transparent outline-none appearance-none cursor-pointer font-bold pr-4 pl-1"
+                              value={imageAspectRatio}
+                              onChange={(e) => setImageAspectRatio(e.target.value)}
+                            >
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="1:1">1:1 – For Instagram Square Post</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="16:9">16:9 – For YouTube Thumbnail & Landscape</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="4:5">4:5 – For Social Media Post</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="4:7">4:7 – For Vertical Social Media</option>
+                            </select>
+                            <ChevronDown size={12} className="absolute right-0 pointer-events-none" />
+                          </div>
                           <button onClick={() => setIsImageGeneration(false)} className="ml-1 hover:text-pink-800"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isVideoGeneration && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-xs font-bold border border-red-500/20 backdrop-blur-md shrink-0">
                           <Video size={12} strokeWidth={3} />
-                          <select
-                            className="bg-transparent outline-none appearance-none cursor-pointer font-bold px-1"
-                            value={videoAspectRatio}
-                            onChange={(e) => setVideoAspectRatio(e.target.value)}
-                          >
-                            <option value="">Default (16:9)</option>
-                            <option value="16:9">16:9 Video</option>
-                            <option value="9:16">9:16 Video</option>
-                            <option value="1:1">1:1 Video</option>
-                          </select>
-                          <ChevronDown size={12} className="-ml-1 hidden sm:block" />
+                          <div className="relative flex items-center">
+                            <select
+                              className="bg-transparent outline-none appearance-none cursor-pointer font-bold pr-4 pl-1"
+                              value={videoAspectRatio}
+                              onChange={(e) => setVideoAspectRatio(e.target.value)}
+                            >
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="">Default (16:9)</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="16:9">16:9 – For YouTube Thumbnail</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="9:16">9:16 – For Vertical Social Media</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="1:1">1:1 – For Instagram Square Post</option>
+                            </select>
+                            <ChevronDown size={12} className="absolute right-0 pointer-events-none" />
+                          </div>
                           <button onClick={() => setIsVideoGeneration(false)} className="ml-1 hover:text-red-800"><X size={12} /></button>
                         </motion.div>
                       )}

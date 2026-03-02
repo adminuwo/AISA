@@ -41,11 +41,11 @@ apiClient.interceptors.response.use(
 
 export const apiService = {
   // --- AI Tools ---
-  async generateImage(prompt) {
+  async generateImage(prompt, aspectRatio = '1:1') {
     try {
-      console.log("[Frontend] Generating image for prompt:", prompt);
+      console.log("[Frontend] Generating image for prompt:", prompt, "Ratio:", aspectRatio);
       // Increased timeout to 60s for image generation
-      const response = await apiClient.post('/image/generate', { prompt }, { timeout: 60000 });
+      const response = await apiClient.post('/image/generate', { prompt, aspectRatio }, { timeout: 60000 });
       console.log("[Frontend] Image generation success:", response.data);
       return response.data;
     } catch (error) {
