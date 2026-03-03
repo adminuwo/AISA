@@ -3,6 +3,7 @@ import { X, Sparkles, AlertCircle, CheckCircle, Loader2, ChevronDown, Check } fr
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import PricingConfigModal from './PricingConfigModal';
+import { API } from '../../types.js';
 
 // Custom Dropdown Component
 const CustomSelect = ({ label, name, value, options, onChange, placeholder = "Select option" }) => {
@@ -129,7 +130,7 @@ const NewAppModal = ({ isOpen, onClose, onAppCreated }) => {
                 pricingConfig: pricingConfig
             };
 
-            const response = await axios.post('http://localhost:5000/api/agents', payload, {
+            const response = await axios.post(`${API}/agents`, payload, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API } from '../types.js';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Adjust based on your backend port
+const API_BASE_URL = API;
 
 const vendorService = {
     // Get all apps for a specific vendor
