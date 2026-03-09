@@ -35,13 +35,13 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    
+
     if (error.response?.status === 403 && error.response?.data?.code === 'OUT_OF_CREDITS') {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        user.credits = error.response.data.available || 0; 
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        window.dispatchEvent(new CustomEvent('out_of_credits'));
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      user.credits = error.response.data.available || 0;
+      localStorage.setItem('user', JSON.stringify(user));
+
+      window.dispatchEvent(new CustomEvent('out_of_credits'));
     }
     return Promise.reject(error);
   }
@@ -49,11 +49,11 @@ apiClient.interceptors.response.use(
 
 export const apiService = {
   // --- AI Tools ---
-  async generateImage(prompt, aspectRatio = '1:1') {
+  async generateImage(prompt, aspectRatio = '1:1', modelId = 'imagen-3.0-generate-001') {
     try {
-      console.log("[Frontend] Generating image for prompt:", prompt, "Ratio:", aspectRatio);
+      console.log("[Frontend] Generating image for prompt:", prompt, "Ratio:", aspectRatio, "Model:", modelId);
       // Increased timeout to 60s for image generation
-      const response = await apiClient.post('/image/generate', { prompt, aspectRatio }, { timeout: 60000 });
+      const response = await apiClient.post('/image/generate', { prompt, aspectRatio, modelId }, { timeout: 60000 });
       console.log("[Frontend] Image generation success:", response.data);
       return response.data;
     } catch (error) {

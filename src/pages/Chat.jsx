@@ -325,6 +325,7 @@ const Chat = () => {
   const [isVideoGeneration, setIsVideoGeneration] = useState(false);
   const [videoAspectRatio, setVideoAspectRatio] = useState('');
   const [imageAspectRatio, setImageAspectRatio] = useState('1:1');
+  const [imageModelId, setImageModelId] = useState('imagen-3.0-generate-001');
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
   const inputRef = useRef(null); // Ref for textarea input
@@ -1107,7 +1108,7 @@ const Chat = () => {
 
       try {
         // Use apiService
-        const data = await apiService.generateImage(prompt, imageAspectRatio);
+        const data = await apiService.generateImage(prompt, imageAspectRatio, imageModelId);
 
         if (data && (data.imageUrl || data.data)) {
           const finalUrl = data.imageUrl || data.data; // Handle different response structures
@@ -5095,6 +5096,17 @@ For "Remix" requests with an attachment, analyze the attached image, then create
                               <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="16:9">16:9 – For YouTube Thumbnail & Landscape</option>
                               <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="4:5">4:5 – For Social Media Post</option>
                               <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="4:7">4:7 – For Vertical Social Media</option>
+                            </select>
+                            <ChevronDown size={12} className="absolute right-0 pointer-events-none" />
+                          </div>
+                          <div className="relative flex items-center ml-1 border-l border-pink-500/20 pl-2">
+                            <select
+                              className="bg-transparent outline-none appearance-none cursor-pointer font-bold pr-4 pl-1 text-[11px] max-w-[150px] sm:max-w-[200px] truncate"
+                              value={imageModelId}
+                              onChange={(e) => setImageModelId(e.target.value)}
+                            >
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="imagen-3.0-generate-001">Imagen 3.0 (38 Credits)</option>
+                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="imagen-4.0-ultra-generate-001">Imagen 4 Ultra (58 Credits)</option>
                             </select>
                             <ChevronDown size={12} className="absolute right-0 pointer-events-none" />
                           </div>
