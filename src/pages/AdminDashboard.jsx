@@ -6,11 +6,13 @@ import {
     Search, Shield, Ban, Trash2, Plus, Edit2, X,
     TrendingUp, DollarSign, Activity, Zap,
     ChevronDown, Save, RefreshCw, ArrowLeft,
-    Eye, EyeOff, Check, AlertCircle, FileText, PlusCircle
+    Eye, EyeOff, Check, AlertCircle, FileText, PlusCircle, Headphones
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { getUserData } from '../userStore/userData';
 import toast from 'react-hot-toast';
+import { COOKIE_POLICY_DEFAULTS, TERMS_OF_SERVICE_DEFAULTS, PRIVACY_POLICY_DEFAULTS } from '../constants/legalDefaults';
+import AdminHelpDesk from '../Components/AdminHelpDesk';
 
 const ADMIN_EMAIL = 'admin@uwo24.com';
 
@@ -783,17 +785,32 @@ const LegalPagesTab = () => {
         fetchPage();
     }, [selectedPage]);
 
+    const getDefaultsForPage = (type) => {
+        switch (type) {
+            case 'cookie-policy': return COOKIE_POLICY_DEFAULTS;
+            case 'terms-of-service': return TERMS_OF_SERVICE_DEFAULTS;
+            case 'privacy-policy': return PRIVACY_POLICY_DEFAULTS;
+            default: return [];
+        }
+    };
+
     const fetchPage = async () => {
         setLoading(true);
         try {
             const data = await apiService.getLegalPage(selectedPage);
-            if (data && data.sections) {
+            if (data && data.sections && data.sections.length > 0) {
                 setPageData(data);
             } else {
-                setPageData({ sections: [] });
+                // If no DB content exists, use the hardcoded defaults
+                setPageData({
+                    sections: getDefaultsForPage(selectedPage),
+                    lastUpdated: new Date().toISOString()
+                });
             }
         } catch (err) {
             toast.error('Failed to fetch legal page data');
+            // Fallback to defaults on error too
+            setPageData({ sections: getDefaultsForPage(selectedPage) });
         } finally {
             setLoading(false);
         }
@@ -876,8 +893,8 @@ const LegalPagesTab = () => {
                             key={type}
                             onClick={() => setSelectedPage(type)}
                             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${selectedPage === type
-                                    ? 'bg-primary text-white shadow-md'
-                                    : 'text-subtext hover:bg-white/10 hover:text-maintext'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'text-subtext hover:bg-white/10 hover:text-maintext'
                                 }`}
                         >
                             {type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -1016,6 +1033,7 @@ const AdminDashboard = () => {
         { id: 'plans', label: 'Plans', icon: CreditCard },
         { id: 'packages', label: 'Packages', icon: Package },
         { id: 'legal', label: 'Legal Pages', icon: FileText },
+        { id: 'helpdesk', label: 'Help Desk', icon: Headphones },
         { id: 'settings', label: 'Settings', icon: Settings },
     ];
 
@@ -1026,6 +1044,7 @@ const AdminDashboard = () => {
             case 'plans': return <PlansTab />;
             case 'packages': return <PackagesTab />;
             case 'legal': return <LegalPagesTab />;
+            case 'helpdesk': return <AdminHelpDesk isOpen={true} isEmbedded={true} />;
             case 'settings': return <SettingsTab />;
             default: return <OverviewTab />;
         }
