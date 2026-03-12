@@ -1971,7 +1971,7 @@ const Chat = () => {
       {
         id: 'websearch',
         name: 'Real-Time Web Search',
-        active: isWebSearch,
+        active: isWebSearch || isDeepSearch,
         check: () => lowerContent.includes('search the web') || lowerContent.includes('live data') || lowerContent.includes('current news') || lowerContent.includes('aaj ki') || lowerContent.includes('latest')
       },
       {
