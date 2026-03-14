@@ -4124,6 +4124,21 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               </div>
                             )}
 
+                            {msg.role === 'model' && !msg.isRealTime && msg.sources && msg.sources.length > 0 && (
+                              <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border border-emerald-500/20 rounded-2xl w-fit shadow-lg shadow-emerald-500/5 transition-all hover:scale-[1.02] group/knowledge-badge">
+                                <div className="p-1.5 bg-emerald-500 rounded-lg shadow-md ring-1 ring-emerald-400 group-hover/knowledge-badge:rotate-12 transition-transform">
+                                  <HardDrive className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">AISA Knowledge</span>
+                                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                                  </div>
+                                  <span className="text-[9px] font-bold text-emerald-500/60 uppercase tracking-widest mt-0.5">Verified Documents Grounding</span>
+                                </div>
+                              </div>
+                            )}
+
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               components={{
@@ -4242,12 +4257,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               {msg.content || msg.text || ""}
                             </ReactMarkdown>
 
-                            {/* Real-Time Sources List */}
-                            {msg.role === 'model' && msg.isRealTime && msg.sources && msg.sources.length > 0 && (
+                            {/* Sources List (For both Web Search and RAG) */}
+                            {msg.role === 'model' && msg.sources && msg.sources.length > 0 && (
                               <div className="mt-4 pt-4 border-t border-border/50">
                                 <p className="text-[10px] font-bold uppercase text-subtext mb-3 flex items-center gap-2">
                                   <ExternalLink className="w-3 h-3" />
-                                  Trusted Sources
+                                  {msg.isRealTime ? 'Web Sources' : 'Knowledge Sources'}
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                   {msg.sources.map((source, sIdx) => (
@@ -4258,6 +4273,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                       rel="noopener noreferrer"
                                       className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 hover:bg-primary/10 border border-border rounded-lg transition-all group/source"
                                     >
+                                      {source.url && source.url.includes('http') ? (
+                                        <Globe className="w-3 h-3 text-subtext group-hover/source:text-primary" />
+                                      ) : (
+                                        <FileText className="w-3 h-3 text-subtext group-hover/source:text-primary" />
+                                      )}
                                       <span className="text-xs font-medium text-maintext group-hover/source:text-primary truncate max-w-[150px]">
                                         {source.title}
                                       </span>
