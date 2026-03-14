@@ -369,6 +369,39 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             case 'account':
                 return (
                     <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100 dark:border-white/5">
+                            <div 
+                                className="relative group/avatar cursor-pointer shrink-0"
+                                onClick={() => document.getElementById('dropdown-avatar-upload').click()}
+                            >
+                                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity" />
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-gray-200 dark:border-white/10 shadow-sm overflow-hidden relative z-10 transition-transform group-hover/avatar:scale-105">
+                                    {user.avatar ? (
+                                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-opacity" />
+                                    ) : (
+                                        <span className="text-3xl font-bold group-hover/avatar:opacity-50 transition-opacity">{(user.name || 'U').charAt(0).toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg border-2 border-white dark:border-[#161B2E] z-20">
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 text-center sm:text-left space-y-3">
+                                <div>
+                                    <h3 className="text-xl font-black text-gray-800 dark:text-white capitalize">{user.name}</h3>
+                                    <p className="text-sm font-bold text-gray-500 max-w-[200px] truncate sm:max-w-none">{user.email}</p>
+                                </div>
+                                <button 
+                                    onClick={() => window._aisa_sync_profile && window._aisa_sync_profile()}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all group/sync"
+                                >
+                                    <RefreshCcw className="w-3.5 h-3.5 group-hover/sync:rotate-180 transition-transform duration-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Sync from Social</span>
+                                </button>
+                            </div>
+                        </div>
+
                         {allSettings.filter(s => s.tab === 'account').map(s => <div key={s.id}>{s.component}</div>)}
                         <div className="py-4 flex justify-between items-center text-sm">
                             <div>
@@ -485,74 +518,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input className="w-full bg-white dark:bg-white/5 border border-border rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:border-primary transition-all" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="px-5 py-4 flex flex-col items-center gap-3 border-b border-gray-100 dark:border-white/5">
-                            <input 
-                                type="file" 
-                                id="dropdown-avatar-upload" 
-                                className="hidden" 
-                                accept="image/*" 
-                                onChange={async (e) => {
-                                    const file = e.target.files[0];
-                                    if (!file) return;
-                                    const reader = new FileReader();
-                                    reader.onloadend = async () => {
-                                        const base64 = reader.result;
-                                        const originalUser = { ...user };
-                                        const updatedUser = { ...user, avatar: base64 };
-                                        
-                                        // Preview
-                                        setUserRecoil(prev => ({ ...prev, user: updatedUser }));
-                                        setUserData(updatedUser);
-
-                                        const loadingToast = toast.loading("Uploading avatar...");
-                                        try {
-                                            await axios.put(apis.user, { avatar: base64 }, {
-                                                headers: { 'Authorization': `Bearer ${user.token}` }
-                                            });
-                                            toast.dismiss(loadingToast);
-                                            toast.success("Avatar updated!");
-                                        } catch (error) {
-                                            console.error("Upload failed", error);
-                                            toast.dismiss(loadingToast);
-                                            toast.error("Failed to upload avatar.");
-                                            setUserRecoil(prev => ({ ...prev, user: originalUser }));
-                                            setUserData(originalUser);
-                                        }
-                                    };
-                                    reader.readAsDataURL(file);
-                                }}
-                            />
-                            <div 
-                                className="relative group/avatar cursor-pointer"
-                                onClick={() => document.getElementById('dropdown-avatar-upload').click()}
-                            >
-                                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover/avatar:opacity-100 transition-opacity" />
-                                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-white/20 dark:border-white/10 shadow-sm overflow-hidden relative z-10 transition-transform group-hover/avatar:scale-105">
-                                    {user.avatar ? (
-                                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-opacity" />
-                                    ) : (
-                                        <span className="text-xl font-bold group-hover/avatar:opacity-50 transition-opacity">{(user.name || 'U').charAt(0).toUpperCase()}</span>
-                                    )}
-                                </div>
-                                <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg border-2 border-white dark:border-[#161B2E] z-20">
-                                    <Plus className="w-3 h-3" />
-                                </button>
-                            </div>
-
-                            <button 
-                                onClick={() => window._aisa_sync_profile()}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-all group/sync mt-1 mb-2"
-                                title="Sync photo from Google/Gravatar"
-                            >
-                                <svg className="w-3.5 h-3.5 group-hover/sync:rotate-180 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 16h5v5"></path></svg>
-                                <span className="text-[10px] font-black uppercase tracking-widest">Sync from Social</span>
-                            </button>
-                            <div className="text-center">
-                                <p className="text-sm font-bold truncate max-w-[180px]">{user.name}</p>
-                                <p className="text-[10px] text-subtext truncate max-w-[180px] mb-2">{user.email}</p>
                             </div>
                         </div>
 
