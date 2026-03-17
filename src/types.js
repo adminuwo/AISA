@@ -105,6 +105,7 @@ const apis = {
     delete: (id) => `${API}/aibase/knowledge/${id}`,
   },
   uploadAvatar: `${API}/user/avatar`,
+  removeAvatar: `${API}/user/avatar`,
 };
 
 export { API, apis };
