@@ -103,7 +103,8 @@ const apis = {
     upload: `${API}/aibase/knowledge/upload`,
     download: (id) => `${API}/aibase/knowledge/download/${id}`,
     delete: (id) => `${API}/aibase/knowledge/${id}`,
-  }
+  },
+  uploadAvatar: `${API}/user/avatar`,
 };
 
 export { API, apis };

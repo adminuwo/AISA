@@ -165,6 +165,47 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         }
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validation
+        if (!file.type.startsWith('image/')) {
+            toast.error("Please upload an image file.");
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image size must be less than 5MB.");
+            return;
+        }
+
+        const loadingToast = toast.loading("Uploading image...");
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await axios.post(apis.uploadAvatar, formData, {
+                headers: {
+                    'Authorization': `Bearer ${user.token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (res.data.success && res.data.avatar) {
+                const updatedUser = { ...user, avatar: res.data.avatar };
+                setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+                setUserData(updatedUser);
+                toast.dismiss(loadingToast);
+                toast.success("Profile photo updated!");
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+            toast.dismiss(loadingToast);
+            toast.error(error.response?.data?.error || "Upload failed. Please try again.");
+        }
+    };
+
     const handleSendOtp = async () => {
         setResetLoading(true);
         try {
@@ -382,9 +423,22 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                         <span className="text-3xl font-bold group-hover/avatar:opacity-50 transition-opacity">{(user.name || 'U').charAt(0).toUpperCase()}</span>
                                     )}
                                 </div>
-                                <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg border-2 border-white dark:border-[#161B2E] z-20">
+                                <button 
+                                    className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg border-2 border-white dark:border-[#161B2E] z-20"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        document.getElementById('dropdown-avatar-upload').click();
+                                    }}
+                                >
                                     <Plus className="w-4 h-4" />
                                 </button>
+                                <input
+                                    type="file"
+                                    id="dropdown-avatar-upload"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                />
                             </div>
 
                             <div className="flex-1 text-center sm:text-left space-y-3">
