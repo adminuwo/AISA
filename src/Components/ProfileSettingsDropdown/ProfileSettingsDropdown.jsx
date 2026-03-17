@@ -207,6 +207,29 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         }
     };
 
+    const handleRemoveAvatar = async () => {
+        const loadingToast = toast.loading("Removing profile photo...");
+        try {
+            const res = await axios.delete(apis.removeAvatar, {
+                headers: {
+                    'Authorization': `Bearer ${user.token}`
+                }
+            });
+
+            if (res.data.success) {
+                const updatedUser = { ...user, avatar: "" };
+                setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+                setUserData(updatedUser);
+                toast.dismiss(loadingToast);
+                toast.success("Profile photo removed!");
+            }
+        } catch (error) {
+            console.error("Removal failed", error);
+            toast.dismiss(loadingToast);
+            toast.error(error.response?.data?.error || "Removal failed. Please try again.");
+        }
+    };
+
     const handleSendOtp = async () => {
         setResetLoading(true);
         try {
@@ -454,6 +477,16 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                     <RefreshCcw className="w-3.5 h-3.5 group-hover/sync:rotate-180 transition-transform duration-500" />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Sync from Social</span>
                                 </button>
+
+                                {user.avatar && (
+                                    <button 
+                                        onClick={handleRemoveAvatar}
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all group/remove"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 group-hover/remove:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Remove Photo</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
