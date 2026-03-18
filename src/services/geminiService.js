@@ -33,6 +33,15 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
                         documents.push({ mimeType: mimeType || 'application/pdf', base64Data, name: attachment.name });
                     }
                 } else if (attachment.url) {
+                    // Include URL in images array if it's an image type
+                    const isImage = attachment.type === 'image' || 
+                                   (attachment.name && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(attachment.name)) ||
+                                   (attachment.mimeType && attachment.mimeType.startsWith('image/'));
+                    
+                    if (isImage) {
+                        images.push({ url: attachment.url, name: attachment.name, mimeType: attachment.mimeType });
+                    }
+                    
                     finalMessage += `\n[Shared File: ${attachment.name || 'Link'} - ${attachment.url}]`;
                 }
             });

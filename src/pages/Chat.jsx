@@ -67,9 +67,7 @@ const TOOL_PRICING = {
   },
   image: {
     models: [
-      { id: 'gemini-flash', name: 'AISA Flash', price: 0, speed: 'Fast', description: 'Basic image analysis' },
-      { id: 'gemini-pro', name: 'AISA Pro Vision', price: 0.02, speed: 'Medium', description: 'Advanced image understanding' },
-      { id: 'gpt4-vision', name: 'AISA Vision Premium', price: 0.05, speed: 'Slow', description: 'Premium image analysis' }
+      { id: 'imagen-3.0-generate-001', name: 'AISA Imagen 3', price: 0, speed: 'Fast', description: 'Advanced image generation & editing' }
     ]
   },
   document: {
@@ -344,6 +342,32 @@ const Chat = () => {
 
   const toolsBtnRef = useRef(null);
   const toolsMenuRef = useRef(null);
+
+  // Group: Ensure only one tool card can be active at a time
+  useEffect(() => {
+    if (isImageGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); }
+  }, [isImageGeneration]);
+  useEffect(() => {
+    if (isVideoGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsImageGeneration(false); setIsMagicEditing(false); }
+  }, [isVideoGeneration]);
+  useEffect(() => {
+    if (isDeepSearch) { setIsImageGeneration(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); }
+  }, [isDeepSearch]);
+  useEffect(() => {
+    if (isWebSearch) { setIsImageGeneration(false); setIsDeepSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); }
+  }, [isWebSearch]);
+  useEffect(() => {
+    if (isAudioConvertMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); }
+  }, [isAudioConvertMode]);
+  useEffect(() => {
+    if (isDocumentConvert) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); }
+  }, [isDocumentConvert]);
+  useEffect(() => {
+    if (isCodeWriter) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsVideoGeneration(false); setIsMagicEditing(false); }
+  }, [isCodeWriter]);
+  useEffect(() => {
+    if (isMagicEditing) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); }
+  }, [isMagicEditing]);
 
   // Close menu on click outside
   useEffect(() => {
@@ -2413,13 +2437,15 @@ const Chat = () => {
       const webSearchActive = isWebSearch;
       const imageGenActive = isImageGeneration;
       const videoGenActive = isVideoGeneration;
+      const magicEditActive = isMagicEditing; // New: capture magic edit state
       // Note: We don't reset these state immediately anymore so the tag stays visible in input bar while "Thinking..."
 
       // Detect mode for UI indicator
-      const detectedMode = deepSearchActive ? MODES.DEEP_SEARCH :
-        (documentConvertActive ? MODES.DOCUMENT_CONVERT :
-          (webSearchActive ? MODES.WEB_SEARCH :
-            detectMode(contentToSend, userMsg.attachments)));
+      const detectedMode = magicEditActive ? MODES.IMAGE_EDIT :
+        (deepSearchActive ? MODES.DEEP_SEARCH :
+          (documentConvertActive ? MODES.DOCUMENT_CONVERT :
+            (webSearchActive ? MODES.WEB_SEARCH :
+              detectMode(contentToSend, userMsg.attachments))));
       setCurrentMode(detectedMode);
 
       // Update user message with the detected mode
@@ -2428,6 +2454,8 @@ const Chat = () => {
       // Determine loading intent for UI feedback (Strictly based on active mode/card)
       if (imageGenActive) {
         setLoadingText("Generating Image... 🎨");
+      } else if (magicEditActive) {
+        setLoadingText("Editing Image... ✨");
       } else if (videoGenActive) {
         setLoadingText("Generating Video... 🎥");
       } else if (documentConvertActive) {
@@ -2636,11 +2664,17 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
 - Keep the response text brief, explaining what you are doing.` : ''}
 `;
         // Default AI message sending
+        // If magic editing is active, ensure the ref image is included in attachments
+        let finalAttachments = userMsg.attachments || [];
+        if (magicEditActive && editRefImage && !finalAttachments.some(a => a.url === editRefImage.url)) {
+            finalAttachments = [...finalAttachments, editRefImage];
+        }
+
         const aiResponseData = await generateChatResponse(
           messages,
           userMsg.content,
           SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
-          userMsg.attachments,
+          finalAttachments,
           currentLang,
           abortControllerRef.current.signal,
           detectedMode
@@ -2804,6 +2838,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       setIsDeepSearch(false);
       setIsDocumentConvert(false);
       setIsWebSearch(false);
+      setIsMagicEditing(false); // Reset Magic Editing after each turn
+      setEditRefImage(null);    // Reset Ref Image
     }
   };
 
@@ -5113,6 +5149,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isImageGeneration,
                         color: "from-purple-500/20 to-pink-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Image Generation')) return;
                           setIsImageGeneration(true);
                           setIsVideoGeneration(false);
                           if (inputRef.current) {
@@ -5128,6 +5165,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isVideoGeneration,
                         color: "from-red-500/20 to-orange-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Generate Video')) return;
                           setIsVideoGeneration(true);
                           setIsImageGeneration(false);
                           if (inputRef.current) inputRef.current.focus();
@@ -5141,6 +5179,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isDeepSearch,
                         color: "from-blue-500/20 to-sky-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Deep Search')) return;
                           setIsDeepSearch(true);
                           setIsWebSearch(false);
                           if (inputRef.current) inputRef.current.focus();
@@ -5154,6 +5193,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isWebSearch,
                         color: "from-sky-500/20 to-emerald-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Web Search')) return;
                           setIsWebSearch(true);
                           setIsDeepSearch(false);
                           if (inputRef.current) inputRef.current.focus();
@@ -5167,6 +5207,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isAudioConvertMode,
                         color: "from-emerald-500/20 to-teal-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Convert to Audio')) return;
                           setIsAudioConvertMode(true);
                           if (inputRef.current) inputRef.current.focus();
                           toast.success("Audio Conversion Active");
@@ -5178,7 +5219,10 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         desc: "Chat with PDFs & Docs",
                         active: false,
                         color: "from-blue-500/20 to-indigo-500/20",
-                        action: () => uploadInputRef.current?.click()
+                        action: () => {
+                          if (!checkPremiumTool('Analyze Document')) return;
+                          uploadInputRef.current?.click();
+                        }
                       },
                       {
                         icon: <Code className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />,
@@ -5187,6 +5231,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isCodeWriter,
                         color: "from-indigo-500/20 to-violet-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Code Writer')) return;
                           setIsCodeWriter(true);
                           if (inputRef.current) inputRef.current.focus();
                           toast.success("Code Writer Mode Enabled");
@@ -5199,8 +5244,16 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         active: isMagicEditing,
                         color: "from-pink-500/20 to-rose-500/20",
                         action: () => {
+                          if (!checkPremiumTool('Edit Image')) return;
                           setIsMagicEditing(true);
                           if (inputRef.current) inputRef.current.focus();
+                          
+                          // Auto-select last image if none selected
+                          if (!editRefImage && messages.length > 0) {
+                            const lastImg = [...messages].reverse().find(m => m.imageUrl);
+                            if (lastImg) setEditRefImage({ url: lastImg.imageUrl, name: 'Last Generated', type: 'image' });
+                          }
+                          
                           toast.success("Image Editing Enabled");
                         }
                       },
@@ -5215,7 +5268,10 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         desc: "Image to Video Magic",
                         active: false,
                         color: "from-amber-500/20 to-orange-500/20",
-                        action: () => setIsMagicVideoModalOpen(true)
+                        action: () => {
+                          if (!checkPremiumTool('Image to Video')) return;
+                          setIsMagicVideoModalOpen(true);
+                        }
                       }
                     ].map((item, index) => (
                       <button
@@ -5636,14 +5692,21 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           onClick={() => {
                             if (!checkPremiumTool('Edit Image')) return;
                             setIsToolsMenuOpen(false);
-                            setIsMagicEditing(!isMagicEditing);
+                            const newMode = !isMagicEditing;
+                            setIsMagicEditing(newMode);
+                            
+                            if (newMode && !editRefImage && messages.length > 0) {
+                              const lastImg = [...messages].reverse().find(m => m.imageUrl);
+                              if (lastImg) setEditRefImage({ url: lastImg.imageUrl, name: 'Last Generated', type: 'image' });
+                            }
+
                             setIsDeepSearch(false);
                             setIsImageGeneration(false);
                             setIsVideoGeneration(false);
                             setIsAudioConvertMode(false);
                             setIsDocumentConvert(false);
                             setIsCodeWriter(false);
-                            if (!isMagicEditing) toast.success("Image Editing Mode Enabled");
+                            if (newMode) toast.success("Image Editing Mode Enabled");
                           }}
                           className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isMagicEditing ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
                         >
@@ -5751,7 +5814,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               onChange={(e) => setImageModelId(e.target.value)}
                             >
                               <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="imagen-3.0-generate-001">Imagen 3.0</option>
-                              <option className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-white font-medium" value="imagen-4.0-ultra-generate-001">Imagen 4 Ultra</option>
                             </select>
                             <ChevronDown size={10} className="absolute right-0 pointer-events-none" />
                           </div>
