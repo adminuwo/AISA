@@ -29,6 +29,7 @@ import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
 import PremiumUpsellModal from '../Components/PremiumUpsellModal';
 import MagicVideoGenModal from '../Components/MagicVideoGenModal';
+import DeleteConfirmModal from '../Components/DeleteConfirmModal';
 import { getSubscriptionDetails } from '../services/pricingService';
 import IntentSuggestionBanner from '../components/IntentSuggestionBanner';
 import { detectIntent, mapModeToToolState } from '../services/intentService';
@@ -347,6 +348,12 @@ const Chat = () => {
   const [isIntentLoading, setIsIntentLoading] = useState(false);
   const lastDetectedTextRef = useRef('');
 
+  const [deleteConfig, setDeleteConfig] = useState({
+    isOpen: false,
+    title: "Delete Message?",
+    description: "Are you sure you want to delete this message? This action cannot be undone.",
+    onConfirm: () => {}
+  });
 
   const toolsBtnRef = useRef(null);
   const toolsMenuRef = useRef(null);
@@ -2931,16 +2938,22 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
     }
   };
 
-  const handleDeleteSession = async (e, id) => {
+  const handleDeleteSession = (e, id) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this chat history?')) {
-      await chatStorageService.deleteSession(id);
-      const data = await chatStorageService.getSessions();
-      setSessions(data);
-      if (currentSessionId === id) {
-        navigate('/dashboard/chat/new');
+    setDeleteConfig({
+      isOpen: true,
+      title: "Delete Chat History?",
+      description: "Are you sure you want to delete this entire chat history? This action cannot be undone and all messages will be lost.",
+      onConfirm: async () => {
+        await chatStorageService.deleteSession(id);
+        const data = await chatStorageService.getSessions();
+        setSessions(data);
+        if (currentSessionId === id) {
+          navigate('/dashboard/chat/new');
+        }
+        toast.success("Chat history deleted");
       }
-    }
+    });
   };
 
   const handleKeyDown = (e) => {
@@ -3769,31 +3782,36 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
     toast.success("Copied to clipboard!");
   };
 
-  const handleMessageDelete = async (messageId) => {
-    if (!confirm("Delete this message?")) return;
+  const handleMessageDelete = (messageId) => {
+    setDeleteConfig({
+      isOpen: true,
+      title: "Delete Message?",
+      description: "Are you sure you want to delete this message? This action cannot be undone.",
+      onConfirm: async () => {
+        // Find the message index
+        const msgIndex = messages.findIndex(m => m.id === messageId);
+        if (msgIndex === -1) return;
 
-    // Find the message index
-    const msgIndex = messages.findIndex(m => m.id === messageId);
-    if (msgIndex === -1) return;
+        const msgsToDelete = [messageId];
 
-    const msgsToDelete = [messageId];
+        // Check if the NEXT message is an AI response (model), if so, delete it too
+        if (msgIndex + 1 < messages.length) {
+          const nextMsg = messages[msgIndex + 1];
+          if (nextMsg.role === 'model') {
+            msgsToDelete.push(nextMsg.id);
+          }
+        }
 
-    // Check if the NEXT message is an AI response (model), if so, delete it too
-    // We only auto-delete the immediate next AI response associated with this user query
-    if (msgIndex + 1 < messages.length) {
-      const nextMsg = messages[msgIndex + 1];
-      if (nextMsg.role === 'model') {
-        msgsToDelete.push(nextMsg.id);
+        // Optimistic update
+        setMessages(prev => prev.filter(m => !msgsToDelete.includes(m.id)));
+
+        // Delete from storage
+        for (const id of msgsToDelete) {
+          await chatStorageService.deleteMessage(sessionId, id);
+        }
+        toast.success("Message deleted");
       }
-    }
-
-    // Optimistic update
-    setMessages(prev => prev.filter(m => !msgsToDelete.includes(m.id)));
-
-    // Delete from storage
-    for (const id of msgsToDelete) {
-      await chatStorageService.deleteMessage(sessionId, id);
-    }
+    });
   };
 
   const startEditing = (msg) => {
@@ -4043,6 +4061,18 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
   return (
     <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text overscroll-none h-[100dvh] fixed inset-0 lg:static lg:h-full">
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteConfig.isOpen}
+        title={deleteConfig.title}
+        description={deleteConfig.description}
+        onClose={() => setDeleteConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => {
+          deleteConfig.onConfirm();
+          setDeleteConfig(prev => ({ ...prev, isOpen: false }));
+        }}
+      />
 
       {/* Document Viewer Modal */}
       <AnimatePresence>
