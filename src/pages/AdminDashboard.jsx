@@ -16,7 +16,7 @@ import { COOKIE_POLICY_DEFAULTS, TERMS_OF_SERVICE_DEFAULTS, PRIVACY_POLICY_DEFAU
 import AdminHelpDesk from '../Components/AdminHelpDesk';
 import KnowledgeUpload from '../Components/KnowledgeUpload';
 import KnowledgeManagement from '../Components/KnowledgeManagement';
-import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import DeleteConfirmModal from '../Components/DeleteConfirmModal';
 const ADMIN_EMAIL = 'admin@uwo24.com';
 
 // ─── Tab Button ───
