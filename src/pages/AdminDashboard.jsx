@@ -119,11 +119,12 @@ const OverviewTab = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} />
                 <StatCard icon={Activity} label="Active Subscriptions" value={stats?.activeSubscriptions ?? 0} color="emerald-500" />
                 <StatCard icon={DollarSign} label="Total Revenue" value={`₹${stats?.totalRevenue ?? 0}`} color="amber-500" />
                 <StatCard icon={Zap} label="Credits Used" value={stats?.totalCreditsUsed ?? 0} color="violet-500" />
+                <StatCard icon={Headphones} label="Support" value={stats?.pendingTickets ?? 0} color="primary" trend={stats?.pendingTickets > 0 ? "Action Required" : "All Clear"} />
             </div>
 
             {stats?.toolUsage && stats.toolUsage.length > 0 && (
