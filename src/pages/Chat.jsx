@@ -2580,8 +2580,7 @@ const Chat = () => {
       setIsLoading(true);
 
       try {
-        const title = isFirstMessage ? (userMsg.content ? userMsg.content.slice(0, 30) : 'File Attachment') + '...' : undefined;
-        await chatStorageService.saveMessage(activeSessionId, userMsg, title);
+        await chatStorageService.saveMessage(activeSessionId, userMsg);
 
         if (isFirstMessage) {
           isNavigatingRef.current = true;
