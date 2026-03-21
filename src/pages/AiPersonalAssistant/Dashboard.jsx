@@ -4,7 +4,7 @@ import TaskModal from './TaskModal';
 import { Plus, CheckCircle, Clock, Calendar as CalendarIcon, AlertTriangle, Trash2, Mic, Settings2, Menu as MenuIcon } from 'lucide-react';
 import { useRecoilState } from 'recoil';
 import { toggleState } from '../../userStore/userData';
-import DeleteConfirmModal from '../../components/DeleteConfirmModal';
+import DeleteConfirmModal from '../../Components/DeleteConfirmModal';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../context/LanguageContext';
 
