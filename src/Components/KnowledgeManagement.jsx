@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
-import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import DeleteConfirmModal from '../Components/DeleteConfirmModal';
 
 const KnowledgeManagement = () => {
     const [loading, setLoading] = useState(true);
