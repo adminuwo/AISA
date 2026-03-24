@@ -231,5 +231,18 @@ export const chatStorageService = {
       return false;
     }
   },
+
+  async generateSessionTitle(sessionId, message) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/chat/${sessionId}/generate-title`, { message }, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
+      return response.data.title;
+    } catch (error) {
+       console.error("Concurrent title generation failed:", error);
+       return null;
+    }
+  }
 };
 

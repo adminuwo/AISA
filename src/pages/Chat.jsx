@@ -2246,6 +2246,11 @@ const Chat = () => {
 
         // Regenerate Blob URLs for audio conversions on load
         const processedHistory = (history || []).map(msg => {
+          // Ensure every message has a valid unique ID (backend might supply _id)
+          if (!msg.id) {
+            msg.id = (msg._id || Math.random().toString(36).substr(2, 9)).toString();
+          }
+
           if (msg.conversion && msg.conversion.file) {
             try {
               // Only create if we don't have a CURRENT valid blob URL
@@ -2619,6 +2624,26 @@ const Chat = () => {
           isNavigatingRef.current = true;
           setCurrentSessionId(activeSessionId);
           navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+
+          // REAL-TIME TITLE GENERATION (Parallel - Match ChatGPT behavior)
+          chatStorageService.generateSessionTitle(activeSessionId, userMsg.content).then(newTitle => {
+            if (newTitle) {
+              setSessions(prev => {
+                const currentSessions = Array.isArray(prev) ? prev : [];
+                const idx = currentSessions.findIndex(s => s.sessionId === activeSessionId);
+                if (idx !== -1) {
+                  const updated = [...currentSessions];
+                  if (updated[idx].title !== newTitle) {
+                    updated[idx] = { ...updated[idx], title: newTitle, lastModified: Date.now() };
+                    return [...updated].sort((a, b) => b.lastModified - a.lastModified);
+                  }
+                  return currentSessions;
+                } else {
+                  return [{ sessionId: activeSessionId, title: newTitle, lastModified: Date.now() }, ...currentSessions];
+                }
+              });
+            }
+          });
         }
 
         // Send to AI for response
@@ -2819,8 +2844,38 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           finalAttachments,
           currentLang,
           abortControllerRef.current.signal,
-          detectedMode
+          detectedMode,
+          activeSessionId
         );
+        
+        // --- REAL-TIME TITLE SYNC ---
+        if (aiResponseData && aiResponseData.title) {
+          const generatedTitle = aiResponseData.title;
+          
+          // 1. Update global recoil state for instant sidebar refresh
+          setSessions(prev => {
+            const currentSessions = Array.isArray(prev) ? prev : [];
+            const exists = currentSessions.findIndex(s => s.sessionId === activeSessionId);
+            
+            if (exists !== -1) {
+              const updated = [...currentSessions];
+              if (updated[exists].title !== generatedTitle) {
+                updated[exists] = { ...updated[exists], title: generatedTitle, lastModified: Date.now() };
+                return [...updated].sort((a, b) => b.lastModified - a.lastModified);
+              }
+              return currentSessions;
+            } else {
+              return [{
+                sessionId: activeSessionId,
+                title: generatedTitle,
+                lastModified: Date.now()
+              }, ...currentSessions];
+            }
+          });
+
+          // 2. Persist to local storage meta
+          chatStorageService.updateSessionTitle(activeSessionId, generatedTitle);
+        }
 
         if (aiResponseData && aiResponseData.error === "LIMIT_REACHED") {
           setIsLimitReached(true);
@@ -5103,7 +5158,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 // Detect if the AI response contains Hindi (Devanagari script)
                                 const isHindiContent = /[\u0900-\u097F]/.test(msg.content);
                                 const prompts = isHindiContent ? FEEDBACK_PROMPTS.hi : FEEDBACK_PROMPTS.en;
-                                const promptIndex = (msg.id.toString().charCodeAt(msg.id.toString().length - 1) || 0) % prompts.length;
+                                const msgIdentifier = (msg.id || msg._id || Date.now()).toString();
+                                const promptIndex = (msgIdentifier.charCodeAt(msgIdentifier.length - 1) || 0) % prompts.length;
                                 return (
                                   <p className="text-xs text-subtext font-medium flex items-center gap-1.5 shrink-0 m-0">
                                     {prompts[promptIndex]}
