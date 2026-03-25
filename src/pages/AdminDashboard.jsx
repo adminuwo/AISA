@@ -1264,7 +1264,7 @@ const FeatureCreditsTab = () => {
                                         <div className="flex items-center bg-black/20 rounded-lg w-24 overflow-hidden border border-transparent focus-within:border-primary/50 transition-colors">
                                             <input
                                                 type="number"
-                                                className="bg-transparent border-none outline-none text-right font-black text-primary text-lg w-full p-2"
+                                                className="bg-transparent border-none outline-none text-right font-black text-primary text-lg w-full p-2 no-spinner"
                                                 value={currentCost}
                                                 onChange={(e) => handleFeatureChange(f._id, 'cost', e.target.value)}
                                                 min="0"
