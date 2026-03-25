@@ -2348,6 +2348,7 @@ const Chat = () => {
 
   const chatContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
+  const isStreamingRef = useRef(false); // true while AI is typing word-by-word
 
   const handleScroll = () => {
     if (chatContainerRef.current) {
@@ -2371,6 +2372,8 @@ const Chat = () => {
   };
 
   useEffect(() => {
+    // Do NOT auto-scroll while AI is streaming text word-by-word
+    if (isStreamingRef.current) return;
     scrollToBottom();
   }, [messages, isLoading]);
 
@@ -2986,6 +2989,9 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           // Decide speed based on length (shorter = slower, longer = faster)
           const delay = words.length > 200 ? 10 : (words.length > 50 ? 20 : 35);
 
+          // Typewriter effect simulation — lock auto-scroll during streaming
+          isStreamingRef.current = true;
+
           for (let j = 0; j < words.length; j++) {
             // Check if generation was stopped by user
             if (!isSendingRef.current) break;
@@ -2997,12 +3003,12 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
               prev.map(m => m.id === msgId ? { ...m, content: displayedContent } : m)
             );
 
-            // Auto-scroll as content grows
-            if (j % 5 === 0) scrollToBottom();
-
             // Wait before next word
             await new Promise(resolve => setTimeout(resolve, delay));
           }
+
+          // Streaming done — unlock auto-scroll
+          isStreamingRef.current = false;
 
           if (!isSendingRef.current) {
             setTypingMessageId(null);
@@ -3031,7 +3037,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           setMessages((prev) =>
             prev.map(m => m.id === msgId ? finalModelMsg : m)
           );
-          scrollToBottom();
+          scrollToBottom(); // Single scroll after full generation
 
           // Speak the AI response if user used voice input
           if (i === 0 && voiceUsedRef.current) {
@@ -4649,21 +4655,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               </div>
                             )}
 
-                            {msg.role === 'model' && !msg.isRealTime && msg.sources && msg.sources.length > 0 && (
-                              <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border border-emerald-500/20 rounded-2xl w-fit shadow-lg shadow-emerald-500/5 transition-all hover:scale-[1.02] group/knowledge-badge">
-                                <div className="p-1.5 bg-emerald-500 rounded-lg shadow-md ring-1 ring-emerald-400 group-hover/knowledge-badge:rotate-12 transition-transform">
-                                  <HardDrive className="w-3.5 h-3.5 text-white" />
-                                </div>
-                                <div className="flex flex-col">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">AISA Knowledge</span>
-                                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                                  </div>
-                                  <span className="text-[9px] font-bold text-emerald-500/60 uppercase tracking-widest mt-0.5">Verified Documents Grounding</span>
-                                </div>
-                              </div>
-                            )}
-
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               components={{
@@ -4782,12 +4773,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               {msg.content || msg.text || ""}
                             </ReactMarkdown>
 
-                            {/* Sources List (For both Web Search and RAG) */}
-                            {msg.role === 'model' && msg.sources && msg.sources.length > 0 && (
+                            {/* Sources List (ONLY for Web Search, HIDE for RAG as requested) */}
+                            {msg.role === 'model' && msg.isRealTime && msg.sources && msg.sources.length > 0 && (
                               <div className="mt-4 pt-4 border-t border-border/50">
                                 <p className="text-[10px] font-bold uppercase text-subtext mb-3 flex items-center gap-2">
                                   <ExternalLink className="w-3 h-3" />
-                                  {msg.isRealTime ? 'Web Sources' : 'Knowledge Sources'}
+                                  Web Sources
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                   {msg.sources.map((source, sIdx) => (
@@ -6154,13 +6145,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 </AnimatePresence>
 
 
-
-                <IntentSuggestionBanner 
-                  suggestion={intentSuggestion} 
-                  onAccept={handleAcceptSuggestion} 
-                  onDismiss={handleDismissSuggestion} 
-                  isDarkMode={true} 
-                />
 
                 <textarea
 

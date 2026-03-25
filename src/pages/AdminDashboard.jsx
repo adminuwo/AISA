@@ -436,8 +436,7 @@ const PlansTab = () => {
     const fetchPlans = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API}/pricing/plans`);
-            const data = await response.json();
+            const data = await apiService.getPlans();
             setPlans(Array.isArray(data) ? data : data.plans || []);
         } catch (err) {
             console.error('Failed to fetch plans:', err);
@@ -447,12 +446,7 @@ const PlansTab = () => {
     };
 
     const handleSubmit = async () => {
-        const token = getUserData()?.token;
-        const url = editingPlan
-            ? `${API}/admin/plans/${editingPlan._id}`
-            : `${API}/admin/plans`;
-        const method = editingPlan ? 'PUT' : 'POST';
-
+        setSaving(true);
         try {
             const body = {
                 ...form,
@@ -462,12 +456,14 @@ const PlansTab = () => {
                 creditsYearly: Number(form.creditsYearly),
                 features: form.features.split(',').map(f => f.trim()).filter(Boolean)
             };
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(body)
-            });
-            const data = await response.json();
+
+            let data;
+            if (editingPlan) {
+                data = await apiService.updatePlan(editingPlan._id, body);
+            } else {
+                data = await apiService.createPlan(body);
+            }
+
             if (data.success) {
                 toast.success(editingPlan ? 'Plan updated' : 'Plan created');
                 resetForm();
@@ -477,17 +473,15 @@ const PlansTab = () => {
             }
         } catch (err) {
             toast.error('Failed to save plan');
+        } finally {
+            setSaving(true);
         }
     };
 
     const handleDelete = async () => {
         if (!deleteModal.planId) return;
         try {
-            const token = getUserData()?.token;
-            await fetch(`${API}/admin/plans/${deleteModal.planId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await apiService.deletePlan(deleteModal.planId);
             toast.success('Plan deleted');
             setDeleteModal({ isOpen: false, planId: null });
             fetchPlans();
@@ -642,8 +636,7 @@ const PackagesTab = () => {
     const fetchPackages = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API}/pricing/packages`);
-            const data = await response.json();
+            const data = await apiService.getPackages();
             setPackages(Array.isArray(data) ? data : data.packages || []);
         } catch (err) {
             console.error('Failed to fetch packages:', err);
@@ -653,20 +646,16 @@ const PackagesTab = () => {
     };
 
     const handleSubmit = async () => {
-        const token = getUserData()?.token;
-        const url = editingPkg
-            ? `${API}/admin/packages/${editingPkg._id}`
-            : `${API}/admin/packages`;
-        const method = editingPkg ? 'PUT' : 'POST';
-
         try {
             const body = { ...form, credits: Number(form.credits), price: Number(form.price) };
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(body)
-            });
-            const data = await response.json();
+            
+            let data;
+            if (editingPkg) {
+                data = await apiService.updatePackage(editingPkg._id, body);
+            } else {
+                data = await apiService.createPackage(body);
+            }
+
             if (data.success) {
                 toast.success(editingPkg ? 'Package updated' : 'Package created');
                 resetForm();
@@ -680,11 +669,7 @@ const PackagesTab = () => {
     const handleDelete = async () => {
         if (!deleteModal.pkgId) return;
         try {
-            const token = getUserData()?.token;
-            await fetch(`${API}/admin/packages/${deleteModal.pkgId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await apiService.deletePackage(deleteModal.pkgId);
             toast.success('Package deleted');
             setDeleteModal({ isOpen: false, pkgId: null });
             fetchPackages();
@@ -1264,7 +1249,7 @@ const FeatureCreditsTab = () => {
                                         <div className="flex items-center bg-black/20 rounded-lg w-24 overflow-hidden border border-transparent focus-within:border-primary/50 transition-colors">
                                             <input
                                                 type="number"
-                                                className="bg-transparent border-none outline-none text-right font-black text-primary text-lg w-full p-2"
+                                                className="bg-transparent border-none outline-none text-right font-black text-primary text-lg w-full p-2 no-spinner"
                                                 value={currentCost}
                                                 onChange={(e) => handleFeatureChange(f._id, 'cost', e.target.value)}
                                                 min="0"
