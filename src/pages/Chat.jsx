@@ -2332,6 +2332,7 @@ const Chat = () => {
 
   const chatContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
+  const isStreamingRef = useRef(false); // true while AI is typing word-by-word
 
   const handleScroll = () => {
     if (chatContainerRef.current) {
@@ -2355,6 +2356,8 @@ const Chat = () => {
   };
 
   useEffect(() => {
+    // Do NOT auto-scroll while AI is streaming text word-by-word
+    if (isStreamingRef.current) return;
     scrollToBottom();
   }, [messages, isLoading]);
 
@@ -2970,6 +2973,9 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           // Decide speed based on length (shorter = slower, longer = faster)
           const delay = words.length > 200 ? 10 : (words.length > 50 ? 20 : 35);
 
+          // Typewriter effect simulation — lock auto-scroll during streaming
+          isStreamingRef.current = true;
+
           for (let j = 0; j < words.length; j++) {
             // Check if generation was stopped by user
             if (!isSendingRef.current) break;
@@ -2981,12 +2987,12 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
               prev.map(m => m.id === msgId ? { ...m, content: displayedContent } : m)
             );
 
-            // Auto-scroll as content grows
-            if (j % 5 === 0) scrollToBottom();
-
             // Wait before next word
             await new Promise(resolve => setTimeout(resolve, delay));
           }
+
+          // Streaming done — unlock auto-scroll
+          isStreamingRef.current = false;
 
           if (!isSendingRef.current) {
             setTypingMessageId(null);
@@ -3015,7 +3021,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           setMessages((prev) =>
             prev.map(m => m.id === msgId ? finalModelMsg : m)
           );
-          scrollToBottom();
+          scrollToBottom(); // Single scroll after full generation
 
           // Speak the AI response if user used voice input
           if (i === 0 && voiceUsedRef.current) {
