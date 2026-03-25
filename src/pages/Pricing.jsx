@@ -24,6 +24,11 @@ const Pricing = () => {
   }, []);
 
   const fetchCurrentPlan = async () => {
+    const user = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (!user) {
+      setCurrentPlanName('');
+      return;
+    }
     try {
       const data = await getSubscriptionDetails();
       if (data?.founderStatus) {
@@ -76,10 +81,15 @@ const Pricing = () => {
   };
 
   const handleUpgrade = async (plan) => {
+    const user = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (!user) {
+      toast.error('Please login to upgrade your plan');
+      navigate('/login');
+      return;
+    }
     try {
       setProcessing(true);
       const orderRes = await createSubscriptionOrder({ planId: plan._id, billingCycle });
-
       if (orderRes.isFree) {
         const res = await purchasePlan(plan._id, billingCycle);
         toast.success(`Successfully upgraded to ${plan.planName}!`);
@@ -133,6 +143,12 @@ const Pricing = () => {
   };
 
   const handleBuyCredits = async (pkg) => {
+    const user = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (!user) {
+      toast.error('Please login to purchase credits');
+      navigate('/login');
+      return;
+    }
     try {
       setProcessing(true);
       const orderRes = await createSubscriptionOrder({ packageId: pkg._id });
@@ -343,6 +359,7 @@ const Pricing = () => {
           const isFounder = plan.planName.toLowerCase().includes('founder');
           const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
           const isCurrentPlan = (() => {
+            if (!currentPlanName) return false;
             const pn = plan.planName.toLowerCase();
             if (currentPlanName === 'founder') return pn.includes('founder');
             if (currentPlanName === 'free' || currentPlanName === 'free tier') return isFree;
