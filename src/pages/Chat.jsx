@@ -4401,7 +4401,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   </div>
                 ) : (
                   <div className="w-full h-full bg-[#1e1e1e] p-0 flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-[#3e3e42] shrink-0">
+                    <div className="flex items-center justify-between px-4 py-2 bg-black/20 backdrop-blur-md border-b border-transparent shrink-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-[#cccccc] uppercase tracking-wider">
                           {viewingDoc.name.match(/\.(rar|zip|exe|dll|bin|iso|7z)$/i) ? 'BINARY CONTENT' : 'CODE READER'}
@@ -5228,7 +5228,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </button>
 
                             <Menu as="div" className="relative">
-                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-transparent text-maintext rounded-xl transition-all hover:bg-hover font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap">
+                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 border border-transparent text-maintext rounded-xl transition-all hover:bg-white/20 font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap backdrop-blur-sm">
                                 <Share className="w-4 h-4" />
                                 Share
                               </Menu.Button>
@@ -5245,7 +5245,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 >
                                   <Menu.Items
                                     anchor="bottom end"
-                                    className="w-56 mt-2 origin-top-right divide-y divide-border/20 rounded-xl bg-surface shadow-2xl border border-transparent focus:outline-none z-[100] overflow-hidden"
+                                    className="w-56 mt-2 origin-top-right divide-y divide-transparent rounded-xl bg-white/10 dark:bg-black/40 backdrop-blur-2xl shadow-2xl border border-transparent focus:outline-none z-[100] overflow-hidden"
                                   >
                                     <div className="px-1 py-1">
                                       <Menu.Item>
