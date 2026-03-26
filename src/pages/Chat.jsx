@@ -295,6 +295,9 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { personalizations, getSystemPromptExtensions } = usePersonalization();
+  const isDarkMode = personalizations?.general?.theme === 'Dark' || 
+                    (personalizations?.general?.theme !== 'Light' && 
+                     window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const [messages, setMessages] = useState([]);
   const [excelHTML, setExcelHTML] = useState(null);
@@ -383,6 +386,8 @@ const Chat = () => {
   const [intentSuggestion, setIntentSuggestion] = useState(null);
   const [isIntentLoading, setIsIntentLoading] = useState(false);
   const lastDetectedTextRef = useRef('');
+  const [expandedMessages, setExpandedMessages] = useState({}); // { [msgId]: true/false }
+  const USER_MSG_COLLAPSE_CHARS = 200; // Collapse threshold
 
   const [deleteConfig, setDeleteConfig] = useState({
     isOpen: false,
@@ -440,7 +445,7 @@ const Chat = () => {
     }
 
     // Heuristic: Check for action keywords before calling expensive LLM
-    const actionKeywords = ['make', 'create', 'search', 'find', 'convert', 'write', 'draw', 'video', 'music', 'banao', 'dalo', 'edit', 'animate'];
+    const actionKeywords = ['make', 'create', 'search', 'find', 'convert', 'write', 'draw', 'video', 'music', 'banao', 'dalo', 'edit', 'animate', 'code', 'optimize', 'debug', 'refactor', 'script'];
     const hasKeyword = actionKeywords.some(k => text.toLowerCase().includes(k));
     if (!hasKeyword) return;
 
@@ -488,6 +493,7 @@ const Chat = () => {
     if (toolUpdates.webSearchMode) setIsWebSearch(true);
     if (toolUpdates.deepSearchMode) setIsDeepSearch(true);
     if (toolUpdates.activeFileAnalysis) setIsFileAnalysis(true);
+    if (toolUpdates.activeCodeWriter) setIsCodeWriter(true);
     if (toolUpdates.mode) setCurrentMode(toolUpdates.mode);
 
     toast.success(`AISA switched to ${suggestion.intent.replace('_', ' ')}! ✨`);
@@ -980,7 +986,7 @@ const Chat = () => {
       const userMsg = {
         id: Date.now().toString(),
         role: 'user',
-        content: `Convert this text to audio: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
+        content: `Convert this text to audio: "${text}"`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, userMsg]);
@@ -2354,7 +2360,7 @@ const Chat = () => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       // Increased threshold (250px) to be less sensitive to minor scroll movements or large images
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 250;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 350;
       shouldAutoScrollRef.current = isNearBottom;
     }
   };
@@ -2362,11 +2368,12 @@ const Chat = () => {
   const scrollToBottom = (force = false, behavior = 'auto') => {
     if ((force || shouldAutoScrollRef.current) && chatContainerRef.current) {
       const { scrollHeight, clientHeight } = chatContainerRef.current;
-      const maxScrollTop = scrollHeight - clientHeight;
+      const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
+      
       if (behavior === 'smooth') {
-        chatContainerRef.current.scrollTo({ top: maxScrollTop, behavior: 'smooth' });
+        chatContainerRef.current.scrollTo({ top: maxScrollTop + 100, behavior: 'smooth' }); // Add a bit of padding to be safe
       } else {
-        chatContainerRef.current.scrollTop = maxScrollTop;
+        chatContainerRef.current.scrollTop = maxScrollTop + 500; // Extra buffer to over-scroll
       }
     }
   };
@@ -2403,7 +2410,7 @@ const Chat = () => {
 
   const isSendingRef = useRef(false);
 
-  const handleSendMessage = async (e, overrideContent) => {
+  const handleSendMessage = async (e, overrideContent, toolOverride = null) => {
     if (e) e.preventDefault();
 
     // Prevent duplicate sends
@@ -2418,10 +2425,10 @@ const Chat = () => {
 
     // --- Subscription Limit Checks ---
     let featureToTrack = 'chat';
-    if (isDeepSearch) featureToTrack = 'deepSearch';
-    else if (isWebSearch) featureToTrack = 'webSearch';
-    else if (isDocumentConvert) featureToTrack = 'document';
-    else if (isCodeWriter) featureToTrack = 'codeWriter';
+    if (isDeepSearch || toolOverride === 'deep_search') featureToTrack = 'deepSearch';
+    else if (isWebSearch || toolOverride === 'web_search') featureToTrack = 'webSearch';
+    else if (isDocumentConvert || toolOverride === 'file_conversion') featureToTrack = 'document';
+    else if (isCodeWriter || toolOverride === 'code_writer') featureToTrack = 'codeWriter';
 
     if (!checkLimitLocally(featureToTrack)) {
       // Limit reached, UpgradeModal will be triggered by SubscriptionContext
@@ -2431,13 +2438,20 @@ const Chat = () => {
     // ─── Smart Routing Interceptor (Pipeline System) ─────────────────────────
     // If a tool intent was detected with high confidence but not activated,
     // we route it through the pipeline instead of standard chat.
-    if (intentSuggestion && intentSuggestion.confidence > 0.85 && intentSuggestion.intent !== 'normal_chat') {
-       const isCurrentModeChat = !isImageGeneration && !isVideoGeneration && !isDeepSearch && !isWebSearch && !isMagicEditing;
+    if (intentSuggestion && !toolOverride && intentSuggestion.confidence > 0.85 && intentSuggestion.intent !== 'normal_chat') {
+       // Check if ANY magic tool mode is already active
+       const isCurrentModeChat = !isImageGeneration && !isVideoGeneration && !isDeepSearch && !isWebSearch && 
+                                !isMagicEditing && !isCodeWriter && !isFileAnalysis && !isAudioConvertMode && 
+                                !isDocumentConvert && !isVoiceMode;
+                                
        if (isCurrentModeChat) {
           console.log(`[IntentRouting] High confidence intent (${intentSuggestion.intent}) detected. Routing to pipeline.`);
-          handleAcceptSuggestion(intentSuggestion);
-          // After switching mode, we recursively call handleSendMessage to trigger the correct handler
-          setTimeout(() => handleSendMessage(e, contentToSend), 50);
+          const activeSuggestion = intentSuggestion;
+          setIntentSuggestion(null); // Clear state immediately
+          
+          handleAcceptSuggestion(activeSuggestion);
+          // After switching mode, we recursively call handleSendMessage with the tool override
+          setTimeout(() => handleSendMessage(e, contentToSend, activeSuggestion.intent), 50);
           return;
        }
     }
@@ -2512,21 +2526,21 @@ const Chat = () => {
     }
 
     // Handle Image Generation Mode
-    if (isImageGeneration) {
+    if (isImageGeneration || toolOverride === 'text_to_image') {
       handleGenerateImage(contentToSend, activeSessionId);
       isSendingRef.current = false;
       return;
     }
 
     // Handle Video Generation Mode
-    if (isVideoGeneration) {
+    if (isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') {
       handleGenerateVideo(contentToSend, activeSessionId);
       isSendingRef.current = false;
       return;
     }
 
     // Handle Image Editing Mode
-    if (isMagicEditing) {
+    if (isMagicEditing || toolOverride === 'image_edit') {
       handleEditImage(contentToSend, activeSessionId);
       isSendingRef.current = false;
       return;
@@ -2580,10 +2594,26 @@ const Chat = () => {
         isFirstMessage = true;
       }
 
+      // [SMART FORMATTING]: If input is long code, automatically wrap in backticks for structured display
+      let displayContent = contentToSend;
+      const hasCodeStructure = (contentToSend?.split('\n').length || 0) >= 6 && 
+                              (/function\s*\(|const\s+\w+\s*=|class\s+\w+|import\s+.*from|<\w+>|{\s*\w+:|\/\/|\/\*/.test(contentToSend));
+      
+      if ((isCodeWriter || hasCodeStructure) && contentToSend && !contentToSend.trim().startsWith('```')) {
+         let detectedLang = 'javascript'; // Default for web-centric AISA
+         const low = contentToSend.toLowerCase();
+         if (low.includes('def ') || low.includes('import os') || low.includes('np.') || low.includes('pd.')) detectedLang = 'python';
+         else if (low.includes('<html>') || low.includes('<!doctype html>')) detectedLang = 'html';
+         else if (low.includes('select * from') || low.includes('create table')) detectedLang = 'sql';
+         else if (low.includes('public static void main')) detectedLang = 'java';
+         
+         displayContent = `\`\`\`${detectedLang}\n${contentToSend.trim()}\n\`\`\``;
+      }
+
       const userMsg = {
         id: Date.now().toString(),
         role: 'user',
-        content: contentToSend || (filePreviews.length > 0 ? (isDocumentConvert ? "Convert this document" : "Analyze these files") : ""),
+        content: displayContent || (filePreviews.length > 0 ? (isDocumentConvert ? "Convert this document" : "Analyze these files") : ""),
         timestamp: Date.now(),
         attachments: filePreviews.map(p => ({
           url: p.url,
@@ -2600,7 +2630,9 @@ const Chat = () => {
 
       const updatedMessages = [...messages, userMsg];
       setMessages(updatedMessages);
-      scrollToBottom(true, 'smooth'); // Force smooth scroll for user message
+      // Double-attempt auto-scroll for user message to ensure it handles layout changes correctly
+      setTimeout(() => scrollToBottom(true, 'smooth'), 50);
+      setTimeout(() => scrollToBottom(true, 'smooth'), 400); 
       setInputValue('');
 
       // Capture mode states before resetting
@@ -4409,7 +4441,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         )}
 
         {/* Header */}
-        <div className="h-12 md:h-14 border-b border-border flex items-center justify-between px-3 md:px-4 bg-secondary z-10 shrink-0 gap-2">
+        <div className="h-12 md:h-14 flex items-center justify-between px-3 md:px-4 bg-transparent backdrop-blur-xl z-20 shrink-0 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => setTglState(prev => ({ ...prev, sidebarOpen: true }))}
@@ -4655,8 +4687,32 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               </div>
                             )}
 
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
+                            {msg.role === 'model' && !msg.isRealTime && msg.sources && msg.sources.length > 0 && (
+                              <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border border-emerald-500/20 rounded-2xl w-fit shadow-lg shadow-emerald-500/5 transition-all hover:scale-[1.02] group/knowledge-badge">
+                                <div className="p-1.5 bg-emerald-500 rounded-lg shadow-md ring-1 ring-emerald-400 group-hover/knowledge-badge:rotate-12 transition-transform">
+                                  <HardDrive className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">AISA Knowledge</span>
+                                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                                  </div>
+                                  <span className="text-[9px] font-bold text-emerald-500/60 uppercase tracking-widest mt-0.5">Verified Documents Grounding</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ——— User message Read More toggle ——— */}
+                            {msg.role === 'user' && (() => {
+                              const isLong = msg.content && msg.content.length > USER_MSG_COLLAPSE_CHARS;
+                              const isExpanded = !!expandedMessages[msg.id];
+                              const displayContent = isLong && !isExpanded
+                                ? msg.content.substring(0, USER_MSG_COLLAPSE_CHARS)
+                                : msg.content;
+                              return (
+                                <>
+                                  <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
                               components={{
                                 a: ({ href, children }) => {
                                   const isInternal = href && href.startsWith('/');
@@ -4769,10 +4825,149 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                   )
                                 },
                               }}
-                            >
-                              {msg.content || msg.text || ""}
-                            </ReactMarkdown>
+                                  >
+                                    {displayContent || ""}
+                                  </ReactMarkdown>
+                                  {/* Read More / Show Less button */}
+                                  {isLong && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedMessages(prev => ({ ...prev, [msg.id]: !isExpanded }));
+                                      }}
+                                      className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-white/70 hover:text-white transition-colors group/readmore select-none"
+                                    >
+                                      <span>{isExpanded ? 'Show less' : 'Read more'}</span>
+                                      <svg
+                                        className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                                        fill="none" stroke="currentColor" strokeWidth="2.5"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </>
+                              );
+                            })()}
 
+                            {/* Model message content */}
+                            {msg.role === 'model' && (
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  a: ({ href, children }) => {
+                                    const isInternal = href && href.startsWith('/');
+                                    return (
+                                      <a
+                                        href={href}
+                                        onClick={(e) => {
+                                          if (isInternal) {
+                                            e.preventDefault();
+                                            navigate(href);
+                                          }
+                                        }}
+                                        className="text-primary hover:underline font-bold cursor-pointer"
+                                        target={isInternal ? "_self" : "_blank"}
+                                        rel={isInternal ? "" : "noopener noreferrer"}
+                                      >
+                                        {children}
+                                      </a>
+                                    );
+                                  },
+                                  p: ({ children }) => <p className={`mb-2 last:mb-0 leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]`}>{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ol>,
+                                  li: ({ children }) => <li className="mb-1.5 last:mb-0 transition-colors leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]">{children}</li>,
+                                  h1: ({ children }) => <h1 className="font-bold mb-2 mt-3 block text-[1.4em] text-maintext tracking-tight">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="font-bold mb-1.5 mt-2 block text-[1.2em] text-maintext tracking-tight">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="font-bold mb-1 mt-1.5 block text-[1.1em] text-maintext tracking-tight">{children}</h3>,
+                                  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                  mark: ({ children }) => <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">{children}</mark>,
+                                  code: ({ node, inline, className, children, ...props }) => {
+                                    const match = /language-(\w+)/.exec(className || '');
+                                    const lang = match ? match[1] : '';
+
+                                    if (!inline && match) {
+                                      return (
+                                        <div className="rounded-xl overflow-hidden my-2 border border-border bg-[#1e1e1e] shadow-md w-full max-w-full">
+                                          <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-[#404040]">
+                                            <span className="text-xs font-mono text-gray-300 lowercase">{lang}</span>
+                                            <button
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+                                                toast.success("Code copied!");
+                                              }}
+                                              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+                                            >
+                                              <Copy className="w-3.5 h-3.5" />
+                                              Copy code
+                                            </button>
+                                          </div>
+                                          <div className="p-4 overflow-x-auto custom-scrollbar bg-[#1e1e1e]">
+                                            <code className={`${className} font-mono text-[0.9em] leading-relaxed text-[#d4d4d4] block min-w-full`} {...props}>
+                                              {children}
+                                            </code>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <code className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-primary font-bold mx-0.5" {...props}>
+                                        {children}
+                                      </code>
+                                    );
+                                  },
+                                  img: ({ node, ...props }) => {
+                                    return (
+                                      <div
+                                        className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm cursor-zoom-in max-w-md"
+                                        onClick={() => setViewingDoc({ url: props.src, type: 'image', name: 'Generated Image' })}
+                                      >
+                                        <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
+                                          <div className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA Generated Asset</span>
+                                          </div>
+                                        </div>
+                                        <img
+                                          {...props}
+                                          className="w-full max-w-sm h-auto max-h-[400px] object-contain rounded-xl bg-black/5"
+                                          loading="lazy"
+                                          onLoad={() => scrollToBottom(true)}
+                                          onError={(e) => {
+                                            e.target.src = 'https://placehold.co/600x400?text=Image+Generating...';
+                                          }}
+                                        />
+                                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none" />
+                                        <button
+                                          disabled={isDownloadingUrl === props.src}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(props.src, 'aisa-generated.png');
+                                          }}
+                                          className={`absolute bottom-3 right-3 p-2.5 rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100 ${isDownloadingUrl === props.src ? 'bg-zinc-600 cursor-wait' : 'bg-primary hover:bg-primary/90 text-white'}`}
+                                          title="Download High-Res"
+                                        >
+                                          <div className="flex items-center gap-2 px-1">
+                                            {isDownloadingUrl === props.src ? (
+                                              <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                                            ) : (
+                                              <Download className="w-4 h-4" />
+                                            )}
+                                            <span className="text-[10px] font-bold uppercase">
+                                              {isDownloadingUrl === props.src ? 'Downloading...' : 'Download'}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      </div>
+                                    )
+                                  },
+                                }}
+                              >
+                                {msg.content || msg.text || ""}
+                              </ReactMarkdown>
+                            )}
                             {/* Sources List (ONLY for Web Search, HIDE for RAG as requested) */}
                             {msg.role === 'model' && msg.isRealTime && msg.sources && msg.sources.length > 0 && (
                               <div className="mt-4 pt-4 border-t border-border/50">
@@ -5070,11 +5265,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-maintext truncate">{msg.conversion.fileName}</p>
                                 <p className="text-[10px] text-subtext font-bold uppercase tracking-widest flex items-center gap-2">
-                                  <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20">
+                                  <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-md border border-transparent">
                                     {msg.conversion.fileSize || "Ready"}
                                   </span>
                                   {msg.conversion.charCount && (
-                                    <span className="px-1.5 py-0.5 bg-secondary/30 text-subtext rounded-md border border-border/50">
+                                    <span className="px-1.5 py-0.5 bg-secondary/30 text-subtext rounded-md border border-transparent">
                                       {msg.conversion.charCount} CHARS
                                     </span>
                                   )}
@@ -5121,7 +5316,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </button>
 
                             <Menu as="div" className="relative">
-                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-border text-maintext rounded-xl transition-all hover:bg-hover font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap">
+                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-transparent text-maintext rounded-xl transition-all hover:bg-hover font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap">
                                 <Share className="w-4 h-4" />
                                 Share
                               </Menu.Button>
@@ -5138,7 +5333,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 >
                                   <Menu.Items
                                     anchor="bottom end"
-                                    className="w-56 mt-2 origin-top-right divide-y divide-border rounded-xl bg-surface shadow-2xl border border-border focus:outline-none z-[100] overflow-hidden"
+                                    className="w-56 mt-2 origin-top-right divide-y divide-border/20 rounded-xl bg-surface shadow-2xl border border-transparent focus:outline-none z-[100] overflow-hidden"
                                   >
                                     <div className="px-1 py-1">
                                       <Menu.Item>
@@ -5584,19 +5779,19 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
             {/* File Preview Area */}
             {filePreviews.length > 0 && (
-              <div className={`absolute bottom-full left-0 right-0 ${ (isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing) ? 'mb-[60px]' : 'mb-4' } px-2 overflow-x-auto custom-scrollbar no-scrollbar flex gap-3 pb-2 z-20 pointer-events-auto`}>
+              <div className={`absolute bottom-full left-0 right-0 ${ (isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing) ? 'mb-[38px]' : 'mb-2' } px-2 overflow-x-auto custom-scrollbar no-scrollbar flex gap-3 pb-1 z-20 pointer-events-auto`}>
                 {filePreviews.map((preview) => (
                   <div
                     key={preview.id}
-                    className="relative shrink-0 w-64 md:w-72 bg-surface/95 dark:bg-zinc-900/95 border border-border/50 rounded-2xl p-2.5 flex items-center gap-3 shadow-xl backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-300 ring-1 ring-black/5"
+                    className="relative shrink-0 w-64 md:w-72 bg-surface/95 dark:bg-zinc-900/95 border border-transparent rounded-2xl p-2.5 flex items-center gap-3 shadow-xl backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-300 ring-1 ring-black/5"
                   >
                     <div className="relative group shrink-0">
                       {preview.type.startsWith('image/') ? (
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-border/50 bg-black/5">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-transparent bg-black/5">
                           <img src={preview.url} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center border border-transparent shadow-sm">
                           <FileText className="w-7 h-7 text-primary" />
                         </div>
                       )}
@@ -5664,7 +5859,18 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
               </div>
             )}
 
-            <form onSubmit={handleSendMessage} className="relative w-full max-w-5xl mx-auto flex items-center gap-[6px] bg-white dark:bg-[#0a0a0a] border border-black/5 dark:border-white/10 rounded-[16px] p-[6px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:border-primary/20 backdrop-blur-3xl px-[10px] z-50">
+            {intentSuggestion && (
+              <div className="absolute bottom-full left-0 right-0 mb-3 px-2 z-30 pointer-events-auto">
+                <IntentSuggestionBanner
+                  suggestion={intentSuggestion}
+                  onAccept={handleAcceptSuggestion}
+                  onDismiss={handleDismissSuggestion}
+                  isDarkMode={true} 
+                />
+              </div>
+            )}
+
+            <form onSubmit={handleSendMessage} className="relative w-full max-w-5xl mx-auto flex items-center gap-[6px] bg-white dark:bg-[#0a0a0a] border border-transparent rounded-[16px] p-[6px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:border-primary/20 backdrop-blur-3xl px-[10px] z-50">
               <input
                 id="file-upload"
                 type="file"
@@ -6062,13 +6268,13 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   {(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis) && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-[calc(100vw-24px)] max-w-5xl px-2 z-[100] justify-start sm:justify-start">
                       {isWebSearch && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <Globe size={12} strokeWidth={3} /> <span className="hidden sm:inline">Web Search</span>
                           <button onClick={() => setIsWebSearch(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isDeepSearch && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <Search size={12} strokeWidth={3} /> <span className="hidden sm:inline">Deep Search</span>
                           <button onClick={() => setIsDeepSearch(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>
@@ -6077,48 +6283,44 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0 group">
                           <ImageIcon size={12} strokeWidth={3} />
                           <span className="text-[10px] font-black uppercase tracking-tight hidden xs:inline">Image Gen</span>
-                          <div className="w-[1px] h-3 bg-primary/20 mx-0.5 hidden xs:block" />
                           <button 
                             type="button"
                             onClick={() => setIsMagicSettingsOpen(!isMagicSettingsOpen)}
                             className="flex items-center gap-1 hover:text-primary/80 transition-colors"
                           >
                             <span className="text-[10px] font-bold">{imageAspectRatio}</span>
-                            <div className="w-1 h-1 rounded-full bg-primary/40" />
-                            <span className="text-[10px] font-bold truncate max-w-[60px] sm:max-w-[100px]">
+                            <span className="text-[10px] font-bold truncate max-w-[60px] sm:max-w-[100px] ml-1">
                               {TOOL_PRICING.image.models.find(m => m.id === imageModelId)?.name.replace('AISA ', '') || 'Model'}
                             </span>
                             <ChevronDown size={10} className={`transition-transform duration-200 ${isMagicSettingsOpen ? 'rotate-180' : ''}`} />
                           </button>
-                          <button type="button" onClick={() => setIsImageGeneration(false)} className="ml-1 hover:text-primary/80 border-l border-primary/20 pl-1.5"><X size={12} /></button>
+                          <button type="button" onClick={() => setIsImageGeneration(false)} className="ml-1 hover:text-primary/80 border-transparent pl-1.5"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isVideoGeneration && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0 group">
                           <Video size={12} strokeWidth={3} />
                           <span className="text-[10px] font-black uppercase tracking-tight hidden xs:inline">Video Gen</span>
-                          <div className="w-[1px] h-3 bg-primary/20 mx-0.5 hidden xs:block" />
                           <button 
                             type="button"
                             onClick={() => setIsMagicSettingsOpen(!isMagicSettingsOpen)}
                             className="flex items-center gap-1 hover:text-primary/80 transition-colors"
                           >
                             <span className="text-[10px] font-bold">{videoAspectRatio || 'D'}</span>
-                            <div className="w-1 h-1 rounded-full bg-primary/40" />
-                            <span className="text-[10px] font-bold">{videoResolution}</span>
+                            <span className="text-[10px] font-bold ml-1">{videoResolution}</span>
                             <ChevronDown size={10} className={`transition-transform duration-200 ${isMagicSettingsOpen ? 'rotate-180' : ''}`} />
                           </button>
-                          <button type="button" onClick={() => setIsVideoGeneration(false)} className="ml-1 hover:text-primary/80 border-l border-primary/20 pl-1.5"><X size={12} /></button>
+                          <button type="button" onClick={() => setIsVideoGeneration(false)} className="ml-1 hover:text-primary/80 border-transparent pl-1.5"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isVoiceMode && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <Volume2 size={12} strokeWidth={3} /> <span className="hidden sm:inline">Voice Mode</span>
                           <button onClick={() => setIsVoiceMode(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isAudioConvertMode && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <Headphones size={12} strokeWidth={3} /> <span className="hidden sm:inline">Audio Convert</span>
                           <button type="button" onClick={() => setIsVoiceSettingsOpen(true)} className="ml-1 hover:text-indigo-800" title="Voice Settings">
                             <Sliders size={12} />
@@ -6127,25 +6329,25 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         </motion.div>
                       )}
                       {isDocumentConvert && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <FileText size={12} strokeWidth={3} /> <span className="hidden sm:inline">Doc Convert</span>
                           <button onClick={() => setIsDocumentConvert(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isCodeWriter && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <Code size={12} strokeWidth={3} /> <span className="hidden sm:inline">Code Writer</span>
                           <button onClick={() => setIsCodeWriter(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isMagicEditing && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <Wand2 size={12} strokeWidth={3} /> <span className="hidden sm:inline">Image Edit</span>
                           <button onClick={() => setIsMagicEditing(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>
                       )}
                       {isFileAnalysis && (
-                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20 backdrop-blur-md whitespace-nowrap shrink-0">
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <FileText size={12} strokeWidth={3} /> <span className="hidden sm:inline">Analyze Document</span>
                           <button onClick={() => setIsFileAnalysis(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
                         </motion.div>

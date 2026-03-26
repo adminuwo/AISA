@@ -541,13 +541,13 @@ const PlansTab = () => {
                                 <input placeholder="Plan Name" value={form.planName} onChange={e => setForm(p => ({ ...p, planName: e.target.value }))}
                                     className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
                                 <input placeholder="Price Monthly (₹)" type="number" value={form.priceMonthly} onChange={e => setForm(p => ({ ...p, priceMonthly: e.target.value }))}
-                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
+                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner" />
                                 <input placeholder="Price Yearly (₹)" type="number" value={form.priceYearly} onChange={e => setForm(p => ({ ...p, priceYearly: e.target.value }))}
-                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
+                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner" />
                                 <input placeholder="Credits (Monthly)" type="number" value={form.credits} onChange={e => setForm(p => ({ ...p, credits: e.target.value }))}
-                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
+                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner" />
                                 <input placeholder="Credits (Yearly)" type="number" value={form.creditsYearly} onChange={e => setForm(p => ({ ...p, creditsYearly: e.target.value }))}
-                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
+                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner" />
                             </div>
                             <input placeholder="Features (comma-separated)" value={form.features} onChange={e => setForm(p => ({ ...p, features: e.target.value }))}
                                 className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
@@ -713,9 +713,9 @@ const PackagesTab = () => {
                                 <input placeholder="Package Name" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                                     className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
                                 <input placeholder="Credits" type="number" value={form.credits} onChange={e => setForm(p => ({ ...p, credits: e.target.value }))}
-                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
+                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner" />
                                 <input placeholder="Price (₹)" type="number" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
-                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
+                                    className="bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner" />
                             </div>
                             <input placeholder="Description" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                                 className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
@@ -836,7 +836,7 @@ const SettingsTab = () => {
                         type="number"
                         value={settings?.maxTokensPerUser || ''}
                         onChange={e => setSettings(p => ({ ...p, maxTokensPerUser: Number(e.target.value) }))}
-                        className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext"
+                        className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner"
                     />
                 </div>
                 <div className="space-y-2">
