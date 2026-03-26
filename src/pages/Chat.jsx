@@ -2722,7 +2722,7 @@ const Chat = () => {
         const pStyle = personalizations?.personalization || {};
         const pParental = personalizations?.parentalControls || {};
 
-        let PERSONA_INSTRUCTION = "";
+        let PERSONA_INSTRUCTION = "- FORMAT: Always use Markdown tables and structured formatting thoughtfully whenever presenting comparisons, structured data, or lists of items with multiple attributes.\n";
 
         // 1. STYLE & FONT (Font is UI only, but we can hint at TONE)
         if (pStyle.fontStyle && pStyle.fontStyle !== 'Default') {
@@ -4879,10 +4879,20 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                   ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ul>,
                                   ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ol>,
                                   li: ({ children }) => <li className="mb-1.5 last:mb-0 transition-colors leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]">{children}</li>,
-                                  h1: ({ children }) => <h1 className="font-bold mb-2 mt-3 block text-[1.4em] text-maintext tracking-tight">{children}</h1>,
-                                  h2: ({ children }) => <h2 className="font-bold mb-1.5 mt-2 block text-[1.2em] text-maintext tracking-tight">{children}</h2>,
-                                  h3: ({ children }) => <h3 className="font-bold mb-1 mt-1.5 block text-[1.1em] text-maintext tracking-tight">{children}</h3>,
+                                  h1: ({ children }) => <h1 style={{ fontSize: '2rem', lineHeight: '1.2' }} className="font-black mb-4 mt-7 block text-maintext tracking-tight border-b border-border/30 pb-2">{children}</h1>,
+                                  h2: ({ children }) => <h2 style={{ fontSize: '1.6rem', lineHeight: '1.25' }} className="font-extrabold mb-3 mt-6 block text-maintext tracking-tight">{children}</h2>,
+                                  h3: ({ children }) => <h3 style={{ fontSize: '1.3rem', lineHeight: '1.3' }} className="font-bold mb-2 mt-4 block text-maintext tracking-tight">{children}</h3>,
                                   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                  table: ({ children }) => (
+                                    <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg">
+                                      <table className="w-full border-collapse text-sm">{children}</table>
+                                    </div>
+                                  ),
+                                  thead: ({ children }) => <thead className="bg-primary/10 border-b border-border/50">{children}</thead>,
+                                  tbody: ({ children }) => <tbody className="divide-y divide-border/30">{children}</tbody>,
+                                  tr: ({ children }) => <tr className="transition-colors hover:bg-white/3">{children}</tr>,
+                                  th: ({ children }) => <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-primary">{children}</th>,
+                                  td: ({ children }) => <td className="px-4 py-3 text-sm text-maintext leading-relaxed">{children}</td>,
                                   mark: ({ children }) => <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">{children}</mark>,
                                   code: ({ node, inline, className, children, ...props }) => {
                                     const match = /language-(\w+)/.exec(className || '');
