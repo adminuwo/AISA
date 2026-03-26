@@ -295,6 +295,9 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { personalizations, getSystemPromptExtensions } = usePersonalization();
+  const isDarkMode = personalizations?.general?.theme === 'Dark' || 
+                    (personalizations?.general?.theme !== 'Light' && 
+                     window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const [messages, setMessages] = useState([]);
   const [excelHTML, setExcelHTML] = useState(null);
@@ -440,7 +443,7 @@ const Chat = () => {
     }
 
     // Heuristic: Check for action keywords before calling expensive LLM
-    const actionKeywords = ['make', 'create', 'search', 'find', 'convert', 'write', 'draw', 'video', 'music', 'banao', 'dalo', 'edit', 'animate'];
+    const actionKeywords = ['make', 'create', 'search', 'find', 'convert', 'write', 'draw', 'video', 'music', 'banao', 'dalo', 'edit', 'animate', 'code', 'optimize', 'debug', 'refactor', 'script'];
     const hasKeyword = actionKeywords.some(k => text.toLowerCase().includes(k));
     if (!hasKeyword) return;
 
@@ -488,6 +491,7 @@ const Chat = () => {
     if (toolUpdates.webSearchMode) setIsWebSearch(true);
     if (toolUpdates.deepSearchMode) setIsDeepSearch(true);
     if (toolUpdates.activeFileAnalysis) setIsFileAnalysis(true);
+    if (toolUpdates.activeCodeWriter) setIsCodeWriter(true);
     if (toolUpdates.mode) setCurrentMode(toolUpdates.mode);
 
     toast.success(`AISA switched to ${suggestion.intent.replace('_', ' ')}! ✨`);
@@ -2354,7 +2358,7 @@ const Chat = () => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       // Increased threshold (250px) to be less sensitive to minor scroll movements or large images
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 250;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 350;
       shouldAutoScrollRef.current = isNearBottom;
     }
   };
@@ -2362,11 +2366,12 @@ const Chat = () => {
   const scrollToBottom = (force = false, behavior = 'auto') => {
     if ((force || shouldAutoScrollRef.current) && chatContainerRef.current) {
       const { scrollHeight, clientHeight } = chatContainerRef.current;
-      const maxScrollTop = scrollHeight - clientHeight;
+      const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
+      
       if (behavior === 'smooth') {
-        chatContainerRef.current.scrollTo({ top: maxScrollTop, behavior: 'smooth' });
+        chatContainerRef.current.scrollTo({ top: maxScrollTop + 100, behavior: 'smooth' }); // Add a bit of padding to be safe
       } else {
-        chatContainerRef.current.scrollTop = maxScrollTop;
+        chatContainerRef.current.scrollTop = maxScrollTop + 500; // Extra buffer to over-scroll
       }
     }
   };
@@ -2403,7 +2408,7 @@ const Chat = () => {
 
   const isSendingRef = useRef(false);
 
-  const handleSendMessage = async (e, overrideContent) => {
+  const handleSendMessage = async (e, overrideContent, toolOverride = null) => {
     if (e) e.preventDefault();
 
     // Prevent duplicate sends
@@ -2418,10 +2423,10 @@ const Chat = () => {
 
     // --- Subscription Limit Checks ---
     let featureToTrack = 'chat';
-    if (isDeepSearch) featureToTrack = 'deepSearch';
-    else if (isWebSearch) featureToTrack = 'webSearch';
-    else if (isDocumentConvert) featureToTrack = 'document';
-    else if (isCodeWriter) featureToTrack = 'codeWriter';
+    if (isDeepSearch || toolOverride === 'deep_search') featureToTrack = 'deepSearch';
+    else if (isWebSearch || toolOverride === 'web_search') featureToTrack = 'webSearch';
+    else if (isDocumentConvert || toolOverride === 'file_conversion') featureToTrack = 'document';
+    else if (isCodeWriter || toolOverride === 'code_writer') featureToTrack = 'codeWriter';
 
     if (!checkLimitLocally(featureToTrack)) {
       // Limit reached, UpgradeModal will be triggered by SubscriptionContext
@@ -2431,13 +2436,20 @@ const Chat = () => {
     // ─── Smart Routing Interceptor (Pipeline System) ─────────────────────────
     // If a tool intent was detected with high confidence but not activated,
     // we route it through the pipeline instead of standard chat.
-    if (intentSuggestion && intentSuggestion.confidence > 0.85 && intentSuggestion.intent !== 'normal_chat') {
-       const isCurrentModeChat = !isImageGeneration && !isVideoGeneration && !isDeepSearch && !isWebSearch && !isMagicEditing;
+    if (intentSuggestion && !toolOverride && intentSuggestion.confidence > 0.85 && intentSuggestion.intent !== 'normal_chat') {
+       // Check if ANY magic tool mode is already active
+       const isCurrentModeChat = !isImageGeneration && !isVideoGeneration && !isDeepSearch && !isWebSearch && 
+                                !isMagicEditing && !isCodeWriter && !isFileAnalysis && !isAudioConvertMode && 
+                                !isDocumentConvert && !isVoiceMode;
+                                
        if (isCurrentModeChat) {
           console.log(`[IntentRouting] High confidence intent (${intentSuggestion.intent}) detected. Routing to pipeline.`);
-          handleAcceptSuggestion(intentSuggestion);
-          // After switching mode, we recursively call handleSendMessage to trigger the correct handler
-          setTimeout(() => handleSendMessage(e, contentToSend), 50);
+          const activeSuggestion = intentSuggestion;
+          setIntentSuggestion(null); // Clear state immediately
+          
+          handleAcceptSuggestion(activeSuggestion);
+          // After switching mode, we recursively call handleSendMessage with the tool override
+          setTimeout(() => handleSendMessage(e, contentToSend, activeSuggestion.intent), 50);
           return;
        }
     }
@@ -2512,21 +2524,21 @@ const Chat = () => {
     }
 
     // Handle Image Generation Mode
-    if (isImageGeneration) {
+    if (isImageGeneration || toolOverride === 'text_to_image') {
       handleGenerateImage(contentToSend, activeSessionId);
       isSendingRef.current = false;
       return;
     }
 
     // Handle Video Generation Mode
-    if (isVideoGeneration) {
+    if (isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') {
       handleGenerateVideo(contentToSend, activeSessionId);
       isSendingRef.current = false;
       return;
     }
 
     // Handle Image Editing Mode
-    if (isMagicEditing) {
+    if (isMagicEditing || toolOverride === 'image_edit') {
       handleEditImage(contentToSend, activeSessionId);
       isSendingRef.current = false;
       return;
@@ -2580,10 +2592,26 @@ const Chat = () => {
         isFirstMessage = true;
       }
 
+      // [SMART FORMATTING]: If input is long code, automatically wrap in backticks for structured display
+      let displayContent = contentToSend;
+      const hasCodeStructure = (contentToSend?.split('\n').length || 0) >= 6 && 
+                              (/function\s*\(|const\s+\w+\s*=|class\s+\w+|import\s+.*from|<\w+>|{\s*\w+:|\/\/|\/\*/.test(contentToSend));
+      
+      if ((isCodeWriter || hasCodeStructure) && contentToSend && !contentToSend.trim().startsWith('```')) {
+         let detectedLang = 'javascript'; // Default for web-centric AISA
+         const low = contentToSend.toLowerCase();
+         if (low.includes('def ') || low.includes('import os') || low.includes('np.') || low.includes('pd.')) detectedLang = 'python';
+         else if (low.includes('<html>') || low.includes('<!doctype html>')) detectedLang = 'html';
+         else if (low.includes('select * from') || low.includes('create table')) detectedLang = 'sql';
+         else if (low.includes('public static void main')) detectedLang = 'java';
+         
+         displayContent = `\`\`\`${detectedLang}\n${contentToSend.trim()}\n\`\`\``;
+      }
+
       const userMsg = {
         id: Date.now().toString(),
         role: 'user',
-        content: contentToSend || (filePreviews.length > 0 ? (isDocumentConvert ? "Convert this document" : "Analyze these files") : ""),
+        content: displayContent || (filePreviews.length > 0 ? (isDocumentConvert ? "Convert this document" : "Analyze these files") : ""),
         timestamp: Date.now(),
         attachments: filePreviews.map(p => ({
           url: p.url,
@@ -2600,7 +2628,9 @@ const Chat = () => {
 
       const updatedMessages = [...messages, userMsg];
       setMessages(updatedMessages);
-      scrollToBottom(true, 'smooth'); // Force smooth scroll for user message
+      // Double-attempt auto-scroll for user message to ensure it handles layout changes correctly
+      setTimeout(() => scrollToBottom(true, 'smooth'), 50);
+      setTimeout(() => scrollToBottom(true, 'smooth'), 400); 
       setInputValue('');
 
       // Capture mode states before resetting
@@ -5659,6 +5689,17 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {intentSuggestion && (
+              <div className="absolute bottom-full left-0 right-0 mb-3 px-2 z-30 pointer-events-auto">
+                <IntentSuggestionBanner
+                  suggestion={intentSuggestion}
+                  onAccept={handleAcceptSuggestion}
+                  onDismiss={handleDismissSuggestion}
+                  isDarkMode={isDarkMode}
+                />
               </div>
             )}
 
