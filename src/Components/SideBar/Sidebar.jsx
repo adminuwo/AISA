@@ -269,8 +269,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         `}
       >
         {/* Brand */}
-        <div className="p-4 flex items-center justify-between bg-white/10 dark:bg-black/10 backdrop-blur-md relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none"></div>
+        <div className="p-4 flex items-center justify-between border-b border-transparent relative overflow-hidden">
+          <div className="absolute inset-0 bg-transparent pointer-events-none"></div>
           <Link to="/" state={{ fromLogo: true }} className="relative z-10">
             <h1 className="text-xl font-bold text-primary drop-shadow-sm flex items-center gap-2">
               AISA <sup className="text-[10px] opacity-70">TM</sup>
@@ -326,7 +326,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   .map((session) => (
                     <div key={session.sessionId} className="group relative px-2">
                       {editingSessionId === session.sessionId ? (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-lg border border-primary/20">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-lg border border-transparent">
                           <input
                             autoFocus
                             type="text"
@@ -411,14 +411,14 @@ const Sidebar = ({ isOpen, onClose }) => {
 
 
         {/* User Profile Footer */}
-        <div className="p-3 bg-white/10 dark:bg-black/10 backdrop-blur-md relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none"></div>
+        <div className="p-3 border-t border-transparent relative overflow-hidden">
+          <div className="absolute inset-0 bg-transparent pointer-events-none"></div>
           {token ? (
             <div className="relative profile-menu-container">
               {/* Profile Card - Clickable */}
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="w-full rounded-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-all flex items-center gap-2 p-2 group backdrop-blur-sm relative z-10"
+                className="w-full rounded-xl border border-transparent hover:bg-white/20 dark:hover:bg-white/10 transition-all flex items-center gap-2 p-2 group relative z-10"
               >
 
 
@@ -500,7 +500,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             /* Guest / Login State */
             <div
               onClick={() => navigate(AppRoute.LOGIN)}
-              className="rounded-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-all cursor-pointer flex items-center gap-3 px-3 py-2 group backdrop-blur-sm relative z-10"
+              className="rounded-xl border border-transparent hover:bg-white/20 dark:hover:bg-white/10 transition-all cursor-pointer flex items-center gap-3 px-3 py-2 group relative z-10"
             >
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase shrink-0 border border-primary/10 group-hover:bg-primary/20 transition-colors">
                 <User className="w-4 h-4" />

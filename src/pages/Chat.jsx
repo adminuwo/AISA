@@ -2735,7 +2735,7 @@ const Chat = () => {
         const pStyle = personalizations?.personalization || {};
         const pParental = personalizations?.parentalControls || {};
 
-        let PERSONA_INSTRUCTION = "";
+        let PERSONA_INSTRUCTION = "- FORMAT: Always use Markdown tables and structured formatting thoughtfully whenever presenting comparisons, structured data, or lists of items with multiple attributes.\n";
 
         // 1. STYLE & FONT (Font is UI only, but we can hint at TONE)
         if (pStyle.fontStyle && pStyle.fontStyle !== 'Default') {
@@ -4412,7 +4412,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   </div>
                 ) : (
                   <div className="w-full h-full bg-[#1e1e1e] p-0 flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-[#3e3e42] shrink-0">
+                    <div className="flex items-center justify-between px-4 py-2 bg-black/20 backdrop-blur-md border-b border-transparent shrink-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-[#cccccc] uppercase tracking-wider">
                           {viewingDoc.name.match(/\.(rar|zip|exe|dll|bin|iso|7z)$/i) ? 'BINARY CONTENT' : 'CODE READER'}
@@ -4891,6 +4891,133 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               );
                             })()}
 
+                            {/* Model message content */}
+                            {msg.role === 'model' && (
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  a: ({ href, children }) => {
+                                    const isInternal = href && href.startsWith('/');
+                                    return (
+                                      <a
+                                        href={href}
+                                        onClick={(e) => {
+                                          if (isInternal) {
+                                            e.preventDefault();
+                                            navigate(href);
+                                          }
+                                        }}
+                                        className="text-primary hover:underline font-bold cursor-pointer"
+                                        target={isInternal ? "_self" : "_blank"}
+                                        rel={isInternal ? "" : "noopener noreferrer"}
+                                      >
+                                        {children}
+                                      </a>
+                                    );
+                                  },
+                                  p: ({ children }) => <p className={`mb-2 last:mb-0 leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]`}>{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ol>,
+                                  li: ({ children }) => <li className="mb-1.5 last:mb-0 transition-colors leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]">{children}</li>,
+                                  h1: ({ children }) => <h1 style={{ fontSize: '2rem', lineHeight: '1.2' }} className="font-black mb-4 mt-7 block text-maintext tracking-tight border-b border-border/30 pb-2">{children}</h1>,
+                                  h2: ({ children }) => <h2 style={{ fontSize: '1.6rem', lineHeight: '1.25' }} className="font-extrabold mb-3 mt-6 block text-maintext tracking-tight">{children}</h2>,
+                                  h3: ({ children }) => <h3 style={{ fontSize: '1.3rem', lineHeight: '1.3' }} className="font-bold mb-2 mt-4 block text-maintext tracking-tight">{children}</h3>,
+                                  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                  table: ({ children }) => (
+                                    <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg">
+                                      <table className="w-full border-collapse text-sm">{children}</table>
+                                    </div>
+                                  ),
+                                  thead: ({ children }) => <thead className="bg-primary/10 border-b border-border/50">{children}</thead>,
+                                  tbody: ({ children }) => <tbody className="divide-y divide-border/30">{children}</tbody>,
+                                  tr: ({ children }) => <tr className="transition-colors hover:bg-white/3">{children}</tr>,
+                                  th: ({ children }) => <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-primary">{children}</th>,
+                                  td: ({ children }) => <td className="px-4 py-3 text-sm text-maintext leading-relaxed">{children}</td>,
+                                  mark: ({ children }) => <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">{children}</mark>,
+                                  code: ({ node, inline, className, children, ...props }) => {
+                                    const match = /language-(\w+)/.exec(className || '');
+                                    const lang = match ? match[1] : '';
+
+                                    if (!inline && match) {
+                                      return (
+                                        <div className="rounded-xl overflow-hidden my-2 border border-border bg-[#1e1e1e] shadow-md w-full max-w-full">
+                                          <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-[#404040]">
+                                            <span className="text-xs font-mono text-gray-300 lowercase">{lang}</span>
+                                            <button
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+                                                toast.success("Code copied!");
+                                              }}
+                                              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+                                            >
+                                              <Copy className="w-3.5 h-3.5" />
+                                              Copy code
+                                            </button>
+                                          </div>
+                                          <div className="p-4 overflow-x-auto custom-scrollbar bg-[#1e1e1e]">
+                                            <code className={`${className} font-mono text-[0.9em] leading-relaxed text-[#d4d4d4] block min-w-full`} {...props}>
+                                              {children}
+                                            </code>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <code className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-primary font-bold mx-0.5" {...props}>
+                                        {children}
+                                      </code>
+                                    );
+                                  },
+                                  img: ({ node, ...props }) => {
+                                    return (
+                                      <div
+                                        className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all hover:scale-[1.01] bg-surface/50 backdrop-blur-sm cursor-zoom-in max-w-md"
+                                        onClick={() => setViewingDoc({ url: props.src, type: 'image', name: 'Generated Image' })}
+                                      >
+                                        <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
+                                          <div className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA Generated Asset</span>
+                                          </div>
+                                        </div>
+                                        <img
+                                          {...props}
+                                          className="w-full max-w-sm h-auto max-h-[400px] object-contain rounded-xl bg-black/5"
+                                          loading="lazy"
+                                          onLoad={() => scrollToBottom(true)}
+                                          onError={(e) => {
+                                            e.target.src = 'https://placehold.co/600x400?text=Image+Generating...';
+                                          }}
+                                        />
+                                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/generated:opacity-100 transition-opacity pointer-events-none" />
+                                        <button
+                                          disabled={isDownloadingUrl === props.src}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(props.src, 'aisa-generated.png');
+                                          }}
+                                          className={`absolute bottom-3 right-3 p-2.5 rounded-xl opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all shadow-lg border border-white/20 scale-100 sm:scale-90 sm:group-hover/generated:scale-100 ${isDownloadingUrl === props.src ? 'bg-zinc-600 cursor-wait' : 'bg-primary hover:bg-primary/90 text-white'}`}
+                                          title="Download High-Res"
+                                        >
+                                          <div className="flex items-center gap-2 px-1">
+                                            {isDownloadingUrl === props.src ? (
+                                              <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                                            ) : (
+                                              <Download className="w-4 h-4" />
+                                            )}
+                                            <span className="text-[10px] font-bold uppercase">
+                                              {isDownloadingUrl === props.src ? 'Downloading...' : 'Download'}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      </div>
+                                    )
+                                  },
+                                }}
+                              >
+                                {msg.content || msg.text || ""}
+                              </ReactMarkdown>
+                            )}
                             {/* Sources List (ONLY for Web Search, HIDE for RAG as requested) */}
                             {msg.role === 'model' && msg.isRealTime && msg.sources && msg.sources.length > 0 && (
                               <div className="mt-4 pt-4 border-t border-border/50">
@@ -5239,7 +5366,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </button>
 
                             <Menu as="div" className="relative">
-                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-transparent text-maintext rounded-xl transition-all hover:bg-hover font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap">
+                              <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 border border-transparent text-maintext rounded-xl transition-all hover:bg-white/20 font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap backdrop-blur-sm">
                                 <Share className="w-4 h-4" />
                                 Share
                               </Menu.Button>
@@ -5256,7 +5383,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 >
                                   <Menu.Items
                                     anchor="bottom end"
-                                    className="w-56 mt-2 origin-top-right divide-y divide-border/20 rounded-xl bg-surface shadow-2xl border border-transparent focus:outline-none z-[100] overflow-hidden"
+                                    className="w-56 mt-2 origin-top-right divide-y divide-transparent rounded-xl bg-white/10 dark:bg-black/40 backdrop-blur-2xl shadow-2xl border border-transparent focus:outline-none z-[100] overflow-hidden"
                                   >
                                     <div className="px-1 py-1">
                                       <Menu.Item>
