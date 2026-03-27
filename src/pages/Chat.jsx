@@ -2803,7 +2803,7 @@ Whenever a user mentions "AISA", "AISA AI", "AISA app", "your image", "your vide
    - Modern, premium, intelligent
    - Clean UI dashboard style
    - Advanced AI Super Assistant
-   - Indian tech startup vibe (global level)
+   - Indian tech startup vibe (global level) — Note: Always fulfill technical requirements while matching the user's language.
 
 3. If user asks for:
    - Image → Generate/Ask for a brand-based promotional visual
@@ -2819,9 +2819,10 @@ Whenever a user mentions "AISA", "AISA AI", "AISA app", "your image", "your vide
 ${PERSONA_INSTRUCTION}
 
 ### CRITICAL LANGUAGE RULE:
-**ALWAYS respond in the SAME LANGUAGE as the user's message.** (Unless overridden by settings)
-- If user writes in HINDI (Devanagari or Romanized), respond in HINDI.
-- If user writes in ENGLISH, respond in ENGLISH.
+**MANDATORY: ALWAYS respond in the EXACT SAME LANGUAGE as the user's latest message.**
+- If user writes in ENGLISH, you MUST respond in ENGLISH. (Highest Priority)
+- If user writes in HINDI (Devanagari or Romanized), respond in HINDI (Romanized script).
+- Match the user's script and tongue exactly. Do NOT use Hinglish if they ask in pure English.
 - If user mixes languages, prioritize the dominant language.
 
 ### RESPONSE BEHAVIOR:
@@ -3085,6 +3086,10 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             if (aiImageUrl) finalModelMsg.imageUrl = aiImageUrl;
             finalModelMsg.isRealTime = isRealTimeResponse;
             finalModelMsg.sources = responseSources;
+            if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
+          } else if (i === responseParts.length - 1) {
+            // For multi-part responses, add suggestions to the last part
+            if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
           }
 
           // After typing is complete, save the full message to history
@@ -5317,7 +5322,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       {/* AI Feedback Actions - Strictly hide for media and processing */}
                       {(msg.role === 'model' || msg.role === 'assistant') &&
                         !msg.conversion && !msg.imageUrl && !msg.videoUrl &&
-                        !msg.isProcessing && !msg.isGenerating && !msg.error && (
+                        !msg.isProcessing && !msg.isGenerating && !msg.error && 
+                        typingMessageId !== msg.id && (
                           <div className="mt-4 w-full block">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
                               {(() => {
@@ -5408,6 +5414,26 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </div>
                           </div>
                         )}
+
+                        {/* Related Questions Suggestions */}
+                        {(msg.role === 'model' || msg.role === 'assistant') &&
+                          msg.suggestions && msg.suggestions.length > 0 &&
+                          typingMessageId !== msg.id && (
+                            <div className="mt-4 flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                              {msg.suggestions.map((q, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    handleSendMessage(null, q);
+                                  }}
+                                  className="text-xs px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all flex items-center gap-1.5 font-medium shadow-sm active:scale-95"
+                                >
+                                  <Sparkles className="w-3 h-3" />
+                                  {q}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                     </div>
                     <span className="text-[10px] text-subtext mt-0 px-1">
                       {new Date(msg.timestamp).toLocaleTimeString([], {
