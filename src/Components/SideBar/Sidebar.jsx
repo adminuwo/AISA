@@ -24,13 +24,16 @@ import {
   Search,
   Trash2,
   Edit2,
-  Check
+  Check,
+  FolderPlus,
+  Folder,
+  FolderOpen
 } from 'lucide-react';
 import { apis, AppRoute } from '../../types';
-import { faqs } from '../../constants'; // Import shared FAQs
+import { faqs } from '../../constants';
 import NotificationBar from '../NotificationBar/NotificationBar.jsx';
 import { useRecoilState } from 'recoil';
-import { clearUser, getUserData, setUserData, toggleState, userData, sessionsData } from '../../userStore/userData';
+import { clearUser, getUserData, setUserData, toggleState, userData, sessionsData, activeProjectIdData } from '../../userStore/userData';
 import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -41,16 +44,17 @@ import toast from 'react-hot-toast';
 import ProfileSettingsDropdown from '../ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
 import { getSubscriptionDetails } from '../../services/pricingService';
 import FaqModal from '../FaqModal.jsx';
+import apiService from '../../services/apiService';
+import DeleteConfirmModal from '../DeleteConfirmModal.jsx';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
 
-
   const getFlagUrl = (code) => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 
   const navigate = useNavigate();
-  const [notifiyTgl, setNotifyTgl] = useRecoilState(toggleState)
+  const [notifiyTgl, setNotifyTgl] = useRecoilState(toggleState);
   const [currentUserData, setUserRecoil] = useRecoilState(userData);
   const user = currentUserData.user || getUserData() || { name: "Loading...", email: "...", role: "user" };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -65,12 +69,21 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [newTitle, setNewTitle] = useState("");
   const [planName, setPlanName] = useState("Free Plan");
 
-  // Check if current user is admin - MUST have token AND correct email
+  // --- Project State ---
+  const [projects, setProjects] = useState([]);
+  const [currentProjectId, setCurrentProjectId] = useRecoilState(activeProjectIdData);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  const [renameProjectName, setRenameProjectName] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+
+  // Check if current user is admin
   const token = getUserData()?.token;
   const userEmail = user?.email || getUserData()?.email;
   const isAdmin = token && userEmail === 'admin@uwo24.com';
-
-
 
   const issueCategories = t('issueCategories') || {};
   const issueOptions = [
@@ -82,20 +95,15 @@ const Sidebar = ({ isOpen, onClose }) => {
     issueCategories.other || "Other"
   ];
 
-
   const handleLogout = () => {
     localStorage.clear();
     navigate(AppRoute.LANDING);
   };
-  // token is already declared above
 
   useEffect(() => {
-    // User data
     if (token) {
       axios.get(apis.user, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       }).then((res) => {
         if (res.data) {
           const mergedData = setUserData(res.data);
@@ -103,13 +111,10 @@ const Sidebar = ({ isOpen, onClose }) => {
         }
       }).catch((err) => {
         console.error(err);
-        if (err.status == 401) {
-          clearUser()
-        }
-      })
+        if (err.status == 401) clearUser();
+      });
     }
 
-    // Notifications
     const fetchNotifications = async () => {
       try {
         const res = await axios.get(apis.notifications, {
@@ -123,10 +128,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     if (token) {
       fetchNotifications();
-      // Refresh every 5 mins
       const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
 
-      // Fetch Plan Details
       getSubscriptionDetails().then(data => {
         if (data.founderStatus) {
           setPlanName("Founder");
@@ -139,25 +142,42 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       return () => clearInterval(interval);
     }
-  }, [token])
+  }, [token]);
 
-  // Fetch chat sessions (Works for both guests and logged-in users)
+  // Fetch projects for logged-in users
+  useEffect(() => {
+    if (token) {
+      apiService.getProjects().then(data => {
+        setProjects(Array.isArray(data) ? data : []);
+      }).catch(err => console.error("Failed to fetch projects:", err));
+    }
+  }, [token]);
+
+  // Fetch chat sessions — re-fetch when projectId changes
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const data = await chatStorageService.getSessions();
+        const data = await chatStorageService.getSessions(currentProjectId);
         setSessions(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch sessions:", err);
       }
     };
     fetchSessions();
-  }, [token, sessionId, setSessions]);
+  }, [token, sessionId, setSessions, currentProjectId]);
 
-  // Update currentSessionId when sessionId changes
   useEffect(() => {
     setCurrentSessionId(sessionId || 'new');
   }, [sessionId]);
+
+  // Persist currentProjectId to localStorage
+  useEffect(() => {
+    if (currentProjectId) {
+      localStorage.setItem('currentProjectId', currentProjectId);
+    } else {
+      localStorage.removeItem('currentProjectId');
+    }
+  }, [currentProjectId]);
 
   const handleNewChat = () => {
     navigate('/dashboard/chat/new');
@@ -168,7 +188,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     e.stopPropagation();
     try {
       await chatStorageService.deleteSession(sessionIdToDelete);
-      const updatedSessions = await chatStorageService.getSessions();
+      const updatedSessions = await chatStorageService.getSessions(currentProjectId);
       setSessions(updatedSessions);
       if (currentSessionId === sessionIdToDelete) {
         navigate('/dashboard/chat/new');
@@ -194,7 +214,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     const oldSessions = Array.isArray(sessions) ? [...sessions] : [];
     const renamedTitle = newTitle.trim();
 
-    // Optimistic update
     setSessions(prev => (Array.isArray(prev) ? prev : []).map(s =>
       s.sessionId === sessionId
         ? { ...s, title: renamedTitle, lastModified: Date.now() }
@@ -211,26 +230,91 @@ const Sidebar = ({ isOpen, onClose }) => {
     } catch (err) {
       console.error("Rename failed:", err);
       toast.error("Could not rename chat on server");
-      // Revert optimistic update
       setSessions(oldSessions);
     } finally {
       setEditingSessionId(null);
     }
   };
 
+  // --- Project Handlers ---
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+    try {
+      const project = await apiService.createProject(newProjectName.trim());
+      setProjects(prev => [project, ...prev]);
+      setCurrentProjectId(project._id);
+      setNewProjectName('');
+      setIsCreatingProject(false);
+      toast.success(`Project "${project.name}" created!`);
+      navigate('/dashboard/chat/new');
+    } catch (err) {
+      console.error("Failed to create project:", err);
+      toast.error("Failed to create project");
+    }
+  };
+
+  const handleRenameProject = async (e, projectId) => {
+    e.stopPropagation();
+    if (!renameProjectName.trim()) {
+      setEditingProjectId(null);
+      return;
+    }
+    
+    try {
+      const updated = await apiService.renameProject(projectId, renameProjectName.trim());
+      setProjects(prev => prev.map(p => p._id === projectId ? { ...p, name: updated.name } : p));
+      toast.success("Project renamed successfully");
+    } catch (error) {
+      console.error("Failed to rename project:", error);
+      toast.error("Failed to rename project");
+    } finally {
+      setEditingProjectId(null);
+    }
+  };
+
+  const handleDeleteProject = (e, projectId) => {
+    e.stopPropagation();
+    setProjectToDelete(projectId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+    
+    try {
+      await apiService.deleteProject(projectToDelete);
+      setProjects(prev => prev.filter(p => p._id !== projectToDelete));
+      if (currentProjectId === projectToDelete) {
+        handleSwitchProject(null);
+      }
+      toast.success("Project deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      toast.error("Failed to delete project");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setProjectToDelete(null);
+    }
+  };
+
+  const handleSwitchProject = (projectId) => {
+    setCurrentProjectId(projectId);
+    navigate('/dashboard/chat/new');
+  };
+
+  const currentProject = projects.find(p => p._id === currentProjectId);
+
   if (notifiyTgl.notify) {
     setTimeout(() => {
       setNotifyTgl(prev => ({ ...prev, notify: false }));
     }, 2000);
   }
-  // Dynamic class for active nav items
+
   const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-medium border border-transparent ${isActive
       ? 'bg-primary/10 text-primary border-primary/10'
       : 'text-subtext hover:bg-surface hover:text-maintext'
     }`;
-
-
 
   return (
     <>
@@ -247,7 +331,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         )}
       </AnimatePresence>
 
-      {/* Backdrop for Mobile/Tablet */}
       {isOpen && (
         <div
           className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
@@ -255,7 +338,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`
           fixed inset-y-0 left-0 z-[100] w-[280px] sm:w-72 lg:w-64 
@@ -276,8 +358,6 @@ const Sidebar = ({ isOpen, onClose }) => {
               AISA <sup className="text-[10px] opacity-70">TM</sup>
             </h1>
           </Link>
-
-
           <button
             onClick={onClose}
             className="relative z-10 lg:hidden p-2 -mr-2 text-subtext hover:text-maintext rounded-lg hover:bg-white/20 dark:hover:bg-white/10 transition-all"
@@ -288,6 +368,65 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Chat History Section */}
         <div className="flex-1 flex flex-col overflow-hidden">
+
+
+          <AnimatePresence>
+            {isCreatingProject && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                onClick={() => setIsCreatingProject(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-sm p-6"
+                >
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2.5 bg-primary/10 rounded-xl">
+                      <FolderPlus className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-maintext">New Project</h3>
+                      <p className="text-xs text-subtext">Organize your chats by project</p>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Project name..."
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateProject();
+                      if (e.key === 'Escape') setIsCreatingProject(false);
+                    }}
+                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-subtext/50 text-maintext"
+                  />
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={() => setIsCreatingProject(false)}
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-subtext hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreateProject}
+                      disabled={!newProjectName.trim()}
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-primary hover:opacity-90 transition-all shadow-lg shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Create
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Search Bar */}
           <div className="px-3 pt-3">
             <div className="relative group">
@@ -313,12 +452,100 @@ const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
 
+          {/* Personal Space & Projects Section */}
+          {token && (
+            <div className="flex flex-col">
+
+              {/* Personal Chat - Standalone Top Space */}
+              <div className="px-3 pt-1">
+                <button
+                  onClick={() => handleSwitchProject(null)}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all border ${!currentProjectId 
+                    ? 'bg-primary/10 text-primary border-primary/20 shadow-md ring-1 ring-primary/20' 
+                    : 'bg-white/20 dark:bg-white/5 border-white/20 dark:border-white/10 hover:bg-white/30 dark:hover:bg-white/10 text-maintext'}`}
+                >
+                  <MessageSquare className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="truncate font-semibold text-sm">Personal Chat</span>
+                </button>
+              </div>
+
+              {/* Projects Section Header */}
+              <div 
+                onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+                className="px-4 pt-3 pb-1.5 flex items-center gap-1.5 cursor-pointer group/header hover:text-primary transition-colors select-none"
+              >
+                <h3 className="text-sm font-medium text-subtext/80 group-hover/header:text-primary transition-colors">Projects</h3>
+                <ChevronDown className={`w-3.5 h-3.5 text-subtext/60 transition-transform duration-200 ${isProjectsExpanded ? '' : '-rotate-90'}`} />
+              </div>
+
+              {/* Projects List */}
+              <AnimatePresence>
+                {isProjectsExpanded && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-3 space-y-0.5 max-h-[300px] overflow-y-auto overflow-x-hidden custom-scrollbar"
+                  >
+                    {/* New Project Integrated Button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setIsCreatingProject(true); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-subtext hover:bg-white/20 dark:hover:bg-white/10 hover:text-maintext transition-all group/newproj"
+                    >
+                      <FolderPlus className="w-4 h-4 shrink-0" />
+                      <span className="truncate font-medium text-[15px]">New project</span>
+                    </button>
+
+                    {projects.length > 0 && projects.map(p => (
+                      <div key={p._id} className="relative group/proj flex items-center">
+                        {editingProjectId === p._id ? (
+                           <div className="flex w-full items-center gap-2 px-3 py-1.5" onClick={(e) => e.stopPropagation()}>
+                             <input 
+                               autoFocus
+                               value={renameProjectName}
+                               onChange={e => setRenameProjectName(e.target.value)}
+                               onKeyDown={e => { if(e.key==='Enter') handleRenameProject(e, p._id); if(e.key==='Escape') setEditingProjectId(null); }}
+                               className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
+                             />
+                             <button onClick={(e) => handleRenameProject(e, p._id)} className="text-primary hover:opacity-80 shrink-0"><Check className="w-4 h-4" /></button>
+                             <button onClick={(e) => { e.stopPropagation(); setEditingProjectId(null); }} className="text-subtext hover:text-red-500 shrink-0"><X className="w-4 h-4" /></button>
+                           </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleSwitchProject(p._id)}
+                              className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id 
+                                ? 'bg-primary/10 text-primary font-bold shadow-sm' 
+                                : 'text-subtext hover:bg-white/20 dark:hover:bg-white/10 hover:text-maintext'}`}
+                            >
+                              <Folder className={`w-4 h-4 shrink-0 transition-transform ${currentProjectId === p._id ? 'scale-105' : ''}`} />
+                              <span className="truncate font-medium text-[15px] text-left pr-8">{p.name}</span>
+                            </button>
+                            <div className="absolute right-2 opacity-0 group-hover/proj:opacity-100 flex items-center gap-0.5 transition-opacity duration-200">
+                              <button onClick={(e) => { e.stopPropagation(); setEditingProjectId(p._id); setRenameProjectName(p.name); }} className="p-1 text-subtext hover:text-primary transition-colors bg-white/40 dark:bg-zinc-800/40 rounded-md">
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button onClick={(e) => handleDeleteProject(e, p._id)} className="p-1 text-subtext hover:text-red-500 transition-colors bg-white/40 dark:bg-zinc-800/40 rounded-md">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
           {/* Chat Sessions List */}
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
             {(token || (Array.isArray(sessions) && sessions.length > 0)) ? (
               <>
                 <h3 className="px-4 py-2 text-xs font-bold text-primary/70 uppercase tracking-widest">
-                  {t('history')}
+                  Your chats
                 </h3>
 
                 {(Array.isArray(sessions) ? sessions : [])
@@ -406,22 +633,15 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-
-
-
-
         {/* User Profile Footer */}
         <div className="p-3 bg-white/10 dark:bg-black/10 backdrop-blur-md relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none"></div>
           {token ? (
             <div className="relative profile-menu-container">
-              {/* Profile Card - Clickable */}
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="w-full rounded-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-all flex items-center gap-2 p-2 group backdrop-blur-sm relative z-10"
               >
-
-
                 <div className="flex-1 min-w-0 text-left flex items-center gap-3">
                   <div className="w-9 h-9 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-secondary border border-white/10 relative group/avatar">
                     {user.avatar ? (
@@ -442,8 +662,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <p className="text-sm font-bold text-maintext truncate group-hover:text-primary transition-colors">{user.name}</p>
-
-                      {/* Social Provider Icon in Sidebar */}
                       {user.provider && user.provider !== 'local' && (
                         <div className="flex shrink-0">
                           {user.provider === 'google' && (
@@ -471,7 +689,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                           )}
                         </div>
                       )}
-
                       <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500 uppercase tracking-wider shrink-0">
                         {planName.replace(' Plan', '')}
                       </span>
@@ -479,11 +696,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <p className="text-[11px] text-subtext truncate">{user.email}</p>
                   </div>
                 </div>
-
-
               </button>
 
-              {/* Dropdown Menu - Replaced with Personalization System */}
               <AnimatePresence>
                 {isProfileMenuOpen && (
                   <ProfileSettingsDropdown
@@ -497,7 +711,6 @@ const Sidebar = ({ isOpen, onClose }) => {
               </AnimatePresence>
             </div>
           ) : (
-            /* Guest / Login State */
             <div
               onClick={() => navigate(AppRoute.LOGIN)}
               className="rounded-xl border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-all cursor-pointer flex items-center gap-3 px-3 py-2 group backdrop-blur-sm relative z-10"
@@ -512,7 +725,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           )}
 
           <div className="mt-1 flex flex-col gap-1">
-            {/* Admin Help Desk Button - Only for admin@uwo24.com */}
             {isAdmin && (
               <button
                 onClick={() => { navigate('/dashboard/admin'); onClose(); }}
@@ -522,8 +734,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <span>Admin Dashboard</span>
               </button>
             )}
-
-            {/* FAQ Button */}
             <button
               onClick={() => setIsFaqOpen(true)}
               className="w-full flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg text-subtext hover:bg-white/20 dark:hover:bg-white/10 hover:text-maintext transition-all text-xs border border-transparent hover:border-white/20 dark:hover:border-white/10 backdrop-blur-sm"
@@ -533,10 +743,17 @@ const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
         </div>
-      </div >
+      </div>
 
       <FaqModal isOpen={isFaqOpen} onClose={() => setIsFaqOpen(false)} />
-
+      <DeleteConfirmModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => setIsDeleteModalOpen(false)} 
+        onConfirm={confirmDeleteProject}
+        title="Delete Project?"
+        description="Are you sure you want to delete this project? All associated chats will be kept but unlinked from the project."
+        confirmText="Delete Project"
+      />
     </>
   );
 };

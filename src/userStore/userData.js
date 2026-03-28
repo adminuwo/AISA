@@ -119,3 +119,8 @@ export const memoryData = atom({
   key: 'memoryData',
   default: null
 })
+
+export const activeProjectIdData = atom({
+  key: 'activeProjectIdData',
+  default: localStorage.getItem('currentProjectId') || null
+})

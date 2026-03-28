@@ -805,6 +805,27 @@ export const apiService = {
     }
   },
 
+  // --- Projects ---
+  async getProjects() {
+    try {
+      const response = await apiClient.get('/projects');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      return [];
+    }
+  },
+
+  async createProject(name) {
+    try {
+      const response = await apiClient.post('/projects', { name });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      throw error;
+    }
+  },
+
   async getFeatureCredits() {
     try {
       const response = await apiClient.get('/admin/feature-credits');
@@ -821,6 +842,47 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error("Failed to update feature credit:", error);
+      throw error;
+    }
+  },
+
+  // --- Project Management ---
+  async getProjects() {
+    try {
+      const response = await apiClient.get('/projects');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      throw error;
+    }
+  },
+
+  async createProject(name) {
+    try {
+      const response = await apiClient.post('/projects', { name });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      throw error;
+    }
+  },
+
+  async renameProject(id, name) {
+    try {
+      const response = await apiClient.put(`/projects/${id}`, { name });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to rename project:", error);
+      throw error;
+    }
+  },
+
+  async deleteProject(id) {
+    try {
+      const response = await apiClient.delete(`/projects/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete project:", error);
       throw error;
     }
   }

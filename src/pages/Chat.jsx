@@ -25,7 +25,7 @@ import { apis } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
-import { getUserData, sessionsData, toggleState, memoryData } from '../userStore/userData';
+import { userData, getUserData, sessionsData, toggleState, memoryData, activeProjectIdData } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
 import PremiumUpsellModal from '../Components/PremiumUpsellModal';
@@ -171,7 +171,7 @@ const ImageViewer = ({ src, alt }) => {
       e.preventDefault(); // Prevent scroll
       setPosition({
         x: e.touches[0].clientX - startPos.x,
-        y: e.touches[0].clientY - startPos.y
+        y: e.touches[0].clientY - position.y
       });
     }
   };
@@ -244,6 +244,10 @@ const ImageViewer = ({ src, alt }) => {
     </div>
   );
 };
+
+// Global messaging lock to prevent duplicate sends during navigation re-mounts
+let isGlobalSending = false;
+let lastMessageSentTime = 0;
 
 const Chat = () => {
   const checkLimitLocally = () => true;
@@ -383,9 +387,15 @@ const Chat = () => {
   const transcriptRef = useRef(''); // Ref for speech transcript
   const isManualStopRef = useRef(false); // Track manual stop to avoid recursive loops
   const isDetectionPausedRef = useRef(false); // Pause detection after explicit dismissal
+  const [currentProjectId, setCurrentProjectId] = useRecoilState(activeProjectIdData);
   const [intentSuggestion, setIntentSuggestion] = useState(null);
   const [isIntentLoading, setIsIntentLoading] = useState(false);
   const lastDetectedTextRef = useRef('');
+  
+  // Projects Feature State
+  const [projects, setProjects] = useState([]);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
   const [expandedMessages, setExpandedMessages] = useState({}); // { [msgId]: true/false }
   const USER_MSG_COLLAPSE_CHARS = 200; // Collapse threshold
 
@@ -714,7 +724,7 @@ const Chat = () => {
 
       let activeSessionId = currentSessionId;
       if (activeSessionId === 'new') {
-        activeSessionId = await chatStorageService.createSession();
+        activeSessionId = await chatStorageService.createSession(currentProjectId);
         setCurrentSessionId(activeSessionId);
         isNavigatingRef.current = true;
         navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
@@ -727,6 +737,7 @@ const Chat = () => {
         role: 'user',
         content: `Please convert this document to audio: **${file.name}**`,
         timestamp: new Date(),
+        projectId: currentProjectId,
         attachments: [{
           url: base64Content,
           name: file.name,
@@ -734,7 +745,7 @@ const Chat = () => {
         }]
       };
       setMessages(prev => [...prev, userMsg]);
-      chatStorageService.saveMessage(activeSessionId, userMsg, `Audio: ${file.name}`).catch(e => console.error(e));
+      chatStorageService.saveMessage(activeSessionId, userMsg, `Audio: ${file.name}`, currentProjectId).catch(e => console.error(e));
 
       // 2. Add Processing Message from AISA
       const aiMsgId = (Date.now() + 1).toString();
@@ -800,11 +811,12 @@ const Chat = () => {
               rawSize: rawBytes,
               charCount: charCount
             },
-            timestamp: new Date()
+            timestamp: new Date(),
+            projectId: currentProjectId
           };
 
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? aiResponse : msg));
-          chatStorageService.saveMessage(activeSessionId, aiResponse).catch(e => console.error(e));
+          chatStorageService.saveMessage(activeSessionId, aiResponse, null, currentProjectId).catch(e => console.error(e));
 
           toast.success("Conversion complete! 🎶");
           refreshSubscription();
@@ -836,11 +848,12 @@ const Chat = () => {
           role: 'model',
           isProcessing: false,
           content: `❌ **Conversion Failed**\n${serverError}`,
-          timestamp: new Date()
+          timestamp: new Date(),
+          projectId: currentProjectId
         };
 
         setMessages(prev => prev.map(msg => msg.id === aiMsgId ? errorResponse : msg));
-        chatStorageService.saveMessage(activeSessionId, errorResponse).catch(e => console.error(e));
+        chatStorageService.saveMessage(activeSessionId, errorResponse, null, currentProjectId).catch(e => console.error(e));
 
       }
     };
@@ -869,10 +882,11 @@ const Chat = () => {
         role: 'user',
         content: `Convert this document to audio: **${file.name}**`,
         timestamp: new Date(),
+        projectId: currentProjectId,
         attachments: [{ url: base64Content, name: file.name, type: file.type }]
       };
       setMessages(prev => [...prev, userMsg]);
-      chatStorageService.saveMessage(activeSessionId, userMsg, `Audio: ${file.name}`).catch(e => console.error(e));
+      chatStorageService.saveMessage(activeSessionId, userMsg, `Audio: ${file.name}`, currentProjectId).catch(e => console.error(e));
 
       const aiMsgId = (Date.now() + 1).toString();
       const processingMsg = {
@@ -932,11 +946,12 @@ const Chat = () => {
               rawSize: rawBytes,
               charCount: charCount
             },
-            timestamp: new Date()
+            timestamp: new Date(),
+            projectId: currentProjectId
           };
 
           setMessages(prev => prev.map(msg => msg.id === aiMsgId ? aiResponse : msg));
-          chatStorageService.saveMessage(activeSessionId, aiResponse).catch(e => console.error(e));
+          chatStorageService.saveMessage(activeSessionId, aiResponse, null, currentProjectId).catch(e => console.error(e));
           toast.success("File converted successfully!");
           refreshSubscription();
           scrollToBottom();
@@ -968,7 +983,7 @@ const Chat = () => {
           timestamp: new Date()
         };
         setMessages(prev => prev.map(msg => msg.id === aiMsgId ? errorResponse : msg));
-        chatStorageService.saveMessage(activeSessionId, errorResponse).catch(e => console.error(e));
+        chatStorageService.saveMessage(activeSessionId, errorResponse, null, currentProjectId).catch(e => console.error(e));
         toast.error("Conversion failed");
       }
     };
@@ -987,11 +1002,12 @@ const Chat = () => {
         id: Date.now().toString(),
         role: 'user',
         content: `Convert this text to audio: "${text}"`,
-        timestamp: new Date()
+        timestamp: new Date(),
+        projectId: currentProjectId
       };
       setMessages(prev => [...prev, userMsg]);
       const talkTitle = text.length > 20 ? text.substring(0, 20) + '...' : text;
-      chatStorageService.saveMessage(activeSessionId, userMsg, `Audio Talk: ${talkTitle}`).catch(e => console.error(e));
+      chatStorageService.saveMessage(activeSessionId, userMsg, `Audio Talk: ${talkTitle}`, currentProjectId).catch(e => console.error(e));
     }
 
     const aiMsgId = replaceAssistantMsgId || (Date.now() + 1).toString();
@@ -1044,15 +1060,16 @@ const Chat = () => {
             rawSize: rawBytes,
             charCount: charCount
           },
-          timestamp: new Date()
+          timestamp: new Date(),
+          projectId: currentProjectId
         };
 
         setMessages(prev => prev.map(msg => msg.id === aiMsgId ? aiResponse : msg));
         
         if (replaceAssistantMsgId) {
-          chatStorageService.updateMessage(activeSessionId, aiResponse).catch(e => console.error(e));
+          chatStorageService.updateMessage(activeSessionId, aiResponse, currentProjectId).catch(e => console.error(e));
         } else {
-          chatStorageService.saveMessage(activeSessionId, aiResponse).catch(e => console.error(e));
+          chatStorageService.saveMessage(activeSessionId, aiResponse, null, currentProjectId).catch(e => console.error(e));
         }
         
         toast.success("Text converted successfully!");
@@ -1080,7 +1097,7 @@ const Chat = () => {
         timestamp: new Date()
       };
       setMessages(prev => prev.map(msg => msg.id === aiMsgId ? errorResponse : msg));
-      chatStorageService.saveMessage(activeSessionId, errorResponse).catch(e => console.error(e));
+      chatStorageService.saveMessage(activeSessionId, errorResponse, null, currentProjectId).catch(e => console.error(e));
       toast.error("Conversion failed");
     }
   };
@@ -1109,6 +1126,7 @@ const Chat = () => {
             role: 'user', // Ensure role user
             content: prompt, // Use content
             timestamp: new Date(),
+            projectId: currentProjectId,
             attachments: filePreviews.map(fp => ({
               url: fp.url,
               name: fp.name,
@@ -1125,7 +1143,7 @@ const Chat = () => {
 
           // Save to backend
           if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, newUserMsg).catch(err => console.error("Error saving voice message:", err));
+            chatStorageService.saveMessage(activeSessionId, newUserMsg, null, currentProjectId).catch(err => console.error("Error saving voice message:", err));
           }
 
           // 2. Trigger Voice Reading Directly
@@ -1137,12 +1155,13 @@ const Chat = () => {
             id: aiMsgId,
             role: 'model', // Ensure role assistant
             content: "🎧 Reading content aloud...", // Use content
-            timestamp: new Date()
+            timestamp: new Date(),
+            projectId: currentProjectId
           };
           setMessages(prev => [...prev, readingMsg]);
 
           if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, readingMsg).catch(err => console.error("Error saving reading bubble:", err));
+            chatStorageService.saveMessage(activeSessionId, readingMsg, null, currentProjectId).catch(err => console.error("Error saving reading bubble:", err));
           }
 
           setTimeout(() => {
@@ -1166,6 +1185,7 @@ const Chat = () => {
         role: 'user',
         content: prompt,
         timestamp: new Date(),
+        projectId: currentProjectId,
         attachments: filePreviews.map(fp => ({
           url: fp.url,
           name: fp.name,
@@ -1181,6 +1201,7 @@ const Chat = () => {
         isGenerating: true,
         content: `🎬 Generating video from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`, // Use content
         timestamp: new Date(),
+        projectId: currentProjectId
       };
 
       setMessages(prev => [...prev, userMsg, newMessage]);
@@ -1193,7 +1214,7 @@ const Chat = () => {
 
       // Save user message to backend
       if (activeSessionId && activeSessionId !== 'new') {
-        chatStorageService.saveMessage(activeSessionId, userMsg).catch(err => console.error("Error saving video user message:", err));
+        chatStorageService.saveMessage(activeSessionId, userMsg, null, currentProjectId).catch(err => console.error("Error saving video user message:", err));
       }
 
       try {
@@ -1209,6 +1230,7 @@ const Chat = () => {
             content: `🎥 Video generated successfully!`, // Use content
             videoUrl: data.videoUrl,
             timestamp: new Date(),
+            projectId: currentProjectId
           };
 
           setMessages(prev => prev.map(msg => msg.id === tempId ? videoMessage : msg));
@@ -1217,7 +1239,7 @@ const Chat = () => {
 
           // Save AI response to backend
           if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, videoMessage).catch(err => console.error("Error saving video results:", err));
+            chatStorageService.saveMessage(activeSessionId, videoMessage, null, currentProjectId).catch(err => console.error("Error saving video results:", err));
           }
 
         } else if (data.imageUrl) {
@@ -1280,6 +1302,7 @@ const Chat = () => {
         role: 'user',
         content: prompt,
         timestamp: new Date(),
+        projectId: currentProjectId,
         attachments: filePreviews.map(fp => ({
           url: fp.url,
           name: fp.name,
@@ -1297,6 +1320,7 @@ const Chat = () => {
         isGenerating: true,
         content: `✨ **Advanced Controller Active**\n🎨 Generating high-quality poster from your prompt: "${prompt}"\n\nIntelligently refining text detection, placement, and cinematic styling...`, // Use content
         timestamp: new Date(),
+        projectId: currentProjectId
       };
 
       setMessages(prev => [...prev, userMsg, newMessage]);
@@ -1309,7 +1333,7 @@ const Chat = () => {
 
       // Save user message to backend
       if (activeSessionId && activeSessionId !== 'new') {
-        chatStorageService.saveMessage(activeSessionId, userMsg).catch(err => console.error("Error saving image user message:", err));
+        chatStorageService.saveMessage(activeSessionId, userMsg, null, currentProjectId).catch(err => console.error("Error saving image user message:", err));
       }
 
       try {
@@ -1325,6 +1349,7 @@ const Chat = () => {
             content: `🖼️ Image generated successfully!`, // Use content
             imageUrl: finalUrl,
             timestamp: new Date(),
+            projectId: currentProjectId
           };
 
           setMessages(prev => prev.map(msg => msg.id === tempId ? imageMessage : msg));
@@ -1334,7 +1359,7 @@ const Chat = () => {
 
           // Save AI response to backend
           if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, imageMessage).catch(err => console.error("Error saving image generation results:", err));
+            chatStorageService.saveMessage(activeSessionId, imageMessage, null, currentProjectId).catch(err => console.error("Error saving image generation results:", err));
           }
         }
       } catch (error) {
@@ -1397,6 +1422,7 @@ const Chat = () => {
         role: 'user',
         content: prompt,
         timestamp: new Date(),
+        projectId: currentProjectId,
         attachments: imageFile.id ? filePreviews.map(fp => ({
           url: fp.url,
           name: fp.name,
@@ -1416,6 +1442,7 @@ const Chat = () => {
         isGenerating: true,
         content: `🪄 **Advanced Precision Editor Active**\n🔧 Executing Photoshop-level modifications for: "${prompt}"\n\nPreserving original composition, art style, and character-perfect text rendering...`,
         timestamp: new Date(),
+        projectId: currentProjectId,
       };
 
       setMessages(prev => [...prev, userMsg, newMessage]);
@@ -1432,7 +1459,7 @@ const Chat = () => {
 
       // Save user message to backend
       if (activeSessionId && activeSessionId !== 'new') {
-        chatStorageService.saveMessage(activeSessionId, userMsg).catch(err => console.error("Error saving image edit user message:", err));
+        chatStorageService.saveMessage(activeSessionId, userMsg, null, currentProjectId).catch(err => console.error("Error saving image edit user message:", err));
       }
 
       try {
@@ -1468,6 +1495,7 @@ const Chat = () => {
             content: `✨ Your image has been edited!`,
             imageUrl: finalUrl,
             timestamp: new Date(),
+            projectId: currentProjectId
           };
 
           setMessages(prev => prev.map(msg => msg.id === tempId ? editMessage : msg));
@@ -1476,7 +1504,7 @@ const Chat = () => {
 
           // Save AI response to backend
           if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, editMessage).catch(err => console.error("Error saving edited image results:", err));
+            chatStorageService.saveMessage(activeSessionId, editMessage, null, currentProjectId).catch(err => console.error("Error saving edited image results:", err));
           }
         }
       } catch (error) {
@@ -1527,7 +1555,8 @@ const Chat = () => {
           [],
           currentLang,
           null,
-          MODES.DEEP_SEARCH
+          MODES.DEEP_SEARCH,
+          currentProjectId
         );
 
         if (responseData && responseData.reply) {
@@ -2228,7 +2257,7 @@ const Chat = () => {
 
   useEffect(() => {
     const loadSessions = async () => {
-      const data = await chatStorageService.getSessions();
+      const data = await chatStorageService.getSessions(currentProjectId);
       setSessions(data);
 
       // Fetch User Subscribed Agents
@@ -2259,7 +2288,7 @@ const Chat = () => {
       }
     };
     loadSessions();
-  }, [messages, setSessions]);
+  }, [messages, setSessions, currentProjectId]);
 
   const isNavigatingRef = useRef(false);
 
@@ -2412,12 +2441,23 @@ const Chat = () => {
 
   const handleSendMessage = async (e, overrideContent, toolOverride = null) => {
     if (e) e.preventDefault();
-
-    // Prevent duplicate sends
-    if (isSendingRef.current) return;
+    
+    // GLOBAL LOCK & DEBOUNCE
+    const now = Date.now();
+    if (isGlobalSending || (now - lastMessageSentTime < 800)) {
+      console.warn("Message sending blocked by global lock or debounce");
+      return;
+    }
+    if (isLoading) return;
 
     const contentToSend = typeof overrideContent === 'string' ? overrideContent : inputValue.trim();
-    if ((!contentToSend && filePreviews.length === 0) || isLoading) return;
+    if (!contentToSend && filePreviews.length === 0) return;
+
+    // LOCK IMMEDIATELY
+    isGlobalSending = true;
+    lastMessageSentTime = now;
+    setIsLoading(true);
+    isSendingRef.current = true;
 
     // --- Proactive Magic Tool Activation Check Removed ---
     // Messages now flow to the backend normally.
@@ -2431,7 +2471,7 @@ const Chat = () => {
     else if (isCodeWriter || toolOverride === 'code_writer') featureToTrack = 'codeWriter';
 
     if (!checkLimitLocally(featureToTrack)) {
-      // Limit reached, UpgradeModal will be triggered by SubscriptionContext
+      isSendingRef.current = false;
       return;
     }
 
@@ -2451,148 +2491,141 @@ const Chat = () => {
           
           handleAcceptSuggestion(activeSuggestion);
           // After switching mode, we recursively call handleSendMessage with the tool override
-          setTimeout(() => handleSendMessage(e, contentToSend, activeSuggestion.intent), 50);
+          setTimeout(() => {
+            isSendingRef.current = false;
+            handleSendMessage(e, contentToSend, activeSuggestion.intent);
+          }, 50);
           return;
        }
     }
 
 
-    if (isAudioConvertMode && !contentToSend && selectedFiles.length === 0) {
-      toast.error('Please enter text or upload a file to convert to audio');
-      return;
-    }
-
-    if (isDocumentConvert && selectedFiles.length === 0) {
-      toast.error('Please upload a PDF or DOCX file to convert');
-      return;
-    }
-
-    // Special case for Audio Convert Mode: Handle files directly if present
-    if (isAudioConvertMode && selectedFiles.length > 0) {
-      let activeSessionId = currentSessionId;
-      if (activeSessionId === 'new') {
-        activeSessionId = await chatStorageService.createSession();
-        setCurrentSessionId(activeSessionId);
-        isNavigatingRef.current = true;
-        navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
-      }
-      const fileToConvert = selectedFiles[0];
-      manualFileToAudioConversion(fileToConvert, activeSessionId);
-      setSelectedFiles([]);
-      setFilePreviews([]);
-      return;
-    }
-
-    // Special case for Audio Convert Mode: Handle text conversion
-    if (isAudioConvertMode && contentToSend) {
-      let activeSessionId = currentSessionId;
-      if (activeSessionId === 'new') {
-        activeSessionId = await chatStorageService.createSession();
-        setCurrentSessionId(activeSessionId);
-        isNavigatingRef.current = true;
-        navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
-      }
-      manualTextToAudioConversion(contentToSend, activeSessionId);
-      setInputValue('');
-      return;
-    }
-
-    isSendingRef.current = true;
-    setInputValue('');
-    transcriptRef.current = '';
-
-    let activeSessionId = currentSessionId;
-    let isFirstMessage = false;
-
-    // Stop listening if send is clicked
-    if (isListening && recognitionRef.current) {
-      isManualStopRef.current = true;
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
-
-    // Create or find session
-    if (activeSessionId === 'new') {
-      try {
-        activeSessionId = await chatStorageService.createSession();
-        setCurrentSessionId(activeSessionId);
-        isFirstMessage = true;
-      } catch (err) {
-        console.error("Failed to create session:", err);
-        toast.error('Failed to start a new chat session');
-        isSendingRef.current = false;
-        return;
-      }
-    }
-
-    // Handle Image Generation Mode
-    if (isImageGeneration || toolOverride === 'text_to_image') {
-      handleGenerateImage(contentToSend, activeSessionId);
-      isSendingRef.current = false;
-      return;
-    }
-
-    // Handle Video Generation Mode
-    if (isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') {
-      handleGenerateVideo(contentToSend, activeSessionId);
-      isSendingRef.current = false;
-      return;
-    }
-
-    // Handle Image Editing Mode
-    if (isMagicEditing || toolOverride === 'image_edit') {
-      handleEditImage(contentToSend, activeSessionId);
-      isSendingRef.current = false;
-      return;
-    }
-
-    // Handle Voice Reader Mode - Just read, no AI response
-    if (isVoiceMode) {
-      try {
-        // 1. Add User Message to UI
-        const userMsgId = Date.now().toString();
-        const newUserMsg = {
-          id: userMsgId,
-          role: 'user',
-          content: contentToSend,
-          timestamp: new Date(),
-          attachments: filePreviews.map(fp => ({
-            url: fp.url,
-            name: fp.name,
-            type: fp.type.startsWith('image/') ? 'image' :
-              fp.type.includes('pdf') ? 'pdf' :
-                fp.type.includes('word') || fp.type.includes('document') ? 'docx' : 'file'
-          }))
-        };
-        setMessages(prev => [...prev, newUserMsg]);
-
-        // 2. Clear inputs
-        setInputValue('');
-        handleRemoveFile();
-        if (inputRef.current) inputRef.current.style.height = 'auto';
-
-        // 3. Trigger voice reading directly (no AI response)
-        setTimeout(() => {
-          console.log('[Voice Mode] Reading content with attachments:', newUserMsg.attachments);
-          speakResponse(contentToSend, 'en-US', userMsgId, newUserMsg.attachments);
-        }, 300);
-
-        isSendingRef.current = false;
-        return; // STOP - Don't call AI API
-      } catch (err) {
-        console.error('[Voice Mode Error]:', err);
-        toast.error('Failed to read content');
-        isSendingRef.current = false;
-        return;
-      }
-    }
-
-
     try {
-      if (activeSessionId === 'new') {
-        activeSessionId = await chatStorageService.createSession();
-        isFirstMessage = true;
+      if (isAudioConvertMode && !contentToSend && selectedFiles.length === 0) {
+        toast.error('Please enter text or upload a file to convert to audio');
+        return;
       }
+
+      if (isDocumentConvert && selectedFiles.length === 0) {
+        toast.error('Please upload a PDF or DOCX file to convert');
+        return;
+      }
+
+      // Special case for Audio Convert Mode: Handle files directly if present
+      if (isAudioConvertMode && selectedFiles.length > 0) {
+        let activeSessionId = currentSessionId;
+        if (activeSessionId === 'new') {
+          activeSessionId = await chatStorageService.createSession();
+          setCurrentSessionId(activeSessionId);
+          isNavigatingRef.current = true;
+          navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+        }
+        const fileToConvert = selectedFiles[0];
+        await manualFileToAudioConversion(fileToConvert, activeSessionId);
+        setSelectedFiles([]);
+        setFilePreviews([]);
+        return;
+      }
+
+      // Special case for Audio Convert Mode: Handle text conversion
+      if (isAudioConvertMode && contentToSend) {
+        let activeSessionId = currentSessionId;
+        if (activeSessionId === 'new') {
+          activeSessionId = await chatStorageService.createSession();
+          setCurrentSessionId(activeSessionId);
+          isNavigatingRef.current = true;
+          navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+        }
+        await manualTextToAudioConversion(contentToSend, activeSessionId);
+        setInputValue('');
+        return;
+      }
+
+      // isSendingRef already true
+      setInputValue('');
+      transcriptRef.current = '';
+
+      let activeSessionId = currentSessionId;
+      let isFirstMessage = false;
+
+      // Stop listening if send is clicked
+      if (isListening && recognitionRef.current) {
+        isManualStopRef.current = true;
+        recognitionRef.current.stop();
+        setIsListening(false);
+      }
+
+      if (activeSessionId === 'new') {
+        try {
+          activeSessionId = await chatStorageService.createSession();
+          setCurrentSessionId(activeSessionId);
+          isFirstMessage = true;
+          isNavigatingRef.current = true;
+          navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+        } catch (err) {
+          console.error("Failed to create session:", err);
+          toast.error('Failed to start a new chat session');
+          return;
+        }
+      }
+
+      // Handle Image Generation Mode
+      if (isImageGeneration || toolOverride === 'text_to_image') {
+        await handleGenerateImage(contentToSend, activeSessionId);
+        return;
+      }
+
+      // Handle Video Generation Mode
+      if (isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') {
+        await handleGenerateVideo(contentToSend, activeSessionId);
+        return;
+      }
+
+      // Handle Image Editing Mode
+      if (isMagicEditing || toolOverride === 'image_edit') {
+        await handleEditImage(contentToSend, activeSessionId);
+        return;
+      }
+
+      // Handle Voice Reader Mode - Just read, no AI response
+      if (isVoiceMode) {
+        try {
+          // 1. Add User Message to UI
+          const userMsgId = Date.now().toString();
+          const newUserMsg = {
+            id: userMsgId,
+            role: 'user',
+            content: contentToSend,
+            timestamp: new Date(),
+            attachments: filePreviews.map(fp => ({
+              url: fp.url,
+              name: fp.name,
+              type: fp.type.startsWith('image/') ? 'image' :
+                fp.type.includes('pdf') ? 'pdf' :
+                  fp.type.includes('word') || fp.type.includes('document') ? 'docx' : 'file'
+            }))
+          };
+          setMessages(prev => [...prev, newUserMsg]);
+
+          // 2. Clear inputs
+          setInputValue('');
+          handleRemoveFile();
+          if (inputRef.current) inputRef.current.style.height = 'auto';
+
+          // 3. Trigger voice reading directly (no AI response)
+          setTimeout(() => {
+            console.log('[Voice Mode] Reading content with attachments:', newUserMsg.attachments);
+            speakResponse(contentToSend, 'en-US', userMsgId, newUserMsg.attachments);
+          }, 300);
+
+          return; // STOP - Don't call AI API
+        } catch (err) {
+          console.error('[Voice Mode Error]:', err);
+          toast.error('Failed to read content');
+          return;
+        }
+      }
+
 
       // [SMART FORMATTING]: If input is long code, automatically wrap in backticks for structured display
       let displayContent = contentToSend;
@@ -2615,6 +2648,7 @@ const Chat = () => {
         role: 'user',
         content: displayContent || (filePreviews.length > 0 ? (isDocumentConvert ? "Convert this document" : "Analyze these files") : ""),
         timestamp: Date.now(),
+        projectId: currentProjectId,
         attachments: filePreviews.map(p => ({
           url: p.url,
           name: p.name,
@@ -2681,12 +2715,12 @@ const Chat = () => {
       setIsLoading(true);
 
       try {
+        // Include projectId in the message object for local storage and sync
+        userMsg.projectId = currentProjectId;
         await chatStorageService.saveMessage(activeSessionId, userMsg);
 
         if (isFirstMessage) {
-          isNavigatingRef.current = true;
-          setCurrentSessionId(activeSessionId);
-          navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+          // Navigation already handled above
 
           // REAL-TIME TITLE GENERATION (Parallel - Match ChatGPT behavior)
           chatStorageService.generateSessionTitle(activeSessionId, userMsg.content).then(newTitle => {
@@ -2908,7 +2942,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           currentLang,
           abortControllerRef.current.signal,
           detectedMode,
-          activeSessionId
+          activeSessionId,
+          currentProjectId
         );
         
         // --- REAL-TIME TITLE SYNC ---
@@ -3008,6 +3043,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             isRealTime: isRealTimeResponse,
             sources: responseSources,
             timestamp: Date.now() + i * 100,
+            projectId: currentProjectId,
           };
 
           // Add the empty message structure to UI
@@ -3080,7 +3116,6 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         }
       } catch (innerError) {
         console.error("Storage/API Error:", innerError);
-        // Even if saving failed, we still have the local state
       }
     } catch (error) {
       // Handle abort errors silently (user stopped generation)
@@ -3095,10 +3130,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
     } finally {
       setIsLoading(false);
       isSendingRef.current = false;
+      isGlobalSending = false; // RELEASE GLOBAL LOCK
       abortControllerRef.current = null; // Clean up abort controller
-
-      // Tool modes are intentionally NOT cleared here so they persist until the user manually closes them
-      // setEditRefImage(null); // Optional: if you want edit ref image to persist too, leave this commented
     }
   };
 
@@ -3110,7 +3143,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       description: "Are you sure you want to delete this entire chat history? This action cannot be undone and all messages will be lost.",
       onConfirm: async () => {
         await chatStorageService.deleteSession(id);
-        const data = await chatStorageService.getSessions();
+        const data = await chatStorageService.getSessions(currentProjectId);
         setSessions(data);
         if (currentSessionId === id) {
           navigate('/dashboard/chat/new');
@@ -6371,6 +6404,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
+                      e.stopPropagation(); // Stop propagation to prevent form onSubmit if possible
+                      if (isGlobalSending || isLoading) return; // Immediate UI-level block
                       if (inputValue.trim() || selectedFiles.length > 0) {
                         handleSendMessage(e);
                       }

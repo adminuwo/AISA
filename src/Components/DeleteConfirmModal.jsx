@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, X, AlertTriangle } from 'lucide-react';
 
-const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title = "Delete Message?", description = "Are you sure you want to delete this message? This action cannot be undone." }) => {
+const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title = "Delete Message?", description = "Are you sure you want to delete this message? This action cannot be undone.", confirmText = "Delete Message" }) => {
     if (!isOpen) return null;
 
     return (
@@ -58,7 +58,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title = "Delete Messag
                                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#5555FF] to-[#4444EE] text-white font-black text-sm hover:shadow-lg hover:shadow-[#5555FF]/30 transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <Trash2 className="w-4 h-4" />
-                                Delete Message
+                                {confirmText}
                             </button>
                             <button
                                 onClick={onClose}

@@ -78,9 +78,12 @@ const getAuthHeaders = () => {
 
 export const chatStorageService = {
 
-  async getSessions() {
+  async getSessions(projectId) {
     try {
+      const params = {};
+      if (projectId) params.projectId = projectId;
       const response = await axios.get(`${API_BASE_URL}/chat`, {
+        params,
         headers: getAuthHeaders(),
         withCredentials: true
       });
@@ -121,7 +124,7 @@ export const chatStorageService = {
     }
   },
 
-  async saveMessage(sessionId, message, title) {
+  async saveMessage(sessionId, message, title, projectId = null) {
     // 1. Always save to Local (IndexedDB) for instant UI updates & offline backup
     try {
       const historyKey = `chat_history_${sessionId}`;
@@ -142,6 +145,7 @@ export const chatStorageService = {
       const meta = {
         title: title || existingMeta.title || "New Chat",
         lastModified: Date.now(),
+        projectId: projectId || message.projectId || existingMeta.projectId || null
       };
       await idbSet(metaKey, meta);
     } catch (localErr) {
@@ -150,7 +154,8 @@ export const chatStorageService = {
 
     // 2. Sync with Backend
     try {
-      await axios.post(`${API_BASE_URL}/chat/${sessionId}/message`, { message, title }, {
+      const finalProjectId = projectId || message.projectId;
+      await axios.post(`${API_BASE_URL}/chat/${sessionId}/message`, { message, title, projectId: finalProjectId }, {
         headers: getAuthHeaders(),
         withCredentials: true
       });
@@ -190,13 +195,32 @@ export const chatStorageService = {
     await idbSet(historyKey, filtered);
   },
 
-  async updateMessage(sessionId, updatedMsg) {
-    const historyKey = `chat_history_${sessionId}`;
-    const messages = (await idbGet(historyKey)) || [];
-    const index = messages.findIndex(m => m.id === updatedMsg.id);
-    if (index !== -1) {
-      messages[index] = updatedMsg;
-      await idbSet(historyKey, messages);
+  async updateMessage(sessionId, updatedMsg, projectId = null) {
+    // 1. Update Local (IndexedDB)
+    try {
+      const historyKey = `chat_history_${sessionId}`;
+      const messages = (await idbGet(historyKey)) || [];
+      const index = messages.findIndex(m => m.id === updatedMsg.id);
+      if (index !== -1) {
+        messages[index] = updatedMsg;
+        await idbSet(historyKey, messages);
+      }
+    } catch (localErr) {
+      console.error("Local message update failed:", localErr);
+    }
+
+    // 2. Sync with Backend (using the same upsert endpoint)
+    try {
+      const finalProjectId = projectId || updatedMsg.projectId;
+      await axios.post(`${API_BASE_URL}/chat/${sessionId}/message`, { 
+        message: updatedMsg, 
+        projectId: finalProjectId 
+      }, {
+        headers: getAuthHeaders(),
+        withCredentials: true
+      });
+    } catch (error) {
+      console.warn("Backend message update failed:", error.response?.data || error.message);
     }
   },
 
