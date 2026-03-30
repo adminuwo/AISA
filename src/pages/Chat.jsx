@@ -2466,7 +2466,10 @@ const Chat = () => {
     isSendingRef.current = true;
 
     const contentToSend = typeof overrideContent === 'string' ? overrideContent : inputValue.trim();
-    if (!contentToSend && filePreviews.length === 0) return;
+    if (!contentToSend && filePreviews.length === 0) {
+        isSendingRef.current = false;
+        return;
+    }
 
     // LOCK IMMEDIATELY
     isGlobalSending = true;
@@ -2487,6 +2490,8 @@ const Chat = () => {
 
     if (!checkLimitLocally(featureToTrack)) {
       isSendingRef.current = false;
+      isGlobalSending = false;
+      setIsLoading(false);
       return;
     }
 
@@ -2508,6 +2513,8 @@ const Chat = () => {
           // After switching mode, we recursively call handleSendMessage with the tool override
           setTimeout(() => {
             isSendingRef.current = false;
+            isGlobalSending = false;
+            setIsLoading(false);
             handleSendMessage(e, contentToSend, activeSuggestion.intent);
           }, 50);
           return;
@@ -2515,135 +2522,7 @@ const Chat = () => {
     }
 
 
-    if (isAudioConvertMode && !contentToSend && selectedFiles.length === 0) {
-      toast.error('Please enter text or upload a file to convert to audio');
-      return;
-    }
-
-    if (isDocumentConvert && selectedFiles.length === 0) {
-      toast.error('Please upload a PDF or DOCX file to convert');
-      return;
-    }
-
-    // Special case for Audio Convert Mode: Handle files directly if present
-    if (isAudioConvertMode && selectedFiles.length > 0) {
-      let activeSessionId = currentSessionId;
-      if (activeSessionId === 'new') {
-        activeSessionId = await chatStorageService.createSession();
-        setCurrentSessionId(activeSessionId);
-        isNavigatingRef.current = true;
-        navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
-      }
-      const fileToConvert = selectedFiles[0];
-      manualFileToAudioConversion(fileToConvert, activeSessionId);
-      setSelectedFiles([]);
-      setFilePreviews([]);
-      return;
-    }
-
-    // Special case for Audio Convert Mode: Handle text conversion
-    if (isAudioConvertMode && contentToSend) {
-      let activeSessionId = currentSessionId;
-      if (activeSessionId === 'new') {
-        activeSessionId = await chatStorageService.createSession();
-        setCurrentSessionId(activeSessionId);
-        isNavigatingRef.current = true;
-        navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
-      }
-      manualTextToAudioConversion(contentToSend, activeSessionId);
-      setInputValue('');
-      return;
-    }
-
-    // (isSendingRef already set above at function start)
-    setInputValue('');
-    transcriptRef.current = '';
-
-    let activeSessionId = currentSessionId;
-    let isFirstMessage = false;
-
-    // Stop listening if send is clicked
-    if (isListening && recognitionRef.current) {
-      isManualStopRef.current = true;
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
-
-    // Create or find session
-    if (activeSessionId === 'new') {
-      try {
-        activeSessionId = await chatStorageService.createSession();
-        setCurrentSessionId(activeSessionId);
-        isFirstMessage = true;
-      } catch (err) {
-        console.error("Failed to create session:", err);
-        toast.error('Failed to start a new chat session');
-        isSendingRef.current = false;
-        return;
-      }
-    }
-
-    // Handle Image Generation Mode
-    if (isImageGeneration || toolOverride === 'text_to_image') {
-      handleGenerateImage(contentToSend, activeSessionId);
-      isSendingRef.current = false;
-      return;
-    }
-
-    // Handle Video Generation Mode
-    if (isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') {
-      handleGenerateVideo(contentToSend, activeSessionId);
-      isSendingRef.current = false;
-      return;
-    }
-
-    // Handle Image Editing Mode
-    if (isMagicEditing || toolOverride === 'image_edit') {
-      handleEditImage(contentToSend, activeSessionId);
-      isSendingRef.current = false;
-      return;
-    }
-
-    // Handle Voice Reader Mode - Just read, no AI response
-    if (isVoiceMode) {
-      try {
-        // 1. Add User Message to UI
-        const userMsgId = Date.now().toString();
-        const newUserMsg = {
-          id: userMsgId,
-          role: 'user',
-          content: contentToSend,
-          timestamp: new Date(),
-          attachments: filePreviews.map(fp => ({
-            url: fp.url,
-            name: fp.name,
-            type: fp.type.startsWith('image/') ? 'image' :
-              fp.type.includes('pdf') ? 'pdf' :
-                fp.type.includes('word') || fp.type.includes('document') ? 'docx' : 'file'
-          }))
-        };
-        setMessages(prev => [...prev, newUserMsg]);
-
-        // 2. Clear inputs
-        setInputValue('');
-        handleRemoveFile();
-        if (inputRef.current) inputRef.current.style.height = 'auto';
-
-        // 3. Trigger voice reading directly (no AI response)
-        setTimeout(() => {
-          console.log('[Voice Mode] Reading content with attachments:', newUserMsg.attachments);
-          speakResponse(contentToSend, 'en-US', userMsgId, newUserMsg.attachments);
-        }, 300);
-
-        isSendingRef.current = false;
-        return; // STOP - Don't call AI API
-      } catch (err) {
-        console.error('[Voice Mode Error]:', err);
-        toast.error('Failed to read content');
-        isSendingRef.current = false;
-        return;
-      }
-    }
+    // (Removed duplicated routing block that bypassed try-catch locks)
 
 
     try {
