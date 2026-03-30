@@ -69,8 +69,8 @@ const MagicVideoGenModal = ({ isOpen, onClose, onCreditDeduction }) => {
     const processFile = (file) => {
         if (!file) return;
 
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-            toast.error("Please select a valid image (JPG, PNG, WEBP)");
+        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+            toast.error("Please select a valid image (JPG, PNG)");
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
@@ -433,7 +433,7 @@ const MagicVideoGenModal = ({ isOpen, onClose, onCreditDeduction }) => {
                     <input
                         type="file"
                         ref={fileInputRef}
-                        accept="image/jpeg, image/png, image/webp"
+                        accept="image/jpeg, image/png"
                         className="hidden"
                         onChange={handleImageSelect}
                     />
