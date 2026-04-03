@@ -4724,9 +4724,13 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
             </button>
           </div>
 
-          {/* Mode Indicator */}
+          {/* Mode Indicator - Show only when chat has started or user is typing */}
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-300"
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-500 overflow-hidden ${
+              (messages.length > 0 || inputValue.trim().length > 0) 
+              ? 'opacity-100 translate-x-0' 
+              : 'opacity-0 translate-x-4 pointer-events-none'
+            }`}
             style={{
               backgroundColor: `${getModeColor(isDeepSearch ? 'DEEP_SEARCH' : currentMode)}15`,
               color: getModeColor(isDeepSearch ? 'DEEP_SEARCH' : currentMode)
