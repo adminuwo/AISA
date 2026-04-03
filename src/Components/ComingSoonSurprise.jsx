@@ -166,30 +166,45 @@ const SlideShow = ({ type, themeColor }) => {
       )
     },
     {
-      title: "Content Synthesis",
-      description: "AI extracts key selling points, USPs, and visual hooks automatically.",
+      title: "Active Intelligence Synthesis",
+      description: "AISA extracts hooks, USPs and creates viral social captions in seconds.",
       visual: (
         <div className="w-full h-full flex flex-col justify-center p-8 space-y-4">
-           {[ 
-             { l: 'Fetching Metadata...', w: '70% ' }, 
-             { l: 'Summarizing Features...', w: '90%' }, 
-             { l: 'Generating Captions...', w: '60%' } 
-           ].map((step, i) => (
-             <div key={i} className="space-y-1.5">
-                <div className="flex justify-between text-[8px] font-black text-primary/60">
-                   <span>{step.l}</span>
-                   <span>COMPLETE</span>
-                </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                   <motion.div 
-                     initial={{ width: 0 }} 
-                     animate={{ width: step.w }} 
-                     transition={{ duration: 1, delay: i * 0.3 }}
-                     className="h-full bg-primary" 
-                   />
-                </div>
-             </div>
-           ))}
+           <div className="bg-white/5 rounded-2xl p-4 border border-white/10 relative">
+              <div className="flex items-center gap-2 mb-3">
+                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                 <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Generating Content...</span>
+              </div>
+              <div className="space-y-2">
+                 <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    className="text-xs font-medium text-white/80 leading-relaxed italic"
+                 >
+                    "Transforming your workspace has never been easier. Discover premium aesthetics with AISA... <motion.span animate={{ opacity: [0, 1] }} transition={{ repeat: Infinity }}>|</motion.span>"
+                 </motion.div>
+                 <div className="flex flex-wrap gap-2 pt-2">
+                    {['#Productivity', '#AIArt', '#ModernWork'].map(tag => (
+                      <span key={tag} className="text-[9px] font-black text-primary/40 bg-primary/5 px-2 py-0.5 rounded-full">{tag}</span>
+                    ))}
+                 </div>
+              </div>
+           </div>
+           {/* Steps in background */}
+           <div className="flex justify-around opacity-30">
+              <div className="flex flex-col items-center">
+                 <MousePointer2 size={12} className="text-white/40 mb-1" />
+                 <span className="text-[8px] font-black">SCRAPE</span>
+              </div>
+              <div className="flex flex-col items-center">
+                 <Zap size={12} className="text-primary mb-1" />
+                 <span className="text-[8px] font-black">SYNTHESIZE</span>
+              </div>
+              <div className="flex flex-col items-center">
+                 <Layout size={12} className="text-white/40 mb-1" />
+                 <span className="text-[8px] font-black">RENDER</span>
+              </div>
+           </div>
         </div>
       )
     },
