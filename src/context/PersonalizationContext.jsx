@@ -193,8 +193,46 @@ export const PersonalizationProvider = ({ children }) => {
             fetchPersonalizations();
             fetchNotifications();
             fetchChatSessions();
+
+            // Set up interval for polling notifications to detect new reminders/alerts
+            const interval = setInterval(() => {
+                const fetchSilently = async () => {
+                    try {
+                        const res = await axios.get(apis.user + '/notifications', {
+                            headers: { 'Authorization': `Bearer ${user.token}` }
+                        });
+                        
+                        setNotifications(prev => {
+                            if (res.data.length === 0) return prev;
+                            
+                            // Detect new notification by ID instead of length (to avoid demo data issues)
+                            // We only trigger if the new first ID is different and starts with reminder_
+                            const latest = res.data[0];
+                            if (latest.id?.startsWith('reminder_') && latest.id !== prev[0]?.id) {
+                                toast.success(`🔔 Reminder: ${latest.title}`, { 
+                                    duration: 8000,
+                                    icon: '⏰'
+                                });
+                                if (latest.voice && latest.voice !== 'none') {
+                                    speakReminder(latest.title, latest.voice);
+                                }
+                            }
+                            
+                            // Prevent re-rendering if content is identical
+                            if (prev.length === res.data.length && prev[0]?.id === res.data[0]?.id) {
+                                return prev;
+                            }
+                            return res.data;
+                        });
+                    } catch (err) {}
+                };
+                fetchSilently();
+            }, 10000); // Poll every 10s for better responsiveness
+            
+            return () => clearInterval(interval);
         }
         applyDynamicStyles();
+<<<<<<< HEAD
 
         // ONE-TIME MIGRATION: Force localStorage language to English
         // This fixes users who had Hindi saved in their browser storage
@@ -212,6 +250,29 @@ export const PersonalizationProvider = ({ children }) => {
             // Ignore parse errors
         }
     }, [user?.token]);
+=======
+    }, [user?.token]); // Stable dependency
+
+    const speakReminder = async (text, voiceConfig) => {
+        if (!user?.token) return;
+        try {
+            const [lang, variant] = voiceConfig.split(/-(?=[^-]+$)/); // Splits en-US-female into en-US and female
+            const res = await axios.post(`${API}/voice/synthesize`, {
+                text: `Reminder: ${text}`,
+                languageCode: lang,
+                gender: variant?.toUpperCase() || 'FEMALE'
+            }, {
+                headers: { 'Authorization': `Bearer ${user.token}` },
+                responseType: 'blob'
+            });
+            const url = URL.createObjectURL(res.data);
+            const audio = new Audio(url);
+            audio.play();
+        } catch (error) {
+            console.error('TTS failed for reminder', error);
+        }
+    };
+>>>>>>> 7d475261ccffc488e589154ff1a7a34984f3afb4
 
     const updatePersonalization = async (section, data) => {
         const next = {
