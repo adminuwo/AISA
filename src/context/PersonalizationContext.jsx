@@ -232,8 +232,6 @@ export const PersonalizationProvider = ({ children }) => {
             return () => clearInterval(interval);
         }
         applyDynamicStyles();
-<<<<<<< HEAD
-
         // ONE-TIME MIGRATION: Force localStorage language to English
         // This fixes users who had Hindi saved in their browser storage
         try {
@@ -250,14 +248,12 @@ export const PersonalizationProvider = ({ children }) => {
             // Ignore parse errors
         }
     }, [user?.token]);
-=======
-    }, [user?.token]); // Stable dependency
 
     const speakReminder = async (text, voiceConfig) => {
         if (!user?.token) return;
         try {
             const [lang, variant] = voiceConfig.split(/-(?=[^-]+$)/); // Splits en-US-female into en-US and female
-            const res = await axios.post(`${API}/voice/synthesize`, {
+            const res = await axios.post(`${apis.voice}/synthesize`, {
                 text: `Reminder: ${text}`,
                 languageCode: lang,
                 gender: variant?.toUpperCase() || 'FEMALE'
@@ -272,7 +268,6 @@ export const PersonalizationProvider = ({ children }) => {
             console.error('TTS failed for reminder', error);
         }
     };
->>>>>>> 7d475261ccffc488e589154ff1a7a34984f3afb4
 
     const updatePersonalization = async (section, data) => {
         const next = {
