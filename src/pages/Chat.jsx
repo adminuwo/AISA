@@ -465,6 +465,9 @@ const Chat = () => {
 
     if (isPremiumUser === null) return true; // still loading, allow optimistically
 
+    // Whitelist AI Legal for Free Tier
+    if (toolName === 'AI Legal') return true;
+
     // Check if tool is video and plan is starter/founder
     if (['Generate Video', 'Image to Video', 'Image to Video Magic'].includes(toolName)) {
       const plan = (userPlanName || '').toLowerCase();
@@ -868,7 +871,8 @@ const Chat = () => {
       return;
     }
 
-    const isUnlocked = isAdminUser || unlockedTools.includes(toolId);
+    // AI Legal is now available for ALL users (Free Tier)
+    const isUnlocked = true; // isAdminUser || unlockedTools.includes(toolId);
     
     if (!isUnlocked) {
       setMessages(prev => [...prev, {
@@ -6014,9 +6018,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                   onClick={() => {
                                     handleSendMessage(null, q);
                                   }}
-                                  className="text-xs px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all flex items-center gap-1.5 font-medium shadow-sm active:scale-95"
+                                  className="text-[11px] px-5 py-2.5 rounded-full border border-white/20 bg-blue-600/90 dark:bg-blue-600/70 text-white hover:bg-blue-600 hover:scale-[1.03] transition-all flex items-center gap-2.5 font-bold shadow-xl backdrop-blur-md active:scale-95 group/sug border-dashed"
                                 >
-                                  <Sparkles className="w-3 h-3" />
+                                  <Sparkles className="w-3.5 h-3.5 text-white/90 group-hover/sug:animate-pulse transition-all" />
                                   {q}
                                 </button>
                               ))}

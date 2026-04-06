@@ -129,7 +129,7 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
   }, [isOpen]);
 
   const ToolCard = ({ tool, isPrimary = false, size = 'md' }) => {
-    const isUnlocked = isAdmin || unlockedTools.includes(tool.id);
+    const isUnlocked = true; // All legal tools are now available for ALL tiers (Free included)
     const Icon = tool.icon;
 
     const [showWorkflow, setShowWorkflow] = useState(false);
@@ -347,22 +347,7 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
               </div>
 
               {/* Monetization Banner (Bottom) */}
-              {!isAdmin && (
-                <div className="mt-16 p-8 bg-slate-50 border border-slate-100 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100">
-                      <Shield className="w-7 h-7 text-blue-600" />
-                    </div>
-                    <div>
-                      <h6 className="font-extrabold text-slate-900 text-lg">Secure Full Toolkit Access</h6>
-                      <p className="text-xs text-slate-500 font-bold">Unlock all 15+ premium legal generators and predictors.</p>
-                    </div>
-                  </div>
-                  <button className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.1em] hover:bg-slate-800 transition-all shadow-xl active:scale-95">
-                    Unlock All Now
-                  </button>
-                </div>
-              )}
+              {/* Monetization Banner Removed as AI Legal is now free */}
 
             </div>
           </motion.div>
