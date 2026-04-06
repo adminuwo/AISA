@@ -3997,6 +3997,126 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
     }
   };
 
+  const handleDownloadPdf = async (msg) => {
+    const toastId = toast.loading("Generating PDF Report...");
+    try {
+      const element = document.getElementById(`msg-text-${msg.id}`);
+      if (!element) { toast.error("Content not found", { id: toastId }); return; }
+
+      const tempWrapper = document.createElement('div');
+      tempWrapper.style.position = 'absolute';
+      tempWrapper.style.left = '-9999px';
+      tempWrapper.style.top = '-9999px';
+      tempWrapper.style.width = '800px'; 
+      tempWrapper.style.backgroundColor = '#ffffff';
+
+      const clonedContent = element.cloneNode(true);
+      const header = document.createElement('div');
+      header.style.marginBottom = '30px';
+      header.style.paddingBottom = '15px';
+      header.style.borderBottom = '2px solid #000000';
+      header.style.display = 'flex';
+      header.style.justifyContent = 'space-between';
+      header.style.alignItems = 'center';
+      header.innerHTML = `
+        <div style="font-weight: 900; font-size: 24px; color: #000000;">AISA <span style="font-weight: 400; font-size: 14px; color: #888;">AI LEGAL ASSISTANT</span></div>
+        <div style="font-size: 10px; color: #aaa; text-align: right;">DOC-ID: ${msg.id}<br/>DATE: ${new Date().toLocaleDateString()}</div>
+      `;
+
+      tempWrapper.appendChild(header);
+      clonedContent.style.padding = '10px';
+      clonedContent.style.color = '#000000';
+      clonedContent.style.backgroundColor = '#ffffff';
+      clonedContent.style.width = '100%';
+      clonedContent.style.lineHeight = '1.6';
+
+      const all = clonedContent.querySelectorAll('*');
+      Array.from(all).forEach(el => {
+        el.style.color = '#111827';
+        if (el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
+           el.style.color = '#000000';
+           el.style.marginTop = '24px';
+           el.style.marginBottom = '12px';
+        }
+        if (el.tagName === 'P') el.style.marginBottom = '10px';
+        if (el.tagName === 'LI') el.style.marginBottom = '8px';
+      });
+
+      tempWrapper.appendChild(clonedContent);
+      
+      const footer = document.createElement('div');
+      footer.style.marginTop = '40px';
+      footer.style.paddingTop = '15px';
+      footer.style.borderTop = '1px solid #eee';
+      footer.style.fontSize = '10px';
+      footer.style.color = '#999';
+      footer.innerHTML = `AISA AI Legal Report - Generated on ${new Date().toLocaleString()}. Always consult with a licensed legal professional.`;
+      tempWrapper.appendChild(footer);
+
+      document.body.appendChild(tempWrapper);
+      await new Promise(r => setTimeout(r, 200));
+
+      const canvas = await html2canvas(tempWrapper, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        windowWidth: 800
+      });
+      document.body.removeChild(tempWrapper);
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const margin = 15;
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const printW = pageW - margin * 2;
+      const printH = pageH - margin * 2;
+      const pxPerMm = canvas.width / printW;
+      const pageHeightPx = Math.floor(printH * pxPerMm);
+      const mainCtx = canvas.getContext('2d');
+
+      let curY = 0;
+      let pageIdx = 0;
+      while (curY < canvas.height) {
+        if (pageIdx > 0) pdf.addPage();
+        let targetH = pageHeightPx;
+        if (curY + targetH < canvas.height) {
+          const scanRange = 150;
+          try {
+            const scanData = mainCtx.getImageData(0, curY + targetH - scanRange, canvas.width, scanRange).data;
+            let bestRow = -1;
+            for (let r = scanRange - 1; r >= 0; r--) {
+              let isWhite = true;
+              for (let c = 0; c < canvas.width; c += 10) {
+                const i = (r * canvas.width + c) * 4;
+                if (scanData[i] < 250 || scanData[i + 1] < 250 || scanData[i + 2] < 250) { isWhite = false; break; }
+              }
+              if (isWhite) { bestRow = r; break; }
+            }
+            if (bestRow !== -1) targetH = (targetH - scanRange) + bestRow + 5;
+          } catch (e) {}
+        } else { targetH = canvas.height - curY; }
+
+        const pCanvas = document.createElement('canvas');
+        pCanvas.width = canvas.width;
+        pCanvas.height = targetH;
+        const pCtx = pCanvas.getContext('2d');
+        pCtx.fillStyle = '#ffffff';
+        pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
+        pCtx.drawImage(canvas, 0, curY, canvas.width, targetH, 0, 0, canvas.width, targetH);
+        
+        pdf.addImage(pCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, printW, targetH / pxPerMm);
+        curY += targetH;
+        pageIdx++;
+      }
+
+      pdf.save(`AISA_Legal_Report_${msg.id.substring(0,6)}.pdf`);
+      toast.success("PDF Downloaded! 📄", { id: toastId });
+    } catch (err) {
+      console.error("PDF Generate error:", err);
+      toast.error("Download failed.", { id: toastId });
+    }
+  };
+
   // WhatsApp In-App PDF Share — uploads PDF to cloud, then lets user pick contact IN-APP
   const handleWhatsAppPdfShare = async (msg) => {
     const toastId = toast.loading("Preparing PDF for WhatsApp...");
@@ -5630,20 +5750,18 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     <Share className="w-3.5 h-3.5" />
                                   </button>
 
-                                  {/* PDF Tools — Only show when fully ready (no pulsing dots) */}
-                                  {pregeneratedPdfs[msg.id] && (
-                                    <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-800 ml-2 pl-2 animate-in fade-in zoom-in duration-300">
-                                      {/* PDF Share — Direct 1-click */}
-                                      <button
-                                        onClick={() => handlePdfAction('share', msg)}
-                                        className="text-red-500 hover:text-red-600 transition-all p-1.5 hover:bg-red-50/10 rounded-lg flex items-center gap-1 active:scale-95"
-                                        title="Share / Download PDF ✓ Ready"
-                                      >
-                                        <FileText className="w-4 h-4" />
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                      </button>
-                                    </div>
-                                  )}
+                                  {/* PDF Tools — Always show Download, plus Share logic */}
+                                  <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-800 ml-2 pl-2">
+                                    {/* Direct PDF Download Button */}
+                                    <button
+                                      onClick={() => handleDownloadPdf(msg)}
+                                      className="text-red-500 hover:text-red-600 transition-all p-1.5 hover:bg-red-50/10 rounded-lg flex items-center gap-1 active:scale-95 group/pdf"
+                                      title="Download Ready-Made PDF Report"
+                                    >
+                                      <FileText className="w-3.5 h-3.5 group-hover/pdf:scale-110 transition-transform" />
+                                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                    </button>
+                                  </div>
                                 </div>
 
 

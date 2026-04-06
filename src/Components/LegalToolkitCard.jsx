@@ -19,49 +19,84 @@ const PREMIUM_TOOLS = [
     name: 'Draft Maker', 
     icon: FileText, 
     desc: 'Notice, Affidavit & Legal Agreements Architect', 
-    price: '₹599' 
+    price: '₹599',
+    workflow: [
+      'Describe the document you need (Notice, Agreement, etc.).',
+      'Provide key names, dates, and factual background.',
+      'AI generates a litigation-ready professional draft.'
+    ]
   },
   { 
     id: 'legal_contract_analyzer', 
     name: 'Contract Analyzer', 
     icon: FileCheck, 
     desc: 'Risk Scanning & Protective Clause Rewriter', 
-    price: '₹799' 
+    price: '₹799',
+    workflow: [
+      'Upload or paste your contract/agreement text.',
+      'AI scans for hidden risks, liabilities, and unfair clauses.',
+      'Get professional rewrites to protect your interests.'
+    ]
   },
   { 
     id: 'legal_case_predictor', 
     name: 'Case Predictor', 
     icon: Scale, 
     desc: 'Outcome Probability & Case Strength Analyst', 
-    price: '₹999' 
+    price: '₹999',
+    workflow: [
+      'Input case facts, evidence, and legal claims.',
+      'AI evaluates scenarios against legal precedents.',
+      'Receive success probability and predicted judicial verdict.'
+    ]
   },
   { 
     id: 'legal_strategy_engine', 
     name: 'Strategy Engine', 
     icon: Brain, 
     desc: 'Tactical Planning & Case Journey Timeline', 
-    price: '₹899' 
+    price: '₹899',
+    workflow: [
+      'Brief the AI on your current legal dispute.',
+      'AI simulates opponent moves and creates counter-strategies.',
+      'Get aggressive, balanced, and safe tactical options.'
+    ]
   },
   { 
     id: 'legal_evidence_checker', 
     name: 'Evidence Analyst', 
     icon: Binary, 
     desc: 'Professional Strengths, Admissibility & Risk Reporting', 
-    price: '₹599' 
+    price: '₹599',
+    workflow: [
+      'Submit a list or description of your evidence.',
+      'AI checks admissibility under Section 65B and other laws.',
+      'AI identifies gaps and suggests ways to strengthen proof.'
+    ]
   },
   { 
     id: 'legal_research_assistant', 
     name: 'Research Assistant', 
     icon: Library, 
     desc: 'Statutory Interpetation & Case Law CITATIONS', 
-    price: '₹699' 
+    price: '₹699',
+    workflow: [
+      'Ask any complex legal query or situational question.',
+      'AI searches relevant statutes (IPC, BNS) and case laws.',
+      'Receive citations and strategic summaries for court use.'
+    ]
   },
   { 
     id: 'legal_argument_builder', 
     name: 'Argument Builder', 
     icon: Gavel, 
     desc: 'Structure Courtroom-Ready Arguments & Cross-Exams', 
-    price: '₹999' 
+    price: '₹999',
+    workflow: [
+      'Provide brief facts and the core dispute.',
+      'AI structures primary arguments and secondary rebuttals.',
+      'AI generates targeted cross-examination questions.'
+    ]
   }
 ];
 
@@ -97,15 +132,69 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
     const isUnlocked = isAdmin || unlockedTools.includes(tool.id);
     const Icon = tool.icon;
 
+    const [showWorkflow, setShowWorkflow] = useState(false);
+
     return (
       <motion.div
         whileHover={{ y: -4, scale: 1.01 }}
-        onClick={() => { onSelect(tool, isUnlocked); if (isUnlocked) onClose(); }}
         className={`group relative cursor-pointer bg-white border border-slate-200/60 rounded-[1.4rem] p-5 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-200 ${size === 'lg' ? 'p-6' : 'p-4'}`}
       >
-        <div className="flex flex-col gap-4">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 ${isUnlocked ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
-            <Icon className="w-5.5 h-5.5" />
+        {/* Workflow Overlay */}
+        <AnimatePresence>
+          {showWorkflow && (
+            <motion.div
+              initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              animate={{ opacity: 1, backdropFilter: 'blur(8px)' }}
+              exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              className="absolute inset-0 z-20 bg-blue-600/95 rounded-[1.4rem] p-6 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h6 className="text-white font-black text-[12px] uppercase tracking-widest flex items-center gap-2">
+                    <Zap className="w-4 h-4 fill-white" /> Workflow
+                  </h6>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setShowWorkflow(false); }}
+                    className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+                <div className="space-y-2.5">
+                  {tool.workflow.map((step, i) => (
+                    <div key={i} className="flex gap-3">
+                      <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-black text-white shrink-0">
+                        {i + 1}
+                      </span>
+                      <p className="text-white/90 text-[11px] leading-snug font-medium pt-0.5">
+                        {step}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onSelect(tool, isUnlocked); if (isUnlocked) onClose(); }}
+                className="w-full py-2 bg-white text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-colors shadow-lg"
+              >
+                Launch Now
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div onClick={() => { onSelect(tool, isUnlocked); if (isUnlocked) onClose(); }} className="flex flex-col gap-4">
+          <div className="flex items-start justify-between">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 ${isUnlocked ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
+              <Icon className="w-5.5 h-5.5" />
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setShowWorkflow(true); }}
+              className="p-2 transition-all text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg"
+              title="How it works"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
           </div>
           
           <div className="space-y-1">
