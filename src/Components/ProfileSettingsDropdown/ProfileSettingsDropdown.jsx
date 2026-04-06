@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { API, apis } from '../../types';
 import CustomSelect from '../CustomSelect/CustomSelect';
+import MultiScheduleReminder from './MultiScheduleReminder';
 import Cropper from 'react-easy-crop';
 import { getCroppedImgBlob } from '../../utils/canvasUtils';
 
@@ -355,6 +356,11 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                     {renderDropdown(accentColor, Object.keys(ACCENT_COLORS || {}), (e) => setAccentColor(e.target.value), Palette)}
                 </div>
             ))
+        });
+
+        settings.push({
+            id: 'multiScheduleReminder', tab: 'personalization', label: 'Multi Schedule Reminder', keywords: 'alarm scheduler calendar schedule',
+            component: <MultiScheduleReminder />
         });
 
         // Data
