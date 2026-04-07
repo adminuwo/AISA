@@ -509,7 +509,16 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
                             <div className="flex-1 text-center sm:text-left space-y-3">
                                 <div>
-                                    <h3 className="text-xl font-black text-gray-800 dark:text-white capitalize">{user.name}</h3>
+                                    <h3 className="text-xl font-black text-gray-800 dark:text-white capitalize flex items-center justify-center sm:justify-start gap-2">
+                                        {user.name}
+                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                                            planName.toLowerCase().includes('pro') ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                                            planName.toLowerCase().includes('founder') ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 
+                                            'bg-primary/10 text-primary border-primary/20'
+                                        }`}>
+                                            {planName.replace(' Plan', '')}
+                                        </span>
+                                    </h3>
                                     <p className="text-sm font-bold text-gray-500 max-w-[200px] truncate sm:max-w-none">{user.email}</p>
                                 </div>
                                 <button 
