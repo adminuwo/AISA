@@ -400,15 +400,8 @@ const ImageViewer = ({ src, alt }) => {
             }
           }}
         />
-        {explosions.map(exp => (
-          <NeuralExplosion 
-            key={exp.id} 
-            x={exp.x} 
-            y={exp.y} 
-            onComplete={() => setExplosions(prev => prev.filter(e => e.id !== exp.id))} 
-          />
-        ))}
       </div>
+
 
     </div>
   );
