@@ -387,7 +387,10 @@ const ImageViewer = ({ src, alt }) => {
             console.error("Viewer image load failed:", src);
             if (src && !e.target.dataset.retried) {
               e.target.dataset.retried = "true";
-              const retryUrl = src + (src.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+              const isSignedUrl = src?.includes('X-Goog-Signature');
+              const retryUrl = isSignedUrl
+                ? src
+                : src + (src.includes('?') ? '&' : '?') + 'retry=' + Date.now();
               console.log("Retrying viewer image:", retryUrl);
               e.target.src = retryUrl;
             } else {
@@ -395,7 +398,8 @@ const ImageViewer = ({ src, alt }) => {
               e.target.style.cursor = 'pointer';
               e.target.onclick = (event) => {
                 event.stopPropagation();
-                e.target.src = src + (src.includes('?') ? '&' : '?') + 'reload=' + Date.now();
+                const isSignedUrl = src?.includes('X-Goog-Signature');
+                e.target.src = isSignedUrl ? src : src + (src.includes('?') ? '&' : '?') + 'reload=' + Date.now();
               };
             }
           }}
@@ -1934,6 +1938,8 @@ const Chat = () => {
           
           const initialSuggestions = responseData.suggestions || [];
           const editMessage = {
+            id: tempId,
+            role: 'model',
             content: `✨ Your image has been edited!`,
             imageUrl: finalUrl,
             suggestions: initialSuggestions,
@@ -5647,7 +5653,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     if (!e.target.dataset.retried) {
                                       e.target.dataset.retried = "true";
                                       setTimeout(() => {
-                                        const retryUrl = msg.imageUrl + (msg.imageUrl.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+                                        // ⚠️ Never append extra query params to signed URLs — it breaks the signature
+                                        const isSignedUrl = msg.imageUrl?.includes('X-Goog-Signature');
+                                        const retryUrl = isSignedUrl
+                                          ? msg.imageUrl  // Use exact URL for signed URLs
+                                          : msg.imageUrl + (msg.imageUrl.includes('?') ? '&' : '?') + 'retry=' + Date.now();
                                         console.log("Retrying image load:", retryUrl);
                                         e.target.src = retryUrl;
                                       }, 2000);
@@ -5657,7 +5667,10 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                       e.target.style.cursor = 'pointer';
                                       e.target.onclick = (event) => {
                                         event.stopPropagation();
-                                        e.target.src = msg.imageUrl + (msg.imageUrl.includes('?') ? '&' : '?') + 'manual=' + Date.now();
+                                        const isSignedUrl = msg.imageUrl?.includes('X-Goog-Signature');
+                                        e.target.src = isSignedUrl
+                                          ? msg.imageUrl
+                                          : msg.imageUrl + (msg.imageUrl.includes('?') ? '&' : '?') + 'manual=' + Date.now();
                                       };
                                     }
                                   }}
