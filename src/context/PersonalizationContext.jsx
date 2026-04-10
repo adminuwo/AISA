@@ -252,13 +252,8 @@ export const PersonalizationProvider = ({ children }) => {
     const speakReminder = async (text, voiceConfig) => {
         if (!user?.token) return;
         try {
-<<<<<<< HEAD
             const [lang, variant] = voiceConfig.split(/-(?=[^-]+$)/); // Splits en-US-female into en-US and female
-            const res = await axios.post(`${apis.voice}/synthesize`, {
-=======
-            const [lang, variant] = voiceConfig.split(/-(?=[^-]+$)/);
             const res = await axios.post(apis.synthesizeVoice, {
->>>>>>> 2fbb6642ab5879b3af1eaa25784452dbf56e9227
                 text: `Reminder: ${text}`,
                 languageCode: lang,
                 gender: variant?.toUpperCase() || 'FEMALE'
