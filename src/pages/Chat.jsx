@@ -42,6 +42,7 @@ import { detectIntent, mapModeToToolState } from '../services/intentService';
 import LoginRequiredModal from '../Components/LoginRequiredModal';
 import FuturisticToolCards from '../Components/FuturisticToolCards';
 import AisaTypingIndicator from '../Components/AisaTypingIndicator';
+import AISnapshot from '../Components/AISnapshot';
 import Ballpit from '../Components/Ballpit';
 
 const SendRipple = ({ onComplete }) => {
@@ -464,11 +465,6 @@ const Chat = () => {
     // Admin Access Rule: Treat all tools as unlocked
     if (user.email === 'admin@uwo24.com' || isAdminUser) return true;
 
-    // Block AI CashFlow for non-admins immediately
-    if (toolName === 'AI CashFlow') {
-      toast.error("Access Restricted: Admin Only Tool.");
-      return false;
-    }
 
     if (isPremiumUser === null) return true; // still loading, allow optimistically
 
@@ -3630,6 +3626,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           // Extract media URLs if present
           aiVideoUrl = aiResponseData.videoUrl || null;
           aiImageUrl = aiResponseData.imageUrl || null;
+          const aiSnapshotData = aiResponseData.snapshot || null;
 
           // If backend provided specific error details, show them to help user understand why 'brain' is failing
           if (aiResponseData.error && aiResponseData.details) {
@@ -3726,6 +3723,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             finalModelMsg.isRealTime = isRealTimeResponse;
             finalModelMsg.sources = responseSources;
             if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
+            if (aiResponseData.snapshot) finalModelMsg.snapshot = aiResponseData.snapshot;
           } else if (i === responseParts.length - 1) {
             // For multi-part responses, add suggestions to the last part
             if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
@@ -5810,6 +5808,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 </div>
                               </div>
                             )}
+                            {msg.snapshot && <AISnapshot data={msg.snapshot} />}
                           </div>
                         )
                       )}
@@ -6911,7 +6910,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 <AnimatePresence>
                   {(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit) && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-[calc(100vw-24px)] max-w-5xl px-2 z-[100] justify-start sm:justify-start">
-                      {isCashFlowMode && isAdminUser && (
+                      {isCashFlowMode && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                           <TrendingUp size={12} strokeWidth={3} /> <span className="hidden sm:inline">AI CashFlow</span>
                           <button onClick={() => setIsCashFlowMode(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
