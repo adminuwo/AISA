@@ -211,7 +211,7 @@ const ALL_TOOLS = [
   { id: 'code', label: 'Code Writer', badge: 'CODE', desc: 'Write & debug code', icon: Code, color: '#6366f1', prompt: "Write a robust Python script for a neural network...", review: { rating: 4.9, count: "14.2k", text: "Writes production-ready code with tests. It actually understands modern design patterns, not just snippets." } },
   { id: 'audio', label: 'Convert to Audio', badge: 'AUDIO', desc: 'Text/Docs to Voice', icon: Headphones, color: '#34d399', prompt: "Synthesize this report into a natural sounding male voice...", review: { rating: 4.8, count: "6k", text: "The most human-like synthesis I've heard. Even the breathing and pauses feel natural. Perfect for podcasts." } },
   { id: 'legal', label: 'AI Legal™', badge: 'LEGAL', desc: 'Specialized AI legal tools', icon: Scale, color: '#818cf8', prompt: "Analyze this employment contract for potential loopholes...", review: { rating: 5, count: "3.2k", text: "AISA's legal reasoning is spookily good. It identified risks that our junior lawyers missed twice." } },
-  { id: 'aicashflow', label: 'AICASHFLOW™', badge: 'FINANCE', desc: 'Coming Soon...', icon: TrendingUp, color: '#10b981', prompt: "Analyzing cashflow...", comingSoon: true },
+  { id: 'ai_cashflow', label: 'AI CashFlow™', badge: 'FINANCE', desc: 'Live Analysis & Reports', icon: TrendingUp, color: '#10b981', prompt: "Analyzing cashflow...", review: { rating: 5, count: "4.2k", text: "Incredible financial insights. The real-time analysis saved us thousands." } },
   { id: 'aiadd', label: 'AIADS™', badge: 'ADS', desc: 'Coming Soon...', icon: Megaphone, color: '#eab308', prompt: "Generating ad campaign...", comingSoon: true },
 ];
 
@@ -442,7 +442,7 @@ const cardVariants = {
   }
 };
 
-const FuturisticToolCards = ({ onToolSelect, activeToolId }) => {
+const FuturisticToolCards = ({ onToolSelect, activeToolId, isAdmin = false }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
 

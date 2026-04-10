@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, Zap, Scale, Navigation, Rocket } from 'lucide-react';
-
+import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, TrendingUp, Zap, Scale, Navigation, Rocket } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { Menu, Transition, Dialog, Listbox, Portal } from '@headlessui/react';
@@ -23,6 +22,8 @@ import ImageEditor from '../Components/ImageEditor';
 import CustomVideoPlayer from '../Components/CustomVideoPlayer';
 import ModelSelector from '../Components/ModelSelector';
 import MagicToolSettingsCard from '../Components/MagicToolSettingsCard';
+import CashFlowStockModal from '../Components/CashFlowStockModal';
+import CashFlowChartWidget from '../Components/CashFlowChartWidget';
 import LegalToolkitCard from '../Components/LegalToolkitCard';
 import axios from 'axios';
 import { apis, API } from '../types';
@@ -41,6 +42,7 @@ import { detectIntent, mapModeToToolState } from '../services/intentService';
 import LoginRequiredModal from '../Components/LoginRequiredModal';
 import FuturisticToolCards from '../Components/FuturisticToolCards';
 import AisaTypingIndicator from '../Components/AisaTypingIndicator';
+import AISnapshot from '../Components/AISnapshot';
 import Ballpit from '../Components/Ballpit';
 
 const SendRipple = ({ onComplete }) => {
@@ -433,7 +435,7 @@ const Chat = () => {
     }
 
     // Admin Access Rule
-    if (user.email && user.email.toLowerCase() === 'admin@uwo24.com') {
+    if ((user.email && user.email.toLowerCase() === 'admin@uwo24.com') || (user.role === 'admin')) {
       setIsAdminUser(true);
       setIsPremiumUser(true);
       setUserPlanName('AISA Admin');
@@ -450,8 +452,13 @@ const Chat = () => {
       .catch(() => setIsPremiumUser(false));
   }, []);
 
+  const user = getUserData();
+  const isAdmin = user?.token && (user?.role === 'admin' || user?.email === 'admin@uwo24.com');
+
   const checkPremiumTool = (toolName) => {
-    const user = getUserData();
+    // Whitelist AI Legal and AI CashFlow for all users
+    if (toolName === 'AI Legal' || toolName === 'AI CashFlow') return true;
+
     if (!user?.token) {
       window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName } }));
       return false;
@@ -461,9 +468,6 @@ const Chat = () => {
     if (user.email === 'admin@uwo24.com' || isAdminUser) return true;
 
     if (isPremiumUser === null) return true; // still loading, allow optimistically
-
-    // Whitelist AI Legal for Free Tier
-    if (toolName === 'AI Legal') return true;
 
     // Check if tool is video and plan is starter/founder
     if (['Generate Video', 'Image to Video', 'Image to Video Magic'].includes(toolName)) {
@@ -613,6 +617,11 @@ const Chat = () => {
   const [isDocumentConvert, setIsDocumentConvert] = useState(false);
   const [isCodeWriter, setIsCodeWriter] = useState(false);
   const [isFileAnalysis, setIsFileAnalysis] = useState(false);
+  const [isCashFlowMode, setIsCashFlowMode] = useState(false);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [stockSearchResults, setStockSearchResults] = useState([]);
+  const [isSearchingStocks, setIsSearchingStocks] = useState(false);
   const [isVideoGeneration, setIsVideoGeneration] = useState(false);
   const [activeLegalToolkit, setActiveLegalToolkit] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -749,10 +758,13 @@ const Chat = () => {
     if (isFileAnalysis) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsMagicVideoModalOpen(false); }
   }, [isFileAnalysis]);
   useEffect(() => {
-    if (isMagicVideoModalOpen) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setActiveLegalToolkit(false); }
+    if (isMagicVideoModalOpen) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setActiveLegalToolkit(false); }
   }, [isMagicVideoModalOpen]);
   useEffect(() => {
-    if (activeLegalToolkit) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isCashFlowMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); }
+  }, [isCashFlowMode]);
+  useEffect(() => {
+    if (activeLegalToolkit) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); }
   }, [activeLegalToolkit]);
 
   // ─── Intent Detection Logic (Routing System) ──────────────────────────────
@@ -807,7 +819,8 @@ const Chat = () => {
     setIsImageGeneration(false); setIsVideoGeneration(false); setIsDeepSearch(false); 
     setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); 
     setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false);
-    setActiveLegalToolkit(false); // Reset legal toolkit too
+    setIsCashFlowMode(false);
+    setActiveLegalToolkit(false);
 
     // Dynamic activation based on map
     if (toolUpdates.activeImageGen) { setIsImageGeneration(true); setIsMagicSettingsOpen(true); }
@@ -910,6 +923,34 @@ const Chat = () => {
     isDetectionPausedRef.current = true;
     setTimeout(() => { isDetectionPausedRef.current = false; }, 30000); // 30s pause
   };
+
+  // ─── AI CashFlow Search Logic ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!isCashFlowMode || inputValue.length < 2) {
+      setStockSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingStocks(true);
+      try {
+        const user = getUserData();
+        const baseURL = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://localhost:8080/api";
+        const response = await axios.get(`${baseURL}/cashflow/search`, {
+          params: { keywords: inputValue },
+          headers: { Authorization: `Bearer ${user.token}` }
+        });
+        const data = response.data;
+        setStockSearchResults(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Stock search failed:", err);
+      } finally {
+        setIsSearchingStocks(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [inputValue, isCashFlowMode]);
 
 
   // Close menu on click outside
@@ -2067,6 +2108,95 @@ const Chat = () => {
     }
   };
 
+  const handleStockAnalysis = async (stock, activeSessionId = currentSessionId) => {
+    try {
+      if (!stock) {
+        toast.error('Please select a stock first');
+        return;
+      }
+
+      setIsLoading(true);
+      const user = getUserData();
+
+      // 1. Add User Message to UI
+      const userMsgId = Date.now().toString();
+      const userMsg = {
+        id: userMsgId,
+        role: 'user',
+        content: `Analyze stock performance and potential for: ${stock.name || stock.symbol}`,
+        timestamp: new Date(),
+        projectId: currentProjectId
+      };
+
+      // Show a message that analysis is in progress
+      const tempId = (Date.now() + 1).toString();
+      const readingMsg = {
+        id: tempId,
+        role: 'model',
+        isGenerating: true,
+        content: `📉 Fetching real-time market data for **${stock.symbol}**...\n\nAggregating the latest news and historical trends for AI depth analysis...`,
+        timestamp: new Date(),
+        projectId: currentProjectId
+      };
+
+      setMessages(prev => [...prev, userMsg, readingMsg]);
+      setInputValue('');
+      setStockSearchResults([]);
+      setSelectedStock(null);
+
+      // Save user message to backend
+      if (activeSessionId && activeSessionId !== 'new') {
+        chatStorageService.saveMessage(activeSessionId, userMsg, null, currentProjectId).catch(e => console.error(e));
+      }
+
+      try {
+        const baseURL = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://localhost:8080/api";
+        const response = await axios.post(`${baseURL}/cashflow/analyze`, {
+          symbol: stock.symbol,
+          name: stock.name
+        }, {
+          headers: { Authorization: `Bearer ${user.token}` }
+        });
+
+        const { summary, emailSent } = response.data;
+
+        // 2. Add AI full report to UI
+        const finalMsg = {
+          id: tempId,
+          role: 'model',
+          isGenerating: false,
+          content: summary.fullAnalysis,
+          cashflowData: summary,
+          timestamp: new Date(),
+          projectId: currentProjectId
+        };
+
+        setMessages(prev => prev.map(m => m.id === tempId ? finalMsg : m));
+        toast.success(`Research Report for ${summary.symbol} complete!`);
+        
+        // Save AI response
+        if (activeSessionId && activeSessionId !== 'new') {
+          chatStorageService.saveMessage(activeSessionId, finalMsg, null, currentProjectId).catch(e => console.error(e));
+        }
+
+        setIsCashFlowMode(false); // Return to normal chat
+        refreshSubscription();
+
+      } catch (err) {
+        console.error("Stock analysis request failed:", err);
+        const errorMsg = err.response?.data?.error || "Failed to complete financial analysis";
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, isGenerating: false, content: `❌ ${errorMsg}` } : m));
+        toast.error(errorMsg);
+      }
+
+    } catch (err) {
+      console.error("handleStockAnalysis error:", err);
+      toast.error("Error initiating analysis");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleModelSelect = (modelId) => {
     if (selectedToolType) {
       setToolModels(prev => ({
@@ -3127,6 +3257,19 @@ const Chat = () => {
         return;
       }
 
+      // Handle AI CashFlow Mode
+      if (isCashFlowMode || toolOverride === 'cashflow') {
+        if (!selectedStock) {
+          toast.error("Please select a stock from the search results first.");
+          isSendingRef.current = false;
+          setIsLoading(false);
+          isGlobalSending = false;
+          return;
+        }
+        await handleStockAnalysis(selectedStock, activeSessionId);
+        return;
+      }
+
       // Handle Voice Reader Mode - Just read, no AI response
       if (isVoiceMode) {
         try {
@@ -3561,6 +3704,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           // Extract media URLs if present
           aiVideoUrl = aiResponseData.videoUrl || null;
           aiImageUrl = aiResponseData.imageUrl || null;
+          const aiSnapshotData = aiResponseData.snapshot || null;
 
           // If backend provided specific error details, show them to help user understand why 'brain' is failing
           if (aiResponseData.error && aiResponseData.details) {
@@ -3657,6 +3801,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             finalModelMsg.isRealTime = isRealTimeResponse;
             finalModelMsg.sources = responseSources;
             if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
+            if (aiResponseData.snapshot) finalModelMsg.snapshot = aiResponseData.snapshot;
           } else if (i === responseParts.length - 1) {
             // For multi-part responses, add suggestions to the last part
             if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
@@ -5584,7 +5729,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               >
                                 {msg.content || msg.text || ""}
                               </ReactMarkdown>
-                              {/* AI Suggested Actions Removed */}
+                              {msg.cashflowData && (
+                                <CashFlowChartWidget data={msg.cashflowData} />
+                              )}
                             </div>
                             {/* Sources List (ONLY for Web Search, HIDE for RAG as requested) */}
                             {msg.role === 'model' && msg.isRealTime && msg.sources && msg.sources.length > 0 && (
@@ -5746,6 +5893,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 </div>
                               </div>
                             )}
+                            {msg.snapshot && <AISnapshot data={msg.snapshot} />}
                           </div>
                         )
                       )}
@@ -6235,6 +6383,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
                 <section className="w-full pb-32 px-1 sm:px-2 md:px-0">
                   <FuturisticToolCards 
+                    isAdmin={isAdminUser}
                     activeToolId={
                       isImageGeneration ? 'image' : 
                       isVideoGeneration ? 'video' :
@@ -6245,6 +6394,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       isFileAnalysis ? 'document' :
                       isMagicEditing ? 'edit_image' :
                       isMagicVideoModalOpen ? 'image_to_video' :
+                      isCashFlowMode ? 'ai_cashflow' :
                       (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
                     }
                     onToolSelect={(id) => {
@@ -6258,6 +6408,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       setIsFileAnalysis(false);
                       setIsMagicEditing(false);
                       setIsMagicVideoModalOpen(false);
+                      setIsCashFlowMode(false);
                       setActiveLegalToolkit(false);
 
                       if (id === 'image') {
@@ -6301,7 +6452,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       } else if (id === 'image_to_video') {
                         if (!checkPremiumTool('Image to Video')) return;
                         setIsMagicVideoModalOpen(true);
-                      } else if (id === 'legal') {
+                      } else if (id === 'legal' || id === 'legal_chat') {
                         if (inputRef.current) {
                           inputRef.current.value = "AI Legal Specialist: Analyze this legal concern: ";
                           inputRef.current.focus();
@@ -6309,9 +6460,14 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         if (!checkPremiumTool('AI Legal')) return;
                         setActiveLegalToolkit(true);
                         toast.success("AI Legal Enabled ⚖️");
-
+                      } else if (id === 'ai_cashflow') {
+                        if (!checkPremiumTool('AI CashFlow')) return;
+                        setIsCashFlowMode(true);
+                        setIsStockModalOpen(true);
+                        toast.success("AI CashFlow Explorer Active");
                       }
                     }}
+                    isAdmin={isAdminUser}
                   />
                 </section>
               </div>
@@ -6370,6 +6526,34 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
               
               <div className="flex items-end gap-2 w-full">
 
+
+            {/* AI CashFlow Search Results Dropdown */}
+            {isCashFlowMode && Array.isArray(stockSearchResults) && stockSearchResults.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-3 px-2 z-30 pointer-events-auto max-h-[300px] overflow-y-auto custom-scrollbar">
+                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
+                  {stockSearchResults.map((stock) => (
+                    <button
+                      key={stock.symbol}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStock(stock);
+                        setInputValue(stock.name);
+                        setStockSearchResults([]);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-primary/10 border-b border-slate-100 dark:border-zinc-800 last:border-0 flex items-center justify-between group transition-colors"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors">{stock.symbol}</span>
+                        <span className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-1">{stock.name}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded text-slate-500 dark:text-zinc-400 font-bold uppercase">{stock.region}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
               {/* Left Actions Group */}
               <div className="flex items-center gap-[2px] pl-[2px] shrink-0">
@@ -6646,14 +6830,17 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               const lastImg = [...messages].reverse().find(m => m.imageUrl);
                               if (lastImg) setEditRefImage({ url: lastImg.imageUrl, name: 'Last Generated', type: 'image' });
                             }
-
-                            setIsDeepSearch(false);
+                            
                             setIsImageGeneration(false);
                             setIsVideoGeneration(false);
+                            setIsDeepSearch(false);
+                            setIsWebSearch(false);
                             setIsAudioConvertMode(false);
                             setIsDocumentConvert(false);
                             setIsCodeWriter(false);
-                            if (newMode) toast.success("Image Editing Mode Enabled");
+                            setIsCashFlowMode(false);
+                            setIsFileAnalysis(false);
+                            if (newMode) toast.success("Image Editing Enabled");
                           }}
                           className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isMagicEditing ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
                         >
@@ -6665,9 +6852,47 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Edit Image</span>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Enhance and modify existing visuals.</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Magic Image Editor.</p>
                           </div>
                         </button>
+
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!checkPremiumTool('AI CashFlow')) return;
+                              setIsToolsMenuOpen(false);
+                              const newMode = !isCashFlowMode;
+                              setIsCashFlowMode(newMode);
+                              
+                              setIsImageGeneration(false);
+                              setIsVideoGeneration(false);
+                              setIsDeepSearch(false);
+                              setIsWebSearch(false);
+                              setIsAudioConvertMode(false);
+                              setIsDocumentConvert(false);
+                              setIsCodeWriter(false);
+                              setIsMagicEditing(false);
+                              setIsFileAnalysis(false);
+                              if (newMode) {
+                                setIsStockModalOpen(true);
+                                toast.success("AI CashFlow Explorer Active");
+                              }
+                            }}
+                            className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isCashFlowMode ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
+                          >
+                            <div className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] ${isCashFlowMode ? 'bg-primary border-primary text-white' : 'bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300'}`}>
+                              <TrendingUp className="w-5.5 h-5.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                                <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI CashFlow</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Live Analysis & Reports.</p>
+                            </div>
+                          </button>
+
 
                         <button
                           type="button"
@@ -6708,18 +6933,17 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           }}
                           className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md`}
                         >
-                          <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300`}>
-                            <Wand2 className="w-7 h-7" />
+                          <div className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300`}>
+                            <PlaySquare className="w-5.5 h-5.5" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
-                              <span className="text-[16px] font-extrabold text-slate-800 dark:text-white leading-none">Image {'->'} Video</span>
+                              <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Image to Video</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Animate your images with AI magic.</p>
                           </div>
                         </button>
-
                       </div>
                     </motion.div>
                   )}
@@ -6790,8 +7014,14 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
               <div className="flex-1 flex items-center min-w-0 bg-transparent border-0 ring-0 focus:ring-0">
                 <AnimatePresence>
-                  {(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') && (
+                  {(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') && (
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-[calc(100vw-24px)] max-w-5xl px-2 z-[100] justify-start sm:justify-start">
+                      {isCashFlowMode && (
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
+                          <TrendingUp size={12} strokeWidth={3} /> <span className="hidden sm:inline">AI CashFlow</span>
+                          <button onClick={() => setIsCashFlowMode(false)} className="ml-1 hover:text-primary/80"><X size={12} /></button>
+                        </motion.div>
+                      )}
                       {isWebSearch && (
                         <motion.div 
                           initial={{ opacity: 0, y: 10, scale: 0.95 }} 
@@ -7808,6 +8038,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         }}
         pricing={TOOL_PRICING}
       />
+      <CashFlowStockModal 
+        isOpen={isStockModalOpen}
+        onClose={() => setIsStockModalOpen(false)}
+        onSelect={(stock) => handleStockAnalysis(stock)}
+      />
       {explosions && explosions.map(exp => (
         <NeuralExplosion 
           key={exp.id} 
@@ -7876,7 +8111,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           });
         }}
       />
-
     </div>
   );
 };
