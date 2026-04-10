@@ -473,7 +473,7 @@ const FuturisticToolCards = ({ onToolSelect, activeToolId, isAdmin = false }) =>
         initial="hidden"
         animate="visible"
       >
-        {ALL_TOOLS.filter(tool => tool.id !== 'ai_cashflow' || isAdmin).map((tool, index) => (
+        {ALL_TOOLS.map((tool, index) => (
           <motion.div
             key={tool.id}
             variants={cardVariants}

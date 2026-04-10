@@ -452,8 +452,9 @@ const Chat = () => {
   const isAdmin = user?.token && (user?.role === 'admin' || user?.email === 'admin@uwo24.com');
 
   const checkPremiumTool = (toolName) => {
-    if (toolName === 'AI CashFlow' && !isAdmin) return false;
-    
+    // Whitelist AI Legal and AI CashFlow for all users
+    if (toolName === 'AI Legal' || toolName === 'AI CashFlow') return true;
+
     if (!user?.token) {
       window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName } }));
       return false;
@@ -462,11 +463,7 @@ const Chat = () => {
     // Admin Access Rule: Treat all tools as unlocked
     if (user.email === 'admin@uwo24.com' || isAdminUser) return true;
 
-
     if (isPremiumUser === null) return true; // still loading, allow optimistically
-
-    // Whitelist AI Legal for Free Tier
-    if (toolName === 'AI Legal') return true;
 
     // Check if tool is video and plan is starter/founder
     if (['Generate Video', 'Image to Video', 'Image to Video Magic'].includes(toolName)) {
@@ -6846,7 +6843,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                         </button>
 
-                        {isAdmin && (
+
                           <button
                             type="button"
                             onClick={() => {
@@ -6882,7 +6879,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Live Analysis & Reports.</p>
                             </div>
                           </button>
-                        )}
+
 
                         <button
                           type="button"
