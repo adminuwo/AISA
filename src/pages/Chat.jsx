@@ -455,8 +455,12 @@ const Chat = () => {
       .catch(() => setIsPremiumUser(false));
   }, []);
 
+  const user = getUserData();
+  const isAdmin = user?.token && (user?.role === 'admin' || user?.email === 'admin@uwo24.com');
+
   const checkPremiumTool = (toolName) => {
-    const user = getUserData();
+    if (toolName === 'AI CashFlow' && !isAdmin) return false;
+    
     if (!user?.token) {
       window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName } }));
       return false;
@@ -6752,41 +6756,43 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!checkPremiumTool('AI CashFlow')) return;
-                            setIsToolsMenuOpen(false);
-                            const newMode = !isCashFlowMode;
-                            setIsCashFlowMode(newMode);
-                            
-                            setIsImageGeneration(false);
-                            setIsVideoGeneration(false);
-                            setIsDeepSearch(false);
-                            setIsWebSearch(false);
-                            setIsAudioConvertMode(false);
-                            setIsDocumentConvert(false);
-                            setIsCodeWriter(false);
-                            setIsMagicEditing(false);
-                            setIsFileAnalysis(false);
-                            if (newMode) {
-                              setIsStockModalOpen(true);
-                              toast.success("AI CashFlow Explorer Active");
-                            }
-                          }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isCashFlowMode ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
-                        >
-                          <div className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] ${isCashFlowMode ? 'bg-primary border-primary text-white' : 'bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300'}`}>
-                            <TrendingUp className="w-5.5 h-5.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
-                              <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI CashFlow</span>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!checkPremiumTool('AI CashFlow')) return;
+                              setIsToolsMenuOpen(false);
+                              const newMode = !isCashFlowMode;
+                              setIsCashFlowMode(newMode);
+                              
+                              setIsImageGeneration(false);
+                              setIsVideoGeneration(false);
+                              setIsDeepSearch(false);
+                              setIsWebSearch(false);
+                              setIsAudioConvertMode(false);
+                              setIsDocumentConvert(false);
+                              setIsCodeWriter(false);
+                              setIsMagicEditing(false);
+                              setIsFileAnalysis(false);
+                              if (newMode) {
+                                setIsStockModalOpen(true);
+                                toast.success("AI CashFlow Explorer Active");
+                              }
+                            }}
+                            className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isCashFlowMode ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
+                          >
+                            <div className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] ${isCashFlowMode ? 'bg-primary border-primary text-white' : 'bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300'}`}>
+                              <TrendingUp className="w-5.5 h-5.5" />
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Live Analysis & Reports.</p>
-                          </div>
-                        </button>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                                <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI CashFlow</span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Live Analysis & Reports.</p>
+                            </div>
+                          </button>
+                        )}
 
                         <button
                           type="button"
