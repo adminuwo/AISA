@@ -304,6 +304,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         }
     };
 
+    const tabs = [
         { id: 'personalization', label: t('personalization'), icon: Sparkles },
         { id: 'appearance', label: t('appearance'), icon: Palette },
         { id: 'notifications', label: t('notifications'), icon: Bell },
