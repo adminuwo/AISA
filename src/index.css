@@ -488,11 +488,16 @@ body,
   background-color: #f9f9fb !important;
 }
 
+.dark .chatgpt-container {
+  background-color: #212121 !important;
+  color: #ececec !important;
+}
+
 .chatgpt-message-row {
   width: 100%;
   display: flex;
-  padding: 16px 24px;
-  transition: background-color 0.2s ease;
+  padding: 12px 24px;
+  transition: background-color 0.3s ease;
 }
 
 .chatgpt-message-row.user-row {
@@ -503,29 +508,28 @@ body,
   justify-content: flex-start;
 }
 
-.chatgpt-message-row:last-child {
-  border-bottom: none;
-}
-
 .chatgpt-message-content {
   width: 100%;
-  max-width: 800px;
+  max-width: 90%;
   display: flex;
   gap: 16px;
-}
-
-@media (min-width: 1024px) {
-  .chatgpt-message-content {
-    max-width: 70%; 
-  }
+  margin: 0; /* Remove centering margin */
 }
 
 .user-row .chatgpt-message-content {
   flex-direction: row-reverse;
+  text-align: right;
 }
 
 .ai-row .chatgpt-message-content {
   flex-direction: row;
+  text-align: left;
+}
+
+@media (min-width: 1024px) {
+  .chatgpt-message-content {
+    max-width: 750px; 
+  }
 }
 
 .chatgpt-text {
@@ -533,88 +537,47 @@ body,
   letter-spacing: normal;
   color: #374151;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-row .chatgpt-text {
-  text-align: right;
-  color: #1a1a1a;
-  background-color: transparent !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
+  align-items: flex-end;
 }
 
 .ai-row .chatgpt-text {
-  text-align: left;
+  align-items: flex-start;
 }
 
-/* Ensure headings NEVER have list bullets */
-.chatgpt-text h1, .chatgpt-text h2, .chatgpt-text h3 {
-  list-style-type: none !important;
-  list-style: none !important;
+/* Ensure headings inherit alignment */
+.user-row .chatgpt-text h1, 
+.user-row .chatgpt-text h2, 
+.user-row .chatgpt-text h3,
+.user-row .chatgpt-text p,
+.user-row .chatgpt-text ul,
+.user-row .chatgpt-text ol {
+  text-align: right;
+  width: 100%;
 }
 
-.chatgpt-text h1 {
-  font-size: 22px;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  color: #111827;
+.user-row .chatgpt-text ul,
+.user-row .chatgpt-text ol {
+  list-style-position: inside;
+  padding-left: 0;
 }
 
-.chatgpt-text h2 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-top: 1.25rem;
-  margin-bottom: 0.75rem;
-  color: #111827;
-}
-
-.chatgpt-text h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: #111827;
-}
-
-.chatgpt-text p {
-  margin-bottom: 14px;
-}
-
-.chatgpt-text ul, .chatgpt-text ol {
-  margin-bottom: 14px;
-  padding-left: 20px;
-}
-
-.chatgpt-text li {
-  margin-bottom: 6px;
-}
-
-.chatgpt-text code {
-  background-color: #f1f1f1;
-  padding: 0.2rem 0.4rem;
-  border-radius: 6px;
-  font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
-  font-size: 0.875em;
-  color: #111827;
-}
-
-/* Dark mode overrides */
-.dark .chatgpt-container {
-  background-color: #212121 !important;
-  color: #ececec !important;
-}
-
-.dark .chatgpt-message-row {
-  border-bottom: none;
-}
 
 .dark .chatgpt-text {
   color: #d1d5db;
 }
 
-.dark .user-row .chatgpt-text {
-  color: #ececec;
+/* Heading Typography & Bullet Fix */
+.chatgpt-text h1, .chatgpt-text h2, .chatgpt-text h3 {
+  list-style-type: none !important;
+  list-style: none !important;
+  color: #111827;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
 }
 
 .dark .chatgpt-text h1, 
@@ -623,9 +586,50 @@ body,
   color: #ececec;
 }
 
+.chatgpt-text h1 {
+  font-size: 24px;
+  margin-top: 1.5rem;
+}
+
+.chatgpt-text h2 {
+  font-size: 20px;
+  margin-top: 1.25rem;
+}
+
+.chatgpt-text h3 {
+  font-size: 18px;
+  margin-top: 1rem;
+}
+
+.chatgpt-text p {
+  margin-bottom: 14px;
+}
+
+.chatgpt-text ul, .chatgpt-text ol {
+  margin-bottom: 14px;
+  padding-left: 24px;
+}
+
+.chatgpt-text li {
+  margin-bottom: 8px;
+}
+
+.chatgpt-text code {
+  background-color: #f1f1f1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'ui-monospace', monospace;
+  font-size: 0.875em;
+  color: #111827;
+}
+
 .dark .chatgpt-text code {
   background-color: #383838;
   color: #ececec;
+}
+
+.chatgpt-message-row:hover {
+  background-color: rgba(0, 0, 0, 0.01);
 }
 
 .dark .chatgpt-message-row:hover {
@@ -635,5 +639,19 @@ body,
 .ai-row .chatgpt-text {
   background-color: transparent;
   padding: 0;
-  width: 100%;
 }
+
+/* Alignment for specific components inside rows */
+.user-row .chatgpt-text > div {
+  display: flex;
+  flex-direction: column;
+  items-align: flex-end;
+}
+
+.user-row .flex-1.chatgpt-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+
