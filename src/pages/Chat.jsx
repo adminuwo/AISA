@@ -3566,9 +3566,9 @@ REQUIRED OUTPUT FORMAT:
 (Repeat strictly for ALL ${filePreviews.length} files)` : ''}
 
 ### RESPONSE FORMATTING RULES (STRICT):
-1.  **Structure**: ALWAYS use **Bold Headings** and **Bullet Points**. Avoid long paragraphs.
-2.  **Point-wise Answers**: Break down complex topics into simple points.
-3.  **Highlights**: Bold key terms and important concepts.
+1.  **Structure**: ALWAYS use Markdown headers (# for main, ## for sub-sections) for section titles. Do NOT use bullets for these headers.
+2.  **Lists**: Use Bullet Points only for actual lists of multiple points. Avoid putting section titles inside a list.
+3.  **Highlights**: Bold key terms and important concepts within sentences.
 4.  **Summary**: Include a "One-line summary" or "Simple definition" at the start or end where appropriate.
 5.  **Emojis**: Use relevant emojis.
 
@@ -5037,6 +5037,42 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
     }
   };
 
+  const handleMessageUndo = async (msg) => {
+    const msgIndex = messages.findIndex(m => m.id === msg.id);
+    if (msgIndex === -1) return;
+
+    const msgsToDelete = [msg.id];
+    // Check if the next message is an AI response (model), if so, delete it too
+    if (msgIndex + 1 < messages.length && messages[msgIndex + 1].role === 'model') {
+      msgsToDelete.push(messages[msgIndex + 1].id);
+    }
+
+    // Restore content to input
+    setInputValue(msg.content || msg.text || "");
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.selectionStart = (msg.content || msg.text || "").length;
+        inputRef.current.selectionEnd = (msg.content || msg.text || "").length;
+      }
+    }, 50);
+
+    // Optimistic Update
+    setMessages(prev => prev.filter(m => !msgsToDelete.includes(m.id)));
+
+    // Delete from storage
+    try {
+      for (const id of msgsToDelete) {
+        if (id) {
+          await chatStorageService.deleteMessage(currentSessionId, id);
+        }
+      }
+      toast.success("Resumed from this message", { icon: '↩️' });
+    } catch (error) {
+      console.error("Quick undo error:", error);
+    }
+  };
+
   const [viewingDoc, setViewingDoc] = useState(null);
   const docContainerRef = useRef(null);
 
@@ -5346,15 +5382,14 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="relative flex-1 overflow-y-auto p-1 sm:p-2 md:p-3 pb-48 md:pb-56 space-y-2.5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent aisa-scalable-text"
+          className="relative flex-1 overflow-y-auto chatgpt-container pb-48 md:pb-56 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent aisa-scalable-text"
         >
           {messages.length > 0 && (
             <>
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`group relative flex items-start gap-2 md:gap-3 w-full max-w-5xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''
-                    }`}
+                  className={`chatgpt-message-row group ${msg.role === 'user' ? 'user-row' : 'ai-row'}`}
                   onClick={() => {
                     if (window.getSelection().toString()) return;
                     setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
@@ -5362,29 +5397,22 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 >
                   {/* Actions Menu (Always visible for discoverability) */}
 
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
-                      ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 shadow-sm'
-                      : 'bg-transparent'
-                      }`}
-                  >
-                    {msg.role === 'user' ? (
-                      <User className="w-4 h-4 text-slate-800 dark:text-slate-200" />
-                    ) : (
-                      <img src="/logo/Logo.svg" alt="AISA" className="w-5 h-5 object-contain" />
-                    )}
-                  </div>
-
-                  <div
-                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
-                      } max-w-[85%] sm:max-w-[80%] md:max-w-[75%]`}
-                  >
+                  <div className="chatgpt-message-content">
+                    {/* Avatar */}
                     <div
-                      className={`group/bubble relative transition-all duration-300 min-h-[40px] w-fit max-w-full ${msg.role === 'user'
-                        ? 'px-2 py-1 text-slate-900 dark:text-white text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words'
-                        : `text-maintext text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words`
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
+                        ? 'bg-slate-200 dark:bg-slate-700'
+                        : 'bg-transparent'
                         }`}
                     >
+                      {msg.role === 'user' ? (
+                        <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                      ) : (
+                        <img src="/logo/Logo.svg" alt="AISA" className="w-6 h-6 object-contain" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 chatgpt-text">
 
                       {msg.isProcessing && (
                         <div className="flex items-center gap-3 mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10 animate-pulse">
@@ -5599,25 +5627,13 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                       </a>
                                     );
                                   },
-                                  p: ({ children }) => <p className={`mb-2 last:mb-0 ${msg.role === 'user' ? 'm-0 leading-normal' : 'leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]'}`}>{children}</p>,
-                                  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ul>,
-                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-2 marker:text-subtext/70 transition-all">{children}</ol>,
-                                  li: ({ children }) => <li className="mb-1.5 last:mb-0 transition-colors leading-[1.75] tracking-[0.015em] [word-spacing:0.05em]">{children}</li>,
-                                  h1: ({ children }) => (
-                                    msg.role === 'model' ? 
-                                      <h1 style={{ fontSize: '2rem', lineHeight: '1.2' }} className="font-black mb-4 mt-7 block text-maintext tracking-tight border-b border-border/30 pb-2">{children}</h1> :
-                                      <h1 className="font-bold mb-2 mt-3 block text-[1.4em] text-maintext tracking-tight">{children}</h1>
-                                  ),
-                                  h2: ({ children }) => (
-                                    msg.role === 'model' ?
-                                      <h2 style={{ fontSize: '1.6rem', lineHeight: '1.25' }} className="font-extrabold mb-3 mt-6 block text-maintext tracking-tight">{children}</h2> :
-                                      <h2 className="font-bold mb-1.5 mt-2 block text-[1.2em] text-maintext tracking-tight">{children}</h2>
-                                  ),
-                                  h3: ({ children }) => (
-                                    msg.role === 'model' ?
-                                      <h3 style={{ fontSize: '1.3rem', lineHeight: '1.3' }} className="font-bold mb-2 mt-4 block text-maintext tracking-tight">{children}</h3> :
-                                      <h3 className="font-bold mb-1 mt-1.5 block text-[1.1em] text-maintext tracking-tight">{children}</h3>
-                                  ),
+                                  p: ({ children }) => <p className="mb-[14px] last:mb-0 leading-[1.6]">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ol>,
+                                  li: ({ children }) => <li className="mb-1 last:mb-0 leading-[1.6]">{children}</li>,
+                                  h1: ({ children }) => <h1 className="text-[22px] font-semibold mb-3.5 mt-6 block text-[#1a1a1a] dark:text-[#ececec] tracking-tight">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="text-[18px] font-semibold mb-3 mt-5 block text-[#1a1a1a] dark:text-[#ececec] tracking-tight">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="text-[16px] font-semibold mb-2.5 mt-4 block text-[#1a1a1a] dark:text-[#ececec] tracking-tight">{children}</h3>,
                                   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
                                   table: ({ children }) => (
                                     <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg bg-surface/30 backdrop-blur-sm">
@@ -5739,7 +5755,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </div>
                             {/* Sources List (ONLY for Web Search, HIDE for RAG as requested) */}
                             {msg.role === 'model' && msg.isRealTime && msg.sources && msg.sources.length > 0 && (
-                              <div className="mt-4 pt-4 border-t border-border/50">
+                              <div className="mt-4 pt-4">
                                 <p className="text-[10px] font-bold uppercase text-subtext mb-3 flex items-center gap-2">
                                   <ExternalLink className="w-3 h-3" />
                                   Web Sources
@@ -6244,9 +6260,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     <Share className="w-3.5 h-3.5" />
                                   </button>
 
-                                  {/* PDF Tools — Always show Download, plus Share logic */}
+                                  {/* PDF Tools — Always show Download */}
                                   <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-800 ml-2 pl-2">
-                                    {/* Direct PDF Download Button */}
                                     <button
                                       onClick={() => handleDownloadPdf(msg)}
                                       className="text-red-500 hover:text-red-600 transition-all p-1.5 hover:bg-red-50/10 rounded-lg flex items-center gap-1 active:scale-95 group/pdf"
@@ -6257,99 +6272,82 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     </button>
                                   </div>
                                 </div>
-
-
                               </div>
                             </div>
                           </div>
                         )}
 
-                        {/* Related Questions Suggestions */}
-                        {(msg.role === 'model' || msg.role === 'assistant') &&
-                          msg.suggestions && msg.suggestions.length > 0 &&
-                          typingMessageId !== msg.id && (
-                            <div className="mt-5 flex flex-col gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-700">
-                               <div className="flex items-center gap-2 px-1">
-                                    <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/80 dark:text-blue-400/80">AISA Smart Prompts</span>
-                               </div>
-                               <div className="flex flex-wrap gap-2.5">
-                                {msg.suggestions.map((q, idx) => (
-                                  <button
-                                    key={idx}
-                                    onClick={() => {
-                                      handleSendMessage(null, q);
-                                    }}
-                                    className="text-[11px] px-5 py-2.5 rounded-full border border-blue-500/10 dark:border-white/10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.03] transition-all flex items-center gap-2.5 font-bold shadow-lg shadow-blue-500/20 backdrop-blur-md active:scale-95 group/sug border-dashed"
-                                  >
-                                    <Wand2 className="w-3.5 h-3.5 text-white/90 group-hover/sug:rotate-12 transition-transform" />
-                                    {q}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
+                      {/* Related Questions Suggestions */}
+                    {(msg.role === 'model' || msg.role === 'assistant') &&
+                      msg.suggestions && msg.suggestions.length > 0 &&
+                      typingMessageId !== msg.id && (
+                        <div className="mt-6 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                          <div className="flex items-center gap-2 px-1">
+                            <Sparkles className="w-3.5 h-3.5 text-blue-500/60" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-subtext/60">Suggestions</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {msg.suggestions.map((q, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleSendMessage(null, q)}
+                                className="text-[13px] px-4 py-2 rounded-2xl border border-border bg-white dark:bg-white/5 text-maintext hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95 text-left shadow-sm"
+                              >
+                                {q}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Timestamp & User Actions */}
+                    <div className="mt-4 flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {msg.role === 'user' && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleMessageDelete(msg.id)}
+                            className="p-1.5 text-subtext hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleMessageUndo(msg)}
+                            className="p-1.5 text-subtext hover:text-indigo-500 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
+                            title="Undo/Restore to Input"
+                          >
+                            <Undo2 className="w-3.5 h-3.5" />
+                          </button>
+                          {!msg.attachment && (
+                            <button
+                              onClick={() => startEditing(msg)}
+                              className="p-1.5 text-subtext hover:text-primary hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
                           )}
+                          <button
+                            onClick={() => handleCopyMessage(msg.content || msg.text)}
+                            className="p-1.5 text-subtext hover:text-maintext hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
+                            title="Copy"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
+                      <span className="text-[10px] text-subtext font-medium">
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-subtext mt-0 px-1">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
                   </div>
-
-                  {/* Hover Actions - User Only (AI has footer) */}
-                  {
-                    msg.role === 'user' && (
-                      <div className={`flex items-center gap-1 transition-opacity duration-200 self-start mt-2 mr-0 flex-row-reverse ${activeMessageId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-
-                        <button
-                          onClick={() => handleCopyMessage(msg.content || msg.text)}
-                          className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
-                          title="Copy"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        {!msg.attachment && (
-                          <button
-                            onClick={() => startEditing(msg)}
-                            className="p-1.5 text-blue-500 hover:text-primary hover:bg-surface rounded-full transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        {msg.attachment && (
-                          <button
-                            onClick={() => handleRenameFile(msg)}
-                            className="p-1.5 text-blue-500 hover:text-primary hover:bg-surface rounded-full transition-colors"
-                            title="Rename"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        {/* Only show Undo for the most recent user message if it's the last or second to last message in the whole chat */}
-                        {msg.id === messages.findLast(m => m.role === 'user')?.id && (
-                          <button
-                            onClick={handleUndo}
-                            className="p-1.5 text-subtext hover:text-primary hover:bg-surface rounded-full transition-colors"
-                            title="Undo"
-                          >
-                            <Undo2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleMessageDelete(msg.id)}
-                          className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )
-                  }
                 </div>
-              ))}
+              </div>
+            ))}
 
               {isLoading && !typingMessageId && (
                 <AisaTypingIndicator visible={true} />
@@ -6532,7 +6530,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
             {/* AI CashFlow Search Results Dropdown */}
             {isCashFlowMode && Array.isArray(stockSearchResults) && stockSearchResults.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-3 px-2 z-30 pointer-events-auto max-h-[300px] overflow-y-auto custom-scrollbar">
+              <div className="absolute bottom-full left-0 right-0 mb-3 px-2 z-[110] pointer-events-auto max-h-[300px] overflow-y-auto custom-scrollbar">
                 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
                   {stockSearchResults.map((stock) => (
                     <button
@@ -6568,7 +6566,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       exit={{ opacity: 0, scale: 0.9, y: 10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
                       ref={menuRef}
-                      className={`absolute bottom-full left-0 ${ (isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing) ? 'mb-[60px]' : 'mb-4' } w-[min(85vw,220px)] bg-surface/95 dark:bg-[#1a1a1a]/95 border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-30 backdrop-blur-xl ring-1 ring-black/5`}
+                      className={`absolute bottom-full left-0 ${ (isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'mb-[60px]' : 'mb-4' } w-[min(85vw,220px)] bg-surface/95 dark:bg-[#1a1a1a]/95 border border-border/50 rounded-2xl shadow-2xl overflow-hidden z-[110] backdrop-blur-xl ring-1 ring-black/5`}
                     >
                       <div className="p-2 space-y-1">
                         {getAgentCapabilities(activeAgent.agentName, activeAgent.category).canCamera && (
@@ -6606,7 +6604,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       exit={{ opacity: 0, scale: 0.9, y: 10 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
                       ref={toolsMenuRef}
-                      className={`absolute bottom-full left-0 ${ (isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing) ? 'mb-[60px]' : 'mb-[16px]' } w-[min(94vw,310px)] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[36px] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)] overflow-hidden z-30 ring-1 ring-black/5`}
+                      className={`absolute bottom-full left-0 ${ (isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'mb-[60px]' : 'mb-[16px]' } w-[min(94vw,310px)] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[36px] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)] overflow-hidden z-[110] ring-1 ring-black/5`}
                       style={{ maxHeight: 'calc(100vh - 180px)' }}
                     >
                       <div className="px-6 py-5 bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-100 dark:border-zinc-800 shrink-0">
@@ -6923,7 +6921,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI Legal</span>
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">6 specialized AI legal tools.</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">7 specialized AI legal tools.</p>
                           </div>
                         </button>
 
