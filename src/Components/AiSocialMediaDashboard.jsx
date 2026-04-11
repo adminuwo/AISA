@@ -102,6 +102,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
   // AI Ads Agent – Visual Post Generation state
   const [visualGenRowId, setVisualGenRowId] = useState(null); // tracks which card is actively generating
 
+  // Gen Post Format Modal
+  const [genPostModal, setGenPostModal] = useState({ open: false, entry: null, format: 'single' });
+
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
 
@@ -1015,7 +1018,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
    * 2. Vertex AI Imagen 3/4 renders the high-quality visual
    * 3. Polls for completion, then auto-redirects to Post Generation tab
    */
-  const handleVisualPostGeneration = async (entry) => {
+  const handleVisualPostGeneration = async (entry, postFormat = 'single') => {
     if (!workspace || !entry) return;
     const entryId = String(entry._id);
     setVisualGenRowId(entryId);
@@ -1029,7 +1032,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
       // Step 1: Kick off the backend pipeline
       const res = await apiService.generateVisualPost(
         workspace._id,
-        entryId
+        entryId,
+        undefined, // modelId — use backend default
+        postFormat  // 'single' | 'carousel'
       );
 
       if (!res?.success || !res?.jobId) {
@@ -1061,6 +1066,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
 
       // Step 3: Success — refresh assets and navigate to Post Generation
       toast.success('✨ Visual post created! Redirecting to Creative Studio...', { id: toastId, duration: 4000 });
+
+      // Update local calendar status to instantly show "View Post" instead of "Gen Post"
+      setCalendarEntries(prev => prev.map(r => r._id === entryId ? { ...r, status: 'generated' } : r));
 
       // Refresh assets in background
       if (workspace?._id) {
@@ -2354,21 +2362,34 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mt-auto pt-6 border-t border-slate-100 dark:border-white/5">
-                          <button
-                            onClick={() => handleVisualPostGeneration(entry)}
-                            disabled={!!visualGenRowId}
-                            className={`h-11 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg disabled:opacity-50 ${
-                              visualGenRowId === String(entry._id)
-                                ? 'bg-indigo-600 text-white shadow-indigo-500/20 cursor-not-allowed'
-                                : 'bg-primary text-white shadow-primary/10'
-                            }`}
-                          >
-                            {visualGenRowId === String(entry._id) ? (
-                              <><RefreshCw className="w-3 h-3 animate-spin" /> Generating...</>
-                            ) : (
-                              <><Sparkles className="w-3 h-3" /> Gen Post</>
-                            )}
-                          </button>
+                          {(entry.status === 'generated' || (assets && assets.some(a => a.calendarEntryId === entry._id))) ? (
+                            <button
+                              onClick={() => {
+                                const generatedAsset = assets?.find(a => a.calendarEntryId === entry._id);
+                                if (generatedAsset) setSelectedAsset(generatedAsset);
+                                setActiveTab('assets');
+                              }}
+                              className="h-11 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg bg-emerald-500 text-white shadow-emerald-500/20"
+                            >
+                              <Layers className="w-3 h-3" /> View Post
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setGenPostModal({ open: true, entry, format: 'single' })}
+                              disabled={!!visualGenRowId}
+                              className={`h-11 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg disabled:opacity-50 ${
+                                visualGenRowId === String(entry._id)
+                                  ? 'bg-indigo-600 text-white shadow-indigo-500/20 cursor-not-allowed'
+                                  : 'bg-primary text-white shadow-primary/10'
+                              }`}
+                            >
+                              {visualGenRowId === String(entry._id) ? (
+                                <><RefreshCw className="w-3 h-3 animate-spin" /> Generating...</>
+                              ) : (
+                                <><Sparkles className="w-3 h-3" /> Gen Post</>
+                              )}
+                            </button>
+                          )}
                           
                           <button
                             onClick={() => handleRegeneratePost(entry._id || idx)}
@@ -3211,13 +3232,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
                    className="h-14 pl-12 pr-6 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all w-64 md:w-80" 
                  />
                </div>
-               <button className="h-14 w-14 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-all hover:scale-105 active:scale-95"><Filter className="w-5 h-5" /></button>
             </div>
 
             <div className="flex gap-4">
-               <button className="h-14 px-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center gap-3 font-black uppercase text-[9px] tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all shadow-sm">
-                 <Video className="w-4 h-4" /> Generate Video
-               </button>
                <button
                  onClick={() => setShowOneOffModal(true)}
                  className="h-14 px-8 bg-primary text-white rounded-2xl flex items-center gap-3 font-black uppercase text-[10px] tracking-[2px] shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
@@ -3631,6 +3648,156 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
       </Dialog>
     </Transition>
   );
+
+  const renderGenPostModal = () => {
+    const { open, entry, format } = genPostModal;
+    if (!open || !entry) return null;
+
+    const isGeneratingThis = visualGenRowId === String(entry._id);
+    const postFormats = [
+      {
+        id: 'single',
+        label: 'Single Post',
+        desc: 'One high-impact visual optimised for your platform',
+        icon: '🖼️',
+      },
+      {
+        id: 'carousel',
+        label: 'Carousel Post',
+        desc: 'Multi-slide storytelling format (Instagram / LinkedIn)',
+        icon: '📑',
+      },
+    ];
+
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/70 backdrop-blur-md"
+          onClick={() => !isGeneratingThis && setGenPostModal({ open: false, entry: null, format: 'single' })}
+        />
+
+        {/* Modal Card */}
+        <div className="relative w-full max-w-md bg-white dark:bg-[#0e0e14] rounded-[36px] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+
+          {/* Header */}
+          <div className="px-8 pt-8 pb-6 border-b border-slate-100 dark:border-white/5 flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-[9px] font-black text-primary uppercase tracking-[3px]">AI Post Generator</span>
+              </div>
+              <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
+                {entry.title || entry.heading_hook || 'Generate Visual Post'}
+              </h3>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {entry.platform && (
+                  <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-500 text-[9px] font-black uppercase tracking-widest">{entry.platform}</span>
+                )}
+                {entry.phase && (
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 text-[9px] font-black uppercase tracking-widest">{entry.phase}</span>
+                )}
+                {(entry.postType || entry.format) && (
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[9px] font-black uppercase tracking-widest">{entry.postType || entry.format}</span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setGenPostModal({ open: false, entry: null, format: 'single' })}
+              disabled={isGeneratingThis}
+              className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all hover:scale-110 disabled:opacity-40 flex-shrink-0 mt-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Format Selector */}
+          <div className="px-8 py-6">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[3px] mb-4">Choose Post Format</p>
+            <div className="grid grid-cols-2 gap-3">
+              {postFormats.map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setGenPostModal(prev => ({ ...prev, format: f.id }))}
+                  className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+                    format === f.id
+                      ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-lg shadow-primary/10'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] hover:border-primary/40'
+                  }`}
+                >
+                  <span className="text-2xl block mb-2">{f.icon}</span>
+                  <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+                    format === f.id ? 'text-primary' : 'text-slate-700 dark:text-white'
+                  }`}>{f.label}</p>
+                  <p className="text-[9px] font-medium text-slate-400 leading-relaxed">{f.desc}</p>
+                  {format === f.id && (
+                    <div className="mt-2 flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-[8px] font-black text-primary uppercase tracking-widest">Selected</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Pipeline Steps Preview */}
+            <div className="mt-5 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-[3px] mb-3">Generation Pipeline</p>
+              <div className="flex items-center gap-2">
+                {[
+                  { label: 'GPT-4', icon: '🧠', desc: 'Prompt' },
+                  { icon: '→', plain: true },
+                  { label: 'Imagen', icon: '🖼️', desc: 'Visual' },
+                  { icon: '→', plain: true },
+                  { label: 'GCS', icon: '☁️', desc: 'Upload' },
+                  { icon: '→', plain: true },
+                  { label: 'Asset', icon: '✨', desc: 'Saved' },
+                ].map((step, i) =>
+                  step.plain ? (
+                    <span key={i} className="text-slate-300 dark:text-white/20 font-black text-xs">→</span>
+                  ) : (
+                    <div key={i} className="flex-1 text-center">
+                      <span className="text-base block">{step.icon}</span>
+                      <p className="text-[7px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{step.label}</p>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="px-8 pb-8 flex gap-3">
+            <button
+              onClick={() => setGenPostModal({ open: false, entry: null, format: 'single' })}
+              disabled={isGeneratingThis}
+              className="flex-1 h-12 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                const currentEntry = genPostModal.entry;
+                const currentFormat = genPostModal.format;
+                setGenPostModal({ open: false, entry: null, format: 'single' });
+                handleVisualPostGeneration(currentEntry, currentFormat);
+              }}
+              disabled={isGeneratingThis}
+              className="flex-1 h-12 bg-primary text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+            >
+              {isGeneratingThis ? (
+                <><RefreshCw className="w-4 h-4 animate-spin" /> Generating...</>
+              ) : (
+                <><Sparkles className="w-4 h-4" /> Generate Post</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderOneOffAssetModal = () => {
     return (
@@ -4959,6 +5126,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
                 {renderGenerationWizard()}
                 {renderPostHistoryDrawer()}
                 {renderOneOffAssetModal()}
+                {renderGenPostModal()}
 
                 <AnimatePresence>
                   {showUserProfileModal && renderUserProfileModal()}
