@@ -300,9 +300,9 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
         <div 
           className={`absolute inset-0 w-full h-full rounded-[20px] border p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between backface-hidden ${
             isActive 
-              ? (isDark ? 'bg-[#1a223f] border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]')
+              ? (isDark ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)] backdrop-blur-xl' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]')
               : (isDark 
-                  ? 'bg-[#151929] border-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]' 
+                  ? 'sidebar-glass border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]' 
                   : 'bg-white border-slate-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.05)]')
           }`}
           style={{ backfaceVisibility: 'hidden' }}
@@ -362,9 +362,9 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
         <div 
           className={`absolute inset-0 w-full h-full rounded-[20px] border overflow-hidden flex flex-col backface-hidden transition-all duration-300 ${
             isActive 
-              ? (isDark ? 'bg-[#1a223f] border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.4)]' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.2)]')
+              ? (isDark ? 'bg-primary/20 border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.4)] backdrop-blur-2xl' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.2)]')
               : (isDark 
-                  ? 'bg-[#1a1e2e] border-primary/30 shadow-[0_10px_40px_rgba(var(--primary-rgb),0.2)]' 
+                  ? 'sidebar-glass border-primary/30 shadow-[0_10px_40px_rgba(var(--primary-rgb),0.2)]' 
                   : 'bg-white border-primary/20 shadow-[0_10px_40px_rgba(0,0,0,0.1)]')
           }`}
           style={{ 
