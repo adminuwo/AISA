@@ -1134,17 +1134,33 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
         {/* ── SECTION 1: Strategic Command Stats ─────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { label: 'Active Brands', val: allWorkspaces.length, icon: Palette, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-            { label: 'Strategy Flow', val: calendarEntries.length, icon: CalendarRange, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-            { label: 'AI Post Drafts', val: generatedPosts.length, icon: Sparkles, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-            { label: 'Assets in Vault', val: (assets || []).filter(a => a.assetSource === 'generated').length, icon: Library, color: 'text-primary', bg: 'bg-primary/10' }
+            { id: 'brands', label: 'Active Brands', val: allWorkspaces.length, icon: Palette, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+            { id: 'strategy', label: 'Strategy Flow', val: calendarEntries.length, icon: CalendarRange, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+            { 
+              id: 'pulse', 
+              label: activeJob ? 'AI Gen Progress' : 'AI Engine Status', 
+              val: activeJob ? `${activeJob.progress || 0}%` : 'Waiting', 
+              icon: activeJob ? RefreshCw : Sparkles, 
+              color: activeJob ? 'text-primary' : 'text-emerald-500', 
+              bg: activeJob ? 'bg-primary/10' : 'bg-emerald-500/10',
+              pulse: !!activeJob,
+              spin: activeJob?.status === 'processing'
+            },
+            { id: 'vault', label: 'Assets in Vault', val: (assets || []).filter(a => a.assetSource === 'generated').length, icon: Library, color: 'text-primary', bg: 'bg-primary/10' }
           ].map((stat, i) => (
-            <div key={i} className="p-6 rounded-[32px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 flex flex-col items-center text-center group hover:border-primary/30 transition-all shadow-sm">
+            <div key={stat.id} className="p-6 rounded-[32px] bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 flex flex-col items-center text-center group hover:border-primary/30 transition-all shadow-sm relative overflow-hidden">
+              {stat.pulse && <div className="absolute top-0 right-0 p-3"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /></div>}
               <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <stat.icon className="w-6 h-6" />
+                <stat.icon className={`w-6 h-6 ${stat.spin ? 'animate-spin' : ''}`} />
               </div>
-              <h4 className="text-2xl font-black text-slate-800 dark:text-white mb-1">{stat.val}</h4>
+              <h4 className={`text-2xl font-black mb-1 ${stat.pulse ? 'text-primary' : 'text-slate-800 dark:text-white'}`}>{stat.val}</h4>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+              
+              {stat.id === 'pulse' && activeJob && (
+                <div className="w-full h-1 bg-slate-100 dark:bg-white/5 rounded-full mt-4 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${activeJob.progress || 0}%` }} className="h-full bg-primary" />
+                </div>
+              )}
             </div>
           ))}
         </div>
