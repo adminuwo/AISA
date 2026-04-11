@@ -8058,6 +8058,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
             if (key === 'resolution') setVideoResolution(value);
           }
         }}
+        onContentSelect={(content) => {
+          setInputValue(content);
+          // Auto-focus input if possible for immediate refinement
+          const inputEl = document.querySelector('textarea');
+          if (inputEl) inputEl.focus();
+        }}
         pricing={TOOL_PRICING}
       />
       <CashFlowStockModal 
