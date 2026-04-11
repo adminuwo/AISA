@@ -304,8 +304,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         }
     };
 
-    const tabs = [
         { id: 'personalization', label: t('personalization'), icon: Sparkles },
+        { id: 'appearance', label: t('appearance'), icon: Palette },
         { id: 'notifications', label: t('notifications'), icon: Bell },
         { id: 'data', label: t('dataControls'), icon: Database },
         { id: 'account', label: t('account'), icon: User }
@@ -343,13 +343,13 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const allSettings = useMemo(() => {
         const settings = [];
 
-        // Personalization
+        // Appearance
         settings.push({
-            id: 'theme', tab: 'personalization', label: t('appearance'), description: t('appearanceDesc'), keywords: 'dark mode light mode',
+            id: 'theme', tab: 'appearance', label: t('appearance'), description: t('appearanceDesc'), keywords: 'dark mode light mode',
             component: renderSettingRow(t('appearance'), t('appearanceDesc'), renderDropdown(t(theme), [t('system'), t('dark'), t('light')], (e) => setTheme(e.target.value === t('system') ? 'system' : e.target.value === t('dark') ? 'dark' : 'light'), Monitor))
         });
         settings.push({
-            id: 'accent', tab: 'personalization', label: t('accentColor'), description: t('accentColorDesc'), keywords: 'color design',
+            id: 'accent', tab: 'appearance', label: t('accentColor'), description: t('accentColorDesc'), keywords: 'color design',
             component: renderSettingRow(t('accentColor'), t('accentColorDesc'), (
                 <div className="flex items-center gap-3">
                     <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: `hsl(${ACCENT_COLORS[accentColor] || ACCENT_COLORS['Default']})` }} />
@@ -358,15 +358,19 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             ))
         });
 
+        // Personalization
         settings.push({
             id: 'multiScheduleReminder', tab: 'personalization', label: 'Multi Schedule Reminder', keywords: 'alarm scheduler calendar schedule',
             component: <MultiScheduleReminder />
         });
 
-        // Language & Region (Integrated from world-wide selection)
         settings.push({
             id: 'region', tab: 'personalization', label: t('region'), description: t('regionDesc'), keywords: 'country world',
-            component: renderSettingRow(t('region'), t('regionDesc'), renderDropdown(region, Object.keys(regions || {}), (e) => setRegion(e.target.value), Globe))
+            component: (
+                <div className="pt-6 mt-6 border-t border-gray-100 dark:border-white/5">
+                    {renderSettingRow(t('region'), t('regionDesc'), renderDropdown(region, Object.keys(regions || {}), (e) => setRegion(e.target.value), Globe))}
+                </div>
+            )
         });
 
         settings.push({
@@ -409,9 +413,10 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             );
         }
 
-        switch (activeTab) {
             case 'personalization':
-                return <div className="space-y-2">{allSettings.filter(s => s.tab === 'personalization').map(s => <div key={s.id}>{s.component}</div>)}</div>;
+                return <div className="space-y-0">{allSettings.filter(s => s.tab === 'personalization').map(s => <div key={s.id}>{s.component}</div>)}</div>;
+            case 'appearance':
+                return <div className="space-y-2">{allSettings.filter(s => s.tab === 'appearance').map(s => <div key={s.id}>{s.component}</div>)}</div>;
             case 'notifications':
                 return (
                     <div className="space-y-4">

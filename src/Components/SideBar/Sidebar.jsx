@@ -481,6 +481,25 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Main Navigation Links */}
+          <nav className="px-3 pt-4 space-y-1 relative z-10">
+            <NavLink to="/dashboard/chat" className={navItemClass}>
+              <MessageSquare className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+              <span className="truncate font-semibold text-sm">{t('chat') || 'Chat'}</span>
+            </NavLink>
+
+            <NavLink to="/dashboard/social-agent" className={navItemClass}>
+              <LayoutGrid className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+              <span className="truncate font-semibold text-sm">Content Generation</span>
+              <span className="ml-auto px-1.5 py-0.5 rounded-lg bg-primary/10 text-[9px] font-black uppercase text-primary border border-primary/10">Gen</span>
+            </NavLink>
+
+            <NavLink to="/dashboard/ai-personal-assistant" className={navItemClass}>
+              <Bot className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+              <span className="truncate font-semibold text-sm">AI Personal Assistant</span>
+            </NavLink>
+          </nav>
+
           {/* New Chat Button */}
           <div className="px-5 pt-4 pb-2 relative z-10">
             <button
