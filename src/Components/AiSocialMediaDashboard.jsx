@@ -1250,7 +1250,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
                 </div>
                 <div className="flex gap-3 text-white animate-in fade-in slide-in-from-bottom-6 duration-1000">
                   <span className="text-green-400 shrink-0 font-bold">[{new Date().getHours()}:{new Date().getMinutes()}]</span>
-                  <p className="leading-relaxed">System ready. Standing by for {currentUser?.name || 'User'} commands.</p>
+                  <p className="leading-relaxed">System ready. Standing by for {workspace?.onboarding?.customName || currentUser?.name || 'User'} commands.</p>
                 </div>
               </div>
             </div>
@@ -1263,7 +1263,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
           {/* Action Tasks (Matches Sidebar Options) */}
           <div className="lg:col-span-2 space-y-8">
              <div className="flex items-center justify-between px-2">
-                <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white">Agent Tasks for {currentUser?.name || 'AISA Agent'}</h3>
+                <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white">Agent Tasks for {workspace?.onboarding?.customName || currentUser?.name || 'AISA Agent'}</h3>
              </div>
              
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
