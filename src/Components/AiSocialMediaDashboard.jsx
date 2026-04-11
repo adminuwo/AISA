@@ -3118,60 +3118,129 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
     const generatedAssets = (assets || []).filter(a => a.assetSource === 'generated');
 
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 h-full flex flex-col space-y-8">
-        <div className="flex justify-between items-end bg-white/50 dark:bg-white/[0.02] p-8 rounded-[40px] border border-slate-100 dark:border-white/5">
-          <div>
-            <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-2">Post Generation</h2>
-            <div className="flex items-center gap-6">
-              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest">Manage your library of AI-generated media artifacts.</p>
-              <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
-              <div className="ads-badge-small !bg-primary/10 !text-primary !border-primary/20 uppercase">{generatedAssets.length} Artifacts</div>
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 h-full flex flex-col space-y-10 pb-20">
+        
+        {/* ── Neural Workstation Header ─────────────────── */}
+        <div className="bg-white dark:bg-[#080808] p-10 rounded-[50px] border border-slate-100 dark:border-white/5 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-primary/10 transition-all duration-1000" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
+                  <Monitor className="w-5 h-5" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Creative Studio</h2>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest max-w-md leading-relaxed">
+                Your brand's visual engine. orchestrate, generate, and refine high-fidelity media assets in real-time.
+              </p>
             </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input placeholder="Search vault..." className="h-14 pl-12 pr-6 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all w-64" />
+
+            <div className="flex flex-wrap gap-4">
+              <div className="px-6 py-4 rounded-[32px] bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 flex flex-col">
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Sessions</span>
+                <span className="text-xl font-black text-primary">02</span>
+              </div>
+              <div className="px-6 py-4 rounded-[32px] bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 flex flex-col">
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Neural Artifacts</span>
+                <span className="text-xl font-black text-slate-800 dark:text-white">{generatedAssets.length}</span>
+              </div>
+              <div className="px-6 py-4 rounded-[32px] bg-indigo-500/10 border border-indigo-500/20 flex flex-col">
+                <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">Cloud Storage</span>
+                <span className="text-xl font-black text-indigo-600">88%</span>
+              </div>
             </div>
-            <button
-              onClick={() => setShowOneOffModal(true)}
-              className="h-14 px-6 bg-primary text-white rounded-2xl flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all"
-            >
-              <Sparkles className="w-4 h-4 fill-current" />
-              Magic Create
-            </button>
-            <button className="h-14 w-14 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-sm"><Filter className="w-5 h-5" /></button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {generatedAssets.map((asset) => (
-            <div
-              key={asset._id}
-              onClick={() => setSelectedAsset(asset)}
-              className="aspect-square rounded-3xl overflow-hidden relative group cursor-pointer border-4 border-transparent hover:border-primary/40 transition-all shadow-sm"
-            >
-              <img src={asset.gcsUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Generated Asset" />
-              <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent translate-y-full group-hover:translate-y-0 transition-transform flex justify-between items-center z-10">
-                <span className="text-[8px] font-black text-white uppercase tracking-widest">{asset.assetType?.replace('_', ' ') || 'AI ART'}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownloadMedia(asset.gcsUrl);
-                  }}
-                  className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white/40 transition-all text-white border border-white/10"
-                >
-                  <Download className="w-4 h-4" />
-                </button>
+        {/* ── Studio Toolbox ────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 bg-white dark:bg-[#080808]/80 backdrop-blur-xl p-8 rounded-[40px] border border-slate-100 dark:border-white/5 shadow-xl flex items-center justify-between">
+            <div className="flex items-center gap-4">
+               <div className="relative group">
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                 <input 
+                   placeholder="Search neural vault..." 
+                   className="h-14 pl-12 pr-6 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all w-64 md:w-80" 
+                 />
+               </div>
+               <button className="h-14 w-14 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-all hover:scale-105 active:scale-95"><Filter className="w-5 h-5" /></button>
+            </div>
+
+            <div className="flex gap-4">
+               <button className="h-14 px-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center gap-3 font-black uppercase text-[9px] tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all shadow-sm">
+                 <Video className="w-4 h-4" /> Generate Video
+               </button>
+               <button
+                 onClick={() => setShowOneOffModal(true)}
+                 className="h-14 px-8 bg-primary text-white rounded-2xl flex items-center gap-3 font-black uppercase text-[10px] tracking-[2px] shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+               >
+                 <Sparkles className="w-4 h-4 fill-current animate-pulse" /> Magic Create
+               </button>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-[40px] shadow-xl shadow-indigo-500/20 flex items-center justify-between group cursor-pointer overflow-hidden relative">
+             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] opacity-20" />
+             <div className="relative z-10">
+               <h4 className="text-white font-black uppercase text-[10px] tracking-widest mb-1">Total Assets</h4>
+               <p className="text-3xl font-black text-white">{assets?.length || 0}</p>
+             </div>
+             <div className="relative z-10 w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 group-hover:rotate-12 transition-transform">
+               <Layers className="w-6 h-6" />
+             </div>
+          </div>
+        </div>
+
+        {/* ── Neural Vault Explorer ──────────────────────── */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-4">
+            <h3 className="text-sm font-black text-slate-400 uppercase tracking-[4px]">Neural Vault Artifacts</h3>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">All Assets Synchronized</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+            {generatedAssets.map((asset) => (
+              <div
+                key={asset._id}
+                onClick={() => setSelectedAsset(asset)}
+                className="group relative"
+              >
+                <div className="aspect-square rounded-[36px] overflow-hidden relative cursor-pointer border-4 border-white dark:border-zinc-900 shadow-xl group-hover:scale-[1.03] active:scale-95 transition-all duration-500">
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+                  <img src={asset.gcsUrl} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="Generated Asset" />
+                  
+                  <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-500">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadMedia(asset.gcsUrl);
+                      }}
+                      className="w-10 h-10 rounded-2xl bg-white/90 dark:bg-black/90 text-primary flex items-center justify-center shadow-2xl hover:bg-primary hover:text-white transition-all transform hover:rotate-6 active:scale-90"
+                    >
+                      <Download className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-500 flex flex-col z-20">
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{asset.assetType?.replace('_', ' ') || 'AI ART'}</span>
+                    <p className="text-[8px] font-bold text-white/60 uppercase tracking-wider truncate">{asset.originalName || 'Visual Synthesis'}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-          {generatedAssets.length === 0 && Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="aspect-square rounded-3xl bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center opacity-40">
-              <Sparkles className="w-6 h-6 text-slate-300 mb-2" />
-              <span className="text-[8px] font-black text-slate-400 uppercase">Slot {i + 1}</span>
-            </div>
-          ))}
+            ))}
+
+            {generatedAssets.length === 0 && Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-square rounded-[36px] bg-white dark:bg-[#080808] border border-slate-100 dark:border-white/5 flex flex-col items-center justify-center opacity-30 group hover:opacity-50 transition-opacity border-dashed">
+                <Sparkles className="w-8 h-8 text-slate-200 dark:text-zinc-800 mb-3 group-hover:animate-spin transition-all" />
+                <span className="text-[9px] font-black text-slate-300 dark:text-zinc-700 uppercase tracking-widest leading-none">Studio Slot {i + 1}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
