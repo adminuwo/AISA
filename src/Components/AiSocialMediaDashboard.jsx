@@ -377,6 +377,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
 
       const scheduleData = await apiService.getSocialSchedule(wsId);
       if (scheduleData.success) setScheduleItems(scheduleData.items);
+
+      // 9. Fetch Pipelines (for real-time stats)
+      await fetchPipelines(wsId);
     } catch (err) {
       console.error("Fetch WS Data Error:", err);
     } finally {
@@ -1269,7 +1272,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
                   { title: 'Brand Setup', val: activeProfile ? '1 Optimized' : '0 Connected', desc: 'Identity Snapshot', icon: Palette, tab: 'brand', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-                  { title: 'Content Calendar', val: `${calendarEntries.length} In Queue`, desc: '30-Day Strategy', icon: CalendarRange, tab: 'calendar', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                  { title: 'Content Calendar', val: `${pipelines.length} Active Plan${pipelines.length !== 1 ? 's' : ''}`, desc: 'Strategy Orchestration', icon: CalendarRange, tab: 'calendar', color: 'text-amber-500', bg: 'bg-amber-500/10' },
                   { title: 'Content Generation', val: `${generatedPosts.length} Drafts`, desc: 'AI Creative Hub', icon: Sparkles, tab: 'generation', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
                   { title: 'Post Generation', val: `${(assets || []).filter(a => a.assetSource === 'generated').length} Artifacts`, desc: 'Generated Media', icon: Library, tab: 'assets', color: 'text-primary', bg: 'bg-primary/10' },
                   { title: 'Hashtag Studio', val: 'Viral Clusters', desc: 'Trending Insights', icon: Hash, tab: 'hashtags', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
