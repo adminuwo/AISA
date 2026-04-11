@@ -776,6 +776,7 @@ const Chat = () => {
   const [projects, setProjects] = useState([]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [isDownloadingUrl, setIsDownloadingUrl] = useState(null);
   const [expandedMessages, setExpandedMessages] = useState({}); // { [msgId]: true/false }
   const USER_MSG_COLLAPSE_CHARS = 200; // Collapse threshold
 
