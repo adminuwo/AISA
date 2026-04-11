@@ -2354,7 +2354,6 @@ const Chat = () => {
   // Helper to clean markdown for TTS
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [isDownloadingUrl, setIsDownloadingUrl] = useState(null);
   const audioRef = useRef(null);
   const audioCacheRef = useRef({});
 
