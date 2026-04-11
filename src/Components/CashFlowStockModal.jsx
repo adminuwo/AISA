@@ -118,6 +118,11 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect }) => {
    const [isGrahamLoading, setIsGrahamLoading] = useState(false);
    const [showGrahamPanel, setShowGrahamPanel] = useState(false);
 
+   // Robert Kiyosaki analysis state
+   const [kiyosakiData, setKiyosakiData] = useState(null);
+   const [isKiyosakiLoading, setIsKiyosakiLoading] = useState(false);
+   const [showKiyosakiPanel, setShowKiyosakiPanel] = useState(false);
+
    const [socket, setSocket] = useState(null);
 
    useEffect(() => {
@@ -146,6 +151,9 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect }) => {
          // Reset Graham panel when stock changes
          setGrahamData(null);
          setShowGrahamPanel(false);
+         // Reset Kiyosaki panel when stock changes
+         setKiyosakiData(null);
+         setShowKiyosakiPanel(false);
       }
    }, [isOpen, selectedStock]);
 
@@ -191,7 +199,11 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect }) => {
          // HTTP for Intraday (Chart Area)
          axios.get(`${baseURL}/stock/intraday`, { params, headers })
             .then(res => setTabData(prev => ({ ...prev, 'Realtime chart': { quote: prev['Realtime chart']?.quote, intraday: res.data.intraday } })))
-            .catch(() => { });
+            .catch((err) => { 
+                if (err.response?.status === 403 && err.response?.data?.code === 'OUT_OF_CREDITS') {
+                   setTabError(`Insufficient Credits (Required: 5)`);
+                }
+            });
 
          if (socket) {
             setIsLoadingTab(!tabData['Realtime chart']?.quote); // Only load if absolutely no quote
@@ -237,7 +249,11 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect }) => {
             promise.then(result => {
                setTabData(prev => ({ ...prev, [activeTab]: result }));
             }).catch(err => {
-               setTabError(`Failed to load ${activeTab}.`);
+               if (err.response?.status === 403 && err.response?.data?.code === 'OUT_OF_CREDITS') {
+                  setTabError(`Insufficient Credits (Required: 5)`);
+               } else {
+                  setTabError(`Failed to load ${activeTab}.`);
+               }
             }).finally(() => setIsLoadingTab(false));
          }
       }
@@ -264,6 +280,25 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect }) => {
          console.error('[Graham] Analysis failed:', err);
       } finally {
          setIsGrahamLoading(false);
+      }
+   };
+
+   const fetchKiyosakiAnalysis = async () => {
+      if (kiyosakiData || isKiyosakiLoading) return;
+      setIsKiyosakiLoading(true);
+      setShowKiyosakiPanel(true);
+      try {
+         const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
+         const price = tabData['Realtime chart']?.quote?.price || '';
+         const res = await axios.get(`${baseURL}/stock/kiyosaki-analysis`, {
+            params: { symbol: selectedStock.symbol, name: selectedStock.name, price },
+            headers: { 'Authorization': `Bearer ${token}` }
+         });
+         setKiyosakiData(res.data.kiyosaki);
+      } catch (err) {
+         console.error('[Kiyosaki] Analysis failed:', err);
+      } finally {
+         setIsKiyosakiLoading(false);
       }
    };
 
@@ -812,7 +847,125 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect }) => {
                                  </AnimatePresence>
                               </motion.div>
 
-                              {/* Analyst Estimates Block */}
+                                                             {/* ── Robert Kiyosaki Button — NEXT ── */}
+                               <motion.div
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.2 }}
+                               >
+                                  <button
+                                     id="kiyosaki-analysis-btn"
+                                     onClick={() => showKiyosakiPanel ? setShowKiyosakiPanel(false) : fetchKiyosakiAnalysis()}
+                                     className={`group relative w-full flex items-center justify-between px-8 py-5 rounded-[20px] border-2 transition-all duration-300 overflow-hidden
+                                        ${showKiyosakiPanel
+                                           ? 'bg-blue-950 border-blue-800'
+                                           : 'bg-gradient-to-r from-blue-950 to-indigo-950 border-blue-800/60 hover:border-blue-600 hover:shadow-xl hover:shadow-blue-900/30'
+                                        }`}
+                                  >
+                                     <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-blue-700/40 border border-blue-600/30 flex items-center justify-center shadow-inner">
+                                           <Globe className="w-6 h-6 text-blue-300" />
+                                        </div>
+                                        <div className="text-left">
+                                           <p className="text-[11px] font-black uppercase tracking-[0.25em] text-blue-400/70 mb-0.5">Finance IQ & Cashflow</p>
+                                           <p className="text-lg font-black text-blue-100">Robert Kiyosaki <span className="text-blue-400">Perspective</span></p>
+                                           <p className="text-[11px] text-blue-300/60 font-semibold mt-0.5">Based on &quot;Rich Dad Poor Dad&quot;</p>
+                                        </div>
+                                     </div>
+                                     <div className="flex items-center gap-3">
+                                        {isKiyosakiLoading
+                                           ? <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                                           : <ChevronRight className={`w-5 h-5 text-blue-400 transition-transform duration-300 group-hover:translate-x-1 ${showKiyosakiPanel ? 'rotate-90' : ''}`} />
+                                        }
+                                     </div>
+                                  </button>
+
+                                  {/* Kiyosaki Analysis Panel */}
+                                  <AnimatePresence>
+                                     {showKiyosakiPanel && (
+                                        <motion.div
+                                           initial={{ opacity: 0, height: 0 }}
+                                           animate={{ opacity: 1, height: 'auto' }}
+                                           exit={{ opacity: 0, height: 0 }}
+                                           transition={{ duration: 0.4 }}
+                                           className="overflow-hidden"
+                                        >
+                                           {isKiyosakiLoading ? (
+                                              <div className="mt-4 flex flex-col items-center justify-center gap-4 py-16 bg-blue-950/30 rounded-[20px] border border-blue-900/40">
+                                                 <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+                                                 <p className="text-sm font-black text-blue-400 uppercase tracking-widest animate-pulse">Building Financial IQ with Rich Dad...</p>
+                                              </div>
+                                           ) : kiyosakiData ? (
+                                              <div className="mt-4 bg-gradient-to-br from-blue-950/20 to-indigo-900/10 border border-blue-900/30 rounded-[24px] p-8 space-y-6">
+                                                 {/* Header */}
+                                                 <div className="flex items-center justify-between pb-5 border-b border-blue-900/30">
+                                                    <div className="flex items-center gap-3">
+                                                       <div className="w-10 h-10 rounded-xl bg-blue-700/30 flex items-center justify-center">
+                                                          <TrendingUp className="w-5 h-5 text-blue-400" />
+                                                       </div>
+                                                       <div>
+                                                          <h3 className="text-lg font-black text-stone-800">Rich Dad&apos;s Verdict</h3>
+                                                          <p className="text-[11px] text-stone-500 font-bold uppercase tracking-wider">{kiyosakiData.source}</p>
+                                                       </div>
+                                                    </div>
+                                                    <div className={`px-5 py-2 rounded-xl text-sm font-black uppercase tracking-widest
+                                                       ${kiyosakiData.kiyosaki_verdict === 'BUY' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                                                          kiyosakiData.kiyosaki_verdict === 'AVOID' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                                                             'bg-blue-100 text-blue-700 border border-blue-200'}
+                                                    `}>
+                                                       {kiyosakiData.kiyosaki_verdict === 'AVOID' ? '⛔ AVOID' : kiyosakiData.kiyosaki_verdict === 'BUY' ? '✅ BUY' : '⏸ HOLD'}
+                                                    </div>
+                                                 </div>
+
+                                                 {/* Quote */}
+                                                 <blockquote className="relative pl-6 border-l-4 border-blue-400 italic text-stone-700 text-[15px] font-semibold leading-relaxed">
+                                                    <span className="absolute -left-3 -top-2 text-5xl text-blue-300/50 font-serif leading-none">&ldquo;</span>
+                                                    {kiyosakiData.kiyosaki_quote}
+                                                 </blockquote>
+
+                                                 {/* Key Perspective */}
+                                                 <div className="bg-blue-50 border border-blue-200 rounded-[16px] p-4 flex items-center gap-3">
+                                                    <Zap className="w-5 h-5 text-blue-600 shrink-0" />
+                                                    <div>
+                                                       <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-0.5">Financial Literacy Tip</p>
+                                                       <p className="text-sm font-bold text-blue-900">{kiyosakiData.financial_literacy_tip}</p>
+                                                    </div>
+                                                 </div>
+
+                                                 {/* Analysis Grid */}
+                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {[
+                                                       { label: 'Cashflow Perspective', value: kiyosakiData.cashflow_perspective, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+                                                       { label: 'Asset vs Liability', value: kiyosakiData.asset_vs_liability, color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
+                                                       { label: 'Risk Assessment', value: kiyosakiData.risk_assessment, color: 'text-rose-600 bg-rose-50 border-rose-100' },
+                                                       { label: 'Rich Dad Advice', value: kiyosakiData.rich_dad_advice, color: 'text-blue-600 bg-blue-50 border-blue-100' },
+                                                    ].map((item, i) => (
+                                                       <div key={i} className={`rounded-[16px] border p-5 ${item.color.split(' ').slice(1).join(' ')}`}>
+                                                          <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${item.color.split(' ')[0]}`}>{item.label}</p>
+                                                          <p className="text-sm font-semibold text-stone-700 leading-relaxed">{item.value}</p>
+                                                       </div>
+                                                    ))}
+                                                 </div>
+
+                                                 {/* Final Summary */}
+                                                 <div className="bg-gradient-to-r from-blue-900/10 to-indigo-800/5 border border-blue-800/20 rounded-[20px] p-6">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-700 mb-3">Wealth Building Summary</p>
+                                                    <p className="text-[15px] font-semibold text-stone-800 leading-relaxed">{kiyosakiData.final_summary}</p>
+                                                 </div>
+
+                                                 {/* Footer */}
+                                                 <div className="flex items-center gap-2 text-[11px] text-stone-400 font-bold pt-2 border-t border-blue-200">
+                                                    <Activity className="w-4 h-4" />
+                                                    Source: {kiyosakiData.source} &middot; {kiyosakiData.rag_used ? '📚 Knowledge Base Retrieved' : '🤖 AI Generated'}
+                                                 </div>
+                                              </div>
+                                           ) : null}
+                                        </motion.div>
+                                     )}
+                                  </AnimatePresence>
+                               </motion.div>
+
+                               {/* Analyst Estimates Block */}
                               {tabData['Research and recommendation']?.research?.analyst_estimates && (
                                  <motion.div
                                     initial={{ opacity: 0, y: 10 }}

@@ -452,13 +452,16 @@ const Chat = () => {
   const isAdmin = user?.token && (user?.role === 'admin' || user?.email === 'admin@uwo24.com');
 
   const checkPremiumTool = (toolName) => {
-    // Whitelist AI Legal and AI CashFlow for all users
-    if (toolName === 'AI Legal' || toolName === 'AI CashFlow') return true;
+    // Whitelist AI Legal for all users
+    if (toolName === 'AI Legal') return true;
 
     if (!user?.token) {
       window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName } }));
       return false;
     }
+
+    // Whitelist AI CashFlow for all LOGGED IN users
+    if (toolName === 'AI CashFlow') return true;
 
     // Admin Access Rule: Treat all tools as unlocked
     if (user.email === 'admin@uwo24.com' || isAdminUser) return true;
@@ -6454,7 +6457,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         toast.success("AI CashFlow Explorer Active");
                       }
                     }}
-                    isAdmin={isAdminUser}
                   />
                 </section>
               </div>
