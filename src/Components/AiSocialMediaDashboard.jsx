@@ -5,7 +5,7 @@ import {
   X, Upload, FileText, Calendar, Image as ImageIcon, Video, Layers,
   ChevronDown, ChevronUp, Check, Play, Download, RefreshCw, ChevronLeft,
   Settings, CreditCard, Sparkles, BarChart3, Trash2, ExternalLink,
-  LayoutDashboard, Palette, CalendarRange, Library, CheckSquare, Clock,
+  LayoutDashboard, Palette, CalendarRange, Library, CheckSquare, Clock, Monitor,
   ChevronRight, Plus, HelpCircle, AlertCircle, Info, Filter, Search,
   Instagram, Facebook, Linkedin, Twitter, Youtube, Send, Save, Globe, CheckCircle2, Mic2,
   Eye, Target, Zap, Hash, Copy, Sparkle, User, User2, Briefcase, History, Activity, Tag, 
