@@ -405,15 +405,23 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const renderContent = () => {
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            const results = allSettings.filter(item => item.label.toLowerCase().includes(query) || (item.keywords && item.keywords.toLowerCase().includes(query)));
+            const results = allSettings.filter(item => 
+                item.label.toLowerCase().includes(query) || 
+                (item.keywords && item.keywords.toLowerCase().includes(query))
+            );
             return (
                 <div className="space-y-4">
                     {results.map(item => <div key={item.id}>{item.component}</div>)}
-                    {results.length === 0 && <div className="py-20 text-center opacity-50"><p>No results found for "{searchQuery}"</p></div>}
+                    {results.length === 0 && (
+                        <div className="py-20 text-center opacity-50">
+                            <p>No results found for "{searchQuery}"</p>
+                        </div>
+                    )}
                 </div>
             );
         }
 
+        switch (activeTab) {
             case 'personalization':
                 return <div className="space-y-0">{allSettings.filter(s => s.tab === 'personalization').map(s => <div key={s.id}>{s.component}</div>)}</div>;
             case 'appearance':
