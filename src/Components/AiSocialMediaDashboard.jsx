@@ -99,6 +99,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
   const [wizardConfig, setWizardConfig] = useState({ mode: 'today', count: 1 });
   const [stagedCalendarCount, setStagedCalendarCount] = useState(0);
 
+  // AI Ads Agent – Visual Post Generation state
+  const [visualGenRowId, setVisualGenRowId] = useState(null); // tracks which card is actively generating
+
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
 
@@ -1003,6 +1006,77 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
       toast.error("Generation failed to start");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  /**
+   * AI Ads Agent - Visual Post Generation Pipeline
+   * 1. Calls GPT-4 to craft a brand-aware Imagen prompt from the calendar card
+   * 2. Vertex AI Imagen 3/4 renders the high-quality visual
+   * 3. Polls for completion, then auto-redirects to Post Generation tab
+   */
+  const handleVisualPostGeneration = async (entry) => {
+    if (!workspace || !entry) return;
+    const entryId = String(entry._id);
+    setVisualGenRowId(entryId);
+
+    const toastId = toast.loading(
+      `🎨 Engineering prompt for "${entry.title || 'Post'}"...`,
+      { duration: 30000 }
+    );
+
+    try {
+      // Step 1: Kick off the backend pipeline
+      const res = await apiService.generateVisualPost(
+        workspace._id,
+        entryId
+      );
+
+      if (!res?.success || !res?.jobId) {
+        throw new Error(res?.error || 'Failed to start generation');
+      }
+
+      toast.loading('🤖 Vertex AI Imagen generating visual...', { id: toastId, duration: 120000 });
+
+      // Step 2: Poll for job completion (max 90s)
+      const jobId = res.jobId;
+      let attempts = 0;
+      const maxAttempts = 30; // 30 * 3s = 90s
+      let jobResult = null;
+
+      while (attempts < maxAttempts) {
+        await new Promise(r => setTimeout(r, 3000));
+        const statusRes = await apiService.getSocialAgentJobStatus(jobId);
+        if (statusRes?.job?.status === 'completed') {
+          jobResult = statusRes.job;
+          break;
+        }
+        if (statusRes?.job?.status === 'failed') {
+          throw new Error(statusRes.job.errorSummary || 'Generation job failed');
+        }
+        attempts++;
+      }
+
+      if (!jobResult) throw new Error('Generation timed out. Please try again.');
+
+      // Step 3: Success — refresh assets and navigate to Post Generation
+      toast.success('✨ Visual post created! Redirecting to Creative Studio...', { id: toastId, duration: 4000 });
+
+      // Refresh assets in background
+      if (workspace?._id) {
+        apiService.getSocialAgentAssets(workspace._id)
+          .then(data => { if (data?.assets) setAssets(data.assets); })
+          .catch(() => {});
+      }
+
+      // Auto-redirect to Post Generation tab after short delay
+      setTimeout(() => setActiveTab('assets'), 1500);
+
+    } catch (err) {
+      console.error('[VisualPost] Error:', err);
+      toast.error(`Generation failed: ${err.message}`, { id: toastId });
+    } finally {
+      setVisualGenRowId(null);
     }
   };
 
@@ -2281,14 +2355,19 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
 
                         <div className="grid grid-cols-2 gap-3 mt-auto pt-6 border-t border-slate-100 dark:border-white/5">
                           <button
-                            onClick={() => {
-                              handleGenerateContent('today', 1, [entry._id]);
-                              setActiveTab('generation');
-                            }}
-                            disabled={isGenerating}
-                            className="h-11 bg-primary text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg shadow-primary/10 disabled:opacity-50"
+                            onClick={() => handleVisualPostGeneration(entry)}
+                            disabled={!!visualGenRowId}
+                            className={`h-11 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg disabled:opacity-50 ${
+                              visualGenRowId === String(entry._id)
+                                ? 'bg-indigo-600 text-white shadow-indigo-500/20 cursor-not-allowed'
+                                : 'bg-primary text-white shadow-primary/10'
+                            }`}
                           >
-                            {isGenerating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />} Gen Post
+                            {visualGenRowId === String(entry._id) ? (
+                              <><RefreshCw className="w-3 h-3 animate-spin" /> Generating...</>
+                            ) : (
+                              <><Sparkles className="w-3 h-3" /> Gen Post</>
+                            )}
                           </button>
                           
                           <button
