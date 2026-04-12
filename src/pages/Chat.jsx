@@ -3813,6 +3813,9 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             error: !!aiResponseData?.error, // Track if this is an error bubble
             timestamp: Date.now() + i * 100,
             projectId: currentProjectId,
+            conversion: conversionData,
+            imageUrl: aiImageUrl,
+            videoUrl: aiVideoUrl
           };
 
           // Add the empty message structure to UI
@@ -5438,7 +5441,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 >
                   {/* Actions Menu (Always visible for discoverability) */}
 
-                  <div className={`chatgpt-message-content ${msg.role === 'model' ? 'w-fit' : ''}`}>
+                  <div className={`chatgpt-message-content ${msg.role === 'model' ? 'w-full' : ''}`}>
                     {/* Avatar */}
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'

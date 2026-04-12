@@ -614,7 +614,7 @@ const MagicVideoGenModal = ({ isOpen, onClose, onCreditDeduction }) => {
                                         title="Open Prompt Library"
                                     >
                                         <Wand2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Library</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Prompt Library</span>
                                     </button>
                                 </div>
                                 <p className="text-[11px] text-slate-400 ml-1">Be descriptive. Use phrases like "swaying gently", "camera pans left", "zooms in slowly".</p>
