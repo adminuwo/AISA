@@ -231,19 +231,19 @@ const FEEDBACK_PROMPTS = {
 const TOOL_PRICING = {
   chat: {
     models: [
-      { id: 'gemini-flash', name: 'AISA Flash', price: 0, speed: 'Fast', description: 'Free chat model' }
+      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Free chat model' }
     ]
   },
   image: {
     models: [
-      { id: 'imagen-3.0-generate-001', name: 'AISA Imagen 3', price: 45, speed: 'Fast', description: 'Advanced image generation & editing' },
-      { id: 'imagen-4.0-ultra-generate-001', name: 'AISA Imagen 4 Ultra', price: 90, speed: 'Premium', description: 'Next-generation hyper-realistic image generation' }
+      { id: 'imagen-3.0-generate-001', name: 'AISA™ Imagen 3', price: 45, speed: 'Fast', description: 'Advanced image generation & editing' },
+      { id: 'imagen-4.0-ultra-generate-001', name: 'AISA™ Imagen 4 Ultra', price: 90, speed: 'Premium', description: 'Next-generation hyper-realistic image generation' }
     ]
   },
   video: {
     models: [
-      { id: 'veo-3.1-fast-generate-001', name: 'AISA Video Fast', price: '225/5s', speed: 'Fast', description: 'Quick high-quality video generation' },
-      { id: 'veo-3.1-generate-001', name: 'AISA Video Pro', price: '600/5s', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
+      { id: 'veo-3.1-fast-generate-001', name: 'AISA™ Video Fast', price: '225/5s', speed: 'Fast', description: 'Quick high-quality video generation' },
+      { id: 'veo-3.1-generate-001', name: 'AISA™ Video Pro', price: '600/5s', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
     ]
   },
   document: {
