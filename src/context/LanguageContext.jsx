@@ -7,12 +7,12 @@ export const LanguageProvider = ({ children }) => {
     const { personalizations, updatePersonalization } = usePersonalization();
 
     // Single Source of Truth from PersonalizationContext
-    // ALWAYS force English for UI - chat content language is separate
+    // Language selection will apply A to Z across the UI
     const rawLanguage = personalizations?.general?.language || 'English';
-    const language = 'English'; // UI language is always English
+    const language = rawLanguage; 
     const region = personalizations?.general?.region || 'India';
 
-    const setLanguage = (lang) => updatePersonalization('general', { language: 'English' }); // Always English
+    const setLanguage = (lang) => updatePersonalization('general', { language: lang });
     const setRegion = (reg) => updatePersonalization('general', { region: reg });
 
     const regions = {
