@@ -4,6 +4,7 @@ import { ChevronDown, Check } from 'lucide-react';
 
 const CustomSelect = ({ value, options, onChange, label, icon: Icon }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [dropdownPosition, setDropdownPosition] = useState('bottom');
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -16,10 +17,23 @@ const CustomSelect = ({ value, options, onChange, label, icon: Icon }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleOpen = () => {
+        if (!isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            if (spaceBelow < 260) {
+                setDropdownPosition('top');
+            } else {
+                setDropdownPosition('bottom');
+            }
+        }
+        setIsOpen(!isOpen);
+    };
+
     return (
         <div className={`relative w-full ${isOpen ? 'z-[50]' : 'z-[1]'}`} ref={containerRef}>
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleOpen}
                 className={`
                     w-full flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all duration-200
                     ${isOpen
@@ -40,11 +54,11 @@ const CustomSelect = ({ value, options, onChange, label, icon: Icon }) => {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 5, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: dropdownPosition === 'bottom' ? 10 : -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: dropdownPosition === 'bottom' ? 5 : -5, scale: 1 }}
+                        exit={{ opacity: 0, y: dropdownPosition === 'bottom' ? 10 : -10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute z-[99999] left-0 right-0 p-1 bg-white dark:bg-zinc-800 rounded-xl border border-gray-100 dark:border-white/10 shadow-2xl backdrop-blur-xl origin-top"
+                        className={`absolute z-[99999] left-0 right-0 p-1 bg-white dark:bg-zinc-800 rounded-xl border border-gray-100 dark:border-white/10 shadow-2xl backdrop-blur-xl ${dropdownPosition === 'bottom' ? 'origin-top top-full' : 'origin-bottom bottom-full'}`}
                     >
                         <div className="max-h-[240px] overflow-y-auto custom-scrollbar-light">
                             {options.map((opt) => (

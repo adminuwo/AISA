@@ -18,10 +18,10 @@ const PREMIUM_TOOLS = [
     id: 'legal_draft_maker', 
     name: 'Draft Maker', 
     icon: FileText, 
-    desc: 'Notice, Affidavit & Legal Agreements Architect', 
+    desc: 'Notice, Affidavit, FIR & Legal Agreements Architect', 
     price: '₹599',
     workflow: [
-      'Describe the document you need (Notice, Agreement, etc.).',
+      'Describe the document you need (FIR, Notice, Agreement, etc.).',
       'Provide key names, dates, and factual background.',
       'AI generates a litigation-ready professional draft.'
     ]
