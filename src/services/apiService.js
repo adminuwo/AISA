@@ -451,6 +451,26 @@ export const apiService = {
     }
   },
 
+  async adjustCredits(payload) {
+    try {
+      const response = await apiClient.post('/admin/adjust-credits', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to adjust credits:", error);
+      throw error;
+    }
+  },
+
+  async manualPlanUpgrade(payload) {
+    try {
+      const response = await apiClient.post('/admin/manual-upgrade', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to upgrade plan:", error);
+      throw error;
+    }
+  },
+
   async getAllUsers() {
     try {
       const response = await apiClient.get('/user/all');
@@ -549,6 +569,17 @@ export const apiService = {
   },
 
   // --- Plans ---
+  async getAdminPlans() {
+    try {
+      const response = await apiClient.get('/admin/plans');
+      return response.data;
+    } catch (error) {
+      // Fallback to public plans endpoint if admin route fails
+      const response = await apiClient.get('/pricing/plans');
+      return response.data;
+    }
+  },
+
   async getPlans() {
     try {
       const response = await apiClient.get('/pricing/plans');
