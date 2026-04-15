@@ -172,9 +172,9 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                         headers: { 'Authorization': `Bearer ${user.token}` }
                     });
                 }
-                toast.success('Profile updated successfully');
+                toast.success(t('profileUpdatedSuccess') || 'Profile updated successfully');
             } catch (error) {
-                toast.success('Profile updated locally');
+                toast.success(t('profileUpdatedLocally') || 'Profile updated locally');
             }
         }
     };
@@ -280,6 +280,50 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         }
     };
 
+    const handleConnectGmail = async () => {
+        try {
+            const res = await axios.get(`${API}/connectors/gmail/auth`, {
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+            if (res.data && res.data.url) {
+                window.location.href = res.data.url;
+            }
+        } catch(err) {
+            toast.error("Failed to initiate connection. Please try again.");
+        }
+    };
+
+    const handleDisconnectGmail = async () => {
+        const loadingToast = toast.loading("Disconnecting Gmail...");
+        try {
+            await axios.delete(`${API}/connectors/gmail/disconnect`, {
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+
+            // Properly deep-copy to avoid mutating the original reference
+            const updatedApps = (user?.personalizations?.apps || []).filter(a => a.name !== 'Gmail');
+            const updatedUser = {
+                ...user,
+                personalizations: {
+                    ...user.personalizations,
+                    apps: updatedApps
+                }
+            };
+
+            // Fire toast BEFORE state update to avoid re-render race
+            toast.dismiss(loadingToast);
+            toast.success("Gmail disconnected successfully!");
+
+            // Sync both Recoil and localStorage
+            setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+            setUserData(updatedUser);
+
+        } catch(err) {
+            toast.dismiss(loadingToast);
+            toast.error("Failed to disconnect. Please try again.");
+        }
+    };
+
     const handleResetPassword = async () => {
         if (!resetOtp || !newPassword) {
             toast.error('Please enter OTP and New Password');
@@ -309,7 +353,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         { id: 'appearance', label: t('appearance'), icon: Palette },
         { id: 'notifications', label: t('notifications'), icon: Bell },
         { id: 'data', label: t('dataControls'), icon: Database },
-        { id: 'account', label: t('account'), icon: User }
+        { id: 'account', label: t('account'), icon: User },
+        { id: 'connectors', label: 'Connectors', icon: LayoutGrid }
     ];
 
     const renderSettingRow = (label, description, control) => (
@@ -393,7 +438,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                     <label className="text-xs font-bold text-gray-500 uppercase">{t('displayName')}</label>
                     <div className="relative">
                         <input type="text" value={nicknameInput} onChange={e => setNicknameInput(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 border rounded-xl p-3 text-sm outline-none focus:border-primary transition-all" />
-                        <button onClick={handleSaveNickname} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-white text-[10px] rounded-lg hover:opacity-90 transition-all font-bold">Save</button>
+                        <button onClick={handleSaveNickname} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-white text-[10px] rounded-lg hover:opacity-90 transition-all font-bold">{t('saveLabel')}</button>
                     </div>
                 </div>
             )
@@ -430,8 +475,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                 return (
                     <div className="space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-white/5">
-                            <h3 className="text-xs font-bold text-gray-400">Inbox ({notifications.length})</h3>
-                            {notifications.length > 0 && <button onClick={clearAllNotifications} className="text-xs font-bold text-primary">Clear All</button>}
+                            <h3 className="text-xs font-bold text-gray-400">{t('notifications')} ({notifications.length})</h3>
+                            {notifications.length > 0 && <button onClick={clearAllNotifications} className="text-xs font-bold text-primary">{t('clearAll')}</button>}
                         </div>
                         <div className="space-y-3 mt-4">
                             {notifications.length > 0 ? notifications.map(n => (
@@ -442,7 +487,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                     </div>
                                     <button onClick={() => deleteNotification(n.id)} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                                 </div>
-                            )) : <div className="py-20 text-center opacity-40"><p>No notifications</p></div>}
+                            )) : <div className="py-20 text-center opacity-40"><p>{t('noNotifications')}</p></div>}
                         </div>
                     </div>
                 );
@@ -451,7 +496,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                     <div className="space-y-4">
                         {allSettings.filter(s => s.tab === 'data').map(s => <div key={s.id}>{s.component}</div>)}
                         <div className="pt-4 mt-4 border-t border-gray-100 dark:border-white/5">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-4">Chat History</h4>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-4">{t('chatHistory')}</h4>
                             <div className="space-y-2 pr-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                                 {Object.keys(groupedSessions).length > 0 ? Object.keys(groupedSessions).sort((a, b) => new Date(b) - new Date(a)).map(date => (
                                     <div key={date} className="border border-border rounded-xl bg-gray-50/50 dark:bg-zinc-800/30">
@@ -463,8 +508,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                             <div className="p-2 pt-0 space-y-1">
                                                 {groupedSessions[date].map(s => (
                                                     <div key={s.sessionId} className="flex items-center justify-between p-2 hover:bg-white dark:hover:bg-zinc-800 rounded-lg text-xs group">
-                                                        <span className="truncate flex-1">{s.title || "New Chat"}</span>
-                                                        <button onClick={() => { window.location.href = `/dashboard/chat/${s.sessionId}`; onClose(); }} className="ml-2 px-2 py-1 bg-primary text-white rounded font-bold opacity-0 group-hover:opacity-100 transition-opacity">View</button>
+                                                        <span className="truncate flex-1">{s.title || t('newChat')}</span>
+                                                        <button onClick={() => { window.location.href = `/dashboard/chat/${s.sessionId}`; onClose(); }} className="ml-2 px-2 py-1 bg-primary text-white rounded font-bold opacity-0 group-hover:opacity-100 transition-opacity">{t('viewLabel')}</button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -490,7 +535,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        {acc.email !== user?.email && <button onClick={() => handleSwitchAccount(acc)} className="px-3 py-1 bg-primary/10 text-primary text-[10px] rounded-lg font-bold">Switch</button>}
+                                        {acc.email !== user?.email && <button onClick={() => handleSwitchAccount(acc)} className="px-3 py-1 bg-primary/10 text-primary text-[10px] rounded-lg font-bold">{t('switchLabel')}</button>}
                                         <button onClick={() => handleAccountLogout(acc.email)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><LogOut size={14} /></button>
                                     </div>
                                 </div>
@@ -546,12 +591,12 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                     </h3>
                                     <p className="text-sm font-bold text-gray-500 max-w-[200px] truncate sm:max-w-none">{user.email}</p>
                                 </div>
-                                <button 
+                                    <button 
                                     onClick={() => window._aisa_sync_profile && window._aisa_sync_profile()}
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all group/sync"
                                 >
                                     <RefreshCcw className="w-3.5 h-3.5 group-hover/sync:rotate-180 transition-transform duration-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Sync from Social</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{t('syncFromSocial')}</span>
                                 </button>
 
                                 {user.avatar && (
@@ -560,7 +605,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                         className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all group/remove"
                                     >
                                         <Trash2 className="w-3.5 h-3.5 group-hover/remove:scale-110 transition-transform" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Remove Photo</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">{t('removePhoto')}</span>
                                     </button>
                                 )}
                             </div>
@@ -569,10 +614,10 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                         {allSettings.filter(s => s.tab === 'account').map(s => <div key={s.id}>{s.component}</div>)}
                         <div className="py-4 flex justify-between items-center text-sm">
                             <div>
-                                <p className="font-bold">Password</p>
-                                <p className="text-xs text-subtext">Manage your account security</p>
+                                <p className="font-bold">{t('password')}</p>
+                                <p className="text-xs text-subtext">{t('manageAccountSecurity') || 'Manage your account security'}</p>
                             </div>
-                            <button onClick={() => setShowResetModal(true)} className="text-primary font-bold hover:underline">Change Password</button>
+                            <button onClick={() => setShowResetModal(true)} className="text-primary font-bold hover:underline">{t('changePassword')}</button>
                         </div>
                     </div>
                 );
@@ -585,18 +630,18 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                 <Zap className="w-12 h-12 text-primary opacity-20" />
                             </div>
                             <div className="relative z-10">
-                                <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Current Plan</h3>
+                                <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{t('currentPlan')}</h3>
                                 <div className="flex items-baseline gap-2 mb-4">
                                     <h2 className="text-3xl font-black text-maintext">{planName.replace(' Plan', '')}</h2>
-                                    <span className="text-xs text-subtext font-medium">/ 1 Month</span>
+                                    <span className="text-xs text-subtext font-medium">/ 1 {t('month')}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 border border-white/20">
                                     <div>
-                                        <p className="text-[10px] font-bold text-subtext uppercase tracking-wider">Available Credits</p>
+                                        <p className="text-[10px] font-bold text-subtext uppercase tracking-wider">{t('availableCredits')}</p>
                                         <p className="text-2xl font-black text-primary">{user?.credits || 0}</p>
                                     </div>
-                                    <button onClick={() => { window.location.href = '/pricing'; onClose(); }} className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all">Buy More</button>
+                                    <button onClick={() => { window.location.href = '/pricing'; onClose(); }} className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all">{t('buyMore')}</button>
                                 </div>
                             </div>
                         </div>
@@ -604,7 +649,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                         {/* Recent Usage */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Recent Credit Usage</h4>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('recentCreditUsage')}</h4>
                                 {loadingHistory && <RefreshCcw className="w-3 h-3 animate-spin text-primary" />}
                             </div>
 
@@ -629,10 +674,124 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                     </div>
                                 )) : (
                                     <div className="py-10 text-center opacity-40">
-                                        <p className="text-sm">No credit history found yet.</p>
+                                        <p className="text-sm">{t('noCreditHistory')}</p>
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                );
+            case 'connectors':
+                const gmailApp = user?.personalizations?.apps?.find(a => a.name === 'Gmail');
+                return (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* Header */}
+                        <div className="flex flex-col gap-1 pb-4 border-b border-gray-100 dark:border-white/5">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('appsConnectors')}</h3>
+                            <p className="text-sm text-subtext">{t('connectExternalServices')}</p>
+                        </div>
+
+                        {/* Gmail Connector Card */}
+                        <div className={`relative overflow-hidden rounded-2xl border transition-all duration-300 ${gmailApp ? 'border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent dark:from-primary/10' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-primary/30'}`}>
+                            {/* Top accent line */}
+                            {gmailApp && <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/60 via-primary to-primary/60" />}
+
+                            <div className="p-5">
+                                {/* Card header row */}
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        {/* Gmail icon */}
+                                        <div className="relative shrink-0">
+                                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-white dark:bg-[#1E2438] border border-gray-100 dark:border-white/10">
+                                                {/* Real Gmail SVG Logo */}
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-9 h-9">
+                                                    <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z"/>
+                                                    <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z"/>
+                                                    <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17"/>
+                                                    <path fill="#c62828" d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0 C4.924,8,3,9.924,3,12.298z"/>
+                                                    <path fill="#fbc02d" d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0 C43.076,8,45,9.924,45,12.298z"/>
+                                                </svg>
+                                            </div>
+                                            {gmailApp && (
+                                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/40 border-2 border-white dark:border-[#161B2E]">
+                                                    <Check className="w-2.5 h-2.5 text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <h4 className="font-black text-gray-900 dark:text-white text-[15px]">Gmail</h4>
+                                                <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Google</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {gmailApp ? (
+                                                    <span className="text-primary font-bold flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" />
+                                                        {gmailApp.tokens?.email_address || 'Connected'}
+                                                    </span>
+                                                ) : 'Connect your Gmail account to AISA™'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Button */}
+                                    {gmailApp ? (
+                                        <button
+                                            onClick={handleDisconnectGmail}
+                                            className="shrink-0 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-black rounded-xl border border-primary/20 transition-all duration-200 hover:scale-105"
+                                        >
+                                            {t('disconnect')}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleConnectGmail}
+                                            className="shrink-0 px-5 py-2 bg-primary hover:opacity-90 text-white text-xs font-black rounded-xl shadow-lg shadow-primary/30 transition-all duration-200 hover:scale-105 flex items-center gap-2"
+                                        >
+                                            <Zap className="w-3 h-3" />
+                                            {t('connectLabel')}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="my-4 border-t border-gray-100 dark:border-white/5" />
+
+                                {/* Feature capability chips */}
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { label: 'Read Emails', active: !!gmailApp },
+                                        { label: 'Send Emails', active: !!gmailApp },
+                                        { label: 'Smart Search', active: !!gmailApp },
+                                        { label: 'Draft Creation', active: !!gmailApp },
+                                        { label: 'Thread Replies', active: !!gmailApp },
+                                        { label: 'Attachment Intelligence', active: !!gmailApp },
+                                    ].map(feature => (
+                                        <span
+                                            key={feature.label}
+                                            className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${feature.active
+                                                ? 'bg-primary/10 text-primary border-primary/20'
+                                                : 'bg-gray-100 dark:bg-white/5 text-gray-400 border-gray-200 dark:border-white/10'
+                                            }`}
+                                        >
+                                            {feature.active ? '✓ ' : ''}{feature.label}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {/* Bottom hint */}
+                                {!gmailApp && (
+                                    <p className="mt-3 text-[10px] text-gray-400 dark:text-gray-500">
+                                        💡 Once connected, ask AISA™ to check your emails, search your inbox, send replies, and more — right from chat.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Coming Soon placeholder */}
+                        <div className="rounded-2xl border border-dashed border-primary/20 dark:border-primary/10 p-5 text-center opacity-60">
+                            <p className="text-xs font-bold text-primary/60 uppercase tracking-widest">{t('moreConnectorsComingSoon')}</p>
+                            <p className="text-[10px] text-gray-400 mt-1">Google Drive · Notion · Slack · Calendar</p>
                         </div>
                     </div>
                 );

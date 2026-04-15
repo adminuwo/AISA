@@ -40,12 +40,10 @@ import { getSubscriptionDetails } from '../services/pricingService';
 import IntentSuggestionBanner from '../Components/IntentSuggestionBanner';
 import { detectIntent, mapModeToToolState } from '../services/intentService';
 import LoginRequiredModal from '../Components/LoginRequiredModal';
-import AiSocialMediaDashboard from '../Components/AiSocialMediaDashboard';
 import FuturisticToolCards from '../Components/FuturisticToolCards';
 import AisaTypingIndicator from '../Components/AisaTypingIndicator';
-import GmailConnectedModal from '../Components/GmailConnectedModal';
 import AISnapshot from '../Components/AISnapshot';
-
+import Ballpit from '../Components/Ballpit';
 
 const SendRipple = ({ onComplete }) => {
   return (
@@ -197,6 +195,8 @@ const NeuralExplosion = ({ x, y, onComplete }) => {
     </div>
   );
 };
+// LegalToolSuggestions import removed
+
 
 
 
@@ -231,39 +231,31 @@ const FEEDBACK_PROMPTS = {
 const TOOL_PRICING = {
   chat: {
     models: [
-      { id: 'gemini-flash', name: 'AI Ads Flash', price: 0, speed: 'Fast', description: 'Free chat model' }
+      { id: 'gemini-flash', name: 'AISA� Flash', price: 0, speed: 'Fast', description: 'Free chat model' }
     ]
   },
   image: {
     models: [
-      { id: 'imagen-3.0-generate-001', name: 'AI Ads Imagen 3', price: 45, speed: 'Fast', description: 'Advanced image generation & editing' },
-      { id: 'imagen-4.0-ultra-generate-001', name: 'AI Ads Imagen 4 Ultra', price: 90, speed: 'Premium', description: 'Next-generation hyper-realistic image generation' },
-      { id: 'gemini-3.1-flash-image-preview', name: 'AI Ads Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest preview — fastest Gemini image generation' },
-      { id: 'gemini-3-pro-image-preview', name: 'AI Ads Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade scene understanding & generation' },
-      { id: 'gemini-2.5-flash-image', name: 'AI Ads Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable production image generation' }
-    ],
-    editModels: [
-      { id: 'gemini-3.1-flash-image-preview', name: 'AI Ads Gemini 3.1 Flash Image', price: 45, speed: 'Fast', description: 'Latest preview model — fastest AI image editing' },
-      { id: 'gemini-3-pro-image-preview', name: 'AI Ads Gemini 3 Pro Image', price: 75, speed: 'Pro', description: 'Pro-grade image editing with rich scene understanding' },
-      { id: 'gemini-2.5-flash-image', name: 'AI Ads Gemini 2.5 Flash Image', price: 30, speed: 'Stable', description: 'Stable & reliable — production-ready image edits' }
+      { id: 'imagen-3.0-generate-001', name: 'AISA� Imagen 3', price: 45, speed: 'Fast', description: 'Advanced image generation & editing' },
+      { id: 'imagen-4.0-ultra-generate-001', name: 'AISA� Imagen 4 Ultra', price: 90, speed: 'Premium', description: 'Next-generation hyper-realistic image generation' }
     ]
   },
   video: {
     models: [
-      { id: 'veo-3.1-fast-generate-001', name: 'AI Ads Video Fast', price: '225/5s', speed: 'Fast', description: 'Quick high-quality video generation' },
-      { id: 'veo-3.1-generate-001', name: 'AI Ads Video Pro', price: '600/5s', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
+      { id: 'veo-3.1-fast-generate-001', name: 'AISA� Video Fast', price: '225/5s', speed: 'Fast', description: 'Quick high-quality video generation' },
+      { id: 'veo-3.1-generate-001', name: 'AISA� Video Pro', price: '600/5s', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
     ]
   },
   document: {
     models: [
-      { id: 'gemini-flash', name: 'AI Ads Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
-      { id: 'gemini-pro', name: 'AI Ads Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
-      { id: 'gpt4', name: 'AI Ads Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' }
+      { id: 'gemini-flash', name: 'AISA� Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
+      { id: 'gemini-pro', name: 'AISA� Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
+      { id: 'gpt4', name: 'AISA� Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' }
     ]
   },
   voice: {
     models: [
-      { id: 'gemini-flash', name: 'AI Ads Flash', price: 0, speed: 'Fast', description: 'Standard voice recognition' }
+      { id: 'gemini-flash', name: 'AISA� Flash', price: 0, speed: 'Fast', description: 'Standard voice recognition' }
     ]
   }
 };
@@ -446,7 +438,7 @@ const Chat = () => {
     if ((user.email && user.email.toLowerCase() === 'admin@uwo24.com') || (user.role === 'admin')) {
       setIsAdminUser(true);
       setIsPremiumUser(true);
-      setUserPlanName('AISA Admin');
+      setUserPlanName('AISA� Admin');
       return; // Skip server subscription check for admin
     }
 
@@ -560,7 +552,7 @@ const Chat = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { personalizations, getSystemPromptExtensions, updatePersonalization } = usePersonalization();
+  const { personalizations, getSystemPromptExtensions } = usePersonalization();
   const isDarkMode = personalizations?.general?.theme === 'Dark' || 
                     (personalizations?.general?.theme !== 'Light' && 
                      window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -592,7 +584,6 @@ const Chat = () => {
   const [isMagicEditing, setIsMagicEditing] = useState(false);
   const [editRefImage, setEditRefImage] = useState(null);
   const [isMagicVideoModalOpen, setIsMagicVideoModalOpen] = useState(false);
-  const [isSocialMediaDashboardOpen, setIsSocialMediaDashboardOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [explosions, setExplosions] = useState([]);
   const [isBrainHovered, setIsBrainHovered] = useState(false);
@@ -651,13 +642,11 @@ const Chat = () => {
     timeoutId = setTimeout(type, 500); // Initial pause before typing starts for this word
     return () => clearTimeout(timeoutId);
   }, [discoveryIndex]);
-  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
-
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [filePreviews, setFilePreviews] = useState([]);
-  const [activeAgent, setActiveAgent] = useState({ agentName: 'AI Ads', category: 'General' });
+  const [activeAgent, setActiveAgent] = useState({ agentName: 'AISA�', category: 'General' });
   const [userAgents, setUserAgents] = useState([]);
   const [toolModels, setToolModels] = useState({
     chat: 'gemini-flash',
@@ -702,40 +691,19 @@ const Chat = () => {
   const [selectedLegalTool, setSelectedLegalTool] = useState(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState('');
   const [videoModelId, setVideoModelId] = useState('veo-3.1-fast-generate-001');
-  const [editModelId, setEditModelId] = useState('gemini-3.1-flash-image-preview');
   const [videoResolution, setVideoResolution] = useState('1080p');
-  const v = personalizations?.voice || { languageCode: 'en-US', voiceName: 'en-US-Chirp3-HD-Autonoe', pitch: 0, speed: 1.0 };
-  const [audioLangCode, setAudioLangCode] = useState(v.languageCode);
-  const [audioVoiceName, setAudioVoiceName] = useState(v.voiceName);
-  const [audioPitch, setAudioPitch] = useState(v.pitch);
-  const [audioSpeed, setAudioSpeed] = useState(v.speed);
+  const [audioLangCode, setAudioLangCode] = useState('en-US');
+  const [audioVoiceName, setAudioVoiceName] = useState('en-US-Chirp3-HD-Autonoe');
+  const [audioPitch, setAudioPitch] = useState(0);
+  const [audioSpeed, setAudioSpeed] = useState(1.0);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
   const [isPlayingSample, setIsPlayingSample] = useState(false);
   const sampleAudioRef = useRef(null);
   const [imageAspectRatio, setImageAspectRatio] = useState('1:1');
-  const [imageModelId, setImageModelId] = useState('gemini-3.1-flash-image-preview');
+  const [imageModelId, setImageModelId] = useState('imagen-3.0-generate-001');
   const [isMagicSettingsOpen, setIsMagicSettingsOpen] = useState(false);
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
-
-  const [showGmailModal, setShowGmailModal] = useState(false);
-
-  // ─── Connector OAuth Callback Handler ───
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const connectorSuccess = params.get('connector_success');
-    const connectorError = params.get('connector_error');
-
-    if (connectorSuccess === 'true') {
-      // Show the feature showcase modal
-      setShowGmailModal(true);
-      // Clean the URL so modal doesn't re-fire on refresh
-      navigate(location.pathname, { replace: true });
-    } else if (connectorError) {
-      toast.error('Failed to connect Gmail. Please try again from Settings > Connectors.', { duration: 5000 });
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.search]);
 
   // ─── Direct Feature Link Handling ───
   useEffect(() => {
@@ -964,8 +932,7 @@ const Chat = () => {
     
     if (toolUpdates.mode) setCurrentMode(toolUpdates.mode);
 
-    toast.success(`AISA switched to ${suggestion.intent.replace('legal_', '').replace('_', ' ')}! ✨`);
-
+    toast.success(`AISA� switched to ${suggestion.intent.replace('legal_', '').replace('_', ' ')}! ✨`);
     setIntentSuggestion(null);
     isDetectionPausedRef.current = true; // Don't re-detect immediately after switch
   };
@@ -1139,7 +1106,7 @@ const Chat = () => {
     const isAllowed = validMimes.some(mime => fileType?.startsWith(mime) || fileType === mime);
 
     // Even if not in list, let's allow it but maybe warn? 
-    // Actually, AI Ads can handle most text/data files.
+    // Actually, AISA� can handle most text/data files.
 
     const fileWithMetadata = new File([file], fileName, { type: fileType || 'application/octet-stream' });
     setSelectedFiles(prev => [...prev, fileWithMetadata]);
@@ -1278,7 +1245,7 @@ const Chat = () => {
       setMessages(prev => [...prev, userMsg]);
       chatStorageService.saveMessage(activeSessionId, userMsg, `Audio: ${file.name}`, currentProjectId).catch(e => console.error(e));
 
-      // 2. Add Processing Message from AI Ads
+      // 2. Add Processing Message from AISA�
       const aiMsgId = (Date.now() + 1).toString();
       const processingMsg = {
         id: aiMsgId,
@@ -1585,7 +1552,7 @@ const Chat = () => {
           conversion: {
             file: mp3Base64,
             blobUrl: audioUrl,
-            fileName: `AI Ads_Voice_${Date.now()}.mp3`,
+            fileName: `AISA_Voice_${Date.now()}.mp3`,
             mimeType: 'audio/mpeg',
             fileSize: formattedSize,
             rawSize: rawBytes,
@@ -1696,7 +1663,7 @@ const Chat = () => {
           }
 
           setTimeout(() => {
-            speakResponse(prompt, audioLangCode, aiMsgId, newUserMsg.attachments);
+            speakResponse(prompt, 'en-US', aiMsgId, newUserMsg.attachments);
             setIsLoading(false);
           }, 500);
 
@@ -1859,7 +1826,7 @@ const Chat = () => {
         id: tempId,
         role: 'model',
         isGenerating: true,
-        content: `✨ **AISA generating...**\n🎨 Generating high-quality poster from your prompt: "${prompt}"\n\nIntelligently refining text detection, placement, and cinematic styling...`, // Use content
+        content: `✨ **AISA� generating...**\n🎨 Generating high-quality poster from your prompt: "${prompt}"\n\nIntelligently refining text detection, placement, and cinematic styling...`, // Use content
         timestamp: new Date(),
         projectId: currentProjectId
       };
@@ -2027,8 +1994,8 @@ const Chat = () => {
       try {
         console.log("[Image Edit] Starting edit request for:", prompt);
 
+        // Efficiently get Blob from Data URL or Fetch Blob URL
         let rawImageBlob = null;
-        
         try {
           if (imageFile.url.startsWith('data:')) {
             const res = await fetch(imageFile.url);
@@ -2037,13 +2004,8 @@ const Chat = () => {
             const matchedFile = selectedFiles.find(f => f.name === imageFile.name);
             if (matchedFile) {
               rawImageBlob = matchedFile;
-            } else if (imageFile.url.startsWith('blob:')) {
-              const res = await fetch(imageFile.url);
-              rawImageBlob = await res.blob();
             } else {
-              // Remote URLs: securely fetch through backend proxy to bypass browser CORS blocks
-              const proxiedUrl = `${apis.imageProxy}?url=${encodeURIComponent(imageFile.url)}`;
-              const res = await fetch(proxiedUrl);
+              const res = await fetch(imageFile.url);
               rawImageBlob = await res.blob();
             }
           }
@@ -2052,9 +2014,9 @@ const Chat = () => {
           throw new Error("Failed to process the reference image.");
         }
 
+        // Use bare fetch instead of apiService to completely control the network request
         const formData = new FormData();
         formData.append('prompt', prompt);
-        formData.append('model', editModelId);
         if (rawImageBlob) {
             formData.append('image', rawImageBlob, 'reference.png');
         }
@@ -2757,17 +2719,16 @@ const Chat = () => {
               'vi-VN': 'Vietnamese', 'id-ID': 'Indonesian', 'ms-MY': 'Malay',
               'fil-PH': 'Filipino', 'yue-HK': 'Cantonese',
             };
-            // ── Integrated Voice Engine ──────────────────────────────────────────
-            // Use the user's selected persona (e.g., Autonoe, Charon) but adapt to detected language
-            const selectedVoicePersona = audioVoiceName.split('-Chirp3-HD-')[1] || 'Autonoe';
-            const finalVoice = `${targetLang}-Chirp3-HD-${selectedVoicePersona}`;
+            toast.loading(`🌐 Speaking in ${langLabels[targetLang] || targetLang}...`, { id: 'voice-loading' });
 
+            // Use Chirp 3 HD Autonoe — soft, gentle voice with natural pauses
+            const chirpVoice = `${targetLang}-Chirp3-HD-Autonoe`;
             const response = await axios.post(apis.synthesizeFile, {
               introText: cleanText,
               languageCode: targetLang,
-              voiceName: finalVoice,
-              pitch: audioPitch,
-              speakingRate: audioSpeed
+              voiceName: chirpVoice,
+              pitch: 0,
+              speakingRate: 1.0
             }, {
               responseType: 'arraybuffer',
               timeout: 60000,
@@ -2969,20 +2930,20 @@ const Chat = () => {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             const agents = res.data?.agents || [];
-            // Add default AI Ads agent if not present
-            const processedAgents = [{ agentName: 'AI Ads', category: 'General', avatar: '/AGENTS_IMG/AI Ads_BRAIN_LOGO.png' }, ...agents];
+            // Add default AISA� agent if not present
+            const processedAgents = [{ agentName: 'AISA�', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }, ...agents];
             setUserAgents(processedAgents);
           } catch (agentErr) {
             // Silently use defaults if fetch fails (no console warning)
-            setUserAgents([{ agentName: 'AI Ads', category: 'General', avatar: '/AGENTS_IMG/AI Ads_BRAIN_LOGO.png' }]);
+            setUserAgents([{ agentName: 'AISA�', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
           }
         } else {
           // No user logged in, use default
-          setUserAgents([{ agentName: 'AI Ads', category: 'General', avatar: '/AGENTS_IMG/AI Ads_BRAIN_LOGO.png' }]);
+          setUserAgents([{ agentName: 'AISA�', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
         }
       } catch (err) {
         // Silently handle errors
-        setUserAgents([{ agentName: 'AI Ads', category: 'General', avatar: '/AGENTS_IMG/AI Ads_BRAIN_LOGO.png' }]);
+        setUserAgents([{ agentName: 'AISA�', category: 'General', avatar: '/AGENTS_IMG/AISA_BRAIN_LOGO.png' }]);
       }
     };
     loadSessions();
@@ -3143,7 +3104,7 @@ const Chat = () => {
     // GLOBAL LOCK & DEBOUNCE (Combined with isSendingRef for maximum protection)
     const now = Date.now();
     if (isGlobalSending || (now - lastMessageSentTime < 800) || isSendingRef.current) {
-        console.warn("[AI Ads] Message sending blocked by global lock, debounce, or active send.");
+        console.warn("[AISA�] Message sending blocked by global lock, debounce, or active send.");
         return;
     }
     if (isLoading) return;
@@ -3399,7 +3360,7 @@ const Chat = () => {
           // 3. Trigger voice reading directly (no AI response)
           setTimeout(() => {
             console.log('[Voice Mode] Reading content with attachments:', newUserMsg.attachments);
-            speakResponse(contentToSend, audioLangCode, userMsgId, newUserMsg.attachments);
+            speakResponse(contentToSend, 'en-US', userMsgId, newUserMsg.attachments);
           }, 300);
 
           return; // STOP - Don't call AI API
@@ -3417,7 +3378,7 @@ const Chat = () => {
                               (/function\s*\(|const\s+\w+\s*=|class\s+\w+|import\s+.*from|<\w+>|{\s*\w+:|\/\/|\/\*/.test(contentToSend));
       
       if (hasCodeStructure && contentToSend && !contentToSend.trim().startsWith('```')) {
-         let detectedLang = 'javascript'; // Default for web-centric AI Ads
+         let detectedLang = 'javascript'; // Default for web-centric AISA�
          const low = contentToSend.toLowerCase();
          if (low.includes('def ') || low.includes('import os') || low.includes('np.') || low.includes('pd.')) detectedLang = 'python';
          else if (low.includes('<html>') || low.includes('<!doctype html>')) detectedLang = 'html';
@@ -3591,18 +3552,18 @@ const Chat = () => {
         }
 
         const SYSTEM_INSTRUCTION = `
-You are AISA™, the official AI assistant of the AISA™ platform. Powered by A-Series.
+You are AISA�™, the official AI assistant of the AISA�™ platform. Powered by A-Series.
 ${activeAgent.category ? `Your specialization is in ${activeAgent.category}.` : ''}
 
 ### CRITICAL BRAND RULE:
-Whenever a user mentions "AISA", "AISA AI", "AISA app", "your image", "your video", "AISA image", "AISA video", or refers to AISA in third person, you MUST interpret it as referring to THIS platform (AISA™ brand identity), not a generic artificial intelligence.
+Whenever a user mentions "AISA�", "AISA� AI", "AISA� app", "your image", "your video", "AISA� image", "AISA� video", or refers to AISA� in third person, you MUST interpret it as referring to THIS platform (AISA�™ brand identity), not a generic artificial intelligence.
 
 ### SELF-REFERENCE DETECTION & CONTENT GENERATION:
 1. If user says:
-   - "Generate AISA image", "Create image of AISA", "Make AISA logo", "AISA ka photo banao", "AISA ka video generate karo", "Your intro video banao", "AISA introduction video"
-   → You must generate content representing the official AISA™ brand.
+   - "Generate AISA� image", "Create image of AISA�", "Make AISA� logo", "AISA� ka photo banao", "AISA� ka video generate karo", "Your intro video banao", "AISA� introduction video"
+   → You must generate content representing the official AISA�™ brand.
 
-2. AISA Brand Identity:
+2. AISA� Brand Identity:
    - Futuristic AI assistant
    - Glowing blue/purple neural brain logo
    - Modern, premium, intelligent
@@ -3612,14 +3573,14 @@ Whenever a user mentions "AISA", "AISA AI", "AISA app", "your image", "your vide
 
 3. If user asks for:
    - Image → Generate/Ask for a brand-based promotional visual
-   - Video → Generate/Ask for a cinematic AI intro script for AISA™
+   - Video → Generate/Ask for a cinematic AI intro script for AISA�™
    - Logo → Generate/Ask for a modern AI tech logo concept
    - Poster → Promotional marketing poster content
    - Reel → Social media promotional script
 
-4. Never treat “AISA” as a random AI. Always treat it as THIS official platform.
+4. Never treat “AISA�” as a random AI. Always treat it as THIS official platform.
 
-5. If user intent is unclear, ask: "Are you referring to the official AISA™ platform?"
+5. If user intent is unclear, ask: "Are you referring to the official AISA�™ platform?"
 
 ${PERSONA_INSTRUCTION}
 
@@ -3632,7 +3593,7 @@ ${PERSONA_INSTRUCTION}
 
 ### RESPONSE BEHAVIOR:
 - Answer the user's question directly without greeting messages
-- Do NOT say "Hello... welcome to AI Ads" or similar greetings
+- Do NOT say "Hello... welcome to AISA�" or similar greetings
 - Focus ONLY on providing the answer to what user asked
 - Be helpful, clear, and concise
 
@@ -3734,9 +3695,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           activeSessionId,
           currentProjectId,
           userMsg.id,
-          suggestedAiId,
-          imageAspectRatio,
-          imageModelId
+          suggestedAiId
         );
         
         // Store it for usage in the typewriter loop
@@ -3811,7 +3770,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
 
           // If backend provided specific error details, show them to help user understand why 'brain' is failing
           if (aiResponseData.error && aiResponseData.details) {
-             console.error("[AI Ads Backend Error]", aiResponseData.details);
+             console.error("[AISA� Backend Error]", aiResponseData.details);
              // Append a small subtle hint for the developer/user
              aiResponseText += `\n\n*(Debug: ${aiResponseData.details})*`;
           }
@@ -3854,9 +3813,6 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             error: !!aiResponseData?.error, // Track if this is an error bubble
             timestamp: Date.now() + i * 100,
             projectId: currentProjectId,
-            conversion: conversionData,
-            imageUrl: aiImageUrl,
-            videoUrl: aiVideoUrl
           };
 
           // Add the empty message structure to UI
@@ -3982,8 +3938,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
     const name = (agentName || '').toLowerCase();
     const cat = (category || '').toLowerCase();
 
-    // Default: Everything enabled for AI Ads
-    if (name === 'AI Ads' || !name) {
+    // Default: Everything enabled for AISA�
+    if (name === 'AISA�' || !name) {
       return {
         canUploadImages: true,
         canUploadDocs: true,
@@ -4038,7 +3994,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
 
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = filename || 'AI Ads-download.png';
+      link.download = filename || 'AISA�-download.png';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -4166,8 +4122,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         try {
           await navigator.share({
             files: [file],
-            title: file.name || 'AI Ads Document',
-            text: 'Converted Document from AI Ads'
+            title: file.name || 'AISA� Document',
+            text: 'Converted Document from AISA�'
           });
           return;
         } catch (err) {
@@ -4197,7 +4153,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         }
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'application/pdf' });
-        const filename = msg.conversion.fileName || 'AI Ads.pdf';
+        const filename = msg.conversion.fileName || 'AISA�.pdf';
         const file = new window.File([blob], filename, { type: 'application/pdf' });
 
         if (isPregeneration) {
@@ -4234,8 +4190,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             try {
               await navigator.share({
                 files: [file],
-                title: 'AI Ads AI Response',
-                text: msg && msg.content ? `${msg.content.substring(0, 150)}...` : 'AI Ads Document output'
+                title: 'AISA� AI Response',
+                text: msg && msg.content ? `${msg.content.substring(0, 150)}...` : 'AISA� Document output'
               });
               toast.success("PDF sent to share menu!", { id: shareToastId });
             } catch (shareErr) {
@@ -4296,7 +4252,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         header.style.fontSize = '12px';
         header.style.color = '#888';
         header.style.fontWeight = 'bold';
-        header.innerText = 'AI Ads AI RESPONSE';
+        header.innerText = 'AISA� AI RESPONSE';
 
         tempWrapper.appendChild(header);
 
@@ -4378,7 +4334,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
               // Sampling check every 5th pixel for better accuracy than every 10th
               for (let col = 0; col < canvas.width; col += 5) {
                 const idx = (row * canvas.width + col) * 4;
-                // Check if color is near white (AI Ads bg or transparent)
+                // Check if color is near white (AISA� bg or transparent)
                 if (scanData[idx] < 245 || scanData[idx + 1] < 245 || scanData[idx + 2] < 245) {
                   isWhiteRow = false;
                   break;
@@ -4428,7 +4384,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       }
       // ===== END SMART SLICING =====
 
-      const filename = `AI Ads.pdf`;
+      const filename = `AISA�.pdf`;
       const blob = pdf.output('blob');
       const file = new File([blob], filename, { type: 'application/pdf', lastModified: new Date().getTime() });
 
@@ -4485,8 +4441,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           try {
             await navigator.share({
               files: [file],
-              title: 'AI Ads AI Response',
-              text: msg && msg.content ? `${msg.content.substring(0, 150)}...` : 'AI Ads Document output'
+              title: 'AISA� AI Response',
+              text: msg && msg.content ? `${msg.content.substring(0, 150)}...` : 'AISA� Document output'
             });
             if (processToastId) toast.success("PDF sent to share menu!", { id: processToastId });
           } catch (shareErr) {
@@ -4603,7 +4559,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       header.style.justifyContent = 'space-between';
       header.style.alignItems = 'center';
       header.innerHTML = `
-        <div style="font-weight: 900; font-size: 24px; color: #000000;">AISA</div>
+        <div style="font-weight: 900; font-size: 24px; color: #000000;">AISA� <span style="font-weight: 400; font-size: 14px; color: #888;">AI LEGAL ASSISTANT</span></div>
         <div style="font-size: 10px; color: #aaa; text-align: right;">DOC-ID: ${msg.id}<br/>DATE: ${new Date().toLocaleDateString()}</div>
       `;
 
@@ -4634,7 +4590,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       footer.style.borderTop = '1px solid #eee';
       footer.style.fontSize = '10px';
       footer.style.color = '#999';
-      footer.innerHTML = `AISA Report - Generated on ${new Date().toLocaleString()}. Always consult with a licensed professional.`;
+      footer.innerHTML = `AISA� AI Legal Report - Generated on ${new Date().toLocaleString()}. Always consult with a licensed legal professional.`;
       tempWrapper.appendChild(footer);
 
       document.body.appendChild(tempWrapper);
@@ -4693,7 +4649,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
         pageIdx++;
       }
 
-      pdf.save(`AISA.pdf`);
+      pdf.save(`AISA_Legal_Report_${msg.id.substring(0,6)}.pdf`);
       toast.success("PDF Downloaded! 📄", { id: toastId });
     } catch (err) {
       console.error("PDF Generate error:", err);
@@ -4729,7 +4685,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       header.style.fontSize = '12px';
       header.style.color = '#888';
       header.style.fontWeight = 'bold';
-      header.innerText = 'AI Ads AI RESPONSE';
+      header.innerText = 'AISA� AI RESPONSE';
 
       tempWrapper.appendChild(header);
 
@@ -4818,7 +4774,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       toast.loading("Uploading PDF...", { id: toastId });
       const blob = pdf.output('blob');
       const formData = new FormData();
-      formData.append('pdf', blob, 'AI Ads.pdf');
+      formData.append('pdf', blob, 'AISA�.pdf');
 
       const { BASE_URL } = await import('../types');
       const uploadRes = await axios.post(`${BASE_URL}/api/chat/upload-pdf`, formData, {
@@ -4833,7 +4789,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
 
       // 3. Show in-app WhatsApp contact picker modal
       setWaPdfUrl(pdfUrl);
-      setWaMsgContent(`🤖 *AI Ads AI Response*\n\nYeh dekho meri AI Ads se baat: ${pdfUrl}`);
+      setWaMsgContent(`🤖 *AISA� AI Response*\n\nYeh dekho meri AISA� se baat: ${pdfUrl}`);
       setWaPhone('');
       setWaShareModal(true);
 
@@ -4913,43 +4869,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
   };
 
   const handleCopyMessage = (content) => {
-    if (!content) return;
-    // Convert markdown to clean plain text for clipboard
-    let clean = content;
-    // Remove [ACTIVE TOOL: ...] tags
-    clean = clean.replace(/\*?\*?\[ACTIVE TOOL:.*?\]\*?\*?/gi, '');
-    // Convert markdown headings (##, ###) to plain uppercase text
-    clean = clean.replace(/^#{1,6}\s+(.+)$/gm, (_, heading) => heading.trim().toUpperCase());
-    // Remove bold/italic markers (**text**, *text*, __text__, _text_)
-    clean = clean.replace(/\*\*(.+?)\*\*/g, '$1');
-    clean = clean.replace(/\*(.+?)\*/g, '$1');
-    clean = clean.replace(/__(.+?)__/g, '$1');
-    clean = clean.replace(/_(.+?)_/g, '$1');
-    // Remove strikethrough (~~text~~)
-    clean = clean.replace(/~~(.+?)~~/g, '$1');
-    // Remove inline code backticks
-    clean = clean.replace(/`([^`]+)`/g, '$1');
-    // Remove code block markers (```language ... ```)
-    clean = clean.replace(/```[\s\S]*?```/g, (match) => {
-      return match.replace(/```\w*\n?/g, '').replace(/```/g, '').trim();
-    });
-    // Clean up horizontal rules (---, ***, ___)
-    clean = clean.replace(/^[-*_]{3,}\s*$/gm, '─'.repeat(40));
-    // Clean up list markers (- item -> • item, * item -> • item)
-    clean = clean.replace(/^\s*[-*]\s+/gm, '• ');
-    // Clean ordered list markers (1. item -> 1. item) — keep as-is for readability
-    // Remove link syntax [text](url) -> text
-    clean = clean.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    // Remove image syntax ![alt](url) -> alt
-    clean = clean.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
-    // Remove blockquote markers
-    clean = clean.replace(/^\s*>\s?/gm, '');
-    // Collapse excessive blank lines (3+ newlines -> 2)
-    clean = clean.replace(/\n{3,}/g, '\n\n');
-    // Trim
-    clean = clean.trim();
-
-    navigator.clipboard.writeText(clean);
+    navigator.clipboard.writeText(content);
     toast.success("Copied to clipboard!");
   };
 
@@ -5044,7 +4964,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
 
       // Generate new AI response based on the edited message
       const SYSTEM_INSTRUCTION = `
-You are AI Ads, an advanced AI assistant.
+You are AISA�, an advanced AI assistant.
 IMAGE GENERATION CAPABILITIES:
 If the user asks for an image (e.g., "generate", "create", "draw", "show me a pic", "image dikhao", "photo bhejo", "pic do"), tell them to use the Image Generation mode via the Magic Tools button. Do NOT attempt to generate images inline.
 `;
@@ -5298,7 +5218,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
   }, [isAudioConvertMode]);
 
   return (
-    <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text overscroll-none h-[100dvh] fixed inset-0 lg:static lg:h-full">
+    <div className="flex w-full bg-secondary relative overflow-hidden AISA�-scalable-text overscroll-none h-[100dvh] fixed inset-0 lg:static lg:h-full">
       {/* 🌟 Premium Minimalist Background Wrapper 🌟 */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#f8f9fc] dark:bg-[#0b0c15]">
         {/* Universal Ambient Glows: Animated Blobs for Depth */}
@@ -5317,6 +5237,10 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           </div>
         </div>
 
+        {/* 3D Ballpit Overlay (100% visible in light mode now) */}
+        <div className="absolute inset-0 opacity-80 dark:opacity-60 dark:mix-blend-screen mix-blend-normal">
+          <Ballpit count={60} />
+        </div>
       </div>
 
 
@@ -5499,7 +5423,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="relative flex-1 overflow-y-auto chatgpt-container pb-48 md:pb-56 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent aisa-scalable-text"
+          className="relative flex-1 overflow-y-auto chatgpt-container pb-48 md:pb-56 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent AISA�-scalable-text"
         >
           {messages.length > 0 && (
             <>
@@ -5514,7 +5438,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 >
                   {/* Actions Menu (Always visible for discoverability) */}
 
-                  <div className={`chatgpt-message-content ${msg.role === 'model' ? 'w-full' : ''}`}>
+                  <div className={`chatgpt-message-content ${msg.role === 'model' ? 'w-fit' : ''}`}>
                     {/* Avatar */}
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
@@ -5525,7 +5449,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       {msg.role === 'user' ? (
                         <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
                       ) : (
-                        <img src="/logo/Logo.svg" alt="AISA" className="w-6 h-6 object-contain" />
+                        <img src="/logo/Logo.svg" alt="AISA�" className="w-6 h-6 object-contain" />
                       )}
                     </div>
 
@@ -5533,8 +5457,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
                       {msg.isGenerating && (
                         <div className="flex items-center gap-3 mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10 animate-pulse">
-                          <img src="/logo/Logo.svg" alt="AISA" className="w-5 h-5 object-contain" />
-                          <span className="text-xs font-semibold text-primary uppercase tracking-tighter">AISA generating...</span>
+                          <img src="/logo/Logo.svg" alt="AISA�" className="w-5 h-5 object-contain" />
+                          <span className="text-xs font-semibold text-primary uppercase tracking-tighter">AISA� generating...</span>
                         </div>
                       )}
 
@@ -5704,7 +5628,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 </div>
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500 leading-none">AI Ads Search</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500 leading-none">AISA� Search</span>
                                     <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
                                   </div>
                                   <span className="text-[9px] font-bold text-blue-500/60 uppercase tracking-widest mt-0.5">Real-Time Grounding Active</span>
@@ -5719,7 +5643,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 </div>
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">AI Ads Knowledge</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">AISA� Knowledge</span>
                                     <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                                   </div>
                                   <span className="text-[9px] font-bold text-emerald-500/60 uppercase tracking-widest mt-0.5">Verified Documents Grounding</span>
@@ -5778,7 +5702,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
                                     if (!inline) {
                                       return (
-                                        <div className={`rounded-xl overflow-hidden my-3 border ${isUser ? 'border-white/10 bg-black/20' : 'border-[#1a1a1a] bg-[#0d0d0d]'} shadow-2xl w-full max-w-full group/code`}>
+                                        <div className={`rounded-xl overflow-hidden my-3 border ${isUser ? 'border-white/10 bg-black/20' : 'border-zinc-700/50 bg-[#1e1e1e]'} shadow-2xl w-full max-w-full group/code`}>
                                           {!isUser && (
                                             <div className="flex items-center justify-between px-4 py-2.5 bg-[#2d2d2d]/80 backdrop-blur-sm border-b border-zinc-800">
                                               <div className="flex items-center gap-2">
@@ -5796,34 +5720,32 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                               </button>
                                             </div>
                                           )}
-                                            <div className={`${isUser ? 'max-h-[500px]' : 'max-h-[600px]'} overflow-auto custom-scrollbar-thin ${isUser ? 'bg-transparent' : 'bg-[#0d0d0d]'}`}>
-                                              <SyntaxHighlighter
-                                                language={lang || 'text'}
-                                                style={highlighterTheme}
-                                                PreTag="div"
-                                                customStyle={{
-                                                  margin: 0,
-                                                  padding: isUser ? '16px' : '20px',
-                                                  fontSize: isUser ? '13px' : '14px',
-                                                  lineHeight: '1.7',
-                                                  background: 'transparent',
-                                                  borderRadius: 0,
-                                                  border: 'none',
-                                                  color: '#e5e7eb', // Ensure visibility for plain text
-                                                  fontFamily: '"Fira Code", "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace'
-                                                }}
-                                                codeTagProps={{
-                                                  style: {
-                                                    fontFamily: 'inherit',
-                                                    background: 'transparent',
-                                                    color: 'inherit'
-                                                  }
-                                                }}
-                                                {...props}
-                                              >
-                                                {codeValue}
-                                              </SyntaxHighlighter>
-                                            </div>
+                                          <div className={`${isUser ? 'max-h-[500px]' : 'max-h-[600px]'} overflow-auto custom-scrollbar-thin ${isUser ? 'bg-transparent' : 'bg-[#1e1e1e]'}`}>
+                                            <SyntaxHighlighter
+                                              language={lang || 'text'}
+                                              style={highlighterTheme}
+                                              PreTag="div"
+                                              customStyle={{
+                                                margin: 0,
+                                                padding: isUser ? '16px' : '20px',
+                                                fontSize: isUser ? '12.5px' : '13.5px',
+                                                lineHeight: '1.6',
+                                                background: 'transparent',
+                                                borderRadius: 0,
+                                                border: 'none',
+                                                fontFamily: '"Fira Code", "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace'
+                                              }}
+                                              codeTagProps={{
+                                                style: {
+                                                  fontFamily: 'inherit',
+                                                  background: 'transparent'
+                                                }
+                                              }}
+                                              {...props}
+                                            >
+                                              {codeValue}
+                                            </SyntaxHighlighter>
+                                          </div>
                                         </div>
                                       );
                                     }
@@ -5842,7 +5764,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                             <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/img-container:opacity-100 transition-opacity">
                                               <div className="flex items-center gap-2">
                                                 <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Ads Generated Asset</span>
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA� Generated Asset</span>
                                               </div>
                                             </div>
                                           )}
@@ -5853,7 +5775,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/img-container:opacity-100 transition-opacity pointer-events-none" />
                                         </div>
                                         <button
-                                          onClick={() => handleDownload(props.src, `AI Ads_gen_${Date.now()}.png`)}
+                                          onClick={() => handleDownload(props.src, `aisa_gen_${Date.now()}.png`)}
                                           disabled={isDownloading}
                                           className="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white shadow-lg transition-all active:scale-95 disabled:opacity-50"
                                         >
@@ -5929,7 +5851,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-opacity">
                                   <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Ads Generated Asset</span>
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA� Generated Asset</span>
                                   </div>
                                 </div>
                                 <img
@@ -5973,7 +5895,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setIsMagicEditing(true);
-                                      setIsMagicSettingsOpen(true);
                                       setEditRefImage({
                                         url: msg.imageUrl,
                                         name: 'Generated Asset',
@@ -6002,7 +5923,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     disabled={isDownloadingUrl === msg.imageUrl}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleDownload(msg.imageUrl, 'AI Ads-generated.png');
+                                      handleDownload(msg.imageUrl, 'AISA�-generated.png');
                                     }}
                                     className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center gap-2 ${isDownloadingUrl === msg.imageUrl ? 'bg-zinc-600 cursor-wait' : 'bg-primary text-white hover:bg-primary/90'}`}
                                     title="Download High-Res"
@@ -6241,7 +6162,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                         {({ active }) => (
                                           <button
                                             onClick={() => {
-                                              const text = `I've converted "${msg.conversion.fileName}" into voice audio using AI Ads! ${window.location.href}`;
+                                              const text = `I've converted "${msg.conversion.fileName}" into voice audio using AISA�! ${window.location.href}`;
                                               const url = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
                                                 ? `whatsapp://send?text=${encodeURIComponent(text)}`
                                                 : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
@@ -6258,7 +6179,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                         {({ active }) => (
                                           <button
                                             onClick={() => {
-                                              const text = `AI Ads Audio Conversion: ${msg.conversion.fileName}`;
+                                              const text = `AISA� Audio Conversion: ${msg.conversion.fileName}`;
                                               const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
                                               window.open(url, '_blank');
                                             }}
@@ -6461,11 +6382,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 <AisaTypingIndicator 
                   visible={true} 
                   message={
-                    isImageGeneration ? "AISA Generating..." : 
+                    isImageGeneration ? "AISA� Generating..." : 
                     isVideoGeneration ? "Generating cinematic video..." :
                     isMagicEditing ? "Processing image edit..." :
                     isDeepSearch ? "Deep searching..." :
-                    "AISA is thinking"
+                    "AISA� is thinking"
                   }
                 />
               )}
@@ -6495,9 +6416,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 >
                   <img
                     src="/logo/Logo.svg"
-                    alt="AISA"
+                    alt="AISA�"
                     className="w-20 h-20 sm:w-24 sm:h-24 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
-
                   />
                 </motion.div>
 
@@ -6572,29 +6492,24 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       } else if (id === 'image_to_video') {
                         if (!checkPremiumTool('Image to Video')) return;
                         setIsMagicVideoModalOpen(true);
-                        toast.success("Image to Video Active");
-                      } else if (id === 'legal') {
+                      } else if (id === 'legal' || id === 'legal_chat') {
+                        if (inputRef.current) {
+                          inputRef.current.value = "AI Legal Specialist: Analyze this legal concern: ";
+                          inputRef.current.focus();
+                        }
                         if (!checkPremiumTool('AI Legal')) return;
                         setActiveLegalToolkit(true);
                         toast.success("AI Legal Enabled ⚖️");
                       } else if (id === 'ai_cashflow') {
                         if (!checkPremiumTool('AI CashFlow')) return;
                         setIsCashFlowMode(true);
-                        toast.success("AI CashFlow Active 📈");
-                      } else if (id === 'stock_analyst') {
-                        if (!checkPremiumTool('Stock Analysis')) return;
                         setIsStockModalOpen(true);
-                        toast.success("Stock Analyst Active 📉");
-                      } else if (id === 'aiad_agent') {
-                        if (!checkPremiumTool('AI Ad Agent')) return;
-                        setIsSocialMediaDashboardOpen(true);
-                        toast.success("AIAD™ Agent Active");
+                        toast.success("AI CashFlow Explorer Active");
                       }
                     }}
                   />
                 </section>
               </div>
-
             </motion.div>
           )}
         </AnimatePresence>
@@ -6606,7 +6521,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
             <form 
               onSubmit={handleSendMessage} 
-              className="relative w-full flex flex-col transition-all duration-300 backdrop-blur-3xl p-3 z-50 aisa-chat-input-wrapper bg-[#f8f9fc]/90 dark:bg-zinc-900/95 border border-slate-200/50 dark:border-zinc-800/80 rounded-[32px] shadow-2xl ring-1 ring-black/5 overflow-visible"
+              className="relative w-full flex flex-col transition-all duration-300 backdrop-blur-3xl p-3 z-50 AISA�-chat-input-wrapper bg-[#f8f9fc]/90 dark:bg-zinc-900/95 border border-slate-200/50 dark:border-zinc-800/80 rounded-[32px] shadow-2xl ring-1 ring-black/5 overflow-visible"
             >
               {/* Internal File Preview Area */}
               {filePreviews.length > 0 && (
@@ -6736,7 +6651,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             <Brain className="w-5 h-5 text-white" />
                           </div>
                           <h3 className="text-[16px] font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                            AISA ™ Magic Tools
+                            AISA� ™ Magic Tools
                           </h3>
                         </div>
                       </div>
@@ -6765,7 +6680,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Generate Image</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Create unique AI art from your text.</p>
@@ -6796,7 +6711,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Generate Video</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Convert scenes into dynamic videos.</p>
@@ -6824,7 +6739,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Web Search</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Fast and accurate web queries.</p>
@@ -6852,7 +6767,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Deep Search</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">In-depth analysis and data mining.</p>
@@ -6879,7 +6794,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Convert to Audio</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Natural-sounding text-to-speech.</p>
@@ -6906,7 +6821,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Convert Documents</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Format conversion and text extraction.</p>
@@ -6935,7 +6850,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Code Writer</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Generate multi-language code snippets.</p>
@@ -6964,10 +6879,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             setIsCodeWriter(false);
                             setIsCashFlowMode(false);
                             setIsFileAnalysis(false);
-                            if (newMode) {
-                              setIsMagicSettingsOpen(true);
-                              toast.success("Image Editing Enabled");
-                            }
+                            if (newMode) toast.success("Image Editing Enabled");
                           }}
                           className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isMagicEditing ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
                         >
@@ -6976,7 +6888,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Edit Image</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Magic Image Editor.</p>
@@ -7013,7 +6925,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-0.5">
-                                <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                                <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                                 <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI CashFlow</span>
                               </div>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Live Analysis & Reports.</p>
@@ -7044,7 +6956,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI Legal</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">7 specialized AI legal tools.</p>
@@ -7065,34 +6977,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="AISA�-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA� ™</span>
                               <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">Image to Video</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Animate your images with AI magic.</p>
                           </div>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!checkPremiumTool('AI Ad Agent')) return;
-                            setIsToolsMenuOpen(false);
-                            setIsSocialMediaDashboardOpen(true);
-                          }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md`}
-                        >
-                          <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300`}>
-                            <Sparkles className="w-7 h-7 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
-                              <span className="text-[16px] font-extrabold text-slate-800 dark:text-white leading-none">AIAD™ Agent</span>
-
-                            </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Automate 30 days of social media content.</p>
-                          </div>
-                        </button>
-
                       </div>
                     </motion.div>
                   )}
@@ -7144,7 +7034,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       setIsAttachMenuOpen(false);
                     }}
                     className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-secondary/80 text-subtext hover:text-primary transition-colors shadow-lg hover:shadow-primary/40 relative overflow-visible z-20"
-                    title="AISA ™ Magic Tools"
+                    title="AISA� ™ Magic Tools"
                   >
                     <Brain className={`w-[22px] h-[22px] relative z-10 transition-colors ${isBrainHovered ? 'text-primary' : ''}`} />
                     <AnimatePresence>
@@ -7159,7 +7049,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                     </AnimatePresence>
                   </motion.button>
                 </div>
-
               </div>
 
               <div className="flex-1 flex items-center min-w-0 bg-transparent border-0 ring-0 focus:ring-0">
@@ -7244,8 +7133,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           >
                             <span className="text-[10px] font-extrabold opacity-90">{imageAspectRatio}</span>
                             <span className="text-[10px] font-black truncate max-w-[60px] sm:max-w-[100px] tracking-tight">
-                              {TOOL_PRICING.image.models.find(m => m.id === imageModelId)?.name.replace('AISA ', '') || 'Model'}
-
+                              {TOOL_PRICING.image.models.find(m => m.id === imageModelId)?.name.replace('AISA� ', '') || 'Model'}
                             </span>
                             <ChevronDown size={11} className={`transition-transform duration-300 ${isMagicSettingsOpen ? 'rotate-180' : ''}`} />
                           </button>
@@ -7386,38 +7274,19 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       )}
                       {isMagicEditing && (
                         <motion.div 
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }} 
-                          animate={{ opacity: 1, y: 0, scale: 1 }} 
-                          exit={{ opacity: 0, scale: 0.95 }} 
-                          className="flex items-center gap-3 px-3.5 py-1.5 bg-amber-500/20 dark:bg-amber-500/25 text-amber-700 dark:text-amber-400 rounded-full text-xs font-bold border border-amber-400/40 backdrop-blur-3xl whitespace-nowrap shrink-0 transition-all hover:bg-amber-500/30 group shadow-[0_8px_32px_-4px_rgba(245,158,11,0.3)] relative overflow-hidden ring-1 ring-white/10"
+                          initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} 
+                          className="flex items-center gap-2.5 px-3 py-1.5 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full text-xs font-bold border border-amber-500/30 backdrop-blur-xl whitespace-nowrap shrink-0 transition-all hover:bg-amber-500/15 group shadow-lg shadow-amber-500/10"
                         >
-                          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
-                          
-                          <div className="flex items-center gap-2 relative z-10">
-                             <div className="w-5 h-5 rounded-lg bg-amber-500 dark:bg-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/40 text-white">
-                              <Wand2 size={14} strokeWidth={3} />
+                          <div className="flex items-center gap-2">
+                             <div className="w-5 h-5 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                              <Wand2 size={14} strokeWidth={2.5} />
                             </div>
-                            <span className="uppercase tracking-widest text-[9px] font-black hidden xs:inline">{t('imageEdit')}</span>
+                            <span className="uppercase tracking-wide text-[10px] font-black hidden sm:inline">Image Edit</span>
                           </div>
-
-                          <div className="w-[1px] h-3 bg-amber-500/40 mx-0.5 relative z-10" />
-
-                          <button 
-                            type="button"
-                            onClick={() => setIsMagicSettingsOpen(!isMagicSettingsOpen)}
-                            className="flex items-center gap-1.5 hover:text-amber-900 dark:hover:text-amber-200 transition-all px-1.5 py-0.5 rounded-md hover:bg-white/10 relative z-10"
-                          >
-                            <span className="text-[10px] font-extrabold opacity-90">{imageAspectRatio}</span>
-                            <span className="text-[10px] font-black truncate max-w-[60px] sm:max-w-[100px] tracking-tight">
-                              {TOOL_PRICING.image.models.find(m => m.id === imageModelId)?.name.replace('AISA ', '') || 'Model'}
-                            </span>
-                            <ChevronDown size={11} className={`transition-transform duration-300 ${isMagicSettingsOpen ? 'rotate-180' : ''}`} />
-                          </button>
-
                           <button 
                             type="button" 
                             onClick={() => setIsMagicEditing(false)} 
-                            className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-amber-600 dark:text-amber-400 transition-all hover:rotate-90 relative z-10"
+                            className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all hover:rotate-90"
                           >
                             <X size={14} strokeWidth={3} />
                           </button>
@@ -7432,7 +7301,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                              <div className="w-5 h-5 rounded-lg bg-blue-500/20 flex items-center justify-center">
                               <FileText size={14} strokeWidth={2.5} />
                             </div>
-                            <span className="uppercase tracking-wide text-[10px] font-black hidden sm:inline">{t('analyzeDocument')}</span>
+                            <span className="uppercase tracking-wide text-[10px] font-black hidden sm:inline">Analyze Document</span>
                           </div>
                           <button 
                             type="button" 
@@ -7468,7 +7337,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       }
                     }
                   }}
-                  placeholder={isLimitReached ? t('limitReached') || "Chat limit reached. Sign in to continue." : (isVideoGeneration ? t('describeVideo') || "Describe the video you want to generate..." : isAudioConvertMode ? t('enterTextToConvert') || "Enter text to convert..." : isDocumentConvert ? t('uploadFileToConvert') || "Upload file & ask to convert..." : typedPlaceholder)}
+                  placeholder={isLimitReached ? "Chat limit reached. Sign in to continue." : (isVideoGeneration ? "Describe the video you want to generate..." : isAudioConvertMode ? "Enter text to convert..." : isDocumentConvert ? "Upload file & ask to convert..." : typedPlaceholder)}
                   rows={1}
                   className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none px-2 py-2 text-slate-800 dark:text-zinc-100 text-left placeholder-slate-400 dark:placeholder-zinc-500 resize-none overflow-y-auto custom-scrollbar font-medium leading-relaxed text-[16px] ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
                   style={{ minHeight: '32px', height: 'auto', maxHeight: '180px', lineHeight: '1.5' }}
@@ -7480,7 +7349,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 {isListening && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 rounded-full border border-red-500/20 mr-2">
                     <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-                    <span className="text-[10px] font-bold text-red-600 uppercase">{t('rec')}</span>
+                    <span className="text-[10px] font-bold text-red-600 uppercase">REC</span>
                   </div>
                 )}
 
@@ -7504,7 +7373,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             setTimeout(() => setIsMicTapped(false), 2000);
                             handleVoiceInput();
                           }}
-                           title={t('voiceInput')}
+                          className={`w-[40px] h-[40px] rounded-full flex items-center justify-center transition-colors shrink-0 relative z-20 ${isListening ? 'bg-red-500 text-white' : 'text-subtext hover:text-primary hover:bg-secondary shadow-sm hover:shadow-md'}`}
+                          title="Voice Input"
                         >
                           <Mic className={`w-[22px] h-[22px] shrink-0 transition-colors ${isMicHovered && !isListening ? 'text-primary' : ''}`} />
                         </motion.button>
@@ -7539,7 +7409,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       onMouseLeave={() => setIsSendHovered(false)}
                       whileHover={{ scale: 1.15, rotate: 2 }}
                       whileTap={{ scale: 0.88 }}
-                      title={t('send')}
                       onClick={() => {
                         setIsSendTapped(true);
                         setTimeout(() => setIsSendTapped(false), 2000);
@@ -7629,7 +7498,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       as="h3"
                       className="text-lg font-medium leading-6 text-maintext flex justify-between items-center"
                     >
-                      {t('shareFeedback')}
+                      Share feedback
                       <button onClick={() => setFeedbackOpen(false)} className="text-subtext hover:text-maintext">
                         <X className="w-5 h-5" />
                       </button>
@@ -7660,7 +7529,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                     </div>
 
                     <div className="mt-4 text-[10px] text-subtext leading-tight">
-                      {t('conversationIncludedFeedback')}
+                      Your conversation will be included with your feedback to help improve the AI.
                     </div>
 
                     <div className="mt-6 flex justify-end">
@@ -7672,7 +7541,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         onClick={submitFeedback}
                       >
                         {isSubmittingFeedback && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                        {isSubmittingFeedback ? t('submitting') : t('submit')}
+                        {isSubmittingFeedback ? 'Submitting...' : 'Submit'}
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -7746,8 +7615,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
         onComplete={() => {
-          // Onboarding finished, just close the modal
-          setShowOnboarding(false);
+          // Re-init chat to show correct greeting
+          setTimeout(() => window.location.reload(), 500);
         }}
       />
 
@@ -7764,8 +7633,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-bold text-sm">{t('shareOnWhatsApp')}</h3>
-                  <p className="text-white/70 text-xs">{t('pdfLinkSendNoApp')}</p>
+                  <h3 className="text-white font-bold text-sm">WhatsApp pe Share Karo</h3>
+                  <p className="text-white/70 text-xs">PDF link bhejein — bina app chhode</p>
                 </div>
                 <button onClick={() => setWaShareModal(false)} className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -7776,7 +7645,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
               <div className="p-5 space-y-4">
                 {/* Phone Input */}
                 <div>
-                  <label className="text-xs font-semibold text-subtext mb-1.5 block">📱 {t('phoneNumberWithCode')}</label>
+                  <label className="text-xs font-semibold text-subtext mb-1.5 block">📱 Phone Number (Country Code ke saath)</label>
                   <div className="flex gap-2">
                     <div className="flex items-center bg-surface-hover rounded-xl px-3 border border-border/50 text-sm text-maintext font-mono">+</div>
                     <input
@@ -7788,12 +7657,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       autoFocus
                     />
                   </div>
-                  <p className="text-[10px] text-subtext mt-1">{t('phoneNumberExample')}</p>
+                  <p className="text-[10px] text-subtext mt-1">Example: 91 9876543210 (India), 1 2025551234 (USA)</p>
                 </div>
 
                 {/* Message Preview */}
                 <div>
-                  <label className="text-xs font-semibold text-subtext mb-1.5 block">💬 {t('messagePreview')}</label>
+                  <label className="text-xs font-semibold text-subtext mb-1.5 block">💬 Message Preview</label>
                   <textarea
                     value={waMsgContent}
                     onChange={e => setWaMsgContent(e.target.value)}
@@ -7828,7 +7697,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                   </svg>
-                  {t('sendOnWhatsApp')}
+                  WhatsApp pe Bhejo
                 </button>
               </div>
             </div>
@@ -7855,8 +7724,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           <Sliders className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <Dialog.Title as="h3" className="text-sm font-bold text-maintext leading-none">{t('voiceSettings')}</Dialog.Title>
-                          <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-semibold mt-0.5">{t('chirp3HD')}</p>
+                          <Dialog.Title as="h3" className="text-sm font-bold text-maintext leading-none">Voice Settings</Dialog.Title>
+                          <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-semibold mt-0.5">Chirp 3 HD · 30 voices · 35+ languages</p>
                         </div>
                       </div>
                       <button onClick={() => setIsVoiceSettingsOpen(false)} className="w-7 h-7 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center text-subtext hover:text-maintext transition-all border border-black/5 dark:border-white/10">
@@ -7943,19 +7812,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       const selLang = allLangItems.find(l => l.value === audioLangCode) || allLangItems[0];
                       return (
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-subtext mb-2">{t('language')}</p>
-                          <Listbox value={audioLangCode} onChange={(val) => { 
-                            setAudioLangCode(val); 
-                            setAudioVoiceName(`${val}-Chirp3-HD-Autonoe`);
-                            // Sync with UI Language context
-                            const item = allLangItems.find(l => l.value === val);
-                            if (item) {
-                              const baseLang = item.label.split(' (')[0].split(' —')[0];
-                              setTimeout(() => {
-                                setLanguage(baseLang); 
-                              }, 0);
-                            }
-                          }}>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-subtext mb-2">Language</p>
+                          <Listbox value={audioLangCode} onChange={(val) => { setAudioLangCode(val); setAudioVoiceName(`${val}-Chirp3-HD-Autonoe`); }}>
                             <div className="relative">
                               <Listbox.Button className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 hover:border-indigo-500/40 transition-all group text-left">
                                 <span className="text-xl leading-none">{selLang.flag}</span>
@@ -8039,7 +7897,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       const isFemale = VOICES[0].items.some(v => v.name === voiceKey);
                       return (
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-subtext mb-2">{t('voice')}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-subtext mb-2">Voice</p>
                           <Listbox value={audioVoiceName} onChange={setAudioVoiceName}>
                             <div className="relative">
                               <Listbox.Button className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 hover:border-indigo-500/40 transition-all group text-left">
@@ -8095,7 +7953,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                     {/* ── Pitch Slider ── */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-subtext">{t('pitch')}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-subtext">Pitch</p>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-mono font-bold text-indigo-500 dark:text-indigo-300">{audioPitch > 0 ? '+' : ''}{audioPitch.toFixed(1)}</span>
                           {audioPitch !== 0 && (
@@ -8118,7 +7976,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                     {/* ── Speed Slider ── */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-subtext">{t('speed')}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-subtext">Speed</p>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-mono font-bold text-indigo-500 dark:text-indigo-300">{audioSpeed.toFixed(2)}×</span>
                           {audioSpeed !== 1.0 && (
@@ -8152,15 +8010,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         try {
                           const langSamples = {
                             'hi-IN': 'नमस्ते! मैं आपकी आवाज़ हूँ। क्या यह अच्छी लगती है?',
-                            'bn-IN': 'নমস্কার! আমি আপনার ভয়েস। এটা কেমন শোনাচ্ছে?',
-                            'gu-IN': 'નમસ્તે! હું તમારો અવાજ છું. આ કેવું લાગે છે?',
-                            'kn-IN': 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಧ್ವನಿ. ಇದು ಹೇಗೆ ಕೇಳಿಸುತ್ತದೆ?',
-                            'ml-IN': 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ ശബ്ദമാണ്. ഇത് എങ്ങനെയുണ്ട്?',
-                            'mr-IN': 'नमस्कार! मी तुमचा आवाज आहे. हे कसे वाटते?',
-                            'pa-IN': 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡੀ ਆਵਾਜ਼ ਹਾਂ। ਇਹ ਕਿਵੇਂ ਲੱਗਦਾ ਹੈ?',
-                            'ta-IN': 'வணக்கம்! நான் உங்கள் குரல். இது எப்படி கேட்கிறது?',
-                            'te-IN': 'నమస్కారం! నేను మీ వాయిస్. ఇది ఎలా ఉంది?',
-                            'ur-IN': 'ہیلو! میں آپ کی آواز ہوں۔ یہ کیسا لگ رہا ہے؟',
                             'ar-XA': 'مرحباً! أنا صوتك. هل يبدو هذا جيداً؟',
                             'ja-JP': 'こんにちは。私はあなたの声です。どう聞こえますか？',
                             'cmn-CN': '你好！我是您的声音。这听起来好吗？',
@@ -8181,22 +8030,13 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           toast.dismiss(t); toast.success('Playing sample ▶');
                         } catch (e) { toast.dismiss(t); toast.error('Sample failed — check voice/language combo.'); setIsPlayingSample(false); }
                       }} className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl border border-black/5 dark:border-white/10 text-sm font-bold transition-all ${isPlayingSample ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-300 cursor-not-allowed opacity-70' : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-subtext hover:text-maintext'}`}>
-                        <PlayCircle className={`w-4 h-4 ${isPlayingSample ? 'animate-pulse' : ''} text-indigo-500 dark:text-indigo-400`} /> {isPlayingSample ? t('playing') : t('playSample')}
+                        <PlayCircle className={`w-4 h-4 ${isPlayingSample ? 'animate-pulse' : ''} text-indigo-500 dark:text-indigo-400`} /> {isPlayingSample ? 'Playing...' : 'Play Sample'}
                       </button>
-                      <button type="button" onClick={() => {
-                        updatePersonalization('voice', {
-                          languageCode: audioLangCode,
-                          voiceName: audioVoiceName,
-                          pitch: audioPitch,
-                          speed: audioSpeed
-                        });
-                        setIsVoiceSettingsOpen(false);
-                        toast.success(t('settingsPersisted') || 'Voice Settings Applied ✨', { icon: '🎙️' });
-                      }}
+                      <button type="button" onClick={() => setIsVoiceSettingsOpen(false)}
                         className="flex-[2] h-11 rounded-2xl text-sm font-bold text-white transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40"
                         style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
                       >
-                        {t('applySettings')}
+                        Apply Settings
                       </button>
                     </div>
                   </div>
@@ -8214,25 +8054,19 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         onCreditDeduction={(credits) => console.log('deducted', credits)}
       />
 
-
       <MagicToolSettingsCard 
         isOpen={isMagicSettingsOpen}
         onClose={() => setIsMagicSettingsOpen(false)}
-        referenceImage={editRefImage}
-        toolType={isMagicEditing ? 'edit' : isImageGeneration ? 'image' : isVideoGeneration ? 'video' : ''}
+        toolType={isImageGeneration ? 'image' : isVideoGeneration ? 'video' : ''}
         config={
-          isMagicEditing
-            ? { modelId: editModelId }
-            : isImageGeneration
-              ? { aspectRatio: imageAspectRatio, modelId: imageModelId }
-              : isVideoGeneration
-                ? { aspectRatio: videoAspectRatio, resolution: videoResolution, modelId: videoModelId }
-                : {}
+          isImageGeneration 
+            ? { aspectRatio: imageAspectRatio, modelId: imageModelId }
+            : isVideoGeneration
+              ? { aspectRatio: videoAspectRatio, resolution: videoResolution, modelId: videoModelId }
+              : {}
         }
         onChange={(key, value) => {
-          if (isMagicEditing) {
-            if (key === 'modelId') setEditModelId(value);
-          } else if (isImageGeneration) {
+          if (isImageGeneration) {
             if (key === 'aspectRatio') setImageAspectRatio(value);
             if (key === 'modelId') setImageModelId(value);
           } else if (isVideoGeneration) {
@@ -8248,11 +8082,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           if (inputEl) inputEl.focus();
         }}
         pricing={TOOL_PRICING}
-      />
-      <AiSocialMediaDashboard 
-        isOpen={isSocialMediaDashboardOpen}
-        onClose={() => setIsSocialMediaDashboardOpen(false)}
-        userPlan={userPlanName}
       />
       <CashFlowStockModal 
         isOpen={isStockModalOpen}
@@ -8327,22 +8156,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           });
         }}
       />
-
-      {/* Gmail Connected Feature Showcase Modal */}
-      <GmailConnectedModal
-        isOpen={showGmailModal}
-        onClose={() => setShowGmailModal(false)}
-        onTryPrompt={(prompt) => {
-          setInputValue(prompt);
-          setShowGmailModal(false);
-          setTimeout(() => {
-            if (inputRef.current) inputRef.current.focus();
-          }, 100);
-        }}
-      />
     </div>
-
   );
 };
 
-export default Chat; 
+export default Chat;

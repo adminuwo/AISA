@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,8 +7,9 @@ import {
     Search, Shield, Ban, Trash2, Plus, Edit2, X,
     TrendingUp, DollarSign, Activity, Zap,
     ChevronDown, Save, RefreshCw, ArrowLeft,
-    Eye, EyeOff, Check, AlertCircle, FileText, PlusCircle, Headphones, BookOpen
+    Eye, EyeOff, Check, AlertCircle, FileText, PlusCircle, Headphones, BookOpen, Calendar
 } from 'lucide-react';
+
 import { apiService } from '../services/apiService';
 import { getUserData } from '../userStore/userData';
 import { API } from '../types.js';
@@ -73,6 +75,7 @@ const SectionCard = ({ title, children, action }) => (
 // OVERVIEW TAB
 // ═══════════════════════════════
 const OverviewTab = () => {
+    const { t } = useLanguage();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -100,7 +103,7 @@ const OverviewTab = () => {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
             <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-subtext text-sm">Loading real-time overview...</p>
+            <p className="text-subtext text-sm">{t('loadingRealTimeOverview')}</p>
         </div>
     );
 
@@ -108,7 +111,7 @@ const OverviewTab = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-subtext uppercase tracking-widest flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-primary" /> Live Platform Activity
+                    <Activity className="w-4 h-4 text-primary" /> {t('livePlatformActivity')}
                 </h2>
                 <button
                     onClick={() => fetchStats(true)}
@@ -121,15 +124,15 @@ const OverviewTab = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <StatCard icon={Users} label="Total Users" value={stats?.totalUsers ?? 0} />
-                <StatCard icon={Activity} label="Active Subscriptions" value={stats?.activeSubscriptions ?? 0} color="emerald-500" />
-                <StatCard icon={DollarSign} label="Total Revenue" value={`₹${stats?.totalRevenue ?? 0}`} color="amber-500" />
-                <StatCard icon={Zap} label="Credits Used" value={stats?.totalCreditsUsed ?? 0} color="violet-500" />
-                <StatCard icon={Headphones} label="Support" value={stats?.pendingTickets ?? 0} color="primary" trend={stats?.pendingTickets > 0 ? "Action Required" : "All Clear"} />
+                <StatCard icon={Users} label={t('totalUsers')} value={stats?.totalUsers ?? 0} />
+                <StatCard icon={Activity} label={t('activeSubscriptions')} value={stats?.activeSubscriptions ?? 0} color="emerald-500" />
+                <StatCard icon={DollarSign} label={t('totalRevenue')} value={`₹${stats?.totalRevenue ?? 0}`} color="amber-500" />
+                <StatCard icon={Zap} label={t('creditsUsed')} value={stats?.totalCreditsUsed ?? 0} color="violet-500" />
+                <StatCard icon={Headphones} label={t('support')} value={stats?.pendingTickets ?? 0} color="primary" trend={stats?.pendingTickets > 0 ? "Action Required" : "All Clear"} />
             </div>
 
             {stats?.toolUsage && stats.toolUsage.length > 0 && (
-                <SectionCard title="Tool Usage Analytics">
+                <SectionCard title={t('toolUsageAnalytics')}>
                     <div className="space-y-3">
                         {stats.toolUsage.map((tool, i) => (
                             <div key={i} className="flex items-center justify-between p-3 bg-white/20 dark:bg-white/5 rounded-xl border border-white/10">
@@ -147,10 +150,134 @@ const OverviewTab = () => {
     );
 };
 
+// ─── Plan Badge Color ───
+const getPlanColor = (price) => {
+    if (price === 0) return { bg: 'from-gray-500/20 to-gray-600/10', text: 'text-gray-400', border: 'border-gray-500/20', badge: 'bg-gray-500/10 text-gray-400' };
+    if (price < 500) return { bg: 'from-green-500/20 to-emerald-600/10', text: 'text-emerald-400', border: 'border-emerald-500/20', badge: 'bg-emerald-500/10 text-emerald-400' };
+    if (price < 800) return { bg: 'from-amber-500/20 to-orange-600/10', text: 'text-amber-400', border: 'border-amber-500/20', badge: 'bg-amber-500/10 text-amber-400' };
+    if (price < 1500) return { bg: 'from-blue-500/20 to-indigo-600/10', text: 'text-blue-400', border: 'border-blue-500/20', badge: 'bg-blue-500/10 text-blue-400' };
+    return { bg: 'from-purple-500/20 to-violet-600/10', text: 'text-purple-400', border: 'border-purple-500/20', badge: 'bg-purple-500/10 text-purple-400' };
+};
+
+// ─── Custom Plan Dropdown ───
+const PlanDropdown = ({ plans, value, onChange }) => {
+    const [open, setOpen] = useState(false);
+    const ref = React.useRef(null);
+    const selectedPlan = plans.find(p => p.planName === value);
+
+    React.useEffect(() => {
+        const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div ref={ref} className="relative">
+            {/* Trigger Button */}
+            <button
+                type="button"
+                onClick={() => setOpen(o => !o)}
+                className={`w-full flex items-center justify-between gap-3 bg-white/10 dark:bg-black/30 border-2 ${
+                    open ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-white/10'
+                } rounded-xl px-4 py-3 transition-all group hover:border-primary/30`}
+            >
+                {selectedPlan ? (
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getPlanColor(selectedPlan.priceMonthly).bg} flex items-center justify-center shrink-0`}>
+                            <span className={`text-xs font-black ${getPlanColor(selectedPlan.priceMonthly).text}`}>
+                                {selectedPlan.planName.charAt(0)}
+                            </span>
+                        </div>
+                        <div className="text-left min-w-0">
+                            <p className="text-sm font-bold text-maintext truncate">{selectedPlan.planName}</p>
+                            <p className="text-[10px] text-subtext font-semibold">₹{selectedPlan.priceMonthly}/mo · {selectedPlan.credits} credits</p>
+                        </div>
+                    </div>
+                ) : (
+                    <span className="text-sm text-subtext/60 font-semibold">Select Target Plan</span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-subtext shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Panel */}
+            <AnimatePresence>
+                {open && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                        className="absolute z-[999] top-full left-0 right-0 mt-2 bg-white/95 dark:bg-zinc-900/98 backdrop-blur-3xl border border-white/30 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
+
+                    >
+                        {/* Header */}
+                        <div className="px-4 py-3 border-b border-white/10 dark:border-white/5">
+                            <p className="text-[10px] font-black text-subtext uppercase tracking-widest">Available Plans</p>
+                        </div>
+
+                        {/* Plan Options */}
+                        <div className="p-2 max-h-[400px] overflow-y-auto space-y-1 custom-scrollbar">
+
+                            <button
+                                type="button"
+                                onClick={() => { onChange(''); setOpen(false); }}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                                    !value ? 'bg-primary/10 border border-primary/20' : 'hover:bg-white/50 dark:hover:bg-white/5'
+                                }`}
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-gray-500/10 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-black text-gray-400">—</span>
+                                </div>
+                                <span className="text-sm font-semibold text-subtext">No Plan Selected</span>
+                            </button>
+
+                            {plans.map(plan => {
+                                const colors = getPlanColor(plan.priceMonthly);
+                                const isSelected = value === plan.planName;
+                                return (
+                                    <button
+                                        key={plan._id}
+                                        type="button"
+                                        onClick={() => { onChange(plan.planName); setOpen(false); }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all border ${
+                                            isSelected
+                                                ? `${colors.bg.replace('from-', 'bg-gradient-to-r from-')} ${colors.border} bg-gradient-to-r`
+                                                : 'border-transparent hover:bg-white/50 dark:hover:bg-white/5'
+                                        }`}
+                                    >
+                                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${colors.bg} flex items-center justify-center shrink-0 shadow-sm`}>
+                                            <span className={`text-xs font-black ${colors.text}`}>{plan.planName.charAt(0)}</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-bold text-maintext">{plan.planName}</p>
+                                                {plan.isPopular && (
+                                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-black uppercase tracking-wide">Popular</span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-subtext font-semibold">{plan.credits} credits · ₹{plan.priceMonthly}/mo</p>
+                                        </div>
+                                        {isSelected && (
+                                            <div className={`w-5 h-5 rounded-full ${colors.badge} flex items-center justify-center shrink-0`}>
+                                                <Check className={`w-3 h-3 ${colors.text}`} />
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
 // ═══════════════════════════════
 // USERS TAB
 // ═══════════════════════════════
 const UsersTab = () => {
+    const { t } = useLanguage();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -158,10 +285,24 @@ const UsersTab = () => {
     const [creditAmount, setCreditAmount] = useState('');
     const [upgradeData, setUpgradeData] = useState({ planName: '', expiryDate: '' });
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null });
+    const [availablePlans, setAvailablePlans] = useState([]);
 
     useEffect(() => {
         fetchUsers();
+        fetchPlans();
     }, []);
+
+    const fetchPlans = async () => {
+        try {
+            const data = await apiService.getAdminPlans();
+            const plans = Array.isArray(data) ? data : data.plans || [];
+            console.log('[UsersTab] Fetched plans for dropdown:', plans.length);
+            setAvailablePlans(plans);
+        } catch (err) {
+            console.error('Failed to fetch plans for dropdown:', err);
+        }
+    };
+
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -207,15 +348,7 @@ const UsersTab = () => {
         else payload.credits = parseInt(creditAmount);
 
         try {
-            const response = await fetch(`${API}/admin/adjust-credits`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getUserData()?.token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
+            const data = await apiService.adjustCredits(payload);
             if (data.success) {
                 toast.success('Credits adjusted successfully!');
                 setCreditAmount('');
@@ -225,33 +358,28 @@ const UsersTab = () => {
                 toast.error(data.message || 'Failed');
             }
         } catch (err) {
-            toast.error('Failed to adjust credits');
+            toast.error(err.response?.data?.message || 'Failed to adjust credits');
         }
     };
+
 
     const handleManualUpgrade = async (userId) => {
         if (!upgradeData.planName) return;
         try {
-            const response = await fetch(`${API}/admin/manual-upgrade`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getUserData()?.token}`
-                },
-                body: JSON.stringify({ userId, ...upgradeData })
-            });
-            const data = await response.json();
+            const data = await apiService.manualPlanUpgrade({ userId, ...upgradeData });
             if (data.success) {
                 toast.success('Plan upgraded');
                 setUpgradeData({ planName: '', expiryDate: '' });
                 setSelectedUser(null);
+                fetchUsers(); // Refresh list to show updated plan
             } else {
                 toast.error(data.message || 'Failed');
             }
         } catch (err) {
-            toast.error('Failed to upgrade plan');
+            toast.error(err.response?.data?.message || 'Failed to upgrade plan');
         }
     };
+
 
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -267,23 +395,23 @@ const UsersTab = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-subtext" />
                 <input
                     type="text"
-                    placeholder="Search users by name or email..."
+                    placeholder={t('searchUsersPlaceholder')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="w-full bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm outline-none focus:border-primary/50 transition-all placeholder:text-subtext/50 text-maintext"
                 />
             </div>
 
-            {/* User List */}
             <div className="space-y-2">
                 {filteredUsers.length === 0 && (
-                    <p className="text-center text-subtext py-8 text-sm">No users found</p>
+                    <p className="text-center text-subtext py-8 text-sm">{t('noUsersFound')}</p>
                 )}
                 {filteredUsers.map(user => (
                     <motion.div
                         key={user._id || user.id}
                         layout
-                        className="bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-xl p-4 hover:border-primary/20 transition-all"
+                        className={`bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-xl p-4 hover:border-primary/20 transition-all ${selectedUser === (user._id || user.id) ? 'relative z-[100]' : 'relative z-0'}`}
+
                     >
                         <div className="flex items-center justify-between flex-wrap gap-3">
                             <div className="flex items-center gap-3 min-w-0">
@@ -301,7 +429,7 @@ const UsersTab = () => {
                                     <p className="text-xs text-subtext truncate">{user.email}</p>
                                 </div>
                                 {user.isBlocked && (
-                                    <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase">Blocked</span>
+                                    <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase">{t('block')}</span>
                                 )}
                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
                                     user.planName?.toLowerCase().includes('pro') ? 'bg-amber-500/10 text-amber-500' : 
@@ -316,21 +444,21 @@ const UsersTab = () => {
                                 <button
                                     onClick={() => setSelectedUser(selectedUser === (user._id || user.id) ? null : (user._id || user.id))}
                                     className="p-2 rounded-lg hover:bg-primary/10 text-subtext hover:text-primary transition-all"
-                                    title="Manage"
+                                    title={t('manage')}
                                 >
                                     <Settings className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => handleBlockToggle(user._id || user.id, user.isBlocked)}
                                     className={`p-2 rounded-lg transition-all ${user.isBlocked ? 'hover:bg-green-500/10 text-green-500' : 'hover:bg-amber-500/10 text-amber-500'}`}
-                                    title={user.isBlocked ? 'Unblock' : 'Block'}
+                                    title={user.isBlocked ? t('unblock') : t('block')}
                                 >
                                     {user.isBlocked ? <Check className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
                                 </button>
                                 <button
                                     onClick={() => setDeleteModal({ isOpen: true, userId: user._id || user.id })}
                                     className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-all"
-                                    title="Delete"
+                                    title={t('delete')}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -344,64 +472,97 @@ const UsersTab = () => {
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
+                                    className=""
+
                                 >
-                                    <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Adjust Credits */}
-                                        <div className="bg-white/10 dark:bg-black/10 rounded-xl p-4 space-y-3">
-                                            <h4 className="font-bold text-sm text-maintext flex items-center gap-2">
-                                                <Zap className="w-4 h-4 text-amber-500" /> Transfer Credits
-                                            </h4>
-                                            <p className="text-xs text-subtext">User Balance: <span className="font-bold text-maintext">{user.credits ?? 0}</span></p>
-                                            <div className="relative">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-maintext font-black text-sm opacity-60">+</div>
-                                                <input
-                                                    type="number"
-                                                    placeholder="Amount to send"
-                                                    value={creditAmount}
-                                                    onChange={e => setCreditAmount(e.target.value)}
-                                                    className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm outline-none focus:border-amber-500/50 text-maintext font-bold"
-                                                    min="1"
-                                                />
+                                    <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Adjust Credits Card */}
+                                        <div className="relative group overflow-hidden bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 dark:to-transparent backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-2xl p-6 transition-all hover:border-amber-500/30">
+                                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 blur-3xl rounded-full group-hover:bg-amber-500/20 transition-all" />
+                                            
+                                            <div className="relative z-10 space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shadow-lg shadow-amber-500/10">
+                                                        <Zap className="w-5 h-5 text-amber-500" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-maintext">{t('transferCredits')}</h4>
+                                                        <p className="text-[10px] text-subtext uppercase tracking-wider font-bold opacity-60">Current Balance: {user.credits ?? 0}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="relative group/input">
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 font-bold text-lg">+</div>
+                                                    <input
+                                                        type="number"
+                                                        placeholder={t('amountToSend')}
+                                                        value={creditAmount}
+                                                        onChange={e => setCreditAmount(e.target.value)}
+                                                        className="w-full bg-white/20 dark:bg-black/40 border-2 border-transparent focus:border-amber-500/30 rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all text-maintext font-black placeholder:text-subtext/30"
+                                                        min="1"
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleAdjustCredits(user._id || user.id, parseInt(creditAmount))}
+                                                    disabled={!creditAmount || parseInt(creditAmount) <= 0}
+                                                    className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-black text-sm shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-40 disabled:pointer-events-none uppercase tracking-widest"
+                                                >
+                                                    {t('sendCredits')}
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    handleAdjustCredits(user._id || user.id, parseInt(creditAmount));
-                                                }}
-                                                disabled={!creditAmount || parseInt(creditAmount) <= 0}
-                                                className="w-full py-2 bg-amber-500 text-white rounded-lg font-bold text-xs disabled:opacity-40 hover:bg-amber-600 transition-all flex justify-center items-center gap-2"
-                                            >
-                                                Send Credits
-                                            </button>
                                         </div>
 
-                                        {/* Manual Plan Upgrade */}
-                                        <div className="bg-white/10 dark:bg-black/10 rounded-xl p-4 space-y-3">
-                                            <h4 className="font-bold text-sm text-maintext flex items-center gap-2">
-                                                <CreditCard className="w-4 h-4 text-primary" /> Manual Plan Upgrade
-                                            </h4>
-                                            <input
-                                                type="text"
-                                                placeholder="Plan name (e.g. Pro, Enterprise)"
-                                                value={upgradeData.planName}
-                                                onChange={e => setUpgradeData(p => ({ ...p, planName: e.target.value }))}
-                                                className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
-                                            />
-                                            <input
-                                                type="date"
-                                                value={upgradeData.expiryDate}
-                                                onChange={e => setUpgradeData(p => ({ ...p, expiryDate: e.target.value }))}
-                                                className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
-                                            />
-                                            <button
-                                                onClick={() => handleManualUpgrade(user._id || user.id)}
-                                                disabled={!upgradeData.planName}
-                                                className="w-full py-2 bg-primary text-white rounded-lg font-bold text-xs disabled:opacity-40 hover:opacity-90 transition-all"
-                                            >
-                                                Upgrade Plan
-                                            </button>
+                                        {/* Manual Plan Upgrade Card */}
+                                        <div className="relative group bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 dark:to-transparent backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-2xl p-6 transition-all hover:border-primary/30">
+
+                                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 blur-3xl rounded-full group-hover:bg-primary/20 transition-all" />
+
+                                            <div className="relative z-10 space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shadow-lg shadow-primary/10">
+                                                        <CreditCard className="w-5 h-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-maintext">Plan Upgrade</h4>
+                                                        <p className="text-[10px] text-subtext uppercase tracking-wider font-bold opacity-60">Instant Platform Access</p>
+                                                    </div>
+
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <PlanDropdown
+                                                        plans={availablePlans}
+                                                        value={upgradeData.planName}
+                                                        onChange={(val) => setUpgradeData(p => ({ ...p, planName: val }))}
+                                                    />
+
+                                                    <div className="relative group/date">
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                                                            <Calendar className="w-4 h-4 text-primary" />
+                                                            {!upgradeData.expiryDate && <span className="text-xs text-subtext/40 font-bold uppercase tracking-widest">Set Expiry Date</span>}
+                                                        </div>
+                                                        <input
+                                                            type="date"
+                                                            value={upgradeData.expiryDate}
+                                                            onChange={e => setUpgradeData(p => ({ ...p, expiryDate: e.target.value }))}
+                                                            className="w-full bg-white/20 dark:bg-black/60 border-2 border-white/10 focus:border-primary/50 rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all text-maintext font-black [color-scheme:light] dark:[color-scheme:dark] shadow-inner"
+                                                        />
+                                                    </div>
+
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleManualUpgrade(user._id || user.id)}
+                                                    disabled={!upgradeData.planName}
+                                                    className="w-full py-3 bg-gradient-to-r from-primary to-violet-600 text-white rounded-xl font-black text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-40 disabled:pointer-events-none uppercase tracking-widest"
+                                                >
+                                                    {t('upgradePlan')}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
+
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -413,8 +574,8 @@ const UsersTab = () => {
                 isOpen={deleteModal.isOpen}
                 onClose={() => setDeleteModal({ isOpen: false, userId: null })}
                 onConfirm={handleDeleteUser}
-                title="Delete User?"
-                description="Are you sure you want to delete this user? This action cannot be undone."
+                title={t('deleteUserTitle')}
+                description={t('deleteUserDesc')}
             />
         </div>
     );
@@ -428,7 +589,9 @@ const PlansTab = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingPlan, setEditingPlan] = useState(null);
+    const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({
+
         planId: '',
         planName: '',
         priceMonthly: '',
@@ -446,8 +609,9 @@ const PlansTab = () => {
     const fetchPlans = async () => {
         setLoading(true);
         try {
-            const data = await apiService.getPlans();
+            const data = await apiService.getAdminPlans();
             setPlans(Array.isArray(data) ? data : data.plans || []);
+
         } catch (err) {
             console.error('Failed to fetch plans:', err);
         } finally {
@@ -482,10 +646,12 @@ const PlansTab = () => {
                 toast.error(data.message || 'Failed');
             }
         } catch (err) {
+            console.error('[handleSubmit Error]', err);
             toast.error('Failed to save plan');
         } finally {
-            setSaving(true);
+            setSaving(false);
         }
+
     };
 
     const handleDelete = async () => {
@@ -563,9 +729,21 @@ const PlansTab = () => {
                                 className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext" />
                             <div className="flex gap-3 justify-end">
                                 <button onClick={resetForm} className="px-4 py-2 rounded-xl text-sm font-bold text-subtext hover:text-maintext hover:bg-white/20 transition-all">Cancel</button>
-                                <button onClick={handleSubmit} className="px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20">
-                                    {editingPlan ? 'Update' : 'Create'}
+                                <button 
+                                    onClick={handleSubmit} 
+                                    disabled={saving}
+                                    className={`px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20 ${saving ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+                                >
+                                    {saving ? (
+                                        <div className="flex items-center gap-2">
+                                            <RefreshCw className="w-3 h-3 animate-spin" />
+                                            {editingPlan ? 'Updating...' : 'Creating...'}
+                                        </div>
+                                    ) : (
+                                        editingPlan ? 'Update Plan' : 'Create Plan'
+                                    )}
                                 </button>
+
                             </div>
                         </div>
                     </motion.div>
@@ -1106,23 +1284,24 @@ const LoadingSpinner = () => (
 // KNOWLEDGE BASE TAB
 // ═══════════════════════════════
 const KnowledgeBaseTab = () => {
+    const { t } = useLanguage();
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const handleUploadSuccess = () => {
         setRefreshTrigger(prev => prev + 1);
-        toast.success("Knowledge base updated. Re-indexing assets...");
+        toast.success(t('uploadSuccessKnowledge'));
     };
 
     return (
         <div className="space-y-6">
             <SectionCard
-                title="Ingest New Knowledge"
-                action={<span className="text-xs text-subtext font-medium">Add files or websites to RAG</span>}
+                title={t('ingestNewKnowledge')}
+                action={<span className="text-xs text-subtext font-medium">{t('addFilesWebsitesRAG')}</span>}
             >
                 <KnowledgeUpload onUploadSuccess={handleUploadSuccess} />
             </SectionCard>
 
-            <SectionCard title="Knowledge Assets Management">
+            <SectionCard title={t('knowledgeAssetsManagement')}>
                 <KnowledgeManagement key={refreshTrigger} />
             </SectionCard>
         </div>
@@ -1133,6 +1312,7 @@ const KnowledgeBaseTab = () => {
 // FEATURE CREDITS TAB
 // ═══════════════════════════════
 const FeatureCreditsTab = () => {
+    const { t } = useLanguage();
     const [features, setFeatures] = useState([]);
     const [modifiedFeatures, setModifiedFeatures] = useState({});
     const [loading, setLoading] = useState(true);
@@ -1146,7 +1326,7 @@ const FeatureCreditsTab = () => {
                 setModifiedFeatures({});
             }
         } catch (err) {
-            toast.error("Failed to load feature credits");
+            toast.error(t('failedToLoadFeatureCredits') || "Failed to load feature credits");
         } finally {
             setLoading(false);
         }
@@ -1180,10 +1360,10 @@ const FeatureCreditsTab = () => {
                 await apiService.updateFeatureCredit(id, updatePayload);
             }));
             
-            toast.success('All feature costs updated successfully!');
+            toast.success(t('featureCostsUpdated') || 'All feature costs updated successfully!');
             fetchFeatures();
         } catch (error) {
-            toast.error('Failed to save some features');
+            toast.error(t('failedToSaveFeatures') || 'Failed to save some features');
         } finally {
             setSaving(false);
         }
@@ -1206,8 +1386,8 @@ const FeatureCreditsTab = () => {
                 <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-start gap-4 flex-1">
                     <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="font-bold text-maintext">Credit Cost Economics</h4>
-                        <p className="text-xs text-subtext mt-1">Adjust the credit deduction costs for features dynamically. Changes here are instantly applied across the entire AISA Magic Tool ecosystem. Ensure values align with your targeted 50% profit margins.</p>
+                        <h4 className="font-bold text-maintext">{t('creditCostEconomics')}</h4>
+                        <p className="text-xs text-subtext mt-1">{t('platformEconomicsDesc')}</p>
                     </div>
                 </div>
 
@@ -1217,7 +1397,7 @@ const FeatureCreditsTab = () => {
                         className="px-4 py-2 bg-white/10 dark:bg-black/20 text-maintext rounded-xl font-bold text-sm hover:bg-white/20 transition-all border border-white/20 flex items-center gap-2"
                         disabled={saving}
                     >
-                        <RefreshCw className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} /> Reset
+                        <RefreshCw className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} /> {t('reset')}
                     </button>
                     <button
                         onClick={handleSaveChanges}
@@ -1229,7 +1409,7 @@ const FeatureCreditsTab = () => {
                         }`}
                     >
                         {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Save Changes
+                        {t('saveChanges')}
                     </button>
                 </div>
             </div>
@@ -1280,6 +1460,7 @@ const FeatureCreditsTab = () => {
 // MAIN ADMIN DASHBOARD
 // ═══════════════════════════════
 const AdminDashboard = () => {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState('overview'); 
     const navigate = useNavigate();
 
@@ -1296,15 +1477,15 @@ const AdminDashboard = () => {
     if (!isAdmin) return null;
 
     const tabs = [
-        { id: 'overview', label: 'Overview', icon: BarChart3 },
-        { id: 'users', label: 'Users', icon: Users },
-        { id: 'plans', label: 'Plans', icon: CreditCard },
-        { id: 'packages', label: 'Packages', icon: Package },
-        { id: 'credits', label: 'Tool Costs', icon: Zap },
-        { id: 'legal', label: 'Legal Pages', icon: FileText },
-        { id: 'helpdesk', label: 'Help Desk', icon: Headphones },
-        { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
-        { id: 'settings', label: 'Settings', icon: Settings },
+        { id: 'overview', label: t('overview'), icon: BarChart3 },
+        { id: 'users', label: t('users'), icon: Users },
+        { id: 'plans', label: t('plans'), icon: CreditCard },
+        { id: 'packages', label: t('packages'), icon: Package },
+        { id: 'credits', label: t('toolCosts'), icon: Zap },
+        { id: 'legal', label: t('legalPages'), icon: FileText },
+        { id: 'helpdesk', label: t('helpDesk'), icon: Headphones },
+        { id: 'knowledge', label: t('knowledge'), icon: BookOpen },
+        { id: 'settings', label: t('settings'), icon: Settings },
     ];
 
     const renderTab = () => {
@@ -1332,15 +1513,15 @@ const AdminDashboard = () => {
                             <Shield className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-maintext tracking-tight">Admin Dashboard</h1>
-                            <p className="text-xs text-subtext font-semibold uppercase tracking-wider">Platform Management Console</p>
+                            <h1 className="text-2xl font-black text-maintext tracking-tight">{t('adminDashboard')}</h1>
+                            <p className="text-xs text-subtext font-semibold uppercase tracking-wider">{t('platformManagementConsole')}</p>
                         </div>
                     </div>
                     <button
                         onClick={() => navigate('/dashboard/chat')}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-subtext hover:text-maintext hover:bg-white/20 dark:hover:bg-white/10 transition-all border border-white/20 dark:border-white/10"
                     >
-                        <ArrowLeft className="w-4 h-4" /> Back to Chat
+                        <ArrowLeft className="w-4 h-4" /> {t('backToChat')}
                     </button>
                 </div>
 

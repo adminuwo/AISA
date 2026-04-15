@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useMotionTemplate, useMotionValue } from 'framer-motion';
-import { X, Layout, Monitor, Smartphone, Check, Zap, Shield, Rocket, Sparkles, Wand2 } from 'lucide-react';
+import { X, Layout, Monitor, Smartphone, Check, Zap, Shield, Rocket, Sparkles, Wand2, Brain } from 'lucide-react';
+import PromptLibraryModal from './PromptLibraryModal';
 
 // Wave fill animation for Active Aspect Ratio
 const WaveFill = () => (
@@ -115,9 +116,10 @@ const CinematicShadows = () => (
     </div>
 );
 
-const MagicToolSettingsCard = ({ isOpen, onClose, toolType, config, onChange, pricing }) => {
+const MagicToolSettingsCard = ({ isOpen, onClose, toolType, config, onChange, pricing, onContentSelect, referenceImage }) => {
     const [hoveredModel, setHoveredModel] = useState(null);
     const [isHovered, setIsHovered] = useState(false);
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false);
     
     // Spotlight Effect logic
     let mouseX = useMotionValue(0);
@@ -138,7 +140,8 @@ const MagicToolSettingsCard = ({ isOpen, onClose, toolType, config, onChange, pr
 
     if (!isOpen) return null;
 
-    const toolPricing = pricing[toolType] || { models: [] };
+    const toolPricingBase = pricing[toolType === 'edit' ? 'image' : toolType] || { models: [], editModels: [] };
+    const toolPricing = { models: toolType === 'edit' ? (toolPricingBase.editModels || []) : (toolPricingBase.models || []) };
     
     const aspectRatios = toolType === 'video' ? [
         { id: '16:9', label: '16:9', icon: Monitor, w: 14, h: 8 },
@@ -265,7 +268,7 @@ const MagicToolSettingsCard = ({ isOpen, onClose, toolType, config, onChange, pr
                                     </div>
                                     <div>
                                         <h3 className="text-[15px] sm:text-[16px] font-black text-slate-900 tracking-tight leading-none mb-1 shadow-sm">
-                                            {toolType === 'video' ? 'Video Settings' : 'Image Settings'}
+                                            {toolType === 'video' ? 'Video Settings' : toolType === 'edit' ? 'Image Editing' : 'Image Generation'}
                                         </h3>
                                         <p className="text-[8.5px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] flex items-center gap-1 opacity-90">
                                             <Sparkles className="w-2.5 h-2.5 text-primary animate-pulse" />
@@ -273,22 +276,37 @@ const MagicToolSettingsCard = ({ isOpen, onClose, toolType, config, onChange, pr
                                         </p>
                                     </div>
                                 </div>
-                                <motion.button 
-                                    whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.7)", rotate: 90 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={onClose} 
-                                    className="w-7 h-7 rounded-full bg-white/50 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:shadow-md transition-all shadow-sm border border-white/50 relative z-10"
-                                >
-                                    <X size={16} strokeWidth={2.5} />
-                                </motion.button>
+                                
+                                <div className="flex items-center gap-2 relative z-10">
+                                    {(toolType === 'image' || toolType === 'edit' || toolType === 'video') && (
+                                        <motion.button
+                                            whileHover={{ scale: 1.1, backgroundColor: "rgba(var(--primary-rgb), 0.1)" }}
+                                            whileTap={{ scale: 0.9 }}
+                                            onClick={() => setIsLibraryOpen(true)}
+                                            className="px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-1.5 text-primary transition-all hover:shadow-lg hover:shadow-primary/10"
+                                            title="Prompt Library"
+                                        >
+                                            <img src="/logo/Logo.svg" alt="AISA" className="w-3.5 h-3.5 object-contain" />
+                                            <span className="text-[10px] font-black uppercase tracking-wider">Prompt Library</span>
+                                        </motion.button>
+                                    )}
+                                    <motion.button 
+                                        whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.7)", rotate: 90 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={onClose} 
+                                        className="w-7 h-7 rounded-full bg-white/50 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:shadow-md transition-all shadow-sm border border-white/50 relative z-10"
+                                    >
+                                        <X size={16} strokeWidth={2.5} />
+                                    </motion.button>
+                                </div>
                             </div>
                         </div>
 
                         {/* ── Body ── */}
                         <div className="relative z-20 px-5 sm:px-6 py-5 space-y-5 sm:space-y-6 max-h-[60vh] sm:max-h-[55vh] overflow-y-auto custom-scrollbar">
                             
-                            {/* Segmented Aspect Control */}
-                            {config.aspectRatio !== undefined && (
+                            {/* Segmented Aspect Control — hidden for edit mode */}
+                            {config.aspectRatio !== undefined && toolType !== 'edit' && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-3 ml-1">
                                         <div className="w-1 h-1 rounded-full bg-slate-800 shadow-[0_0_6px_rgba(0,0,0,0.5)]" />
@@ -452,6 +470,21 @@ const MagicToolSettingsCard = ({ isOpen, onClose, toolType, config, onChange, pr
                 </motion.div>
             </div>
             
+            {/* Prompt Library Modal Integration */}
+            <PromptLibraryModal 
+                isOpen={isLibraryOpen}
+                mode={toolType === 'edit' ? 'edit' : toolType === 'video' ? 'video' : 'generate'}
+                referenceImage={referenceImage}
+                onClose={() => setIsLibraryOpen(false)}
+                onSelect={(prompt) => {
+                    if (onContentSelect) {
+                        onContentSelect(prompt);
+                    }
+                    setIsLibraryOpen(false);
+                    onClose(); // Close the settings card too for seamless UX
+                }}
+            />
+
             <style jsx>{`
                 @keyframes shine {
                     100% { background-position: -200% 0, 0 0; }

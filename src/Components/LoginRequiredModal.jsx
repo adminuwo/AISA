@@ -34,55 +34,60 @@ const LoginRequiredModal = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        className="relative bg-zinc-900 border border-white/10 rounded-[32px] p-8 max-w-sm w-full shadow-2xl overflow-hidden"
+                        className="relative bg-[#111218] border border-white/10 rounded-[40px] p-8 sm:p-11 max-w-[420px] w-full shadow-[0_40px_120px_rgba(0,0,0,0.9)] overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Elegant background glows */}
-                        <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-                        <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+                        {/* Dramatic background glows */}
+                        <div className="absolute -top-32 -right-32 w-64 h-64 rounded-full bg-primary/20 blur-[120px] pointer-events-none" />
+                        <div className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full bg-indigo-600/10 blur-[130px] pointer-events-none" />
 
                         {/* Header with Close */}
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
-                                <Lock className="w-7 h-7 text-white" />
+                        <div className="flex justify-between items-start mb-10">
+                            <div className="w-[72px] h-[72px] rounded-[24px] bg-white/[0.04] border border-white/10 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]">
+                                <Lock className="w-10 h-10 text-white" strokeWidth={1.2} />
                             </div>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-2 text-white/40 hover:text-white hover:bg-white/5 rounded-full transition-all"
+                                className="p-2.5 text-white/30 hover:text-white hover:bg-white/10 rounded-full transition-all duration-300 group"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-7 h-7 transition-transform group-hover:rotate-90" strokeWidth={1.5} />
                             </button>
                         </div>
 
-                        {/* Text */}
-                        <h3 className="text-2xl font-black text-white mb-2 tracking-tight">
+                        {/* Text Content */}
+                        <h3 className="text-[32px] font-black text-white mb-4 tracking-tight leading-tight">
                             Login Required
                         </h3>
-                        <p className="text-white/60 text-sm mb-8 leading-relaxed">
-                            Sign in to your <span className="text-white font-bold">AISA™</span> account to unlock <span className="text-primary font-bold">{toolName}</span> and other powerful AI magic tools.
+                        <p className="text-white/40 text-[16px] mb-12 leading-relaxed font-medium">
+                            Sign in to your <span className="text-white font-bold">AISA™</span> account to unlock <span className="text-primary font-bold">{toolName === 'AISA™ Magic Tools' ? 'Image Generation' : toolName}</span> and other powerful AI magic tools.
                         </p>
 
-                        {/* CTAs */}
-                        <div className="space-y-3">
-                            <button
+                        {/* Interactive CTAs */}
+                        <div className="space-y-4">
+                            <motion.button
+                                whileHover={{ scale: 1.015, y: -2 }}
+                                whileTap={{ scale: 0.985 }}
                                 onClick={() => { setIsOpen(false); navigate('/login'); }}
-                                className="w-full py-4 rounded-2xl bg-white text-black font-black text-sm hover:bg-slate-100 transition-all active:scale-95 flex items-center justify-center gap-2.5 shadow-xl shadow-white/5"
+                                className="w-full py-5 rounded-[22px] bg-white text-black font-black text-[16px] transition-all flex items-center justify-center gap-3.5 shadow-[0_20px_50px_rgba(255,255,255,0.12)] group relative overflow-hidden"
                             >
-                                <LogIn className="w-4.5 h-4.5" />
+                                <LogIn className="w-5.5 h-5.5 transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
                                 Log In Now
-                            </button>
-                            <button
+                            </motion.button>
+                            
+                            <motion.button
+                                whileHover={{ scale: 1.015, backgroundColor: 'rgba(255,255,255,0.08)' }}
+                                whileTap={{ scale: 0.985 }}
                                 onClick={() => { setIsOpen(false); navigate('/signup'); }}
-                                className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-sm hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center gap-2.5"
+                                className="w-full py-5 rounded-[22px] bg-transparent border border-white/15 text-white font-black text-[16px] transition-all flex items-center justify-center gap-3.5"
                             >
-                                <UserPlus className="w-4.5 h-4.5" />
+                                <UserPlus className="w-5.5 h-5.5 text-white/80" strokeWidth={1.5} />
                                 Create Account
-                            </button>
+                            </motion.button>
                         </div>
 
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="w-full mt-6 py-2 text-xs font-bold text-white/20 hover:text-white/50 transition-colors uppercase tracking-widest"
+                            className="w-full mt-12 py-2 text-[12px] font-black text-white/20 hover:text-white/60 transition-all uppercase tracking-[0.3em]"
                         >
                             Maybe Later
                         </button>

@@ -84,6 +84,7 @@ const apis = {
   logIn: `${API}/auth/login`,
   signUp: `${API}/auth/signup`,
   googleLogin: `${API}/auth/google`,
+  appleLogin: `${API}/auth/apple`,
   microsoftLogin: `${API}/auth/microsoft`,
   syncProfile: `${API}/auth/sync-profile`,
   socialLogin: `${API}/auth/social-login`,
@@ -112,6 +113,7 @@ const apis = {
     posts: `${API}/ai-ad/posts`,
     status: `${API}/ai-ad/status`,
   },
+  imageProxy: `${API}/image/proxy`,
 };
 
 export { API, apis };

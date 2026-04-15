@@ -135,6 +135,7 @@ const KnowledgeUpload = ({ onUploadSuccess }) => {
                             className="bg-primary/20 text-primary border border-primary/30 rounded-lg px-3 py-1.5 text-xs font-bold outline-none hover:bg-primary/30 transition-all cursor-pointer"
                         >
                             <option value="LEGAL">LEGAL (Law/Pro)</option>
+                            <option value="FINANCE">FINANCE (Markets/Books)</option>
                             <option value="GENERAL">GENERAL (Public)</option>
                         </select>
                     </div>

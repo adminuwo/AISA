@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ImagePlus, PlaySquare, Headphones, Code, Sparkles, Zap, Search, Globe, FileText, Wand2, PlayCircle, Scale, Video, Brain, TrendingUp, Megaphone, Lock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 /* ─── Typewriter Engine ────────────────────────────────────── */
 
@@ -44,6 +45,7 @@ const TypewriterPrompt = ({ text, active }) => {
 };
 
 const ToolPreviewContent = ({ id, prompt, active }) => {
+  const { t } = useLanguage();
   const themeContext = useTheme();
   const theme = themeContext?.theme || 'dark';
   const isDark = theme.toLowerCase() === 'dark';
@@ -158,7 +160,7 @@ const ToolPreviewContent = ({ id, prompt, active }) => {
                 className="absolute inset-0 border-t-4 border-primary rounded-full"
               />
             </div>
-            <p className="text-[12px] font-black text-primary uppercase tracking-widest animate-pulse">AISA AI is Generating...</p>
+            <p className="text-[12px] font-black text-primary uppercase tracking-widest animate-pulse">{t('aisaAiGenerating')}</p>
           </motion.div>
         )}
 
@@ -193,7 +195,7 @@ const ToolPreviewContent = ({ id, prompt, active }) => {
                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                      <Brain size={10} className="text-primary" />
                    </div>
-                   <p className="text-[9px] font-black text-primary uppercase tracking-tight">AI Result Confirmed</p>
+                   <p className="text-[9px] font-black text-primary uppercase tracking-tight">{t('aiResultConfirmed')}</p>
                  </div>
               </div>
             )}
@@ -204,27 +206,12 @@ const ToolPreviewContent = ({ id, prompt, active }) => {
   );
 };
 
-/* ─── Tools Data ───────────────────────────────── */
 
-const ALL_TOOLS = [
-  { id: 'aiad_agent', label: 'AIAD™ Agent', badge: 'AD AGENT', desc: 'Social Media Orchestration', icon: Sparkles, color: '#8b5cf6', prompt: "Generate a 30-day social media campaign for AISA...", review: { rating: 5, count: "18k", text: "Automated my entire month's content in under 5 minutes. The hashtags are perfectly optimized for trends." } },
-  { id: 'image', label: 'Generate Image', badge: 'IMAGE', desc: 'Create visuals from text', icon: ImagePlus, color: '#a78bfa', prompt: "Generate cinematic 8k image of a golden retriever in space...", review: { rating: 5, count: "12.4k", text: "STUNNING! The clarity of the generated images is better than Midjourney V6. AISA truly understands context." } },
-  { id: 'video', label: 'Generate Video', badge: 'VIDEO', desc: 'Text to Cinematic Video', icon: Video, color: '#fb923c', prompt: "Creating realistic drone flight over mountains at sunset...", review: { rating: 4.9, count: "8.2k", text: "The temporal consistency in the videos is industry-leading. Smooth motion without any morphing artifacts." } },
-  { id: 'image_to_video', label: 'Image to Video', badge: 'ANIMATE', desc: 'Image to Video Magic', icon: PlayCircle, color: '#f97316', prompt: "Animate this static scene with dynamic lighting & motion...", review: { rating: 5, count: "5.7k", text: "Turned my product photos into cinematic ads in seconds. This is a game changer for my marketing agency." } },
-  { id: 'edit_image', label: 'Edit Image', badge: 'MAGIC EDIT', desc: 'Magic Image Editor', icon: Wand2, color: '#f43f5e', prompt: "Modify the sky to be a neon-lit cyberpunk sunset...", review: { rating: 4.8, count: "15k", text: "Perfect for quick retouching. The AI infilling is seamless—you literally can't tell where the edit starts." } },
-  { id: 'deep_search', label: 'Deep Search', badge: 'INTELLIGENCE', desc: 'Research complex topics', icon: Search, color: '#0ea5e9', prompt: "Analyze global market trends and future tech predictions...", review: { rating: 5, count: "21k", text: "Replaced my research team. It synthesizes 100+ papers into a 1-page brief perfectly. Extremely accurate indexing." } },
-  { id: 'web_search', label: 'Real-Time Search', badge: 'REAL-TIME', desc: 'Live web data access', icon: Globe, color: '#22d3ee', prompt: "Search for live updates on the latest SpaceX launch...", review: { rating: 4.9, count: "10k", text: "No more hallucinated news. AISA provides real-time citations and live feeds. Highly reliable for tech news." } },
-  { id: 'document', label: 'Analyze Document', badge: 'DOCUMENT', desc: 'Chat with PDFs & Docs', icon: FileText, color: '#3b82f6', prompt: "Summarize this 50-page legal PDF and identify risks...", review: { rating: 5, count: "7.4k", text: "I uploaded a 120-page contract and it found a hidden liability clause in seconds. Worth every credit." } },
-  { id: 'code', label: 'Code Writer', badge: 'CODE', desc: 'Write & debug code', icon: Code, color: '#6366f1', prompt: "Write a robust Python script for a neural network...", review: { rating: 4.9, count: "14.2k", text: "Writes production-ready code with tests. It actually understands modern design patterns, not just snippets." } },
-  { id: 'audio', label: 'Convert to Audio', badge: 'AUDIO', desc: 'Text/Docs to Voice', icon: Headphones, color: '#34d399', prompt: "Synthesize this report into a natural sounding male voice...", review: { rating: 4.8, count: "6k", text: "The most human-like synthesis I've heard. Even the breathing and pauses feel natural. Perfect for podcasts." } },
-  { id: 'legal', label: 'AI Legal™', badge: 'LEGAL', desc: 'Specialized AI legal tools', icon: Scale, color: '#818cf8', prompt: "Analyze this employment contract for potential loopholes...", review: { rating: 5, count: "3.2k", text: "AISA's legal reasoning is spookily good. It identified risks that our junior lawyers missed twice." } },
-  { id: 'ai_cashflow', label: 'AI CashFlow™', badge: 'FINANCE', desc: 'Live Analysis & Reports', icon: TrendingUp, color: '#10b981', prompt: "Analyzing cashflow...", review: { rating: 5, count: "4.2k", text: "Incredible financial insights. The real-time analysis saved us thousands." } },
-  { id: 'stock_analyst', label: 'AI Stock Analyst™', badge: 'STOCKS', desc: 'Market Trends & Analysis', icon: TrendingUp, color: '#f59e0b', prompt: "Analyzing stock market performance for tech sector...", review: { rating: 4.9, count: "2.8k", text: "The stock analysis is spot on. It correctly predicted the quarterly dip of major tech stocks." } },
-];
 
 /* ─── 3D Tilt Card ─────────────────────────────────────────── */
 
 const ToolCard = ({ tool, onToolSelect, index }) => {
+  const { t } = useLanguage();
   const themeContext = useTheme();
   const theme = themeContext?.theme || 'dark';
   const isDark = theme.toLowerCase() === 'dark';
@@ -307,9 +294,9 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
         <div 
           className={`absolute inset-0 w-full h-full rounded-[20px] border p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between backface-hidden ${
             isActive 
-              ? (isDark ? 'bg-[#1a223f] border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]')
+              ? (isDark ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)] backdrop-blur-xl' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]')
               : (isDark 
-                  ? 'bg-[#151929] border-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.3)]' 
+                  ? 'sidebar-glass border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]' 
                   : 'bg-white border-slate-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.05)]')
           }`}
           style={{ backfaceVisibility: 'hidden' }}
@@ -334,7 +321,7 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
                    className="flex items-center gap-1 bg-primary text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg animate-pulse"
                  >
                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
-                   ACTIVE
+                   {t('active')}
                  </motion.span>
                )}
                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
@@ -359,7 +346,7 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
               <div className={`px-2 py-0.5 rounded-full border text-[8px] font-black uppercase tracking-widest ${
                 isDark ? 'bg-[#1a1c2e] border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-500 shadow-sm'
               }`}>
-                Soon
+                {t('soon')}
               </div>
             </div>
           )}
@@ -369,9 +356,9 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
         <div 
           className={`absolute inset-0 w-full h-full rounded-[20px] border overflow-hidden flex flex-col backface-hidden transition-all duration-300 ${
             isActive 
-              ? (isDark ? 'bg-[#1a223f] border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.4)]' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.2)]')
+              ? (isDark ? 'bg-primary/20 border-primary shadow-[0_0_30px_rgba(var(--primary-rgb),0.4)] backdrop-blur-2xl' : 'bg-blue-50 border-primary shadow-[0_0_25px_rgba(var(--primary-rgb),0.2)]')
               : (isDark 
-                  ? 'bg-[#1a1e2e] border-primary/30 shadow-[0_10px_40px_rgba(var(--primary-rgb),0.2)]' 
+                  ? 'sidebar-glass border-primary/30 shadow-[0_10px_40px_rgba(var(--primary-rgb),0.2)]' 
                   : 'bg-white border-primary/20 shadow-[0_10px_40px_rgba(0,0,0,0.1)]')
           }`}
           style={{ 
@@ -417,7 +404,7 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
                  className="bg-primary text-white text-[8px] font-black uppercase tracking-widest py-1.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-primary/20 cursor-pointer"
               >
                 <Zap size={9} fill="white" />
-                Live Try
+                {t('liveTry')}
               </motion.div>
             </div>
           </div>
@@ -450,8 +437,27 @@ const cardVariants = {
 };
 
 const FuturisticToolCards = ({ onToolSelect, activeToolId, isAdmin = false }) => {
+  const { t } = useLanguage();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
+
+  /* ─── Tools Data ───────────────────────────────── */
+
+  const ALL_TOOLS = [
+    { id: 'aiad_agent', label: 'AIAD™ Agent', badge: 'AD AGENT', desc: 'Social Media Orchestration', icon: Sparkles, color: '#8b5cf6', prompt: "Generate a 30-day social media campaign for AISA...", review: { rating: 5, count: "18k", text: "Automated my entire month's content in under 5 minutes. The hashtags are perfectly optimized for trends." } },
+    { id: 'image', label: t('generateImage'), badge: t('badgeImage'), desc: t('createVisualsFromText'), icon: ImagePlus, color: '#a78bfa', prompt: "Generate cinematic 8k image of a golden retriever in space...", review: { rating: 5, count: "12.4k", text: "STUNNING! The clarity of the generated images is better than Midjourney V6. AISA truly understands context." } },
+    { id: 'video', label: t('generateVideo'), badge: t('badgeVideo'), desc: t('textToCinematicVideo'), icon: Video, color: '#fb923c', prompt: "Creating realistic drone flight over mountains at sunset...", review: { rating: 4.9, count: "8.2k", text: "The temporal consistency in the videos is industry-leading. Smooth motion without any morphing artifacts." } },
+    { id: 'image_to_video', label: t('imageToVideo'), badge: t('badgeAnimate'), desc: t('imageToVideoMagic'), icon: PlayCircle, color: '#f97316', prompt: "Animate this static scene with dynamic lighting & motion...", review: { rating: 5, count: "5.7k", text: "Turned my product photos into cinematic ads in seconds. This is a game changer for my marketing agency." } },
+    { id: 'edit_image', label: t('editImage'), badge: t('badgeMagicEdit'), desc: t('magicImageEditor'), icon: Wand2, color: '#f43f5e', prompt: "Modify the sky to be a neon-lit cyberpunk sunset...", review: { rating: 4.8, count: "15k", text: "Perfect for quick retouching. The AI infilling is seamless—you literally can't tell where the edit starts." } },
+    { id: 'deep_search', label: t('deepSearch'), badge: t('badgeIntelligence'), desc: t('researchComplexTopics'), icon: Search, color: '#0ea5e9', prompt: "Analyze global market trends and future tech predictions...", review: { rating: 5, count: "21k", text: "Replaced my research team. It synthesizes 100+ papers into a 1-page brief perfectly. Extremely accurate indexing." } },
+    { id: 'web_search', label: t('realTimeSearch'), badge: t('badgeRealTime'), desc: t('liveWebDataAccess'), icon: Globe, color: '#22d3ee', prompt: "Search for live updates on the latest SpaceX launch...", review: { rating: 4.9, count: "10k", text: "No more hallucinated news. AISA provides real-time citations and live feeds. Highly reliable for tech news." } },
+    { id: 'document', label: t('analyzeDocument'), badge: t('badgeDocument'), desc: t('chatWithPdfsDocs'), icon: FileText, color: '#3b82f6', prompt: "Summarize this 50-page legal PDF and identify risks...", review: { rating: 5, count: "7.4k", text: "I uploaded a 120-page contract and it found a hidden liability clause in seconds. Worth every credit." } },
+    { id: 'code', label: t('codeWriter'), badge: t('badgeCode'), desc: t('writeDebugCode'), icon: Code, color: '#6366f1', prompt: "Write a robust Python script for a neural network...", review: { rating: 4.9, count: "14.2k", text: "Writes production-ready code with tests. It actually understands modern design patterns, not just snippets." } },
+    { id: 'audio', label: t('convertToAudio'), badge: t('badgeAudio'), desc: t('textDocsToVoice'), icon: Headphones, color: '#34d399', prompt: "Synthesize this report into a natural sounding male voice...", review: { rating: 4.8, count: "6k", text: "The most human-like synthesis I've heard. Even the breathing and pauses feel natural. Perfect for podcasts." } },
+    { id: 'legal', label: t('aiLegal'), badge: t('badgeLegal'), desc: t('specializedAiLegalTools'), icon: Scale, color: '#818cf8', prompt: "Analyze this employment contract for potential loopholes...", review: { rating: 5, count: "3.2k", text: "AISA's legal reasoning is spookily good. It identified risks that our junior lawyers missed twice." } },
+    { id: 'ai_cashflow', label: t('aiCashFlow'), badge: t('badgeFinance'), desc: t('liveAnalysisReports'), icon: TrendingUp, color: '#10b981', prompt: "Analyzing cashflow...", review: { rating: 5, count: "4.2k", text: "Incredible financial insights. The real-time analysis saved us thousands." } },
+    { id: 'aiadd', label: t('aiAds'), badge: t('badgeAds'), desc: t('comingSoon'), icon: Megaphone, color: '#eab308', prompt: "Generating ad campaign...", comingSoon: true },
+  ];
 
   // Map the visual tool IDs to the IDs used in state
   const getToolActiveStatus = (toolId) => {

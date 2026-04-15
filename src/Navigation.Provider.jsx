@@ -166,7 +166,7 @@ const DashboardLayout = () => {
                 <Menu className="w-6 h-6" />
               </button>
               <Link to="/" state={{ fromLogo: true }} className="font-bold text-lg text-primary hover:opacity-80 transition-opacity">
-                AISA <span className="text-primary tracking-tighter">™</span>
+                AISA<sup className="text-[0.6em] ml-0.5">™</sup>
               </Link>
             </div>
 
@@ -214,7 +214,7 @@ const NavigateProvider = () => {
 
   return (
     <>
-      <Toaster position="top-right" />
+      <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
       <CreditUpsellPopup />
       <CookieConsentBanner />
       <Routes>

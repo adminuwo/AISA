@@ -312,7 +312,9 @@ const KnowledgeManagement = () => {
                                                 <span className={`text-[9px] font-black uppercase tracking-tight px-1.5 py-0.5 rounded ${
                                                     item.category === 'LEGAL' 
                                                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                                        : item.category === 'FINANCE'
+                                                            ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
+                                                            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                                                 }`}>
                                                     {item.category || 'GENERAL'}
                                                 </span>
