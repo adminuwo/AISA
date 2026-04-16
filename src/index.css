@@ -1,0 +1,703 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Quicksand:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap');
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --background: 228 33% 98%;
+    /* Main Background #f8f9fc */
+    --foreground: 0 0% 0%;
+    /* Black */
+
+    --card: 0 0% 100%;
+    /* White Cards */
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 240 100% 67%;
+    /* #5555ff */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 100%;
+    /* #ffffff Sidebar/Surfaces */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 84 10% 60%;
+    /* #9ca38f */
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 29% 95%;
+    /* #eef2f6 */
+    --input: 210 29% 95%;
+    --ring: 240 100% 67%;
+
+    --radius: 1rem;
+  }
+
+  :root.dark, .dark {
+    --background: 227 39% 9%;
+    /* #0E1220 - Deep Calm Charcoal/Navy */
+    --foreground: 210 20% 90%;
+    /* Soft Off-White for Headings */
+    --card: 228 35% 13%;
+    /* #161B2E - Matte Dark Card */
+    --card-foreground: 210 15% 80%;
+    --popover: 227 39% 9%;
+    --popover-foreground: 210 15% 80%;
+    --primary: 225 60% 55%;
+    /* Professional Soft Blue (Not Neon) */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 228 30% 18%;
+    /* Subtle darker surface */
+    --secondary-foreground: 210 20% 90%;
+    --muted: 228 30% 18%;
+    --muted-foreground: 215 15% 65%;
+    /* Muted Gray for body text */
+    --accent: 228 30% 18%;
+    --accent-foreground: 210 20% 90%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 228 30% 18%;
+    /* Subtle border, blending in */
+    --input: 228 30% 18%;
+    --ring: 225 60% 55%;
+  }
+}
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  /* Custom Aliases */
+  --color-maintext: hsl(var(--foreground));
+  --color-subtext: hsl(var(--muted-foreground));
+  --color-surface: hsl(var(--secondary));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--active-font-family, 'Outfit', sans-serif);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  /* Marked/Highlighted text styling */
+  mark {
+    background-color: rgba(85, 85, 255, 0.1);
+    color: inherit;
+    padding: 0.1em 0.2em;
+    border-radius: 0.2em;
+    border-bottom: 2px solid #5555ff;
+  }
+
+  .dark mark {
+    background-color: #5555ff;
+    color: white;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-border;
+}
+
+/* Force dark scrollbar in dark mode class */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(var(--secondary));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--border));
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 8s linear infinite;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  33% { transform: translate(10px, -15px) scale(1.1); opacity: 0.5; }
+  66% { transform: translate(-15px, 10px) scale(0.95); opacity: 0.4; }
+}
+
+.animate-float-slow {
+  animation: float-slow 15s ease-in-out infinite;
+}
+
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(var(--primary), 0.1); }
+  50% { border-color: rgba(var(--primary), 0.5); }
+}
+
+.sidebar-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark .sidebar-glass {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Glass aesthetic for message cards and other surfaces to match sidebar */
+.message-card-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .message-card-glass {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.chat-item-bg {
+  mask-image: radial-gradient(circle at center, black, transparent);
+}
+
+.ai-typing-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-typing-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.ai-typing-glow {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.font-serif {
+  font-family: 'Playfair Display', serif !important;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.font-rounded {
+  font-family: 'Quicksand', sans-serif !important;
+  font-weight: 600;
+}
+
+.font-sans {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+:root {
+  --aisa-font-size: 16px;
+  --aisa-scale: 1;
+}
+
+/* Global Scaling System */
+html {
+  font-size: var(--aisa-font-size) !important;
+  scroll-behavior: smooth;
+}
+
+/* Momentum scroll on iOS + smooth on all browsers */
+body,
+.overflow-y-auto,
+.overflow-y-scroll,
+[class*="overflow-y-auto"],
+[class*="custom-scrollbar"] {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* GPU-accelerate ALL animated blobs */
+[class*="mix-blend-multiply"],
+[class*="mix-blend-screen"],
+[class*="mix-blend-soft-light"] {
+  will-change: transform, opacity;
+}
+
+/* GPU-accelerate framer-motion animated divs that use background */
+[style*="background: radial-gradient"],
+[style*="background: linear-gradient"] {
+  will-change: background;
+}
+
+/* Isolate the glassmorphic card containers */
+.modal-default,
+.modal-maximized {
+  contain: layout paint;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.25) transparent;
+  scroll-behavior: smooth;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.25);
+  border-radius: 99px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.45);
+}
+
+.demo-scroll-thumb {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.20) transparent;
+  scroll-behavior: smooth;
+}
+
+.demo-scroll-thumb::-webkit-scrollbar {
+  width: 3px;
+}
+
+.demo-scroll-thumb::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.demo-scroll-thumb::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.25);
+  border-radius: 99px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.is-scrolling [style*="backdrop-filter"],
+  html.is-scrolling [class*="backdrop-blur"] {
+    backdrop-filter: blur(0px) !important;
+    -webkit-backdrop-filter: blur(0px) !important;
+    transition: backdrop-filter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (max-width: 768px) {
+  [class*="backdrop-blur"] {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  [class*="shadow-"] {
+    box-shadow: none !important;
+  }
+}
+
+/* Prevent layout thrash from animated gradient borders */
+[style*="inset: -1.5px"],
+[style*="inset: -14px"] {
+  will-change: transform, opacity;
+}
+
+.aisa-badge-small {
+  background: rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(4px);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 35px;
+}
+
+.dark .aisa-badge-small {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.modal-default {
+  @apply w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.1)];
+}
+
+.modal-maximized {
+  @apply w-[95vw] h-[95vh] max-h-[95vh] rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.2)];
+}
+
+.modal-header-glass {
+  @apply sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100/50;
+}
+
+.footer-link-sparkle {
+  position: relative;
+  text-decoration: none !important;
+  transition: color 0.3s ease;
+}
+
+.footer-link-sparkle::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #a855f7 20%, 
+    #22d3ee 50%, 
+    #a855f7 80%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0);
+  opacity: 0.8;
+}
+
+.footer-link-sparkle:hover::after {
+  width: 100%;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  animation: sparkle-shimmer 2.5s infinite linear;
+}
+
+@keyframes sparkle-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.dark .footer-link-sparkle::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #c084fc 20%, 
+    #67e8f9 50%, 
+    #c084fc 80%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ChatGPT Interface Styles */
+.chatgpt-container {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  color: #1a1a1a !important;
+  line-height: 1.6;
+  background-color: transparent !important;
+}
+
+.dark .chatgpt-container {
+  background-color: transparent !important;
+  color: #ececec !important;
+}
+
+.chatgpt-message-row {
+  width: 100%;
+  display: flex;
+  padding: 16px 24px;
+  transition: background-color 0.3s ease;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.chatgpt-message-row.user-row {
+  justify-content: flex-end;
+}
+
+.chatgpt-message-row.ai-row {
+  justify-content: flex-start;
+}
+
+.chatgpt-message-content {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  gap: 20px;
+  margin: 0; 
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.user-row .chatgpt-message-content {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.ai-row .chatgpt-message-content {
+  flex-direction: row;
+  text-align: left;
+}
+
+@media (min-width: 1024px) {
+  .chatgpt-message-content {
+    max-width: 1400px; 
+  }
+}
+
+.chatgpt-text {
+  font-size: 16px;
+  letter-spacing: normal;
+  color: #374151;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.user-row .chatgpt-text {
+  align-items: flex-end;
+  text-align: left;
+  background-color: transparent !important;
+  padding: 0;
+  border-radius: 0;
+  width: 100% !important;
+  max-width: 100%;
+  margin-left: 0;
+}
+
+.dark .user-row .chatgpt-text {
+  background-color: transparent !important;
+}
+
+.ai-row .chatgpt-text {
+  align-items: flex-start;
+  text-align: left;
+  background-color: transparent !important;
+  padding: 0;
+  border-radius: 0;
+  width: 100% !important;
+  max-width: 100%;
+}
+
+/* Ensure headings inherit alignment */
+.user-row .chatgpt-text h1, 
+.user-row .chatgpt-text h2, 
+.user-row .chatgpt-text h3,
+.user-row .chatgpt-text p,
+.user-row .chatgpt-text ul,
+.user-row .chatgpt-text ol {
+  text-align: left; /* Normal left alignment inside the user bubble */
+}
+
+.ai-row .chatgpt-text h1, 
+.ai-row .chatgpt-text h2, 
+.ai-row .chatgpt-text h3,
+.ai-row .chatgpt-text p,
+.ai-row .chatgpt-text ul,
+.ai-row .chatgpt-text ol {
+  text-align: left;
+}
+
+.user-row .chatgpt-text ul,
+.user-row .chatgpt-text ol {
+  list-style-position: inside;
+  padding-left: 0;
+}
+
+
+.dark .chatgpt-text {
+  color: #d1d5db;
+}
+
+/* Heading Typography & Bullet Fix */
+.chatgpt-text h1, .chatgpt-text h2, .chatgpt-text h3 {
+  list-style-type: none !important;
+  list-style: none !important;
+  color: #111827;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.dark .chatgpt-text h1, 
+.dark .chatgpt-text h2, 
+.dark .chatgpt-text h3 {
+  color: #ececec;
+}
+
+.chatgpt-text h1 {
+  font-size: 24px;
+  margin-top: 1.5rem;
+}
+
+.chatgpt-text h2 {
+  font-size: 20px;
+  margin-top: 1.25rem;
+}
+
+.chatgpt-text h3 {
+  font-size: 18px;
+  margin-top: 1rem;
+}
+
+.chatgpt-text p {
+  margin-bottom: 14px;
+}
+
+.chatgpt-text ul, .chatgpt-text ol {
+  margin-bottom: 14px;
+  padding-left: 24px;
+}
+
+.chatgpt-text li {
+  margin-bottom: 8px;
+}
+
+.chatgpt-text code {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'ui-monospace', monospace;
+  font-size: 0.875em;
+  color: #111827;
+}
+
+.dark .chatgpt-text code {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ececec;
+}
+
+.chatgpt-message-row:hover {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.dark .chatgpt-message-row:hover {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+.ai-row .chatgpt-text {
+  background-color: transparent !important;
+  padding: 0;
+}
+
+/* Alignment for specific components inside rows */
+.user-row .chatgpt-text > div {
+  display: flex;
+  flex-direction: column;
+  items-align: flex-end;
+}
+
+.user-row .flex-1.chatgpt-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+

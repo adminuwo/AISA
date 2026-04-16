@@ -1,0 +1,899 @@
+// Generic API service for Dashboard, Automations, Agents, Admin, and Auth
+import axios from "axios";
+import { API } from "../types.js";
+
+// Create axios instance with default config
+const apiClient = axios.create({
+  baseURL: API,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 60000, // 60 second timeout for AI responses
+});
+
+// Request interceptor for adding auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      if (userData.token) {
+        config.headers.Authorization = `Bearer ${userData.token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor for handling errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear user data and redirect to login on unauthorized
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+
+    if (error.response?.status === 403 && error.response?.data?.code === 'OUT_OF_CREDITS') {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      user.credits = error.response.data.available || 0;
+      localStorage.setItem('user', JSON.stringify(user));
+
+      window.dispatchEvent(new CustomEvent('out_of_credits'));
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const apiService = {
+  // --- AI Tools ---
+  async generateImage(prompt, aspectRatio = '1:1', modelId = 'imagen-3.0-generate-001') {
+    try {
+      console.log("[Frontend] Generating image for prompt:", prompt, "Ratio:", aspectRatio, "Model:", modelId);
+      // Increased timeout to 60s for image generation
+      const response = await apiClient.post('/image/generate', { prompt, aspectRatio, modelId }, { timeout: 180000 });
+      console.log("[Frontend] Image generation success:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to generate image:", error);
+      if (error.response) {
+        console.error("Error Status:", error.response.status);
+        console.error("Error Data:", error.response.data);
+      }
+      throw error;
+    }
+  },
+
+  async editImage(prompt, imageFileOrBlob = null) {
+    try {
+      console.log("[Frontend] Editing image for prompt:", prompt);
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      if (imageFileOrBlob) {
+        // Appending the blob payload to send via FormData
+        formData.append('image', imageFileOrBlob);
+      }
+      const response = await apiClient.post('/edit-image', formData, {
+        timeout: 90000 
+      });
+      console.log("[Frontend] Image editing success:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to edit image:", error);
+      throw error;
+    }
+  },
+
+  async generateVideo(prompt, duration = 5, quality = 'medium', aspectRatio = '16:9', modelId = 'veo-3.1-fast-generate-001', resolution = '1080p') {
+    try {
+      console.log(`[Frontend] Generating video for prompt: ${prompt}, Ratio: ${aspectRatio}, Model: ${modelId}, Res: ${resolution}`);
+      // Increased timeout to 900s (15 minutes) for video generation as it regularly takes > 5 minutes
+      const response = await apiClient.post('/video/generate', { prompt, duration, quality, aspectRatio, modelId, resolution }, { timeout: 900000 });
+      console.log("[Frontend] Video generation success:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to generate video:", error);
+      throw error;
+    }
+  },
+
+  async downloadVideo(videoUrl) {
+    try {
+      console.log("[Frontend] Downloading video from proxy:", videoUrl);
+      const response = await apiClient.post('/video/download', { videoUrl }, { responseType: 'blob' });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to download video proxy:", error);
+      throw error;
+    }
+  },
+
+
+  // --- Auth ---
+  async login(credentials) {
+    try {
+      const response = await apiClient.post('/auth/login', credentials);
+      return response.data;
+    } catch (error) {
+      console.warn('Backend login failed, falling back to mock auth for demo:', error.message);
+
+      // Mock fallback for demo purposes
+      if (credentials.email && credentials.password) {
+        return {
+          id: 'demo-user-123',
+          name: 'Demo User',
+          email: credentials.email,
+          avatar: ''
+        };
+      }
+      throw new Error(error.response?.data?.error || error.message || 'Failed to connect to server');
+    }
+  },
+
+  async signup(userData) {
+    try {
+      const response = await apiClient.post('/auth/signup', userData);
+      return response.data;
+    } catch (error) {
+      console.warn('Backend signup failed, falling back to mock auth for demo:', error.message);
+
+      // Mock fallback for demo purposes
+      return {
+        id: 'demo-user-' + Date.now(),
+        name: userData.name,
+        email: userData.email,
+        avatar: ''
+      };
+    }
+  },
+
+  // --- Dashboard Stats ---
+  async getDashboardStats() {
+    try {
+      const response = await apiClient.get('/dashboard/stats');
+      return response.data;
+    } catch (error) {
+      // Mock fallback
+      return {
+        totalChats: 24,
+        activeAgents: 6,
+        tokensUsed: 450230,
+        savedTime: '18h 45m'
+      };
+    }
+  },
+
+  async getAdminOverviewStats() {
+    try {
+      const response = await apiClient.get('/admin/stats');
+      return response.data;
+    } catch (error) {
+      console.warn('Backend admin stats failed, falling back to mock:', error.message);
+      const agents = JSON.parse(localStorage.getItem('mock_agents') || '[]');
+      return {
+        totalUsers: 0,
+        activeAgents: agents.length,
+        pendingApprovals: 0,
+        totalRevenue: 0,
+        openComplaints: 0,
+        recentActivity: [],
+        inventory: agents.map(a => ({
+          ...a,
+          id: a._id,
+          name: a.name || a.agentName,
+          pricing: a.pricing || 'Free',
+          status: a.status || 'Active'
+        }))
+      };
+    }
+  },
+
+  // --- Agents ---
+  async getCreatedAgents() {
+    try {
+      const response = await apiClient.get('/agents/created-by-me');
+      return response.data;
+    } catch (error) {
+      // Mock fallback: Return all local mock agents (assuming I am the owner in demo)
+      const stored = localStorage.getItem('mock_agents');
+      if (stored) return JSON.parse(stored);
+      return [];
+    }
+  },
+
+  async getAgents() {
+    try {
+      const response = await apiClient.get('/agents');
+      return response.data;
+    } catch (error) {
+      const stored = localStorage.getItem('mock_agents');
+      if (stored) return JSON.parse(stored);
+
+      const defaults = [
+        { _id: '683d38ce-1', name: 'AIFLOW', description: 'Streamline your AI workflows.', pricing: 'Free', status: 'Inactive' },
+        { _id: '683d38ce-2', name: 'AIMARKET', description: 'AI-driven marketplace insights.', pricing: 'Free', status: 'Inactive' },
+        { _id: '683d38ce-3', name: 'AICONNECT', description: 'Connect all your AI tools.', pricing: 'Free', status: 'Inactive' },
+        { _id: '693d38ce-4', name: 'AIMUSIC', description: 'AI-powered music generation.', pricing: 'Free', status: 'Inactive' },
+        { _id: '693d38ce-5', name: 'AITRANS', description: 'Advanced AI translation services.', pricing: 'Free', status: 'Inactive' },
+        { _id: '683d38ce-6', name: 'AISCRIPT', description: 'AI script writing and automation.', pricing: 'Free', status: 'Inactive' }
+      ];
+
+      localStorage.setItem('mock_agents', JSON.stringify(defaults));
+      return defaults;
+    }
+  },
+
+  async createAgent(agentData) {
+    try {
+      const response = await apiClient.post('/agents', agentData);
+      return response.data;
+    } catch (error) {
+      const stored = JSON.parse(localStorage.getItem('mock_agents') || '[]');
+      const newAgent = { ...agentData, _id: Date.now().toString() };
+      stored.push(newAgent);
+      localStorage.setItem('mock_agents', JSON.stringify(stored));
+      return newAgent;
+    }
+  },
+
+  async updateAgent(id, updates) {
+    try {
+      const response = await apiClient.put(`/agents/${id}`, updates);
+      return response.data;
+    } catch (error) {
+      const stored = JSON.parse(localStorage.getItem('mock_agents') || '[]');
+      const index = stored.findIndex(a => a._id === id);
+
+      if (index !== -1) {
+        stored[index] = { ...stored[index], ...updates };
+        localStorage.setItem('mock_agents', JSON.stringify(stored));
+        return stored[index];
+      }
+      return null;
+    }
+  },
+
+  async deleteAgent(id) {
+    try {
+      await apiClient.delete(`/agents/${id}`);
+      return true;
+    } catch (error) {
+      const stored = JSON.parse(localStorage.getItem('mock_agents') || '[]');
+      const filtered = stored.filter(a => a._id !== id);
+      localStorage.setItem('mock_agents', JSON.stringify(filtered));
+      return true;
+    }
+  },
+
+  // --- Review Workflow ---
+  async submitForReview(id) {
+    try {
+      const response = await apiClient.post(`/agents/submit-review/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to submit review:", error);
+      throw error;
+    }
+  },
+
+  async approveAgent(id, message) {
+    try {
+      const response = await apiClient.post(`/agents/approve/${id}`, { message });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to approve agent:", error);
+      throw error;
+    }
+  },
+
+  async rejectAgent(id, reason) {
+    try {
+      const response = await apiClient.post(`/agents/reject/${id}`, { reason });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to reject agent:", error);
+      throw error;
+    }
+  },
+
+  async getVendorRevenue() {
+    try {
+      const response = await apiClient.get('/revenue/vendor');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch vendor revenue:", error);
+      throw error;
+    }
+  },
+
+  async getAdminRevenueStats() {
+    try {
+      const response = await apiClient.get('/revenue/admin');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch admin revenue:", error);
+      // Fallback or rethrow
+      return {
+        overview: { totalGross: 0, totalVendorPayouts: 0, totalPlatformNet: 0 },
+        appPerformance: []
+      };
+    }
+  },
+
+  async getVendorTransactions() {
+    try {
+      const response = await apiClient.get('/revenue/transactions');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch vendor transactions:", error);
+      throw error;
+    }
+  },
+
+  async getAdminTransactions() {
+    try {
+      const response = await apiClient.get('/revenue/admin/transactions');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch admin transactions:", error);
+      return []; // Return empty array on error
+    }
+  },
+
+  async downloadInvoice(transactionId) {
+    try {
+      const response = await apiClient.get(`/revenue/invoice/${transactionId}`, {
+        responseType: 'blob'
+      });
+
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${transactionId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      return true;
+    } catch (error) {
+      console.error("Failed to download invoice:", error);
+      throw error;
+    }
+  },
+
+  // --- Notifications ---
+  async getNotifications() {
+    try {
+      const response = await apiClient.get('/notifications');
+      return response.data;
+    } catch (error) {
+      console.warn("Using mock notifications");
+      return [];
+    }
+  },
+
+  async markNotificationRead(id) {
+    try {
+      const response = await apiClient.put(`/notifications/${id}/read`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to mark notification read:", error);
+    }
+  },
+
+  // --- Automations ---
+  async getAutomations() {
+    try {
+      const response = await apiClient.get('/automations');
+      return response.data;
+    } catch (error) {
+      const stored = localStorage.getItem('mock_automations');
+      if (stored) return JSON.parse(stored);
+
+      const defaults = [
+        { id: '1', name: 'Daily Digest', description: 'Summarize unread emails at 9 AM', active: true, type: 'Email' },
+        { id: '2', name: 'Lead Qualifier', description: 'Score incoming leads from CRM', active: false, type: 'CRM' },
+        { id: '3', name: 'Code Reviewer', description: 'Auto-review PRs on GitHub', active: true, type: 'Dev' },
+        { id: '4', name: 'Meeting Notes', description: 'Transcribe and summarize Zoom calls', active: true, type: 'Productivity' }
+      ];
+
+      localStorage.setItem('mock_automations', JSON.stringify(defaults));
+      return defaults;
+    }
+  },
+
+  async toggleAutomation(id) {
+    try {
+      const response = await apiClient.post(`/automations/${id}/toggle`);
+      return response.data;
+    } catch (error) {
+      const stored = JSON.parse(localStorage.getItem('mock_automations') || '[]');
+
+      const updated = stored.map(a =>
+        a.id === id ? { ...a, active: !a.active } : a
+      );
+
+      localStorage.setItem('mock_automations', JSON.stringify(updated));
+
+      return updated.find(a => a.id === id);
+    }
+  },
+
+  // --- Admin ---
+  async getAdminSettings() {
+    try {
+      const response = await apiClient.get('/admin/settings');
+      return response.data;
+    } catch (error) {
+      const stored = localStorage.getItem('mock_admin_settings');
+      if (stored) return JSON.parse(stored);
+
+      return {
+        allowPublicSignup: true,
+        defaultModel: 'gemini-2.5-flash',
+        maxTokensPerUser: 500000,
+        organizationName: 'ACME Corp'
+      };
+    }
+  },
+
+  async updateAdminSettings(settings) {
+    try {
+      const response = await apiClient.post('/admin/settings', settings);
+      return response.data;
+    } catch (error) {
+      localStorage.setItem('mock_admin_settings', JSON.stringify(settings));
+      return settings;
+    }
+  },
+
+  async getAllUsers() {
+    try {
+      const response = await apiClient.get('/user/all');
+      return response.data;
+    } catch (error) {
+      console.warn('Backend get users failed, falling back to mock:', error.message);
+      // Mock fallback
+      return [
+        { id: '1', name: 'Mock User 1', email: 'user1@example.com', role: 'user', status: 'Active', agents: [], spent: 120 },
+        { id: '2', name: 'Mock User 2', email: 'user2@example.com', role: 'user', status: 'Active', agents: [], spent: 250 }
+      ];
+    }
+  },
+
+  async toggleBlockUser(id, isBlocked) {
+    try {
+      const response = await apiClient.put(`/user/${id}/block`, { isBlocked });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to block/unblock user:", error);
+      throw error;
+    }
+  },
+
+  async deleteUser(id) {
+    try {
+      await apiClient.delete(`/user/${id}`);
+      return true;
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      throw error;
+    }
+  },
+
+  // --- Reports ---
+  async submitReport(reportData) {
+    try {
+      const response = await apiClient.post('/reports/submit', reportData);
+      return response.data;
+    } catch (error) {
+      console.warn("Backend report submission failed, using mock:", error.message);
+      // Mock successful response for demo
+      return { success: true, message: "Report submitted successfully (mock)" };
+    }
+  },
+
+  async getReports() {
+    try {
+      const response = await apiClient.get('/reports');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch reports:", error);
+      return [];
+    }
+  },
+
+  // --- Packages ---
+  async getPackages() {
+    try {
+      const response = await apiClient.get('/pricing/packages');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch packages:", error);
+      throw error;
+    }
+  },
+
+  async createPackage(data) {
+    try {
+      const response = await apiClient.post('/admin/packages', data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create package:", error);
+      throw error;
+    }
+  },
+
+  async updatePackage(id, data) {
+    try {
+      const response = await apiClient.put(`/admin/packages/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update package:", error);
+      throw error;
+    }
+  },
+
+  async deletePackage(id) {
+    try {
+      const response = await apiClient.delete(`/admin/packages/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete package:", error);
+      throw error;
+    }
+  },
+
+  // --- Plans ---
+  async getPlans() {
+    try {
+      const response = await apiClient.get('/pricing/plans');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch plans:", error);
+      throw error;
+    }
+  },
+
+  async createPlan(data) {
+    try {
+      const response = await apiClient.post('/admin/plans', data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create plan:", error);
+      throw error;
+    }
+  },
+
+  async updatePlan(id, data) {
+    try {
+      const response = await apiClient.put(`/admin/plans/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update plan:", error);
+      throw error;
+    }
+  },
+
+  async deletePlan(id) {
+    try {
+      const response = await apiClient.delete(`/admin/plans/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete plan:", error);
+      throw error;
+    }
+  },
+
+  // --- Legal ---
+  async getLegalPage(pageType) {
+    try {
+      const response = await apiClient.get(`/legal/${pageType}`);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Failed to fetch ${pageType}:`, error);
+      return null;
+    }
+  },
+
+  async updateLegalPage(pageType, sections) {
+    try {
+      const response = await apiClient.put(`/legal/${pageType}`, { sections });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update ${pageType}:`, error);
+      throw error;
+    }
+  },
+
+  async resolveReport(id, status, resolutionNote) {
+    try {
+      const response = await apiClient.put(`/reports/${id}/resolve`, { status, resolutionNote });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to resolve report:", error);
+      throw error;
+    }
+  },
+
+  async replyToVendorTicket(ticketId, message) {
+    try {
+      const response = await apiClient.post(`/reports/${ticketId}/reply`, { message });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to send reply:", error);
+      throw error;
+    }
+  },
+
+  // --- Personal Assistant ---
+  async getPersonalTasks(params) {
+    try {
+      const response = await apiClient.get('/personal-assistant/tasks', { params });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+      return [];
+    }
+  },
+
+  async createPersonalTask(data) {
+    try {
+      const response = await apiClient.post('/personal-assistant/tasks', data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      throw error;
+    }
+  },
+
+  async updatePersonalTask(id, data) {
+    try {
+      const response = await apiClient.put(`/personal-assistant/tasks/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      throw error;
+    }
+  },
+
+  async deletePersonalTask(id) {
+    try {
+      const response = await apiClient.delete(`/personal-assistant/tasks/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      throw error;
+    }
+  },
+
+  // --- AIBASE & Knowledge ---
+  async getKnowledgeDocuments() {
+    try {
+      const response = await apiClient.get('aibase/knowledge/documents');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch knowledge documents:", error);
+      throw error;
+    }
+  },
+
+  async uploadKnowledgeDocument(formData, onProgress) {
+    try {
+      const response = await apiClient.post('aibase/knowledge/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percentCompleted);
+          }
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to upload knowledge document:", error);
+      throw error;
+    }
+  },
+
+  async uploadKnowledgeUrl(payload) {
+    try {
+      const response = await apiClient.post('aibase/knowledge/upload-url', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to upload knowledge URL:", error);
+      throw error;
+    }
+  },
+
+  async getKnowledgeList() {
+    try {
+      const response = await apiClient.get('aibase/knowledge/list');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch knowledge list:", error);
+      throw error;
+    }
+  },
+
+  async reindexDocument(id) {
+    try {
+      const response = await apiClient.post(`aibase/knowledge/reindex/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to reindex document:", error);
+      throw error;
+    }
+  },
+
+  // --- Knowledge Source (Website Crawler) Management ---
+  async getKnowledgeSources() {
+    try {
+      const response = await apiClient.get('aibase/knowledge/sources');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch knowledge sources:", error);
+      throw error;
+    }
+  },
+
+  async recrawlSource(payload) {
+    try {
+      const path = payload.id ? `aibase/knowledge/recrawl/${payload.id}` : 'aibase/knowledge/recrawl';
+      const response = await apiClient.post(path, payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to recrawl source:", error);
+      throw error;
+    }
+  },
+
+  async updateKnowledgeSource(id, payload) {
+    try {
+      const response = await apiClient.patch(`aibase/knowledge/sources/${id}`, payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update knowledge source:", error);
+      throw error;
+    }
+  },
+
+  async deleteKnowledgeSource(id) {
+    try {
+      const response = await apiClient.delete(`aibase/knowledge/sources/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete knowledge source:", error);
+      throw error;
+    }
+  },
+
+  async deleteKnowledgeDocument(id) {
+    try {
+      const response = await apiClient.delete(`aibase/knowledge/delete/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete knowledge document:", error);
+      throw error;
+    }
+  },
+
+  async aibaseChat(payload) {
+    try {
+      const response = await apiClient.post('aibase/chat', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to generate AIBASE chat response:", error);
+      throw error;
+    }
+  },
+
+  // --- Credits & Subscription ---
+  async getCreditHistory() {
+    try {
+      const response = await apiClient.get('/subscription/credit-history');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch credit history:", error);
+      throw error;
+    }
+  },
+
+  async getUserCredits() {
+    try {
+      const response = await apiClient.get('/subscription/user-credits');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch user credits:", error);
+      throw error;
+    }
+  },
+
+  // --- Projects ---
+  async getProjects() {
+    try {
+      const response = await apiClient.get('/projects');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      return [];
+    }
+  },
+
+  async createProject(name) {
+    try {
+      const response = await apiClient.post('/projects', { name });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      throw error;
+    }
+  },
+
+  async getFeatureCredits() {
+    try {
+      const response = await apiClient.get('/admin/feature-credits');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to load feature credits:", error);
+      throw error;
+    }
+  },
+
+  async updateFeatureCredit(id, data) {
+    try {
+      const response = await apiClient.put(`/admin/feature-credits/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update feature credit:", error);
+      throw error;
+    }
+  },
+
+  // --- Project Management ---
+  async getProjects() {
+    try {
+      const response = await apiClient.get('/projects');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      throw error;
+    }
+  },
+
+  async createProject(name) {
+    try {
+      const response = await apiClient.post('/projects', { name });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      throw error;
+    }
+  },
+
+  async renameProject(id, name) {
+    try {
+      const response = await apiClient.put(`/projects/${id}`, { name });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to rename project:", error);
+      throw error;
+    }
+  },
+
+  async deleteProject(id) {
+    try {
+      const response = await apiClient.delete(`/projects/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      throw error;
+    }
+  }
+};
+
+export default apiService;
