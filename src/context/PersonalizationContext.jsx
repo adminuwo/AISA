@@ -131,6 +131,7 @@ export const PersonalizationProvider = ({ children }) => {
         }
     };
 
+
     const fetchPersonalizations = async () => {
         if (!user?.token) return;
         setIsLoading(true);
