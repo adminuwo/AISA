@@ -367,6 +367,15 @@ body,
   background: rgba(99, 102, 241, 0.45);
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 .demo-scroll-thumb {
   scrollbar-width: thin;
   scrollbar-color: rgba(99, 102, 241, 0.20) transparent;
