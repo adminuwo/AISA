@@ -444,7 +444,6 @@ const FuturisticToolCards = ({ onToolSelect, activeToolId, isAdmin = false }) =>
   /* ─── Tools Data ───────────────────────────────── */
 
   const ALL_TOOLS = [
-    { id: 'aiad_agent', label: 'AIAD™ Agent', badge: 'AD AGENT', desc: 'Social Media Orchestration', icon: Sparkles, color: '#8b5cf6', prompt: "Generate a 30-day social media campaign for AISA...", review: { rating: 5, count: "18k", text: "Automated my entire month's content in under 5 minutes. The hashtags are perfectly optimized for trends." } },
     { id: 'image', label: t('generateImage'), badge: t('badgeImage'), desc: t('createVisualsFromText'), icon: ImagePlus, color: '#a78bfa', prompt: "Generate cinematic 8k image of a golden retriever in space...", review: { rating: 5, count: "12.4k", text: "STUNNING! The clarity of the generated images is better than Midjourney V6. AISA truly understands context." } },
     { id: 'video', label: t('generateVideo'), badge: t('badgeVideo'), desc: t('textToCinematicVideo'), icon: Video, color: '#fb923c', prompt: "Creating realistic drone flight over mountains at sunset...", review: { rating: 4.9, count: "8.2k", text: "The temporal consistency in the videos is industry-leading. Smooth motion without any morphing artifacts." } },
     { id: 'image_to_video', label: t('imageToVideo'), badge: t('badgeAnimate'), desc: t('imageToVideoMagic'), icon: PlayCircle, color: '#f97316', prompt: "Animate this static scene with dynamic lighting & motion...", review: { rating: 5, count: "5.7k", text: "Turned my product photos into cinematic ads in seconds. This is a game changer for my marketing agency." } },
@@ -456,7 +455,7 @@ const FuturisticToolCards = ({ onToolSelect, activeToolId, isAdmin = false }) =>
     { id: 'audio', label: t('convertToAudio'), badge: t('badgeAudio'), desc: t('textDocsToVoice'), icon: Headphones, color: '#34d399', prompt: "Synthesize this report into a natural sounding male voice...", review: { rating: 4.8, count: "6k", text: "The most human-like synthesis I've heard. Even the breathing and pauses feel natural. Perfect for podcasts." } },
     { id: 'legal', label: t('aiLegal'), badge: t('badgeLegal'), desc: t('specializedAiLegalTools'), icon: Scale, color: '#818cf8', prompt: "Analyze this employment contract for potential loopholes...", review: { rating: 5, count: "3.2k", text: "AISA's legal reasoning is spookily good. It identified risks that our junior lawyers missed twice." } },
     { id: 'ai_cashflow', label: t('aiCashFlow'), badge: t('badgeFinance'), desc: t('liveAnalysisReports'), icon: TrendingUp, color: '#10b981', prompt: "Analyzing cashflow...", review: { rating: 5, count: "4.2k", text: "Incredible financial insights. The real-time analysis saved us thousands." } },
-    { id: 'aiadd', label: t('aiAds'), badge: t('badgeAds'), desc: t('comingSoon'), icon: Megaphone, color: '#eab308', prompt: "Generating ad campaign...", comingSoon: true },
+    { id: 'aiad_agent', label: t('aiAds') || 'AIADS™', badge: t('badgeAds') || 'ADS', desc: 'Social Media Orchestration', icon: Megaphone, color: '#eab308', prompt: "Generate a 30-day social media campaign for AISA...", review: { rating: 5, count: "18k", text: "Automated my entire month's content in under 5 minutes. The hashtags are perfectly optimized for trends." } },
   ];
 
   // Map the visual tool IDs to the IDs used in state

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, TrendingUp, Zap, Scale, Navigation, Rocket } from 'lucide-react';
+import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, TrendingUp, Zap, Scale, Navigation, Rocket, Megaphone } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { Menu, Transition, Dialog, Listbox, Portal } from '@headlessui/react';
@@ -231,39 +231,37 @@ const FEEDBACK_PROMPTS = {
 const TOOL_PRICING = {
   chat: {
     models: [
-      { id: 'gemini-flash', name: 'AI Ads Flash', price: 0, speed: 'Fast', description: 'Free chat model' }
+      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Free chat model' }
     ]
   },
   image: {
     models: [
-      { id: 'imagen-3.0-generate-001', name: 'AI Ads Imagen 3', price: 45, speed: 'Fast', description: 'Advanced image generation & editing' },
-      { id: 'imagen-4.0-ultra-generate-001', name: 'AI Ads Imagen 4 Ultra', price: 90, speed: 'Premium', description: 'Next-generation hyper-realistic image generation' },
-      { id: 'gemini-3.1-flash-image-preview', name: 'AI Ads Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest preview — fastest Gemini image generation' },
-      { id: 'gemini-3-pro-image-preview', name: 'AI Ads Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade scene understanding & generation' },
-      { id: 'gemini-2.5-flash-image', name: 'AI Ads Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable production image generation' }
+      { id: 'gemini-3.1-flash-image-preview', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest preview — fastest Gemini image generation' },
+      { id: 'gemini-3-pro-image-preview', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade scene understanding & generation' },
+      { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable production image generation' }
     ],
     editModels: [
-      { id: 'gemini-3.1-flash-image-preview', name: 'AI Ads Gemini 3.1 Flash Image', price: 45, speed: 'Fast', description: 'Latest preview model — fastest AI image editing' },
-      { id: 'gemini-3-pro-image-preview', name: 'AI Ads Gemini 3 Pro Image', price: 75, speed: 'Pro', description: 'Pro-grade image editing with rich scene understanding' },
-      { id: 'gemini-2.5-flash-image', name: 'AI Ads Gemini 2.5 Flash Image', price: 30, speed: 'Stable', description: 'Stable & reliable — production-ready image edits' }
+      { id: 'gemini-3.1-flash-image-preview', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest preview model — fastest AI image editing' },
+      { id: 'gemini-3-pro-image-preview', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade image editing with rich scene understanding' },
+      { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable — production-ready image edits' }
     ]
   },
   video: {
     models: [
-      { id: 'veo-3.1-fast-generate-001', name: 'AI Ads Video Fast', price: '225/5s', speed: 'Fast', description: 'Quick high-quality video generation' },
-      { id: 'veo-3.1-generate-001', name: 'AI Ads Video Pro', price: '600/5s', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
+      { id: 'veo-3.1-fast-generate-001', name: 'AISA™ Video Fast', price: '225/5S', speed: 'Fast', description: 'Quick high-quality video generation' },
+      { id: 'veo-3.1-generate-001', name: 'AISA™ Video Pro', price: '600/5S', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
     ]
   },
   document: {
     models: [
-      { id: 'gemini-flash', name: 'AI Ads Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
-      { id: 'gemini-pro', name: 'AI Ads Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
-      { id: 'gpt4', name: 'AI Ads Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' }
+      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
+      { id: 'gemini-pro', name: 'AISA™ Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
+      { id: 'gpt4', name: 'AISA™ Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' }
     ]
   },
   voice: {
     models: [
-      { id: 'gemini-flash', name: 'AI Ads Flash', price: 0, speed: 'Fast', description: 'Standard voice recognition' }
+      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Standard voice recognition' }
     ]
   }
 };
@@ -5751,7 +5749,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                       </a>
                                     );
                                   },
-                                  p: ({ children }) => <p className="mb-[14px] last:mb-0 leading-[1.6]">{children}</p>,
+                                  p: ({ children }) => <div className="mb-[14px] last:mb-0 leading-[1.6]">{children}</div>,
                                   ul: ({ children }) => <ul className="list-disc pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ul>,
                                   ol: ({ children }) => <ol className="list-decimal pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ol>,
                                   li: ({ children }) => <li className="mb-1 last:mb-0 leading-[1.6]">{children}</li>,
@@ -5842,7 +5840,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                             <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/img-container:opacity-100 transition-opacity">
                                               <div className="flex items-center gap-2">
                                                 <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Ads Generated Asset</span>
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA™ Generated Asset</span>
                                               </div>
                                             </div>
                                           )}
@@ -5853,7 +5851,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/img-container:opacity-100 transition-opacity pointer-events-none" />
                                         </div>
                                         <button
-                                          onClick={() => handleDownload(props.src, `AI Ads_gen_${Date.now()}.png`)}
+                                          onClick={() => handleDownload(props.src, `AISA_gen_${Date.now()}.png`)}
                                           disabled={isDownloading}
                                           className="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white shadow-lg transition-all active:scale-95 disabled:opacity-50"
                                         >
@@ -6514,7 +6512,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       isFileAnalysis ? 'document' :
                       isMagicEditing ? 'edit_image' :
                       isMagicVideoModalOpen ? 'image_to_video' :
-                      isCashFlowMode ? 'ai_cashflow' :
+                      isStockModalOpen ? 'ai_cashflow' :
                       (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
                     }
                     onToolSelect={(id) => {
@@ -6579,16 +6577,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         toast.success("AI Legal Enabled ⚖️");
                       } else if (id === 'ai_cashflow') {
                         if (!checkPremiumTool('AI CashFlow')) return;
-                        setIsCashFlowMode(true);
-                        toast.success("AI CashFlow Active 📈");
-                      } else if (id === 'stock_analyst') {
-                        if (!checkPremiumTool('Stock Analysis')) return;
                         setIsStockModalOpen(true);
-                        toast.success("Stock Analyst Active 📉");
+                        toast.success("AI CashFlow Active 📈");
                       } else if (id === 'aiad_agent') {
                         if (!checkPremiumTool('AI Ad Agent')) return;
                         setIsSocialMediaDashboardOpen(true);
-                        toast.success("AIAD™ Agent Active");
+                        toast.success("AIADS™ Active");
                       }
                     }}
                   />
@@ -6741,6 +6735,27 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         </div>
                       </div>
                       <div className="p-1.5 pb-12 space-y-1 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!checkPremiumTool('AI Ad Agent')) return;
+                            setIsToolsMenuOpen(false);
+                            setIsSocialMediaDashboardOpen(true);
+                          }}
+                          className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md`}
+                        >
+                          <div className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300`}>
+                            <Megaphone className="w-5.5 h-5.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
+                              <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AIADS™</span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Automate 30 days of social media content.</p>
+                          </div>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -7071,27 +7086,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Animate your images with AI magic.</p>
                           </div>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!checkPremiumTool('AI Ad Agent')) return;
-                            setIsToolsMenuOpen(false);
-                            setIsSocialMediaDashboardOpen(true);
-                          }}
-                          className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md`}
-                        >
-                          <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300`}>
-                            <Sparkles className="w-7 h-7 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
-                              <span className="text-[16px] font-extrabold text-slate-800 dark:text-white leading-none">AIAD™ Agent</span>
 
-                            </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Automate 30 days of social media content.</p>
-                          </div>
-                        </button>
 
                       </div>
                     </motion.div>

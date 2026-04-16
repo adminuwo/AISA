@@ -804,8 +804,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-<<<<<<< HEAD
-=======
 
       <FaqModal isOpen={isFaqOpen} onClose={() => setIsFaqOpen(false)} />
       <DeleteConfirmModal 
@@ -816,7 +814,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         description={t('deleteProjectDesc')}
         confirmText={t('deleteProjectLabel')}
       />
->>>>>>> origin/main
     </>
   );
 };

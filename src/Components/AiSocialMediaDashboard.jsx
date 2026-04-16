@@ -5523,12 +5523,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose }) => {
                     ))}
                   </div>
 
-                  <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
-                    <button className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} w-full px-5 py-4 rounded-2xl bg-indigo-600/5 text-indigo-600 border border-indigo-600/10 hover:bg-indigo-600/10 transition-all`}>
-                      <HelpCircle className="w-5 h-5" />
-                      {!isSidebarCollapsed && <span className="text-xs font-black uppercase tracking-widest">Documentation</span>}
-                    </button>
-                  </div>
+
                 </div>
 
                 {/* Main Content Area */}
