@@ -5506,8 +5506,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 <div
                   key={msg.id}
                   className={`chatgpt-message-row group ${msg.role === 'user' ? 'user-row' : 'ai-row'}`}
-                  onClick={() => {
-                    if (window.getSelection().toString()) return;
+                  onMouseUp={(e) => {
+                    // Only toggle active message on clean click (no text selection)
+                    const selection = window.getSelection();
+                    if (selection && selection.toString().trim().length > 0) return;
+                    // Don't toggle if clicked on a button, link, or interactive element
+                    if (e.target.closest('button, a, input, textarea, [role="button"]')) return;
                     setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
                   }}
                 >
