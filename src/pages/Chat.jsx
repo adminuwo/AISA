@@ -3000,11 +3000,21 @@ const Chat = () => {
       if (sessionId && sessionId !== 'new') {
         setCurrentSessionId(sessionId);
         console.log(`[DEBUG] Initializing chat for session: ${sessionId}`);
-        const history = await chatStorageService.getHistory(sessionId);
-        console.log(`[DEBUG] Received history:`, history);
+        const sessionData = await chatStorageService.getHistory(sessionId);
+        console.log(`[DEBUG] Received history:`, sessionData);
+
+        // --- CONTEXT SYNC ---
+        // If the loaded session belongs to a project, ensure the project context is active
+        // This solves the issue of chats "disappearing" from the sidebar list when navigating via URL/refresh
+        if (sessionData.projectId && sessionData.projectId !== currentProjectId) {
+          console.log(`[DEBUG] Syncing project context to: ${sessionData.projectId}`);
+          setCurrentProjectId(sessionData.projectId);
+        }
+
+        const historyMessages = sessionData.messages || [];
 
         // Regenerate Blob URLs for audio conversions on load
-        const processedHistory = (history || []).map(msg => {
+        const processedHistory = historyMessages.map(msg => {
           // Ensure every message has a valid unique ID (backend might supply _id)
           if (!msg.id) {
             msg.id = (msg._id || Math.random().toString(36).substr(2, 9)).toString();
@@ -3224,7 +3234,7 @@ const Chat = () => {
       if (isAudioConvertMode && selectedFiles.length > 0) {
         let activeSessionId = currentSessionId;
         if (activeSessionId === 'new') {
-          activeSessionId = await chatStorageService.createSession();
+          activeSessionId = await chatStorageService.createSession(currentProjectId);
           setCurrentSessionId(activeSessionId);
           isNavigatingRef.current = true;
           navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
@@ -3240,7 +3250,7 @@ const Chat = () => {
       if (isAudioConvertMode && contentToSend) {
         let activeSessionId = currentSessionId;
         if (activeSessionId === 'new') {
-          activeSessionId = await chatStorageService.createSession();
+          activeSessionId = await chatStorageService.createSession(currentProjectId);
           setCurrentSessionId(activeSessionId);
           isNavigatingRef.current = true;
           navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
@@ -3266,7 +3276,7 @@ const Chat = () => {
 
       if (activeSessionId === 'new') {
         try {
-          activeSessionId = await chatStorageService.createSession();
+          activeSessionId = await chatStorageService.createSession(currentProjectId);
           setCurrentSessionId(activeSessionId);
           isFirstMessage = true;
           isNavigatingRef.current = true;
@@ -5507,8 +5517,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 <div
                   key={msg.id}
                   className={`chatgpt-message-row group ${msg.role === 'user' ? 'user-row' : 'ai-row'}`}
-                  onClick={() => {
-                    if (window.getSelection().toString()) return;
+                  onMouseUp={(e) => {
+                    // Only toggle active message on clean click (no text selection)
+                    const selection = window.getSelection();
+                    if (selection && selection.toString().trim().length > 0) return;
+                    // Don't toggle if clicked on a button, link, or interactive element
+                    if (e.target.closest('button, a, input, textarea, [role="button"]')) return;
                     setActiveMessageId(activeMessageId === msg.id ? null : msg.id);
                   }}
                 >
