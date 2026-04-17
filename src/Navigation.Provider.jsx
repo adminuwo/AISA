@@ -157,7 +157,7 @@ const DashboardLayout = () => {
           </div>
         )}
         {/* Outlet for pages */}
-        <main className={`flex-1 overflow-y-auto relative w-full scroll-smooth p-0`}>
+        <main className={`flex-1 overflow-hidden relative w-full scroll-smooth p-0`}>
           <Outlet />
         </main>
       </div>

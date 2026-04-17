@@ -82,7 +82,86 @@ const SendRipple = ({ onComplete }) => {
   );
 };
 
+const MagicShowEffect = ({ isMobileIdle = false }) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const particleCount = isMobileIdle ? 4 : (isMobile ? 8 : 28);
 
+  return (
+    <div className={`absolute inset-0 pointer-events-none overflow-visible z-0 ${isMobileIdle ? 'opacity-40' : 'opacity-100'}`}>
+      {/* 1. Pulsing Expansion Halos */}
+      <motion.div
+        animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
+        transition={{ duration: isMobileIdle ? 3 : 1.5, repeat: Infinity, ease: "easeOut" }}
+        className="absolute inset-[-4px] border-[1.5px] border-primary/40 rounded-full blur-[1px]"
+      />
+      
+      {!isMobileIdle && (
+        <motion.div
+          animate={{ scale: [0.8, 1.8], opacity: [0.3, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+          className="absolute inset-[-4px] border-[1px] border-blue-400/20 rounded-full blur-[2px]"
+        />
+      )}
+
+      {/* 2. Sweeping Lens Glint across the button */}
+      <div className="absolute inset-0 rounded-full overflow-hidden z-20">
+        <motion.div
+          animate={{ x: [-60, 60], opacity: [0, 0.8, 0] }}
+          transition={{ duration: isMobileIdle ? 3 : 1.2, repeat: Infinity, repeatDelay: isMobileIdle ? 2 : 0.8 }}
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-[-30deg]"
+        />
+      </div>
+
+      {/* 3. Theatrical Magic Sparkles */}
+      {[...Array(particleCount)].map((_, i) => {
+        const randomX = (Math.random() - 0.5) * (isMobileIdle ? 100 : 280); 
+        const randomY = (Math.random() - 0.5) * (isMobileIdle ? 100 : 240) - (isMobileIdle ? 0 : 50); 
+        const randomScale = Math.random() * 1.4 + 0.5;
+        const randomRotation = Math.random() * 360;
+        const randomDuration = isMobileIdle ? 1.5 + Math.random() * 2 : 0.5 + Math.random() * 1.0;
+        const randomDelay = Math.random() * (isMobileIdle ? 1.5 : 0.15);
+
+        return (
+          <motion.div
+            key={i}
+            initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+            animate={{
+              x: randomX,
+              y: randomY,
+              opacity: [0, 1, 0.8, 0],
+              scale: [0, randomScale, 1.2, 0],
+              rotate: [0, randomRotation],
+            }}
+            transition={{
+              duration: randomDuration,
+              repeat: Infinity,
+              delay: randomDelay,
+              ease: [0.23, 1, 0.32, 1] 
+            }}
+            className="absolute flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          >
+            <Sparkles 
+              size={Math.random() * 14 + 10} 
+              className={i % 3 === 0 ? "text-indigo-400" : (i % 2 === 0 ? "text-primary" : "text-white")} 
+              fill="currentColor"
+              style={isMobile ? {} : { filter: `drop-shadow(0 0 12px ${i % 2 === 0 ? '#8b5cf6' : '#fff'})` }}
+            />
+          </motion.div>
+        );
+      })}
+
+      {/* 4. Underlying Glow Bloom (Hidden on mobile to heavily save GPU rendering) */}
+      {!isMobile && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.7, scale: 1.25 }}
+          className="absolute inset-[-40px] rounded-full blur-[50px] mix-blend-screen pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, transparent 70%)' }}
+        />
+      )}
+    </div>
+  );
+};
 
 const NeuralExplosion = ({ x, y, onComplete }) => {
   const particles = Array.from({ length: 24 });
@@ -5235,7 +5314,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
   }, [isAudioConvertMode]);
 
   return (
-    <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text overscroll-none h-[100dvh] fixed inset-0 lg:static lg:h-full">
+    <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text overscroll-none h-full">
       {/* 🌟 Premium Minimalist Background Wrapper 🌟 */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#f8f9fc] dark:bg-[#0b0c15]">
         {/* Universal Ambient Glows: Animated Blobs for Depth */}
@@ -6414,20 +6493,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Integrated Smart Suggestions (Only for the latest AI response) */}
-        {suggestions.length > 0 && !isLoading && !typingMessageId && (
-          <div className="suggestions-container animate-in fade-in slide-in-from-bottom-3 duration-500">
-            {suggestions.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => handleSendMessage(null, item)}
-                className="suggestion-btn"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        )}
+
 
         {/* Welcome Screen - Absolute Overlay */}
         <AnimatePresence>
@@ -6440,7 +6506,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
               className="absolute inset-0 z-0 overflow-y-auto no-scrollbar scroll-smooth pointer-events-auto bg-transparent"
             >
               {/* Removed duplicate background component */}
-              <div className="relative z-10 flex flex-col items-center w-full min-h-screen pt-12">
+              <div className="relative z-10 flex flex-col items-center w-full min-h-full pt-12">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -6551,10 +6617,25 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
 
         {/* Unified Chat Input Container */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ padding: 'max(0.375rem, env(safe-area-inset-bottom, 0.375rem)) 0.5rem max(0.375rem, 0.375rem) 0.5rem' }}>
+        <div className="absolute bottom-0 left-0 right-0 z-[60] pointer-events-none" style={{ padding: '0.375rem 0.5rem max(0.375rem, env(safe-area-inset-bottom, 0.375rem)) 0.5rem' }}>
           {/* Bottom Mask to prevent text showing behind input area */}
           <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/90 to-transparent -z-10 h-full w-full pointer-events-none" />
+          
           <div className="max-w-5xl mx-auto w-full pointer-events-auto">
+            {/* Integrated Smart Suggestions appearing above the input bar */}
+            {suggestions.length > 0 && !isLoading && !typingMessageId && (
+              <div className="suggestions-container flex flex-wrap gap-2 px-4 mb-3 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                {suggestions.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSendMessage(null, item)}
+                    className="suggestion-btn"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <form 
               onSubmit={handleSendMessage} 
