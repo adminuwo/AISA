@@ -1723,7 +1723,8 @@ const Chat = () => {
           url: fp.url,
           name: fp.name,
           type: fp.type
-        }))
+        })),
+        mode: MODES.VIDEO_GENERATION
       };
 
       // Show a message that video generation is in progress
@@ -1852,7 +1853,8 @@ const Chat = () => {
           type: fp.type.startsWith('image/') ? 'image' :
             fp.type.includes('pdf') ? 'pdf' :
               fp.type.includes('word') || fp.type.includes('document') ? 'docx' : 'file'
-        }))
+        })),
+        mode: MODES.IMAGE_GENERATION
       };
 
       // Show a message that image generation is in progress
@@ -1995,7 +1997,8 @@ const Chat = () => {
           url: imageFile.url,
           name: imageFile.name,
           type: 'image'
-        }]
+        }],
+        mode: MODES.IMAGE_EDIT
       };
 
       // Show a message that image editing is in progress
@@ -2228,7 +2231,8 @@ const Chat = () => {
         role: 'user',
         content: `Analyze stock performance and potential for: ${stock.name || stock.symbol}`,
         timestamp: new Date(),
-        projectId: currentProjectId
+        projectId: currentProjectId,
+        mode: MODES.CASHFLOW
       };
 
       // Show a message that analysis is in progress
@@ -3490,13 +3494,15 @@ const Chat = () => {
 
       // Detect mode for UI indicator
       const detectedMode = magicEditActive ? MODES.IMAGE_EDIT :
-        (isFileAnalysis ? MODES.FILE_ANALYSIS :
-          (deepSearchActive ? MODES.DEEP_SEARCH :
-            (documentConvertActive ? MODES.DOCUMENT_CONVERT :
-              (webSearchActive ? MODES.WEB_SEARCH :
-                (codeWriterActive ? MODES.CODING_HELP :
-                  (currentMode === 'LEGAL_TOOLKIT' ? MODES.LEGAL_TOOLKIT :
-                    detectMode(contentToSend, userMsg.attachments)))))));
+        (imageGenActive ? MODES.IMAGE_GENERATION :
+          (videoGenActive ? MODES.VIDEO_GENERATION :
+            (isFileAnalysis ? MODES.FILE_ANALYSIS :
+              (deepSearchActive ? MODES.DEEP_SEARCH :
+                (documentConvertActive ? MODES.DOCUMENT_CONVERT :
+                  (webSearchActive ? MODES.WEB_SEARCH :
+                    (codeWriterActive ? MODES.CODING_HELP :
+                      (currentMode === 'LEGAL_TOOLKIT' ? MODES.LEGAL_TOOLKIT :
+                        detectMode(contentToSend, userMsg.attachments)))))))));
 
       setCurrentMode(detectedMode);
 
@@ -3874,6 +3880,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             id: msgId,
             role: 'model',
             content: '', // Start empty for typewriter effect
+            mode: detectedMode, // Set mode for tag rendering
             isRealTime: isRealTimeResponse,
             sources: responseSources,
             error: !!aiResponseData?.error, // Track if this is an error bubble
@@ -5738,24 +5745,33 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         </div>
                       ) : (
                         msg.content && (
-                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'text-slate-900 dark:text-white' : 'text-maintext'}`}>
-                            {msg.role === 'user' && (msg.mode === MODES.DEEP_SEARCH || (msg.role === 'user' && msg.content && (msg.content.toLowerCase().includes('search') || msg.mode === 'web_search'))) && (
-                              <div className={`flex items-center gap-1.5 mb-2 px-2.5 py-1 backdrop-blur-md rounded-full w-fit border shadow-sm ${msg.mode === MODES.DEEP_SEARCH ? 'bg-emerald-600/10 dark:bg-white/20 border-emerald-600/20 dark:border-white/10' : 'bg-blue-600/10 dark:bg-white/20 border-blue-600/20 dark:border-white/10'}`}>
-                                <Search size={10} className={`${msg.mode === MODES.DEEP_SEARCH ? 'text-emerald-600 dark:text-white' : 'text-blue-600 dark:text-white'} animate-pulse`} />
-                                <span className={`text-[9px] font-black uppercase tracking-[0.1em] ${msg.mode === MODES.DEEP_SEARCH ? 'text-emerald-600 dark:text-white' : 'text-blue-600 dark:text-white'}`}>
-                                  {msg.mode === MODES.DEEP_SEARCH ? 'Deep Intelligence Search' : 'Web Intelligence Search'}
+                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-maintext'}`}>
+                            {msg.role === 'user' && msg.mode && msg.mode !== MODES.NORMAL_CHAT && (
+                              <div className={`flex items-center gap-1.5 mb-2 px-2.5 py-1 backdrop-blur-md rounded-full w-fit border shadow-sm transition-all hover:scale-105`}
+                                style={{
+                                  backgroundColor: `${getModeColor(msg.mode)}15`,
+                                  borderColor: `${getModeColor(msg.mode)}30`
+                                }}
+                              >
+                                <span className="text-[10px] animate-pulse">{getModeIcon(msg.mode)}</span>
+                                <span className={`text-[9px] font-black uppercase tracking-[0.1em]`}
+                                  style={{ color: getModeColor(msg.mode) }}
+                                >
+                                  {getModeName(msg.mode)} Active
                                 </span>
                               </div>
                             )}
 
-                            {msg.role === 'model' && msg.isRealTime && (
+                            {msg.role === 'model' && (msg.isRealTime || msg.mode === MODES.DEEP_SEARCH || msg.mode === MODES.WEB_SEARCH) && (
                               <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border border-blue-500/20 rounded-2xl w-fit shadow-lg shadow-blue-500/5 transition-all hover:scale-[1.02] group/search-badge">
                                 <div className="p-1.5 bg-blue-500 rounded-lg shadow-md ring-1 ring-blue-400 group-hover/search-badge:rotate-12 transition-transform">
                                   <Globe className="w-3.5 h-3.5 text-white animate-[spin_8s_linear_infinite]" />
                                 </div>
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500 leading-none">Web Search</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500 leading-none">
+                                      {msg.mode === MODES.DEEP_SEARCH ? 'Deep Intelligence Search' : 'Web Intelligence Search'}
+                                    </span>
                                     <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
                                   </div>
                                   <span className="text-[9px] font-bold text-blue-500/60 uppercase tracking-widest mt-0.5">Real-Time Grounding Active</span>
@@ -5806,9 +5822,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                   ul: ({ children }) => <ul className="list-disc pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ul>,
                                   ol: ({ children }) => <ol className="list-decimal pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ol>,
                                   li: ({ children }) => <li className="mb-1 last:mb-0 leading-[1.6]">{children}</li>,
-                                  h1: ({ children }) => <h1 className="text-[22px] font-semibold mb-3.5 mt-6 block text-[#1a1a1a] dark:text-[#ececec] tracking-tight">{children}</h1>,
-                                  h2: ({ children }) => <h2 className="text-[18px] font-semibold mb-3 mt-5 block text-[#1a1a1a] dark:text-[#ececec] tracking-tight">{children}</h2>,
-                                  h3: ({ children }) => <h3 className="text-[16px] font-semibold mb-2.5 mt-4 block text-[#1a1a1a] dark:text-[#ececec] tracking-tight">{children}</h3>,
+                                  h1: ({ children }) => <h1 className="text-[22px] font-semibold mb-3.5 mt-6 block tracking-tight">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="text-[18px] font-semibold mb-3 mt-5 block tracking-tight">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="text-[16px] font-semibold mb-2.5 mt-4 block tracking-tight">{children}</h3>,
                                   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
                                   table: ({ children }) => (
                                     <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg bg-surface/30 backdrop-blur-sm">
