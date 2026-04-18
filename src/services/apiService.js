@@ -1406,6 +1406,26 @@ export const apiService = {
     }
   },
 
+  async clearCalendarForWorkspace(workspaceId) {
+    try {
+      const response = await apiClient.delete(`/social-agent/calendar/clear/${workspaceId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to clear calendar:", error);
+      throw error;
+    }
+  },
+
+  async resetSocialOnboarding() {
+    try {
+      const response = await apiClient.patch('/social-agent/onboarding/reset');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to reset onboarding:", error);
+      throw error;
+    }
+  },
+
   async deleteSocialAgentWorkspace(workspaceId) {
     try {
       const response = await apiClient.delete(`/social-agent/workspace/${workspaceId}`);

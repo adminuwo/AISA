@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, TrendingUp, Zap, Gavel, Navigation, Rocket, Megaphone, Scale, ArrowLeft, ChevronRight, Briefcase, Calendar, Users, FolderOpen } from 'lucide-react';
+import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, TrendingUp, Zap, Gavel, Navigation, Rocket, Megaphone, Scale, ArrowLeft, ChevronRight, Briefcase, Calendar, Users, FolderOpen, Save } from 'lucide-react';
 import LegalLogo from '../Components/LegalLogo';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
@@ -5902,7 +5902,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
   }, [isAudioConvertMode]);
 
   return (
-    <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text overscroll-none h-full">
+    <div className="flex w-full bg-secondary relative overflow-hidden aisa-scalable-text h-full">
       {/* 🌟 Premium Minimalist Background Wrapper 🌟 */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#f8f9fc] dark:bg-[#0b0c15]">
         {/* Universal Ambient Glows: Animated Blobs for Depth */}
@@ -7263,133 +7263,125 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
             </>
           )}
         </div>
-
-
-
-        {/* Welcome Screen - Absolute Overlay */}
-        <AnimatePresence>
-          {messages.length === 0 && legalView !== 'DASHBOARD' && currentMode !== 'LEGAL_TOOLKIT' && (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
-            <motion.div
-              key="welcome-screen"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-              className="absolute inset-0 z-0 overflow-hidden pointer-events-auto bg-transparent flex flex-col items-center justify-center"
-            >
-              {/* Removed duplicate background component */}
-              <div className="relative z-10 flex flex-col items-center w-full h-full">
+        {legalView === 'DASHBOARD' && currentMode === 'NORMAL_CHAT' && (
+          <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-center overflow-y-auto overflow-x-hidden pt-4 pb-48 sm:pt-12 md:pb-60 custom-scrollbar-thin">
+            {/* Welcome Screen - Integrated Hub */}
+            <AnimatePresence>
+              {messages.length === 0 && legalView !== 'DASHBOARD' && currentMode !== 'LEGAL_TOOLKIT' && (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
                 <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="mb-4"
+                  key="welcome-screen"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+                  className="relative w-full z-0 pointer-events-auto bg-transparent flex flex-col items-center py-12 sm:py-20"
                 >
-                  <img
-                    src="/logo/Logo.svg"
-                    alt="AISA"
-                    className="w-20 h-20 sm:w-24 sm:h-24 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
+                  <div className="relative z-10 flex flex-col items-center w-full min-h-full justify-center">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="mb-8"
+                    >
+                      <img
+                        src="/logo/Logo.svg"
+                        alt="AISA"
+                        className="w-20 h-20 sm:w-24 sm:h-24 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
+                      />
+                    </motion.div>
 
-                  />
-                </motion.div>
-
-                <section className="w-full flex-1 flex items-center justify-center px-1 sm:px-2 md:px-0">
-                  <FuturisticToolCards
-                    isAdmin={isAdminUser}
-                    activeToolId={
-                      isImageGeneration ? 'image' :
-                        isVideoGeneration ? 'video' :
+                    <section className="w-full px-1 sm:px-2 md:px-0">
+                      <FuturisticToolCards
+                        isAdmin={isAdminUser}
+                        activeToolId={
+                          isImageGeneration ? 'image' : 
+                          isVideoGeneration ? 'video' :
                           isDeepSearch ? 'deep_search' :
-                            isWebSearch ? 'web_search' :
-                              isCodeWriter ? 'code' :
-                                isAudioConvertMode ? 'audio' :
-                                  isFileAnalysis ? 'document' :
-                                    isMagicEditing ? 'edit_image' :
-                                      isMagicVideoModalOpen ? 'image_to_video' :
-                                        isStockModalOpen ? 'ai_cashflow' :
-                                          (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
-                    }
-                    onToolSelect={(id) => {
-                      // Reset states
-                      setIsImageGeneration(false);
-                      setIsVideoGeneration(false);
-                      setIsAudioConvertMode(false);
-                      setIsCodeWriter(false);
-                      setIsDeepSearch(false);
-                      setIsWebSearch(false);
-                      setIsFileAnalysis(false);
-                      setIsMagicEditing(false);
-                      setIsMagicVideoModalOpen(false);
-                      setIsCashFlowMode(false);
-                      setActiveLegalToolkit(false);
+                          isWebSearch ? 'web_search' :
+                          isCodeWriter ? 'code' :
+                          isAudioConvertMode ? 'audio' :
+                          isFileAnalysis ? 'document' :
+                          isMagicEditing ? 'edit_image' :
+                          isMagicVideoModalOpen ? 'image_to_video' :
+                          isStockModalOpen ? 'ai_cashflow' :
+                          (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
+                        }
+                        onToolSelect={(id) => {
+                          setIsImageGeneration(false);
+                          setIsVideoGeneration(false);
+                          setIsAudioConvertMode(false);
+                          setIsCodeWriter(false);
+                          setIsDeepSearch(false);
+                          setIsWebSearch(false);
+                          setIsFileAnalysis(false);
+                          setIsMagicEditing(false);
+                          setIsMagicVideoModalOpen(false);
+                          setIsCashFlowMode(false);
+                          setActiveLegalToolkit(false);
 
-                      if (id === 'image') {
-                        if (!checkPremiumTool('Image Generation')) return;
-                        setIsImageGeneration(true);
-                        setIsMagicSettingsOpen(true);
-                        if (inputRef.current) { inputRef.current.value = "Generate an image of "; inputRef.current.focus(); }
-                        toast.success("Image Mode Active");
-                      } else if (id === 'video') {
-                        if (!checkPremiumTool('Generate Video')) return;
-                        setIsVideoGeneration(true);
-                        setIsMagicSettingsOpen(true);
-                        if (inputRef.current) { inputRef.current.value = "Generate a video of "; inputRef.current.focus(); }
-                        toast.success("Video Mode Active");
-                      } else if (id === 'audio') {
-                        if (!checkPremiumTool('Convert to Audio')) return;
-                        setIsAudioConvertMode(true);
-                        if (inputRef.current) { inputRef.current.value = "Convert this text to audio: "; inputRef.current.focus(); }
-                        toast.success("Audio Mode Active");
-                      } else if (id === 'code') {
-                        if (!checkPremiumTool('Code Writer')) return;
-                        setIsCodeWriter(true);
-                        if (inputRef.current) { inputRef.current.value = "Write a function to "; inputRef.current.focus(); }
-                        toast.success("Code Mode Active");
-                      } else if (id === 'deep_search') {
-                        setIsDeepSearch(true);
-                        if (inputRef.current) { inputRef.current.value = "Research in-depth about "; inputRef.current.focus(); }
-                        toast.success("Deep Intelligence Active");
-                      } else if (id === 'web_search') {
-                        setIsWebSearch(true);
-                        if (inputRef.current) { inputRef.current.value = "Search for live updates on "; inputRef.current.focus(); }
-                        toast.success("Real-Time Search Active");
-                      } else if (id === 'document') {
-                        setIsFileAnalysis(true);
-                        uploadInputRef.current?.click();
-                        toast.success("Upload document for analysis");
-                      } else if (id === 'edit_image') {
-                        if (!checkPremiumTool('Edit Image')) return;
-                        setIsMagicEditing(true);
-                        toast.success("Image Editor Active");
-                      } else if (id === 'image_to_video') {
-                        if (!checkPremiumTool('Image to Video')) return;
-                        setIsMagicVideoModalOpen(true);
-                        toast.success("Image to Video Active");
-                      } else if (id === 'legal') {
-                        if (!checkPremiumTool('AI Legal')) return;
-                        setActiveLegalToolkit(true);
-                        toast.success("AI Legal Enabled ⚖️");
-                      } else if (id === 'ai_cashflow') {
-                        if (!checkPremiumTool('AI CashFlow')) return;
-                        setIsStockModalOpen(true);
-                        toast.success("AI CashFlow Active 📈");
-                      } else if (id === 'aiad_agent') {
-                        if (!checkPremiumTool('AI Ad Agent')) return;
-                        setIsSocialMediaDashboardOpen(true);
-                        toast.success("AIADS™ Active");
-                      }
-                    }}
-                  />
-                </section>
-              </div>
-
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+                          if (id === 'image') {
+                            if (!checkPremiumTool('Image Generation')) return;
+                            setIsImageGeneration(true);
+                            setIsMagicSettingsOpen(true);
+                            if (inputRef.current) { inputRef.current.value = "Generate an image of "; inputRef.current.focus(); }
+                            toast.success("Image Mode Active");
+                          } else if (id === 'video') {
+                            if (!checkPremiumTool('Generate Video')) return;
+                            setIsVideoGeneration(true);
+                            setIsMagicSettingsOpen(true);
+                            if (inputRef.current) { inputRef.current.value = "Generate a video of "; inputRef.current.focus(); }
+                            toast.success("Video Mode Active");
+                          } else if (id === 'audio') {
+                            if (!checkPremiumTool('Convert to Audio')) return;
+                            setIsAudioConvertMode(true);
+                            if (inputRef.current) { inputRef.current.value = "Convert this text to audio: "; inputRef.current.focus(); }
+                            toast.success("Audio Mode Active");
+                          } else if (id === 'code') {
+                            if (!checkPremiumTool('Code Writer')) return;
+                            setIsCodeWriter(true);
+                            if (inputRef.current) { inputRef.current.value = "Write a function to "; inputRef.current.focus(); }
+                            toast.success("Code Mode Active");
+                          } else if (id === 'deep_search') {
+                            setIsDeepSearch(true);
+                            if (inputRef.current) { inputRef.current.value = "Research in-depth about "; inputRef.current.focus(); }
+                            toast.success("Deep Intelligence Active");
+                          } else if (id === 'web_search') {
+                            setIsWebSearch(true);
+                            if (inputRef.current) { inputRef.current.value = "Search for live updates on "; inputRef.current.focus(); }
+                            toast.success("Real-Time Search Active");
+                          } else if (id === 'document') {
+                            setIsFileAnalysis(true);
+                            uploadInputRef.current?.click();
+                            toast.success("Upload document for analysis");
+                          } else if (id === 'edit_image') {
+                            if (!checkPremiumTool('Edit Image')) return;
+                            setIsMagicEditing(true);
+                            toast.success("Image Editor Active");
+                          } else if (id === 'image_to_video') {
+                            if (!checkPremiumTool('Image to Video')) return;
+                            setIsMagicVideoModalOpen(true);
+                            toast.success("Image to Video Mode Active");
+                          } else if (id === 'ai_cashflow') {
+                            setIsCashFlowMode(true);
+                            setIsStockModalOpen(true);
+                            toast.success("AI CashFlow Active 📈");
+                          } else if (id === 'aiad_agent') {
+                            if (!checkPremiumTool('AI Ad Agent')) return;
+                            setIsSocialMediaDashboardOpen(true);
+                            toast.success("AI ADS™ Active");
+                          }
+                        }}
+                      />
+                    </section>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* Unified Chat Input Container */}
         {legalView !== 'DASHBOARD' && (
-          <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ padding: 'max(0.375rem, env(safe-area-inset-bottom, 0.375rem)) 0.5rem max(0.375rem, 0.375rem) 0.5rem' }}>
+          <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ padding: '0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px)) 0.5rem' }}>
             {/* Bottom Mask to prevent text showing behind input area */}
             <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/90 to-transparent -z-10 h-full w-full pointer-events-none" />
             <div className="max-w-5xl mx-auto w-full pointer-events-auto">
