@@ -804,7 +804,7 @@ export const LanguageProvider = ({ children }) => {
             convertToAudio: "Convert to Audio",
             aiLegal: "AI Legal™",
             aiCashFlow: "AI CashFlow™",
-            aiAds: "AIADS™",
+            aiAds: "AI ADS™",
             createVisualsFromText: "Create visuals from text",
             textToCinematicVideo: "Text to Cinematic Video",
             imageToVideoMagic: "Image to Video Magic",

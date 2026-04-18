@@ -6642,7 +6642,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       } else if (id === 'aiad_agent') {
                         if (!checkPremiumTool('AI Ad Agent')) return;
                         setIsSocialMediaDashboardOpen(true);
-                        toast.success("AIADS™ Active");
+                        toast.success("AI ADS™ Active");
                       }
                     }}
                   />
@@ -6827,7 +6827,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">AISA ™</span>
-                              <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AIADS™</span>
+                              <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">AI ADS™</span>
                             </div>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">Automate 30 days of social media content.</p>
                           </div>
