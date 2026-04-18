@@ -1414,6 +1414,60 @@ export const apiService = {
       console.error("Failed to delete brand workspace:", error);
       throw error;
     }
+  },
+
+  // --- Projects / Cases ---
+  async getProjects() {
+    try {
+      const response = await apiClient.get('/projects');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      throw error;
+    }
+  },
+
+  async getProject(projectId) {
+    try {
+      const response = await apiClient.get(`/projects/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch project:", error);
+      throw error;
+    }
+  },
+
+  async updateProject(projectId, data) {
+    try {
+      const response = await apiClient.post(`/projects/${projectId}`, data);
+      return response.data;
+    } catch (error) {
+       // Support both PUT and POST if backend allows, but let's stick to update logic
+       // Wait, backend had router.put('/:id', ...). Let's use PUT as viewed.
+      const response = await apiClient.put(`/projects/${projectId}`, data);
+      return response.data;
+    }
+  },
+
+  async createProject(data) {
+    try {
+      const payload = typeof data === 'string' ? { name: data } : data;
+      const response = await apiClient.post('/projects', payload);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      throw error;
+    }
+  },
+
+  async deleteProject(projectId) {
+    try {
+      const response = await apiClient.delete(`/projects/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      throw error;
+    }
   }
 };
 
