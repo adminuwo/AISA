@@ -3931,7 +3931,6 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             finalModelMsg.sources = responseSources;
             if (aiResponseData.suggestions) finalModelMsg.suggestions = aiResponseData.suggestions;
             if (aiResponseData.snapshot) finalModelMsg.snapshot = aiResponseData.snapshot;
-<<<<<<< HEAD
             finalModelMsg.detectedMode = detectedMode; // ✅ Ensure detectedMode persists to storage
           }
 
@@ -3946,14 +3945,6 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
             const trimmedSuggestions = finalSuggestions.slice(0, 3);
             finalModelMsg.suggestions = trimmedSuggestions;
             setSuggestions(trimmedSuggestions);
-=======
-          } else if (i === responseParts.length - 1) {
-            // For multi-part responses, add suggestions to the last part
-            if (aiResponseData.suggestions) {
-              finalModelMsg.suggestions = aiResponseData.suggestions;
-              setSuggestions(aiResponseData.suggestions);
-            }
->>>>>>> 4b6db44f9d40d8bd73202ece0fbfefbb9f6b2743
           }
 
           // After typing is complete, save the full message to history
@@ -4686,7 +4677,6 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       let match;
       let fileCount = 0;
 
-<<<<<<< HEAD
       while ((match = regex.exec(content)) !== null) {
         let filename = match[1].trim();
         let code = match[2];
@@ -4696,112 +4686,6 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
            zip.file(filename, code);
            fileCount++;
         }
-=======
-      const tempWrapper = document.createElement('div');
-      tempWrapper.style.position = 'absolute';
-      tempWrapper.style.left = '-9999px';
-      tempWrapper.style.top = '-9999px';
-      tempWrapper.style.width = '800px'; 
-      tempWrapper.style.backgroundColor = '#ffffff';
-
-      const clonedContent = element.cloneNode(true);
-      const header = document.createElement('div');
-      header.style.marginBottom = '30px';
-      header.style.paddingBottom = '15px';
-      header.style.borderBottom = '2px solid #000000';
-      header.style.display = 'flex';
-      header.style.justifyContent = 'space-between';
-      header.style.alignItems = 'center';
-      header.innerHTML = `
-        <div style="font-weight: 900; font-size: 24px; color: #000000;">AISA</div>
-        <div style="font-size: 10px; color: #aaa; text-align: right;">DOC-ID: ${msg.id}<br/>DATE: ${new Date().toLocaleDateString()}</div>
-      `;
-
-      tempWrapper.appendChild(header);
-      clonedContent.style.padding = '10px';
-      clonedContent.style.color = '#000000';
-      clonedContent.style.backgroundColor = '#ffffff';
-      clonedContent.style.width = '100%';
-      clonedContent.style.lineHeight = '1.6';
-
-      const all = clonedContent.querySelectorAll('*');
-      Array.from(all).forEach(el => {
-        el.style.color = '#111827';
-        if (el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
-           el.style.color = '#000000';
-           el.style.marginTop = '24px';
-           el.style.marginBottom = '12px';
-        }
-        if (el.tagName === 'P') el.style.marginBottom = '10px';
-        if (el.tagName === 'LI') el.style.marginBottom = '8px';
-      });
-
-      tempWrapper.appendChild(clonedContent);
-      
-      const footer = document.createElement('div');
-      footer.style.marginTop = '40px';
-      footer.style.paddingTop = '15px';
-      footer.style.borderTop = '1px solid #eee';
-      footer.style.fontSize = '10px';
-      footer.style.color = '#999';
-      footer.innerHTML = `AISA Report - Generated on ${new Date().toLocaleString()}. Always consult with a licensed professional.`;
-      tempWrapper.appendChild(footer);
-
-      document.body.appendChild(tempWrapper);
-      await new Promise(r => setTimeout(r, 200));
-
-      const canvas = await html2canvas(tempWrapper, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        windowWidth: 800
-      });
-      document.body.removeChild(tempWrapper);
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const margin = 15;
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const printW = pageW - margin * 2;
-      const printH = pageH - margin * 2;
-      const pxPerMm = canvas.width / printW;
-      const pageHeightPx = Math.floor(printH * pxPerMm);
-      const mainCtx = canvas.getContext('2d');
-
-      let curY = 0;
-      let pageIdx = 0;
-      while (curY < canvas.height) {
-        if (pageIdx > 0) pdf.addPage();
-        let targetH = pageHeightPx;
-        if (curY + targetH < canvas.height) {
-          const scanRange = 150;
-          try {
-            const scanData = mainCtx.getImageData(0, curY + targetH - scanRange, canvas.width, scanRange).data;
-            let bestRow = -1;
-            for (let r = scanRange - 1; r >= 0; r--) {
-              let isWhite = true;
-              for (let c = 0; c < canvas.width; c += 10) {
-                const i = (r * canvas.width + c) * 4;
-                if (scanData[i] < 250 || scanData[i + 1] < 250 || scanData[i + 2] < 250) { isWhite = false; break; }
-              }
-              if (isWhite) { bestRow = r; break; }
-            }
-            if (bestRow !== -1) targetH = (targetH - scanRange) + bestRow + 5;
-          } catch (e) {}
-        } else { targetH = canvas.height - curY; }
-
-        const pCanvas = document.createElement('canvas');
-        pCanvas.width = canvas.width;
-        pCanvas.height = targetH;
-        const pCtx = pCanvas.getContext('2d');
-        pCtx.fillStyle = '#ffffff';
-        pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
-        pCtx.drawImage(canvas, 0, curY, canvas.width, targetH, 0, 0, canvas.width, targetH);
-        
-        pdf.addImage(pCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, printW, targetH / pxPerMm);
-        curY += targetH;
-        pageIdx++;
->>>>>>> 4b6db44f9d40d8bd73202ece0fbfefbb9f6b2743
       }
 
       // Fallback if no specific code files were matched
