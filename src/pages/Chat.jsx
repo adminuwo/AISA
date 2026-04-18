@@ -5544,7 +5544,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="relative flex-1 overflow-y-auto chatgpt-container pt-0 pb-64 md:pb-72 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent aisa-scalable-text"
+          className="relative flex-1 overflow-y-auto chatgpt-container pt-8 pb-64 md:pb-72 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent aisa-scalable-text"
         >
           {messages.length > 0 && (
             <>
@@ -5566,7 +5566,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
                         ? 'bg-slate-200 dark:bg-slate-700'
-                        : 'bg-transparent'
+                        : 'bg-transparent chatgpt-avatar-container'
                         }`}
                     >
                       {msg.role === 'user' ? (
@@ -5734,9 +5734,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         </div>
                       ) : (
                         msg.content && (
-                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-2.5 rounded-2xl rounded-tl-none border border-indigo-100/30 dark:border-indigo-800/20 text-slate-900 dark:text-white font-medium shadow-sm w-fit inline-block mb-1' : 'text-maintext'}`}>
+                          <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-2.5 rounded-2xl rounded-tl-none border border-indigo-100/30 dark:border-indigo-800/20 text-slate-900 dark:text-white font-medium shadow-sm w-fit inline-block mb-0' : 'text-maintext'}`}>
                             {msg.role === 'user' && msg.mode && msg.mode !== MODES.NORMAL_CHAT && (
-                              <div className={`flex items-center gap-1.5 mb-2 px-2.5 py-1 backdrop-blur-md rounded-full w-fit border shadow-sm transition-all hover:scale-105`}
+                              <div className={`flex items-center gap-1.5 mb-1.5 px-2.5 py-1 backdrop-blur-md rounded-full w-fit border shadow-sm transition-all hover:scale-105`}
                                 style={{
                                   backgroundColor: `${getModeColor(msg.mode)}15`,
                                   borderColor: `${getModeColor(msg.mode)}30`
@@ -5752,7 +5752,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             )}
 
                             {msg.role === 'model' && (msg.isRealTime || msg.mode === MODES.DEEP_SEARCH || msg.mode === MODES.WEB_SEARCH) && (
-                              <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border border-blue-500/20 rounded-2xl w-fit shadow-lg shadow-blue-500/5 transition-all hover:scale-[1.02] group/search-badge">
+                              <div className="flex items-center gap-3 mb-2 px-4 py-2 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border border-blue-500/20 rounded-2xl w-fit shadow-lg shadow-blue-500/5 transition-all hover:scale-[1.02] group/search-badge">
                                 <div className="p-1.5 bg-blue-500 rounded-lg shadow-md ring-1 ring-blue-400 group-hover/search-badge:rotate-12 transition-transform">
                                   <Globe className="w-3.5 h-3.5 text-white animate-[spin_8s_linear_infinite]" />
                                 </div>
@@ -5769,7 +5769,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             )}
 
                             {msg.role === 'model' && !msg.isRealTime && msg.sources && msg.sources.length > 0 && (
-                              <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border border-emerald-500/20 rounded-2xl w-fit shadow-lg shadow-emerald-500/5 transition-all hover:scale-[1.02] group/knowledge-badge">
+                              <div className="flex items-center gap-3 mb-2 px-4 py-2 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border border-emerald-500/20 rounded-2xl w-fit shadow-lg shadow-emerald-500/5 transition-all hover:scale-[1.02] group/knowledge-badge">
                                 <div className="p-1.5 bg-emerald-500 rounded-lg shadow-md ring-1 ring-emerald-400 group-hover/knowledge-badge:rotate-12 transition-transform">
                                   <HardDrive className="w-3.5 h-3.5 text-white" />
                                 </div>
@@ -5807,13 +5807,13 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                       </a>
                                     );
                                   },
-                                  p: ({ children }) => <div className="mb-[14px] last:mb-0 leading-[1.6]">{children}</div>,
-                                  ul: ({ children }) => <ul className="list-disc pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ul>,
-                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-[14px] last:mb-0 space-y-1.5">{children}</ol>,
+                                  p: ({ children }) => <div className="mb-2 last:mb-0 leading-[1.6]">{children}</div>,
+                                  ul: ({ children }) => <ul className="list-disc pl-5 mb-2 last:mb-0 space-y-1.5">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 last:mb-0 space-y-1.5">{children}</ol>,
                                   li: ({ children }) => <li className="mb-1 last:mb-0 leading-[1.6]">{children}</li>,
-                                  h1: ({ children }) => <h1 className="text-[22px] font-semibold mb-3.5 mt-6 block tracking-tight">{children}</h1>,
-                                  h2: ({ children }) => <h2 className="text-[18px] font-semibold mb-3 mt-5 block tracking-tight">{children}</h2>,
-                                  h3: ({ children }) => <h3 className="text-[16px] font-semibold mb-2.5 mt-4 block tracking-tight">{children}</h3>,
+                                  h1: ({ children }) => <h1 className="text-[22px] font-semibold mb-3.5 mt-0 block tracking-tight">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="text-[18px] font-semibold mb-3 mt-0 block tracking-tight">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="text-[16px] font-semibold mb-2.5 mt-0 block tracking-tight">{children}</h3>,
                                   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
                                   table: ({ children }) => (
                                     <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg bg-surface/30 backdrop-blur-sm">
@@ -6355,7 +6355,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         !msg.conversion && !msg.imageUrl && !msg.videoUrl &&
                         !msg.isProcessing && !msg.isGenerating && !msg.error && 
                         typingMessageId !== msg.id && (
-                          <div className="mt-4 w-full block">
+                          <div className="mt-2 w-full block">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
                               {(() => {
                                 // Detect if the AI response contains Hindi (Devanagari script)
@@ -6465,7 +6465,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       )}
 
                     {/* Timestamp & User Actions */}
-                    <div className="mt-4 flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="h-0 group-hover:h-7 flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden">
                       {msg.role === 'user' && (
                         <div className="flex items-center gap-1">
                           <button
