@@ -1427,6 +1427,7 @@ const Chat = () => {
         const activeToolName = toolMap[toolId] || toolId;
         setSelectedLegalTool({ id: toolId, name: activeToolName });
         setActiveTool(activeToolName);
+        setLegalView('CHAT'); // Ensure chat view for legal tool
       }
     }
 
@@ -1468,6 +1469,7 @@ const Chat = () => {
     setActiveTool(toolName); // Set dynamic tool name
     setActiveLegalToolkit(false); // Close toolkit if open
     setCurrentMode('LEGAL_TOOLKIT');
+    setLegalView('CHAT'); // Ensure input box appears
 
     if (inputRef.current) inputRef.current.focus();
 
@@ -7263,30 +7265,30 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
             </>
           )}
         </div>
-        {legalView === 'DASHBOARD' && currentMode === 'NORMAL_CHAT' && (
-          <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-center overflow-y-auto overflow-x-hidden pt-4 pb-48 sm:pt-12 md:pb-60 custom-scrollbar-thin">
+
             {/* Welcome Screen - Integrated Hub */}
             <AnimatePresence>
-              {messages.length === 0 && legalView !== 'DASHBOARD' && currentMode !== 'LEGAL_TOOLKIT' && (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
+              {messages.length === 0 && (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
                 <motion.div
                   key="welcome-screen"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-                  className="relative w-full z-0 pointer-events-auto bg-transparent flex flex-col items-center py-12 sm:py-20"
+                  className="absolute inset-0 z-10 pointer-events-none flex flex-col items-center overflow-y-auto overflow-x-hidden pt-8 pb-48 sm:pt-12 md:pb-60"
                 >
-                  <div className="relative z-10 flex flex-col items-center w-full min-h-full justify-center">
+                  <div className="relative z-10 pointer-events-auto flex flex-col items-center w-full max-w-5xl mx-auto px-2">
                     <motion.div
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.1 }}
-                      className="mb-8"
+                      className="mb-6"
                     >
                       <img
                         src="/logo/Logo.svg"
                         alt="AISA"
-                        className="w-20 h-20 sm:w-24 sm:h-24 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
+                        className="w-16 h-16 sm:w-20 sm:h-20 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
                       />
+                      <p className="text-center text-sm font-bold text-primary/70 mt-2 tracking-widest">AISA™</p>
                     </motion.div>
 
                     <section className="w-full px-1 sm:px-2 md:px-0">
@@ -7316,7 +7318,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           setIsMagicEditing(false);
                           setIsMagicVideoModalOpen(false);
                           setIsCashFlowMode(false);
-                          setActiveLegalToolkit(false);
+                          if (id !== 'legal') {
+                            setActiveLegalToolkit(false);
+                          }
 
                           if (id === 'image') {
                             if (!checkPremiumTool('Image Generation')) return;
@@ -7368,6 +7372,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             if (!checkPremiumTool('AI Ad Agent')) return;
                             setIsSocialMediaDashboardOpen(true);
                             toast.success("AI ADS™ Active");
+                          } else if (id === 'legal') {
+                            setActiveLegalToolkit(true);
+                            setCurrentMode('LEGAL_TOOLKIT');
+                            // Removed setLegalView('DASHBOARD') to keep input box visible behind modal
+                            toast.success("AI Legal Toolkit Active ⚖️");
                           }
                         }}
                       />
@@ -7376,8 +7385,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        )}
 
         {/* Unified Chat Input Container */}
         {legalView !== 'DASHBOARD' && (
@@ -8133,7 +8140,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                                   <LegalLogo size={14} showText={false} color="white" />
                                 </div>
-                                <span className="uppercase tracking-wide text-[10px] font-black truncate max-w-[120px]">
+                                <span 
+                                  className="uppercase tracking-wide text-[10px] font-black truncate max-w-[120px] cursor-pointer hover:text-indigo-400 transition-colors"
+                                  onClick={() => setActiveLegalToolkit(true)}
+                                  title="Open AI Legal Toolkit"
+                                >
                                   AI Legal
                                   {(selectedLegalTool || activeTool) && (
                                     <span className="opacity-70 ml-1.5 font-bold border-l border-indigo-500/30 pl-1.5">
@@ -9065,8 +9076,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         unlockedTools={unlockedTools}
         onSelect={(tool, isUnlocked) => {
           if (tool.id === 'legal_chat') {
-            setSelectedLegalTool(null); // Clear specific tool to go to general chat
+            setSelectedLegalTool(null);
             setCurrentMode('LEGAL_TOOLKIT');
+            setLegalView('CHAT'); // Ensure chat view is active
             setActiveLegalToolkit(false);
             toast.success("Legal Chat Activated ⚖️", {
               icon: '⚖️',
@@ -9110,6 +9122,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
           setSelectedLegalTool({ id: tool.id, name: tool.name });
           setCurrentMode('LEGAL_TOOLKIT');
+          setLegalView('CHAT'); // Ensure chat view is active for specific tools
           setActiveLegalToolkit(false);
           if (inputRef.current) inputRef.current.focus();
           toast.success(`✅ AI Legal Activated: ${tool.name} ✨`, {
