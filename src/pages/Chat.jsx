@@ -2055,7 +2055,7 @@ const Chat = () => {
           conversion: {
             file: mp3Base64,
             blobUrl: audioUrl,
-            fileName: `AI Ads_Voice_${Date.now()}.mp3`,
+            fileName: `AISA_voice_${Date.now()}.mp3`,
             mimeType: 'audio/mpeg',
             fileSize: formattedSize,
             rawSize: rawBytes,
@@ -6763,7 +6763,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
                           {/* File Conversion Download Button */}
                           {msg.conversion && msg.conversion.file && (
-                            <div className="mt-4 pt-3 border-t border-border/40 space-y-3">
+                            <div className="mt-4 pt-3 border-t border-border/40 space-y-3" style={{ maxWidth: '260px' }}>
 
                               {/* ── Modern Audio Player ── */}
                               {msg.conversion.mimeType.startsWith('audio/') && (() => {
@@ -6772,30 +6772,30 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 return (
                                   <div className="rounded-2xl overflow-hidden mb-2" style={{ background: 'linear-gradient(135deg, rgba(20,20,40,0.95) 0%, rgba(30,20,60,0.95) 100%)', border: '1px solid rgba(139,92,246,0.2)' }}>
                                     {/* Waveform decorative bars + header */}
-                                    <div className="px-4 pt-4 pb-2 flex items-center gap-3">
-                                      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+                                    <div className="px-3 pt-3 pb-1 flex items-center gap-2.5">
+                                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
                                         <Volume2 className="w-4 h-4 text-white" />
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <p className="text-xs font-bold text-white truncate">{msg.conversion.fileName}</p>
                                         <p className="text-[10px] text-purple-300/60 font-medium">
-                                          {msg.conversion.fileSize || ''}{msg.conversion.charCount ? ` · ${msg.conversion.charCount} chars` : ''} · MP3 Audio
+                                          {msg.conversion.fileSize || ''}{msg.conversion.charCount ? ` · ${msg.conversion.charCount}c` : ''} · Audio
                                         </p>
                                       </div>
                                       {/* Decorative waveform */}
                                       <div className="flex items-center gap-[2px] shrink-0">
-                                        {[3, 5, 8, 6, 9, 7, 5, 8, 6, 4, 7, 5].map((h, i) => (
+                                        {[2, 4, 6, 4, 7, 5, 4, 6, 4, 3, 5, 4].map((h, i) => (
                                           <div key={i} className="w-[2px] rounded-full opacity-40" style={{ height: `${h}px`, background: 'linear-gradient(to top, #7c3aed, #818cf8)' }} />
                                         ))}
                                       </div>
                                     </div>
 
                                     {/* Player controls */}
-                                    <div className="px-4 pb-4">
+                                    <div className="px-3 pb-3">
                                       <audio id={playerId} src={audioSrc} preload="metadata" style={{ display: 'none' }} />
 
                                       {/* Seek bar */}
-                                      <div className="mb-3">
+                                      <div className="mb-2">
                                         <input
                                           type="range" min="0" max="100" defaultValue="0" step="0.1"
                                           className="w-full h-1 rounded-full cursor-pointer appearance-none"
@@ -6846,21 +6846,21 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                               document.querySelectorAll('audio').forEach(a => { if (a !== audio) a.pause(); });
                                               audio.play();
                                               btn.dataset.playing = 'true';
-                                              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+                                              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
                                               audio.addEventListener('ended', () => {
                                                 btn.dataset.playing = '';
-                                                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+                                                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
                                               }, { once: true });
                                             } else {
                                               audio.pause();
                                               btn.dataset.playing = '';
-                                              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+                                              btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
                                             }
                                           }}
-                                          className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/30 transition-transform active:scale-90"
+                                          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/30 transition-transform active:scale-90"
                                           style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
                                         >
-                                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                                         </button>
 
                                         {/* Speed pill */}
@@ -6899,23 +6899,23 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               {!msg.conversion.mimeType.startsWith('audio/') && (
                                 <div className="flex items-center justify-between px-1 py-1">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-maintext truncate">{msg.conversion.fileName}</p>
-                                    <p className="text-[10px] text-subtext font-bold uppercase tracking-widest flex items-center gap-2">
-                                      <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-md border border-transparent">
+                                    <p className="text-xs font-bold text-maintext truncate">{msg.conversion.fileName}</p>
+                                    <p className="text-[9px] text-subtext font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                      <span className="px-1 py-0.5 bg-primary/10 text-primary rounded-md border border-transparent">
                                         {msg.conversion.fileSize || "Ready"}
                                       </span>
                                       {msg.conversion.charCount && (
-                                        <span className="px-1.5 py-0.5 bg-secondary/30 text-subtext rounded-md border border-transparent">
-                                          {msg.conversion.charCount} CHARS
+                                        <span className="px-1 py-0.5 bg-secondary/30 text-subtext rounded-md border border-transparent">
+                                          {msg.conversion.charCount}C
                                         </span>
                                       )}
-                                      {msg.conversion.mimeType.includes('pdf') ? 'PDF • DOCUMENT' : 'WORD • DOCUMENT'}
+                                      {msg.conversion.mimeType.includes('pdf') ? 'PDF' : 'DOCX'}
                                     </p>
                                   </div>
                                 </div>
                               )}
 
-                              <div className="flex flex-col sm:flex-row gap-2">
+                              <div className="flex items-center gap-1">
                                 <button
                                   onClick={() => {
                                     const downloadToast = toast.loading("Starting download...");
@@ -6944,15 +6944,15 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                       toast.error("Download failed");
                                     }
                                   }}
-                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-white rounded-xl transition-all shadow-lg font-bold text-sm active:scale-95 hover:opacity-90"
+                                  className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-white rounded-lg transition-all shadow-lg font-bold text-[11px] active:scale-95 hover:opacity-90"
                                   style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
                                 >
                                   <Download className="w-4 h-4" />
-                                  Download {msg.conversion.mimeType.includes('audio') ? 'Audio' : msg.conversion.mimeType.includes('pdf') ? 'PDF' : 'Document'}
+                                  Download
                                 </button>
 
                                 <Menu as="div" className="relative">
-                                  <Menu.Button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 border border-transparent text-maintext rounded-xl transition-all hover:bg-white/20 font-bold text-sm shadow-sm active:scale-95 whitespace-nowrap backdrop-blur-sm">
+                                  <Menu.Button className="flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white/10 border border-transparent text-maintext rounded-lg transition-all hover:bg-white/20 font-bold text-[10px] shadow-sm active:scale-95 whitespace-nowrap backdrop-blur-sm">
                                     <Share className="w-4 h-4" />
                                     Share
                                   </Menu.Button>
