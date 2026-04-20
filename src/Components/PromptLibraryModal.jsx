@@ -368,7 +368,7 @@ const PromptLibraryModal = ({ isOpen, onClose, onSelect, mode = 'generate', refe
                     {/* Content Section (Infinite Scroll) */}
                     <div 
                         onScroll={handleScroll}
-                        className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 bg-slate-50/20 custom-scrollbar"
+                        className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 bg-slate-50/20 scrollbar-hide"
                     >
                         {filteredPrompts.slice(0, page * itemsPerPage).length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">

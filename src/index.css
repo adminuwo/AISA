@@ -742,29 +742,32 @@ html.lenis body {
 }
 
 .ai-row .chatgpt-message-content {
-  display: block !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 16px !important;
   text-align: left;
 }
 
 .ai-row .chatgpt-avatar-container {
-  float: left;
-  margin-right: 14px;
-  margin-bottom: 10px;
-  margin-top: 2px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
 .ai-row .chatgpt-text {
-  display: block !important;
-  flex: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
   width: auto !important;
 }
 
 .user-row .chatgpt-message-content {
   display: flex !important;
-  align-items: flex-start;
-  gap: 16px;
-  flex-direction: row-reverse;
-  text-align: left;
+  align-items: flex-start !important;
+  gap: 16px !important;
+  flex-direction: row-reverse !important;
+  text-align: left !important;
 }
 
 @media (min-width: 1024px) {
