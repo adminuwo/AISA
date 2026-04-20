@@ -5057,12 +5057,12 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setActiveGenerationRowId(null); setActiveJob(null); }}
-              className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+              className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <div>
-              <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest truncate max-w-[400px]">
+              <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest truncate max-w-[400px]">
                 {row?.heading_hook || row?.title}
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
@@ -5087,14 +5087,14 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
           {/* Left: Hook + Hashtags */}
           <div className="space-y-4">
             {/* Hook Card */}
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+            <div className="bg-white dark:bg-[#0a0a0a] rounded-3xl border border-slate-100 dark:border-white/5 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Target className="w-3.5 h-3.5 text-primary" />
                 </div>
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[3px]">Hook</span>
+                <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[3px]">Hook</span>
               </div>
-              <p className="text-sm font-black text-slate-800 uppercase leading-snug border-l-2 border-primary pl-3">
+              <p className="text-sm font-black text-slate-800 dark:text-white uppercase leading-snug border-l-2 border-primary pl-3">
                 {row?.heading_hook || row?.title}
               </p>
               {row?.sub_heading && (
@@ -5103,13 +5103,13 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
             </div>
 
             {/* Hashtags Card */}
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+            <div className="bg-white dark:bg-[#0a0a0a] rounded-3xl border border-slate-100 dark:border-white/5 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center">
                     <Hash className="w-3.5 h-3.5 text-purple-500" />
                   </div>
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[3px]">Hashtags</span>
+                  <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[3px]">Hashtags</span>
                   <span className="text-[8px] text-slate-300 font-bold">({allTags.length})</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -5119,7 +5119,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                       navigator.clipboard.writeText(text);
                       toast.success('All Hashtags Copied!');
                     }}
-                    className="h-6 px-2.5 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-primary text-[8px] font-black uppercase tracking-widest flex items-center gap-1 hover:border-primary/20 transition-all"
+                    className="h-6 px-2.5 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary text-[8px] font-black uppercase tracking-widest flex items-center gap-1 hover:border-primary/20 transition-all"
                   >
                     <Copy className="w-2.5 h-2.5" /> Copy All
                   </button>
@@ -5151,7 +5151,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                         toast.error("Failed to regenerate hashtags", { id: loadingToast });
                       }
                     }}
-                    className="h-6 px-2.5 rounded-lg bg-purple-50 border border-purple-100 text-purple-500 text-[8px] font-black uppercase tracking-widest flex items-center gap-1 hover:bg-purple-100 transition-all"
+                    className="h-6 px-2.5 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 text-purple-500 text-[8px] font-black uppercase tracking-widest flex items-center gap-1 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-all"
                   >
                     <RefreshCw className="w-2.5 h-2.5" /> Regenerate
                   </button>
@@ -5163,7 +5163,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                     <span
                       key={i}
                       onClick={() => { navigator.clipboard.writeText(`#${typeof tag === 'object' ? (tag.name || 'viral') : tag.replace('#', '')}`); toast.success('Copied!'); }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[9px] font-bold text-slate-500 hover:text-primary hover:bg-primary/5 hover:border-primary/20 cursor-pointer transition-all"
+                      className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[9px] font-bold text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/5 hover:border-primary/20 cursor-pointer transition-all"
                     >
                       #{typeof tag === 'object' ? (tag.name || tag.hashtag || 'viral') : tag.replace('#', '')}
                     </span>
@@ -5180,13 +5180,13 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
 
           {/* Right: Generated Content (2-col span) */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
+            <div className="bg-white dark:bg-[#0a0a0a] rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
                     <Layers className="w-3.5 h-3.5 text-amber-500" />
                   </div>
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[3px]">AI Content Studio</span>
+                  <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[3px]">AI Content Studio</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {isDone && (
@@ -5205,10 +5205,10 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                 {isGenerating ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {Array(4).fill(0).map((_, i) => (
-                      <div key={i} className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 animate-pulse p-6 min-h-[120px] flex flex-col gap-3">
-                        <div className="w-16 h-2 bg-slate-200 rounded-full" />
-                        <div className="w-full h-2 bg-slate-100 rounded-full" />
-                        <div className="w-3/4 h-2 bg-slate-100 rounded-full" />
+                      <div key={i} className="bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 animate-pulse p-6 min-h-[120px] flex flex-col gap-3">
+                        <div className="w-16 h-2 bg-slate-200 dark:bg-white/10 rounded-full" />
+                        <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-full" />
+                        <div className="w-3/4 h-2 bg-slate-100 dark:bg-white/5 rounded-full" />
                       </div>
                     ))}
                   </div>
@@ -5217,54 +5217,53 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                     {/* Variations & Captions Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {associatedPost.variations?.length > 0 && associatedPost.variations.map((v, i) => (
-                        <div key={i} className="group relative bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:border-primary/20 hover:bg-white transition-all">
+                        <div key={i} className="group relative bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl p-5 hover:border-primary/20 hover:bg-white dark:hover:bg-white/[0.05] transition-all">
                           <div className="flex items-center justify-between mb-3">
                             <span className="px-2 py-0.5 rounded-md bg-primary/5 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/10">
                               {v.type || `Variation ${i + 1}`}
                             </span>
                             <button
                               onClick={() => { navigator.clipboard.writeText(v.text || v); toast.success('Copied!'); }}
-                              className="w-7 h-7 rounded-lg bg-white text-slate-300 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center border border-slate-100"
+                              className="w-7 h-7 rounded-lg bg-white dark:bg-white/5 text-slate-300 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center border border-slate-100 dark:border-white/5"
                             >
                               <Copy className="w-3 h-3" />
                             </button>
                           </div>
-                          <p className="text-xs text-slate-600 leading-relaxed select-all">{v.text || v}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed select-all">{v.text || v}</p>
                         </div>
                       ))}
 
                       {/* Consolidated Captions Card */}
                       {(associatedPost.captionLong || associatedPost.captionShort) && (
-                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 relative group hover:border-primary/20 hover:bg-white transition-all flex flex-col justify-center gap-5">
+                        <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl p-5 relative group hover:border-primary/20 hover:bg-white dark:hover:bg-white/[0.05] transition-all flex flex-col justify-center gap-5">
                           
                           {associatedPost.captionLong && (
                             <div className="flex flex-col gap-2">
                               <div className="flex justify-between items-center">
-                                <span className="text-[9px] font-black text-primary uppercase tracking-[3px]">Main Caption</span>
+                                <span className="text-[9px] font-black text-primary dark:text-indigo-400 uppercase tracking-[3px]">Main Caption</span>
                                 <button onClick={() => { navigator.clipboard.writeText(associatedPost.captionLong); toast.success('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Copy className="w-3.5 h-3.5 text-slate-400 hover:text-primary transition-colors" />
                                 </button>
                               </div>
-                              <p className="text-[11px] text-slate-600 leading-relaxed select-all font-medium">{associatedPost.captionLong}</p>
+                              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed select-all font-medium">{associatedPost.captionLong}</p>
                             </div>
                           )}
                           
                           {associatedPost.captionLong && associatedPost.captionShort && (
-                            <div className="w-full h-px bg-slate-200/60" />
+                            <div className="w-full h-px bg-slate-200/60 dark:bg-white/10" />
                           )}
-
+ 
                           {associatedPost.captionShort && (
                             <div className="flex flex-col gap-2">
                               <div className="flex justify-between items-center">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[3px]">Sub Caption</span>
+                                <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[3px]">Sub Caption</span>
                                 <button onClick={() => { navigator.clipboard.writeText(associatedPost.captionShort); toast.success('Copied!'); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Copy className="w-3.5 h-3.5 text-slate-400 hover:text-primary transition-colors" />
                                 </button>
                               </div>
-                              <p className="text-[11px] text-slate-600 leading-relaxed select-all font-medium">{associatedPost.captionShort}</p>
+                              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed select-all font-medium">{associatedPost.captionShort}</p>
                             </div>
                           )}
-
                         </div>
                       )}
                     </div>
