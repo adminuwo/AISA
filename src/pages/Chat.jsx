@@ -557,6 +557,7 @@ const Chat = () => {
   const uploadInputRef = useRef(null);
   const driveInputRef = useRef(null);
   const photosInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
   // Attachment Menu State
@@ -7290,7 +7291,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 <input id="drive-upload" type="file" ref={driveInputRef} onChange={handleFileSelect} multiple className="hidden" />
                 <input id="doc-voice-upload" type="file" onChange={handleDocToVoiceSelect} className="hidden" accept=".pdf,.doc,.docx,.txt" />
                 <input id="photos-upload" type="file" ref={photosInputRef} onChange={handleFileSelect} multiple className="hidden" accept="image/*" />
-                <input id="camera-upload" type="file" onChange={handleFileSelect} className="hidden" accept="image/*" capture="environment" />
+                <input id="camera-upload" type="file" ref={cameraInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" capture="environment" />
 
                 <div className="flex items-end gap-2 w-full">
 
@@ -7337,16 +7338,19 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         >
                           <div className="p-2 space-y-1">
                             {getAgentCapabilities(activeAgent.agentName, activeAgent.category).canCamera && (
-                              <label
-                                htmlFor="camera-upload"
-                                onClick={() => setTimeout(() => setIsAttachMenuOpen(false), 500)}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  cameraInputRef.current?.click();
+                                  setIsAttachMenuOpen(false);
+                                }}
                                 className="w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-primary/10 rounded-xl transition-all group cursor-pointer"
                               >
                                 <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/20 transition-colors shrink-0">
                                   <Camera className="w-4 h-4 text-subtext group-hover:text-primary transition-colors" />
                                 </div>
                                 <span className="text-[13px] font-semibold text-maintext group-hover:text-primary transition-colors">Camera & Scan</span>
-                              </label>
+                              </button>
                             )}
                             <label
                               htmlFor="file-upload"
