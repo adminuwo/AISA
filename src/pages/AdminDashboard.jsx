@@ -240,7 +240,6 @@ const UsersTab = () => {
             if (data.success) {
                 toast.success('Credits adjusted successfully!');
                 setCreditAmount('');
-                setSelectedUser(null);
                 fetchUsers();
             } else {
                 toast.error(data.message || 'Failed');
@@ -272,7 +271,6 @@ const UsersTab = () => {
             if (data.success) {
                 toast.success('Plan upgraded successfully');
                 setUpgradeData({ planName: '', expiryDate: '' });
-                setSelectedUser(null);
                 fetchUsers();
             } else {
                 toast.error(data.message || 'Failed to upgrade plan');
@@ -396,6 +394,12 @@ const UsersTab = () => {
                                                     min="1"
                                                 />
                                             </div>
+                                            {creditAmount && parseInt(creditAmount) > 0 && (
+                                                <div className="px-1 flex items-center gap-2 text-[11px] text-amber-500 font-bold">
+                                                    <Activity className="w-3 h-3" />
+                                                    New Balance: {(user.credits ?? 0) + parseInt(creditAmount)} Credits
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => {
                                                     handleAdjustCredits(user._id || user.id, parseInt(creditAmount));
@@ -414,7 +418,12 @@ const UsersTab = () => {
                                             </h4>
                                             <select
                                                 value={upgradeData.planName}
-                                                onChange={e => setUpgradeData(p => ({ ...p, planName: e.target.value }))}
+                                                onChange={e => {
+                                                    const selectedPlanName = e.target.value;
+                                                    setUpgradeData(p => ({ ...p, planName: selectedPlanName }));
+                                                    const planCredits = availablePlans.find(p => p.planName === selectedPlanName)?.credits || 0;
+                                                    setCreditAmount(planCredits.toString());
+                                                }}
                                                 className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
                                             >
                                                 <option value="" disabled className="bg-slate-50 dark:bg-zinc-900 text-subtext">{t('selectPlan') || 'Select Plan'}</option>
@@ -430,6 +439,12 @@ const UsersTab = () => {
                                                 onChange={e => setUpgradeData(p => ({ ...p, expiryDate: e.target.value }))}
                                                 className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
                                             />
+                                            {upgradeData.planName && (
+                                                <div className="px-1 flex items-center gap-2 text-[11px] text-amber-500 font-bold">
+                                                    <Zap className="w-3 h-3" />
+                                                    Plan Includes: {availablePlans.find(p => p.planName === upgradeData.planName)?.credits || 0} Credits
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => handleManualUpgrade(user._id || user.id)}
                                                 disabled={!upgradeData.planName || isUpgrading === (user._id || user.id)}
