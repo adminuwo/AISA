@@ -7391,7 +7391,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                               </h3>
                             </div>
                           </div>
-                          <div className="p-1.5 pb-12 space-y-1 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+                          <div className="p-1.5 pb-12 space-y-1 overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100vh - 220px)' }}>
 
                             <button
                               type="button"

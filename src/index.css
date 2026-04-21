@@ -111,6 +111,12 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  --typography-prose: var(--foreground);
+  --typography-headings: var(--foreground);
+  --typography-links: var(--primary);
+  --typography-bold: var(--foreground);
+  --typography-bullets: var(--primary);
 }
 
 @layer base {
@@ -134,6 +140,66 @@
   .dark mark {
     background-color: #5555ff;
     color: white;
+  }
+
+  .prose {
+    max-width: none !important;
+    color: hsl(var(--muted-foreground)) !important;
+    line-height: 1.75 !important;
+  }
+
+  .prose p {
+    margin-top: 1em !important;
+    margin-bottom: 1em !important;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    color: hsl(var(--foreground)) !important;
+    font-weight: 700 !important;
+    margin-top: 2em !important;
+    margin-bottom: 1em !important;
+  }
+
+  .prose strong {
+    color: hsl(var(--foreground)) !important;
+    font-weight: 700 !important;
+  }
+
+  .prose ul {
+    list-style-type: none !important;
+    padding-left: 0 !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 1.5em !important;
+  }
+
+  .prose li {
+    position: relative !important;
+    padding-left: 1.75em !important;
+    margin-bottom: 0.75em !important;
+  }
+
+  .prose li::before {
+    content: "•" !important;
+    position: absolute !important;
+    left: 0.5em !important;
+    color: hsl(var(--primary)) !important;
+    font-weight: bold !important;
+  }
+
+  .prose a {
+    color: hsl(var(--primary)) !important;
+    text-decoration: underline !important;
+    font-weight: 600 !important;
+  }
+
+  .prose blockquote {
+    border-left: 4px solid hsl(var(--primary) / 0.2) !important;
+    padding-left: 1.5em !important;
+    font-style: italic !important;
+    color: hsl(var(--muted-foreground)) !important;
   }
 }
 

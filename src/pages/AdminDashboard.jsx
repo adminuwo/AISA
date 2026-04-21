@@ -6,8 +6,8 @@ import {
     Users, CreditCard, Package, Settings, BarChart3,
     Search, Shield, Ban, Trash2, Plus, Edit2, X,
     TrendingUp, DollarSign, Activity, Zap,
-    ChevronDown, Save, RefreshCw, ArrowLeft,
-    Eye, EyeOff, Check, AlertCircle, FileText, PlusCircle, Headphones, BookOpen
+    ChevronDown, Save, RefreshCw, ArrowLeft, FileUp,
+    Eye, EyeOff, Check, AlertCircle, FileText, PlusCircle, Headphones, BookOpen,
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { getUserData } from '../userStore/userData';
@@ -934,6 +934,7 @@ const LegalPagesTab = () => {
     const [pageData, setPageData] = useState({ sections: [] });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isParsing, setIsParsing] = useState(false);
 
     useEffect(() => {
         fetchPage();
@@ -1036,6 +1037,98 @@ const LegalPagesTab = () => {
         });
     };
 
+    const parseLegalDocument = (text) => {
+        // Split by lines and filter empty ones
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+        const sections = [];
+        let currentSection = null;
+
+        lines.forEach((line) => {
+            // Robust Header Detection:
+            // 1. Markdown headers (# Header)
+            // 2. ARTICLE I, SECTION 1, CHAPTER 1
+            // 3. Numbered headers (1. Introduction)
+            // 4. Short Uppercase headers
+            const isMetaInfo = /^(Effective Date|Last Updated|Revision|Version)\s*:?/i.test(line);
+            const isHeader = !isMetaInfo && (
+                /^#+\s+/.test(line) ||
+                /^(ARTICLE|SECTION|CHAPTER|UNIT)\s+([IVXLCDM\d]+)/i.test(line) ||
+                (/^\d+[\.\)]\s+[A-Z][^a-z]/.test(line) && line.length < 60) ||
+                (line.length > 3 && line.length < 50 && line === line.toUpperCase() && !line.includes(':') && !line.endsWith('.'))
+            );
+
+            if (isHeader) {
+                if (currentSection) sections.push(currentSection);
+                currentSection = {
+                    title: line.replace(/^#+\s*/, '').trim(),
+                    content: []
+                };
+            } else if (currentSection) {
+                const isBulletOrList = /^[•\-\*\u2022\u2023\u2043\u2044]/.test(line) || /^\d+[\.\)]\s/.test(line);
+                const isMetaInfoLine = /^(Effective Date|Last Updated|Revision|Version)\s*:?/i.test(line);
+                const isSubtitle = !isBulletOrList && !isMetaInfoLine && ((line.length < 100 && (line.endsWith(':') || !line.endsWith('.'))) || /^###\s+/.test(line));
+
+                if (isSubtitle && !line.includes('http')) {
+                    currentSection.content.push({ 
+                        subtitle: line.replace(/^#+\s*/, '').replace(/:$/, '').trim(), 
+                        text: '' 
+                    });
+                } else {
+                    if (currentSection.content.length === 0) {
+                        currentSection.content.push({ subtitle: 'General Terms', text: line });
+                    } else {
+                        const lastUnit = currentSection.content[currentSection.content.length - 1];
+                        if (lastUnit.text) {
+                            lastUnit.text += '\n\n' + line;
+                        } else {
+                            lastUnit.text = line;
+                        }
+                    }
+                }
+            } else {
+                // Fallback for header-less starts
+                currentSection = {
+                    title: 'Policy Overview',
+                    content: [{ subtitle: 'Introduction', text: line }]
+                };
+            }
+        });
+
+        if (currentSection) sections.push(currentSection);
+
+        // Post-process: Ensure no empty text units
+        return sections.map(s => ({
+            ...s,
+            content: s.content.map(c => ({
+                ...c,
+                text: (c.text || '').trim()
+            })).filter(c => c.text.length > 0)
+        })).filter(s => s.content.length > 0);
+    };
+
+    const handleDocUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsParsing(true);
+        try {
+            const res = await apiService.parseLegalDoc(file);
+            if (res.success && res.sections && res.sections.length > 0) {
+                setPageData(prev => ({ ...prev, sections: res.sections }));
+                toast.success(`Successfully parsed ${res.sections.length} sections from ${file.name}!`);
+            } else {
+                toast.error("Could not detect sections in the document.");
+            }
+        } catch (err) {
+            console.error("Doc upload error:", err);
+            const errMsg = err.response?.data?.message || err.response?.data?.error || err.message;
+            toast.error(errMsg || "Failed to parse document. Ensure it is a valid PDF, DOCX, or TXT file.");
+        } finally {
+            setIsParsing(false);
+            e.target.value = '';
+        }
+    };
+
     if (loading) return <LoadingSpinner />;
 
     return (
@@ -1056,9 +1149,20 @@ const LegalPagesTab = () => {
                     ))}
                 </div>
                 <div className="flex gap-2">
+                    <label className={`flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 text-maintext rounded-xl font-bold text-sm transition-all border border-white/20 cursor-pointer ${isParsing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        {isParsing ? <RefreshCw className="w-4 h-4 animate-spin text-primary" /> : <FileUp className="w-4 h-4" />}
+                        {isParsing ? 'Parsing...' : 'Upload Document'}
+                        <input
+                            type="file"
+                            className="hidden"
+                            accept=".txt,.md,.pdf,.docx"
+                            onChange={handleDocUpload}
+                            disabled={isParsing}
+                        />
+                    </label>
                     <button
                         onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || isParsing}
                         className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/30 disabled:opacity-50"
                     >
                         {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -1109,37 +1213,39 @@ const LegalPagesTab = () => {
                                 />
                             </div>
 
-                            <div className="space-y-4 ml-6 pl-6 border-l-2 border-primary/20">
+                            <div className="space-y-6 ml-6 pl-6 border-l-2 border-primary/10">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-subtext">Section Content Units</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-primary/50">Section Content Units</label>
                                     <button
                                         onClick={() => addContent(sIdx)}
-                                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] bg-primary/10 text-primary hover:bg-primary/20 font-bold transition-all"
+                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] bg-primary text-white hover:opacity-90 font-bold transition-all shadow-lg shadow-primary/20"
                                     >
-                                        <Plus className="w-2.5 h-2.5" /> Add Content
+                                        <Plus className="w-3 h-3" /> Add Content Unit
                                     </button>
                                 </div>
 
                                 {section.content.map((item, cIdx) => (
-                                    <div key={cIdx} className="bg-white/10 dark:bg-black/20 rounded-xl p-4 space-y-3 relative group">
+                                    <div key={cIdx} className="bg-white/5 dark:bg-black/40 rounded-2xl p-6 space-y-4 relative group border border-white/5 hover:border-primary/30 transition-all">
                                         <button
                                             onClick={() => removeContent(sIdx, cIdx)}
-                                            className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-all"
+                                            className="absolute top-4 right-4 p-2 opacity-0 group-hover:opacity-100 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"
                                         >
-                                            <X className="w-3 h-3" />
+                                            <Trash2 className="w-3.5 h-3.5" />
                                         </button>
-
-                                        <div className="space-y-1">
-                                            <input
-                                                value={item.subtitle}
-                                                onChange={e => updateContent(sIdx, cIdx, 'subtitle', e.target.value)}
-                                                placeholder="Subtitle"
-                                                className="w-full bg-transparent border-none p-0 text-sm font-bold outline-none text-maintext placeholder:text-subtext/30"
-                                            />
+                                        
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                                <input
+                                                    value={item.subtitle}
+                                                    onChange={e => updateContent(sIdx, cIdx, 'subtitle', e.target.value)}
+                                                    placeholder="Subtitle (e.g. 1.1 Eligibility)"
+                                                    className={`w-full bg-transparent border-none p-0 text-sm font-bold outline-none text-maintext placeholder:text-subtext/20 ${['General Terms', 'Policy Overview', 'Introduction', 'N/A', ''].includes(item.subtitle) ? 'opacity-20 italic font-normal' : ''}`}
+                                                />
+                                            </div>
                                             <textarea
                                                 value={item.text}
                                                 onChange={e => updateContent(sIdx, cIdx, 'text', e.target.value)}
-                                                placeholder="Text content..."
                                                 rows={3}
                                                 className="w-full bg-transparent border-none p-0 text-xs outline-none text-subtext resize-none placeholder:text-subtext/30"
                                             />

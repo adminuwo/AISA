@@ -1079,6 +1079,20 @@ export const apiService = {
     }
   },
 
+  async parseLegalDoc(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiClient.post('/admin/parse-legal-doc', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to parse document:", error);
+      throw error;
+    }
+  },
+
   async resolveReport(id, status, resolutionNote) {
     try {
       const response = await apiClient.put(`/reports/${id}/resolve`, { status, resolutionNote });
