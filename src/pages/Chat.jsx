@@ -6876,87 +6876,13 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                   Download
                                 </button>
 
-                                <Menu as="div" className="relative">
-                                  <Menu.Button className="flex items-center justify-center gap-1.5 px-2 py-1.5 bg-white/10 border border-transparent text-maintext rounded-lg transition-all hover:bg-white/20 font-bold text-[10px] shadow-sm active:scale-95 whitespace-nowrap backdrop-blur-sm">
-                                    <Share className="w-4 h-4" />
-                                    Share
-                                  </Menu.Button>
 
-                                  <Portal>
-                                    <Transition
-                                      as={Fragment}
-                                      enter="transition ease-out duration-100"
-                                      enterFrom="transform opacity-0 scale-95"
-                                      enterTo="transform opacity-100 scale-100"
-                                      leave="transition ease-in duration-75"
-                                      leaveFrom="transform opacity-100 scale-100"
-                                      leaveTo="transform opacity-0 scale-95"
-                                    >
-                                      <Menu.Items
-                                        anchor="bottom end"
-                                        className="w-56 mt-2 origin-top-right divide-y divide-transparent rounded-xl bg-white/10 dark:bg-black/40 backdrop-blur-2xl shadow-2xl border border-transparent focus:outline-none z-[100] overflow-hidden"
-                                      >
-                                        <div className="px-1 py-1">
-                                          <Menu.Item>
-                                            {({ active }) => (
-                                              <button
-                                                onClick={() => {
-                                                  const text = `I've converted "${msg.conversion.fileName}" into voice audio using AISA! ${window.location.href}`;
-                                                  const url = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-                                                    ? `whatsapp://send?text=${encodeURIComponent(text)}`
-                                                    : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-                                                  window.open(url, '_blank', 'noopener');
-                                                }}
-                                                className={`${active ? 'bg-green-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
-                                              >
-                                                <MessageCircle className="h-4 w-4" />
-                                                WhatsApp
-                                              </button>
-                                            )}
-                                          </Menu.Item>
-                                          <Menu.Item>
-                                            {({ active }) => (
-                                              <button
-                                                onClick={() => {
-                                                  const text = `AISA Audio Conversion: ${msg.conversion.fileName}`;
-                                                  const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
-                                                  window.open(url, '_blank');
-                                                }}
-                                                className={`${active ? 'bg-sky-500 text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
-                                              >
-                                                <Send className="h-4 w-4" />
-                                                Telegram
-                                              </button>
-                                            )}
-                                          </Menu.Item>
-                                        </div>
-                                        <div className="px-1 py-1">
-                                          <Menu.Item>
-                                            {({ active }) => (
-                                              <button
-                                                onClick={() => {
-                                                  navigator.clipboard.writeText(window.location.href);
-                                                  toast.success("Link copied!");
-                                                }}
-                                                className={`${active ? 'bg-primary text-white' : 'text-maintext'} group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors`}
-                                              >
-                                                <Copy className="h-4 w-4" />
-                                                Copy Link
-                                              </button>
-                                            )}
-                                          </Menu.Item>
-                                        </div>
-                                      </Menu.Items>
-                                    </Transition>
-                                  </Portal>
-                                </Menu>
                               </div>
                             </div>
                           )}
 
                           {/* AI Feedback Actions - Strictly hide for media and processing */}
                           {(msg.role === 'model' || msg.role === 'assistant') &&
-                            !msg.conversion && !msg.imageUrl && !msg.videoUrl &&
                             !msg.isProcessing && !msg.isGenerating && !msg.error &&
                             typingMessageId !== msg.id && (
                               <div className="mt-4 w-full block">
