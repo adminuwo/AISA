@@ -32,7 +32,7 @@ import { jsPDF } from 'jspdf';
 import { toCanvas } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
-import { userData, getUserData, sessionsData, toggleState, memoryData, activeProjectIdData } from '../userStore/userData';
+import { userData, getUserData, sessionsData, toggleState, memoryData, activeProjectIdData, activeModeData, activeLegalToolData } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
 import PremiumUpsellModal from '../Components/PremiumUpsellModal';
@@ -572,7 +572,7 @@ const Chat = () => {
   const recognitionRef = useRef(null);
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [selectedToolType, setSelectedToolType] = useState(null);
-  const [currentMode, setCurrentMode] = useState('NORMAL_CHAT');
+  const [currentMode, setCurrentMode] = useRecoilState(activeModeData);
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isWebSearch, setIsWebSearch] = useState(false);
   const [isImageGeneration, setIsImageGeneration] = useState(false);
@@ -590,7 +590,7 @@ const Chat = () => {
   const [activeLegalToolkit, setActiveLegalToolkit] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
   const [unlockedTools, setUnlockedTools] = useState([]);
-  const [selectedLegalTool, setSelectedLegalTool] = useState(null);
+  const [selectedLegalTool, setSelectedLegalTool] = useRecoilState(activeLegalToolData);
   const [videoAspectRatio, setVideoAspectRatio] = useState('');
   const [videoModelId, setVideoModelId] = useState('veo-3.1-fast-generate-001');
   const [editModelId, setEditModelId] = useState('gemini-3.1-flash-image-preview');
@@ -3445,16 +3445,29 @@ const Chat = () => {
           setCurrentProjectId(sessionData.projectId);
         }
 
-        // --- LEGAL MODE RESTORE ---
-        // Only restore legal My Case mode if the session belongs to an actual legal case.
-        // Other tools (Draft Maker, Case Predictor, etc.) may also have a projectId but
-        // should NOT trigger My Case mode.
+        // --- MODE RESTORE & RESET ---
+        // Restore legal My Case mode only if the session belongs to an actual legal case
         if (sessionData.projectId && currentCase?.isLegalCase) {
           setCurrentMode('LEGAL_TOOLKIT');
           setSelectedLegalTool(prev =>
             prev?.id === 'legal_my_case' ? prev : { id: 'legal_my_case', name: 'My Case' }
           );
           setLegalView('CHAT');
+        } else {
+          // If not a legal case session, reset to NORMAL_CHAT to prevent "mode leakage"
+          setCurrentMode('NORMAL_CHAT');
+          setSelectedLegalTool(null);
+          // Also reset other specific tool modes
+          setIsDeepSearch(false);
+          setIsWebSearch(false);
+          setIsImageGeneration(false);
+          setIsVideoGeneration(false);
+          setIsAudioConvertMode(false);
+          setIsDocumentConvert(false);
+          setIsCodeWriter(false);
+          setIsFileAnalysis(false);
+          setIsCashFlowMode(false);
+          setActiveLegalToolkit(false);
         }
 
         const historyMessages = sessionData.messages || [];
@@ -4007,9 +4020,16 @@ const Chat = () => {
                 (documentConvertActive ? MODES.DOCUMENT_CONVERT :
                   (webSearchActive ? MODES.WEB_SEARCH :
                     (codeWriterActive ? MODES.CODING_HELP :
-                      (currentMode === 'LEGAL_TOOLKIT' ? MODES.LEGAL_TOOLKIT :
+                      // Only persist LEGAL_TOOLKIT if we are in a dedicated legal project context
+                      (currentMode === 'LEGAL_TOOLKIT' && currentProjectId && currentProjectId !== 'default' ? MODES.LEGAL_TOOLKIT :
                         detectMode(contentToSend, userMsg.attachments)))))))));
       setCurrentMode(detectedMode);
+      
+      // Cleanup legal state if we auto-transitioned out of legal mode
+      if (detectedMode !== MODES.LEGAL_TOOLKIT && currentMode === 'LEGAL_TOOLKIT') {
+        setSelectedLegalTool(null);
+        setActiveLegalToolkit(false);
+      }
 
       // Update user message with the detected mode
       userMsg.mode = detectedMode;

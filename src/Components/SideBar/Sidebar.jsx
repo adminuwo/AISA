@@ -39,7 +39,7 @@ import ShareModal from '../ShareModal';
 import { faqs } from '../../constants';
 import NotificationBar from '../NotificationBar/NotificationBar.jsx';
 import { useRecoilState } from 'recoil';
-import { clearUser, getUserData, setUserData, toggleState, userData, sessionsData, activeProjectIdData } from '../../userStore/userData';
+import { clearUser, getUserData, setUserData, toggleState, userData, sessionsData, activeProjectIdData, activeModeData, activeLegalToolData } from '../../userStore/userData';
 import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -90,6 +90,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [currentShareId, setCurrentShareId] = useState('');
   const [sessionToShare, setSessionToShare] = useState(null);
+  const [, setMode] = useRecoilState(activeModeData);
+  const [, setLegalTool] = useRecoilState(activeLegalToolData);
 
   // Magic Glow State
   const glowX = useMotionValue(0);
@@ -265,6 +267,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   const handleNewChat = () => {
     // Reset to global context so user can access the main tool cards dashboard
     setCurrentProjectId('default');
+    setMode('NORMAL_CHAT');
+    setLegalTool(null);
     navigate('/dashboard/chat/new');
     onClose();
   };
@@ -785,27 +789,26 @@ const Sidebar = ({ isOpen, onClose }) => {
                         </div>
                       ) : (
                         <div className="sidebar-chat-container relative">
-                          <button
-                            onClick={() => {
-                              navigate(`/dashboard/chat/${session.sessionId}`);
-                              onClose();
-                            }}
-                            className={`sidebar-chat-item group/item transition-all duration-500 mb-1 mx-2
-                            ${currentSessionId === session.sessionId
-                                ? (theme === 'dark' ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl' : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5')
-                                : (theme === 'dark' ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent' : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]')
-                              }
-                          `}
-                          >
+                        <div
+                          onClick={() => {
+                            navigate(`/dashboard/chat/${session.sessionId}`);
+                            onClose();
+                          }}
+                          className={`sidebar-chat-item group/item transition-all duration-500 mb-1 mx-2 cursor-pointer
+                          ${currentSessionId === session.sessionId
+                              ? (theme === 'dark' ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl' : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5')
+                              : (theme === 'dark' ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent' : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]')
+                            }
+                        `}
+                        >
                             {currentSessionId === session.sessionId && (
                               <motion.div
                                 layoutId="activeIndicator"
                                 className="absolute left-1 top-4 bottom-4 w-1 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary),0.5)]"
                               />
                             )}
-
-                            <div className="sidebar-chat-title-group text-left">
-                              <div className="sidebar-chat-title mb-1">
+                            <div className="sidebar-chat-title-group text-left flex-1 min-w-0">
+                              <div className="sidebar-chat-title mb-1 truncate">
                                 {highlightMatch(session.title || "Untitled Intelligence", searchQuery)}
                               </div>
                               <div className="flex items-center gap-2">
@@ -826,21 +829,21 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                             <div className="sidebar-chat-actions">
                               <button
-                                onClick={(e) => startRename(e, session)}
+                                onClick={(e) => { e.stopPropagation(); startRename(e, session); }}
                                 className="sidebar-chat-action-btn"
                                 title="Rename Chat"
                               >
                                 <Edit2 />
                               </button>
                               <button
-                                onClick={(e) => handleDeleteSession(e, session.sessionId)}
+                                onClick={(e) => { e.stopPropagation(); handleDeleteSession(e, session.sessionId); }}
                                 className="sidebar-chat-action-btn delete"
                                 title="Delete Chat"
                               >
                                 <X />
                               </button>
                             </div>
-                          </button>
+                          </div>
                         </div>
                       )}
                     </motion.div>

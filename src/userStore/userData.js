@@ -124,3 +124,13 @@ export const activeProjectIdData = atom({
   key: 'activeProjectIdData',
   default: localStorage.getItem('currentProjectId') || null
 })
+
+export const activeModeData = atom({
+  key: 'activeModeData',
+  default: 'NORMAL_CHAT'
+})
+
+export const activeLegalToolData = atom({
+  key: 'activeLegalToolData',
+  default: null
+})
