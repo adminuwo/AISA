@@ -170,7 +170,19 @@ const UsersTab = () => {
 
     useEffect(() => {
         fetchUsers();
+        fetchPlans();
     }, []);
+
+    const [availablePlans, setAvailablePlans] = useState([]);
+
+    const fetchPlans = async () => {
+        try {
+            const data = await apiService.getPlans();
+            setAvailablePlans(Array.isArray(data) ? data : data.plans || []);
+        } catch (err) {
+            console.error('Failed to fetch plans:', err);
+        }
+    };
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -238,8 +250,15 @@ const UsersTab = () => {
         }
     };
 
+    const [isUpgrading, setIsUpgrading] = useState(null); // track userId being upgraded
+
     const handleManualUpgrade = async (userId) => {
-        if (!upgradeData.planName) return;
+        if (!upgradeData.planName) {
+            toast.error('Please select a plan');
+            return;
+        }
+        
+        setIsUpgrading(userId);
         try {
             const response = await fetch(`${API}/admin/manual-upgrade`, {
                 method: 'POST',
@@ -251,14 +270,18 @@ const UsersTab = () => {
             });
             const data = await response.json();
             if (data.success) {
-                toast.success('Plan upgraded');
+                toast.success('Plan upgraded successfully');
                 setUpgradeData({ planName: '', expiryDate: '' });
                 setSelectedUser(null);
+                fetchUsers();
             } else {
-                toast.error(data.message || 'Failed');
+                toast.error(data.message || 'Failed to upgrade plan');
             }
         } catch (err) {
+            console.error("Upgrade error:", err);
             toast.error('Failed to upgrade plan');
+        } finally {
+            setIsUpgrading(null);
         }
     };
 
@@ -389,25 +412,37 @@ const UsersTab = () => {
                                             <h4 className="font-bold text-sm text-maintext flex items-center gap-2">
                                                 <CreditCard className="w-4 h-4 text-primary" /> {t('manualPlanUpgrade')}
                                             </h4>
-                                            <input
-                                                type="text"
-                                                placeholder={t('planNamePlaceholder')}
+                                            <select
                                                 value={upgradeData.planName}
                                                 onChange={e => setUpgradeData(p => ({ ...p, planName: e.target.value }))}
-                                                className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
-                                            />
+                                                className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
+                                            >
+                                                <option value="" disabled className="bg-slate-50 dark:bg-zinc-900 text-subtext">{t('selectPlan') || 'Select Plan'}</option>
+                                                {availablePlans.map(plan => (
+                                                    <option key={plan._id} value={plan.planName} className="bg-slate-50 dark:bg-zinc-900 text-maintext">
+                                                        {plan.planName}
+                                                    </option>
+                                                ))}
+                                            </select>
                                             <input
                                                 type="date"
                                                 value={upgradeData.expiryDate}
                                                 onChange={e => setUpgradeData(p => ({ ...p, expiryDate: e.target.value }))}
-                                                className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
+                                                className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-2 px-3 text-sm outline-none focus:border-primary/50 text-maintext"
                                             />
                                             <button
                                                 onClick={() => handleManualUpgrade(user._id || user.id)}
-                                                disabled={!upgradeData.planName}
-                                                className="w-full py-2 bg-primary text-white rounded-lg font-bold text-xs disabled:opacity-40 hover:opacity-90 transition-all"
+                                                disabled={!upgradeData.planName || isUpgrading === (user._id || user.id)}
+                                                className="w-full py-2 bg-primary text-white rounded-lg font-bold text-xs disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-2"
                                             >
-                                                {t('upgradePlan')}
+                                                {isUpgrading === (user._id || user.id) ? (
+                                                    <>
+                                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                                        {t('upgrading') || 'Upgrading...'}
+                                                    </>
+                                                ) : (
+                                                    t('upgradePlan') || 'Upgrade Plan'
+                                                )}
                                             </button>
                                         </div>
                                     </div>
