@@ -7196,14 +7196,17 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         if (inputRef.current) { inputRef.current.value = "Write a function to "; inputRef.current.focus(); }
                         toast.success("Code Mode Active");
                       } else if (id === 'deep_search') {
+                        if (!checkPremiumTool('Deep Search')) return;
                         setIsDeepSearch(true);
                         if (inputRef.current) { inputRef.current.value = "Research in-depth about "; inputRef.current.focus(); }
                         toast.success("Deep Intelligence Active");
                       } else if (id === 'web_search') {
+                        if (!checkPremiumTool('Web Search')) return;
                         setIsWebSearch(true);
                         if (inputRef.current) { inputRef.current.value = "Search for live updates on "; inputRef.current.focus(); }
                         toast.success("Real-Time Search Active");
                       } else if (id === 'document') {
+                        if (!checkPremiumTool('Document Analyzer')) return;
                         setIsFileAnalysis(true);
                         uploadInputRef.current?.click();
                         toast.success("Upload document for analysis");
