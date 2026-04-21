@@ -7366,14 +7366,17 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
         {/* Unified Chat Input Container */}
         {legalView !== 'DASHBOARD' && (
-          <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ padding: '0 1rem calc(1rem + env(safe-area-inset-bottom, 0px)) 1rem', background: 'transparent' }}>
-            {/* Bottom Mask removed in favor of solid background */}
+          <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+            {/* Gradient Mask to hide text scrolling behind/below input */}
+            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#f8f9fc] via-[#f8f9fc] to-transparent dark:from-zinc-950 dark:via-zinc-950 to-transparent z-10" />
+            
+            <div className="relative z-20" style={{ padding: '0 1rem calc(1rem + env(safe-area-inset-bottom, 0px)) 1rem' }}>
             <div className="max-w-4xl mx-auto w-full pointer-events-auto">
 
 
               <form
                 onSubmit={handleSendMessage}
-                className="relative w-full flex flex-col transition-all duration-300 backdrop-blur-3xl p-2 z-50 aisa-chat-input-wrapper bg-[#f8f9fc]/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-[24px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-black/5 overflow-visible"
+                className="relative w-full flex flex-col transition-all duration-300 p-2 z-50 aisa-chat-input-wrapper bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[24px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-black/5 overflow-visible"
               >
                 {/* Internal File Preview Area */}
                 {filePreviews.length > 0 && (
@@ -8332,7 +8335,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
               </form>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       {/* Live AI Modal */}

@@ -15,7 +15,6 @@ const AisaTypingIndicator = ({ visible = true, message = "AISA™ is thinking" }
     >
       {/* Avatar */}
       <div className="flex items-center gap-2 px-0 py-1 opacity-80">
-        <Sparkles strokeWidth={3} style={{ width: 12, height: 12, color: '#6366f1', flexShrink: 0 }} />
         <span style={{ fontSize: '11px', color: '#6366f1', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           {message}
         </span>

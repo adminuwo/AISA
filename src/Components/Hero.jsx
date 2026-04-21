@@ -401,7 +401,6 @@ const Hero = () => {
             color: isDarkMode ? '#a5b4fc' : '#4f46e5', fontSize: '0.85rem', fontWeight: 700,
             marginBottom: '2.5rem', letterSpacing: '0.1em'
           }}>
-            <Sparkles size={16} fill={isDarkMode ? "#818cf8" : "#6366f1"} />
             Powered by UWO™
           </div>
         </motion.div>
