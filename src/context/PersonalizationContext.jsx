@@ -4,6 +4,7 @@ import { apis } from '../types';
 import { getUserData } from '../userStore/userData';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
+import { initSocket } from '../services/socketService';
 import { API } from '../types';
 
 
@@ -131,6 +132,19 @@ export const PersonalizationProvider = ({ children }) => {
         }
     };
 
+    const markNotificationRead = async (id) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        try {
+            if (user?.token) {
+                await axios.put(`${apis.notifications}/${id}/read`, {}, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+            }
+        } catch (error) {
+            console.error('Failed to mark read', error);
+        }
+    };
+
 
     const fetchPersonalizations = async () => {
         if (!user?.token) return;
@@ -200,19 +214,7 @@ export const PersonalizationProvider = ({ children }) => {
             fetchChatSessions();
 
             // Initialize Socket.io for Real-time Notifications
-            socket = io(API, {
-                auth: { token: user.token },
-                transports: ['websocket']
-            });
-
-            socket.on('connect', () => {
-                console.log('[Socket] Connected to server');
-                // Join user-specific room
-                const userId = user.id || user._id;
-                if (userId) {
-                    socket.emit('join', userId);
-                }
-            });
+            socket = initSocket(user.token);
 
             socket.on('new_notification', (notification) => {
                 console.log('[Socket] New notification received:', notification);
@@ -255,12 +257,15 @@ export const PersonalizationProvider = ({ children }) => {
                 }
             });
 
-            socket.on('disconnect', () => {
-                console.log('[Socket] Disconnected');
-            });
+            const userId = user.id || user._id;
+            if (userId) {
+                socket.emit('join', userId);
+            }
 
             return () => {
-                if (socket) socket.disconnect();
+                // We don't disconnect here because other components might use it
+                // but we do turn off the listener to avoid duplicates
+                if (socket) socket.off('new_notification');
             };
         }
         applyDynamicStyles();
@@ -400,6 +405,7 @@ export const PersonalizationProvider = ({ children }) => {
             resetPersonalizations,
             isLoading,
             notifications,
+            markNotificationRead,
             deleteNotification,
             clearAllNotifications,
             chatSessions,

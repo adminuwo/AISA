@@ -16,10 +16,12 @@ import SharedChat from './pages/SharedChat';
 
 
 import { AppRoute } from './types';
-import { Menu } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 import NeuralBackground from './Components/NeuralBackground.jsx';
 import { useRecoilState } from 'recoil';
 import { toggleState, getUserData } from './userStore/userData';
+import { usePersonalization } from './context/PersonalizationContext';
+import NotificationCenter from './Components/NotificationBar/NotificationCenter.jsx';
 
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
@@ -90,6 +92,25 @@ const AuthenticatRoute = ({ children }) => {
 // Dashboard Layout (Auth pages)
 // ------------------------------
 
+const MobileNotificationBell = ({ onClick }) => {
+  const { notifications } = usePersonalization();
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  return (
+    <button
+      onClick={onClick}
+      className="relative w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/20 text-primary"
+    >
+      <Bell className="w-5 h-5" />
+      {unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center border-2 border-white dark:border-black animate-bounce">
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </span>
+      )}
+    </button>
+  );
+};
+
 const DashboardLayout = () => {
   const [tglState, setTglState] = useRecoilState(toggleState);
   const isSidebarOpen = tglState.sidebarOpen;
@@ -101,6 +122,7 @@ const DashboardLayout = () => {
   const user = getUserData() || { name: 'Guest' };
   const token = getUserData()?.token;
   const navigate = useNavigate();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   return (
     <div className="fixed inset-0 flex bg-transparent text-maintext overflow-hidden aisa-scalable-text">
@@ -139,23 +161,18 @@ const DashboardLayout = () => {
 
         {/* Unified Mobile Header (Hides when sidebar is open to prevent overlap) */}
         {!isFullScreen && !isSidebarOpen && (
-          <div className="lg:hidden flex items-center justify-between px-6 py-4 bg-white/40 dark:bg-black/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shrink-0 z-[1001] shadow-xl">
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setIsSidebarOpen(true)}
-                className="w-10 h-10 flex items-center justify-center bg-amber-500/10 rounded-xl border border-amber-500/30 text-amber-600 dark:text-amber-400"
-              >
-                <Menu className="w-6 h-6 stroke-[2.5]" />
-              </motion.button>
-              <Link to="/" state={{ fromLogo: true }} className="flex items-center gap-2">
-                <img src="/logo/Logo.svg" alt="AISA" className="w-7 h-7" />
-                <span className="font- black text-[17px] text-zinc-900 dark:text-white tracking-tight">AISA<sup className="text-[0.6em] ml-0.5">™</sup></span>
-              </Link>
-            </div>
-
+          <div className="lg:hidden flex items-center justify-start px-6 py-4 bg-white/40 dark:bg-black/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shrink-0 z-[1001] shadow-xl">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/30 text-primary"
+            >
+              <Menu className="w-6 h-6 stroke-[2.5]" />
+            </motion.button>
           </div>
         )}
+
+        <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
         {/* Outlet for pages */}
         <main className={`flex-1 ${location.pathname.includes('/chat') ? 'overflow-hidden' : 'overflow-y-auto'} relative w-full scroll-smooth p-0 scrollbar-hide`}>
           <Outlet />

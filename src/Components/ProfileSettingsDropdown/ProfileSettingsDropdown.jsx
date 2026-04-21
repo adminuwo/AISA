@@ -823,7 +823,9 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                             onClick={handleConnectGmail}
                                             className="shrink-0 px-5 py-2 bg-primary hover:opacity-90 text-white text-xs font-black rounded-xl shadow-lg shadow-primary/30 transition-all duration-200 hover:scale-105 flex items-center gap-2"
                                         >
-                                            <Zap className="w-3 h-3" />
+                                            <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                                                <img src="/logo/Logo.svg" alt="AISA" className="w-3 h-3 object-contain" />
+                                            </div>
                                             {t('connectLabel')}
                                         </button>
                                     )}

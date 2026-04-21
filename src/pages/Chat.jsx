@@ -789,7 +789,7 @@ const Chat = () => {
         await apiService.updateProject(editingCaseId, payload);
         toast.success("Case updated successfully!", { id: tid });
         fetchLegalCases();
-        
+
         // Update local currentCase if it's the one renamed
         if (currentCase?._id === editingCaseId) {
           setCurrentCase(prev => ({ ...prev, ...payload }));
@@ -4024,7 +4024,7 @@ const Chat = () => {
                       (currentMode === 'LEGAL_TOOLKIT' && currentProjectId && currentProjectId !== 'default' ? MODES.LEGAL_TOOLKIT :
                         detectMode(contentToSend, userMsg.attachments)))))))));
       setCurrentMode(detectedMode);
-      
+
       // Cleanup legal state if we auto-transitioned out of legal mode
       if (detectedMode !== MODES.LEGAL_TOOLKIT && currentMode === 'LEGAL_TOOLKIT') {
         setSelectedLegalTool(null);
@@ -6088,8 +6088,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           ref={chatContainerRef}
           onScroll={handleScroll}
           className={`relative flex-1 aisa-scalable-text ${legalView === 'DASHBOARD' && currentMode === 'LEGAL_TOOLKIT' && selectedLegalTool?.id === 'legal_my_case'
-              ? 'overflow-hidden'
-              : 'overflow-y-auto chatgpt-container pt-6 pb-64 md:pb-72 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent'
+            ? 'overflow-hidden'
+            : 'overflow-y-auto chatgpt-container pt-6 pb-64 md:pb-72 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent'
             }`}
         >
           {legalView === 'DASHBOARD' && currentMode === 'LEGAL_TOOLKIT' && selectedLegalTool?.id === 'legal_my_case' ? (
@@ -6353,7 +6353,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             </div>
                           ) : (
                             msg.content && (
-                              <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-2.5 rounded-2xl rounded-tl-none border border-indigo-100/30 dark:border-indigo-800/20 text-slate-900 dark:text-white font-medium shadow-sm w-fit inline-block mb-1' : 'text-maintext'}`}>
+                              <div id={`msg-text-${msg.id}`} className={`max-w-full break-words leading-relaxed whitespace-normal ${msg.role === 'user' ? 'bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-2.5 rounded-2xl rounded-tl-none border border-indigo-100/30 dark:border-indigo-800/20 text-slate-900 dark:text-white font-normal shadow-sm w-fit inline-block mb-1' : 'text-maintext'}`}>
                                 {msg.role === 'user' && msg.mode && msg.mode !== MODES.NORMAL_CHAT && (
                                   <div className={`flex items-center gap-1.5 mb-2 px-2.5 py-1 backdrop-blur-md rounded-full w-fit border shadow-sm transition-all hover:scale-105`}
                                     style={{
@@ -7246,131 +7246,133 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           )}
         </div>
 
-            {/* Welcome Screen - Integrated Hub */}
-            <AnimatePresence>
-              {messages.length === 0 && currentMode !== 'LEGAL_TOOLKIT' && (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
+        {/* Welcome Screen - Integrated Hub */}
+        <AnimatePresence>
+          {messages.length === 0 && currentMode !== 'LEGAL_TOOLKIT' && (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
+            <motion.div
+              key="welcome-screen"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+              className="absolute inset-0 z-10 pointer-events-none flex flex-col items-center overflow-y-auto overflow-x-hidden pt-8 pb-48 sm:pt-12 md:pb-60 scrollbar-hide"
+            >
+              <div className="relative z-10 pointer-events-auto flex flex-col items-center w-full max-w-5xl mx-auto px-2">
                 <motion.div
-                  key="welcome-screen"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-                  className="absolute inset-0 z-10 pointer-events-none flex flex-col items-center overflow-y-auto overflow-x-hidden pt-8 pb-48 sm:pt-12 md:pb-60 scrollbar-hide"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="mb-6"
                 >
-                  <div className="relative z-10 pointer-events-auto flex flex-col items-center w-full max-w-5xl mx-auto px-2">
-                    <motion.div
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.1 }}
-                      className="mb-6"
-                    >
-                      <img
-                        src="/logo/Logo.svg"
-                        alt="AISA"
-                        className="w-16 h-16 sm:w-20 sm:h-20 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
-                      />
-                      <p className="text-center text-sm font-bold text-primary/70 mt-2 tracking-widest">AISA™</p>
-                    </motion.div>
-
-                    <section className="w-full px-1 sm:px-2 md:px-0">
-                      <FuturisticToolCards
-                        isAdmin={isAdminUser}
-                        activeToolId={
-                          isImageGeneration ? 'image' : 
-                          isVideoGeneration ? 'video' :
-                          isDeepSearch ? 'deep_search' :
-                          isWebSearch ? 'web_search' :
-                          isCodeWriter ? 'code' :
-                          isAudioConvertMode ? 'audio' :
-                          isFileAnalysis ? 'document' :
-                          isMagicEditing ? 'edit_image' :
-                          isMagicVideoModalOpen ? 'image_to_video' :
-                          isStockModalOpen ? 'ai_cashflow' :
-                          (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
-                        }
-                        onToolSelect={(id) => {
-                          setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
-                          setIsAudioConvertMode(false);
-                          setIsCodeWriter(false);
-                          setIsDeepSearch(false);
-                          setIsWebSearch(false);
-                          setIsFileAnalysis(false);
-                          setIsMagicEditing(false);
-                          setIsMagicVideoModalOpen(false);
-                          setIsCashFlowMode(false);
-                          if (id !== 'legal') {
-                            setActiveLegalToolkit(false);
-                          }
-
-                          if (id === 'image') {
-                            if (!checkPremiumTool('Image Generation')) return;
-                            setIsImageGeneration(true);
-                            setIsMagicSettingsOpen(true);
-                            if (inputRef.current) { inputRef.current.value = "Generate an image of "; inputRef.current.focus(); }
-                            toast.success("Image Mode Active");
-                          } else if (id === 'video') {
-                            if (!checkPremiumTool('Generate Video')) return;
-                            setIsVideoGeneration(true);
-                            setIsMagicSettingsOpen(true);
-                            if (inputRef.current) { inputRef.current.value = "Generate a video of "; inputRef.current.focus(); }
-                            toast.success("Video Mode Active");
-                          } else if (id === 'audio') {
-                            if (!checkPremiumTool('Convert to Audio')) return;
-                            setIsAudioConvertMode(true);
-                            if (inputRef.current) { inputRef.current.value = "Convert this text to audio: "; inputRef.current.focus(); }
-                            toast.success("Audio Mode Active");
-                          } else if (id === 'code') {
-                            if (!checkPremiumTool('Code Writer')) return;
-                            setIsCodeWriter(true);
-                            if (inputRef.current) { inputRef.current.value = "Write a function to "; inputRef.current.focus(); }
-                            toast.success("Code Mode Active");
-                          } else if (id === 'deep_search') {
-                            setIsDeepSearch(true);
-                            if (inputRef.current) { inputRef.current.value = "Research in-depth about "; inputRef.current.focus(); }
-                            toast.success("Deep Intelligence Active");
-                          } else if (id === 'web_search') {
-                            setIsWebSearch(true);
-                            if (inputRef.current) { inputRef.current.value = "Search for live updates on "; inputRef.current.focus(); }
-                            toast.success("Real-Time Search Active");
-                          } else if (id === 'document') {
-                            setIsFileAnalysis(true);
-                            uploadInputRef.current?.click();
-                            toast.success("Upload document for analysis");
-                          } else if (id === 'edit_image') {
-                            if (!checkPremiumTool('Edit Image')) return;
-                            setIsMagicEditing(true);
-                            toast.success("Image Editor Active");
-                          } else if (id === 'image_to_video') {
-                            if (!checkPremiumTool('Image to Video')) return;
-                            setIsMagicVideoModalOpen(true);
-                            toast.success("Image to Video Mode Active");
-                          } else if (id === 'ai_cashflow') {
-                            setIsCashFlowMode(true);
-                            setIsStockModalOpen(true);
-                            toast.success("AI CashFlow Active 📈");
-                          } else if (id === 'aiad_agent') {
-                            if (!checkPremiumTool('AI Ad Agent')) return;
-                            setIsSocialMediaDashboardOpen(true);
-                            toast.success("AI ADS™ Active");
-                          } else if (id === 'legal') {
-                            setActiveLegalToolkit(true);
-                            setCurrentMode('LEGAL_TOOLKIT');
-                            // Removed setLegalView('DASHBOARD') to keep input box visible behind modal
-                            toast.success("AI Legal Toolkit Active ⚖️");
-                          }
-                        }}
-                      />
-                    </section>
-                  </div>
+                  <img
+                    src="/logo/Logo.svg"
+                    alt="AISA"
+                    className="w-16 h-16 sm:w-20 sm:h-20 mx-auto drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-700 hover:scale-110"
+                    style={{ 
+                      WebkitMaskImage: 'radial-gradient(circle at 50% 45%, black 40%, transparent 70%)',
+                      maskImage: 'radial-gradient(circle at 50% 45%, black 40%, transparent 70%)'
+                    }}
+                  />
                 </motion.div>
-              )}
-            </AnimatePresence>
+                <section className="w-full px-1 sm:px-2 md:px-0">
+                  <FuturisticToolCards
+                    isAdmin={isAdminUser}
+                    activeToolId={
+                      isImageGeneration ? 'image' :
+                        isVideoGeneration ? 'video' :
+                          isDeepSearch ? 'deep_search' :
+                            isWebSearch ? 'web_search' :
+                              isCodeWriter ? 'code' :
+                                isAudioConvertMode ? 'audio' :
+                                  isFileAnalysis ? 'document' :
+                                    isMagicEditing ? 'edit_image' :
+                                      isMagicVideoModalOpen ? 'image_to_video' :
+                                        isStockModalOpen ? 'ai_cashflow' :
+                                          (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
+                    }
+                    onToolSelect={(id) => {
+                      setIsImageGeneration(false);
+                      setIsVideoGeneration(false);
+                      setIsAudioConvertMode(false);
+                      setIsCodeWriter(false);
+                      setIsDeepSearch(false);
+                      setIsWebSearch(false);
+                      setIsFileAnalysis(false);
+                      setIsMagicEditing(false);
+                      setIsMagicVideoModalOpen(false);
+                      setIsCashFlowMode(false);
+                      if (id !== 'legal') {
+                        setActiveLegalToolkit(false);
+                      }
+
+                      if (id === 'image') {
+                        if (!checkPremiumTool('Image Generation')) return;
+                        setIsImageGeneration(true);
+                        setIsMagicSettingsOpen(true);
+                        if (inputRef.current) { inputRef.current.value = "Generate an image of "; inputRef.current.focus(); }
+                        toast.success("Image Mode Active");
+                      } else if (id === 'video') {
+                        if (!checkPremiumTool('Generate Video')) return;
+                        setIsVideoGeneration(true);
+                        setIsMagicSettingsOpen(true);
+                        if (inputRef.current) { inputRef.current.value = "Generate a video of "; inputRef.current.focus(); }
+                        toast.success("Video Mode Active");
+                      } else if (id === 'audio') {
+                        if (!checkPremiumTool('Convert to Audio')) return;
+                        setIsAudioConvertMode(true);
+                        if (inputRef.current) { inputRef.current.value = "Convert this text to audio: "; inputRef.current.focus(); }
+                        toast.success("Audio Mode Active");
+                      } else if (id === 'code') {
+                        if (!checkPremiumTool('Code Writer')) return;
+                        setIsCodeWriter(true);
+                        if (inputRef.current) { inputRef.current.value = "Write a function to "; inputRef.current.focus(); }
+                        toast.success("Code Mode Active");
+                      } else if (id === 'deep_search') {
+                        setIsDeepSearch(true);
+                        if (inputRef.current) { inputRef.current.value = "Research in-depth about "; inputRef.current.focus(); }
+                        toast.success("Deep Intelligence Active");
+                      } else if (id === 'web_search') {
+                        setIsWebSearch(true);
+                        if (inputRef.current) { inputRef.current.value = "Search for live updates on "; inputRef.current.focus(); }
+                        toast.success("Real-Time Search Active");
+                      } else if (id === 'document') {
+                        setIsFileAnalysis(true);
+                        uploadInputRef.current?.click();
+                        toast.success("Upload document for analysis");
+                      } else if (id === 'edit_image') {
+                        if (!checkPremiumTool('Edit Image')) return;
+                        setIsMagicEditing(true);
+                        toast.success("Image Editor Active");
+                      } else if (id === 'image_to_video') {
+                        if (!checkPremiumTool('Image to Video')) return;
+                        setIsMagicVideoModalOpen(true);
+                        toast.success("Image to Video Mode Active");
+                      } else if (id === 'ai_cashflow') {
+                        setIsCashFlowMode(true);
+                        setIsStockModalOpen(true);
+                        toast.success("AI CashFlow Active 📈");
+                      } else if (id === 'aiad_agent') {
+                        if (!checkPremiumTool('AI Ad Agent')) return;
+                        setIsSocialMediaDashboardOpen(true);
+                        toast.success("AI ADS™ Active");
+                      } else if (id === 'legal') {
+                        setActiveLegalToolkit(true);
+                        setCurrentMode('LEGAL_TOOLKIT');
+                        // Removed setLegalView('DASHBOARD') to keep input box visible behind modal
+                        toast.success("AI Legal Toolkit Active ⚖️");
+                      }
+                    }}
+                  />
+                </section>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Unified Chat Input Container */}
         {legalView !== 'DASHBOARD' && (
           <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none" style={{ padding: '0 1rem calc(1rem + env(safe-area-inset-bottom, 0px)) 1rem', background: 'transparent' }}>
             {/* Bottom Mask removed in favor of solid background */}
-            <div className="max-w-5xl mx-auto w-full pointer-events-auto">
+            <div className="max-w-4xl mx-auto w-full pointer-events-auto">
 
 
               <form
@@ -7417,7 +7419,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 <input id="photos-upload" type="file" ref={photosInputRef} onChange={handleFileSelect} multiple className="hidden" accept="image/*" />
                 <input id="camera-upload" type="file" onChange={handleFileSelect} className="hidden" accept="image/*" capture="environment" />
 
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-end gap-2 w-full">
 
 
                   {/* AI CashFlow Search Results Dropdown */}
@@ -7449,7 +7451,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   )}
 
                   {/* Left Actions Group */}
-                  <div className="flex items-center gap-[2px] pl-[2px] shrink-0">
+                  <div className="flex items-center gap-[8px] pl-[14px] shrink-0">
                     <AnimatePresence>
                       {isAttachMenuOpen && (
                         <motion.div
@@ -7501,8 +7503,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         >
                           <div className="px-6 py-5 bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-100 dark:border-zinc-800 shrink-0">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shadow-lg shadow-primary/20">
-                                <Brain className="w-5 h-5 text-white" />
+                              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden border border-white/20">
+                                <img src="/logo/Logo.svg" alt="AISA" className="w-7 h-7 object-contain" />
                               </div>
                               <h3 className="text-[16px] font-black text-slate-800 dark:text-white uppercase tracking-tight">
                                 AISA ™ Magic Tools
@@ -7897,7 +7899,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         className="w-[36px] h-[36px] rounded-full flex items-center justify-center bg-secondary/80 text-subtext hover:text-primary transition-colors shadow-lg hover:shadow-primary/40 relative overflow-visible z-20"
                         title="AISA ™ Magic Tools"
                       >
-                        <Brain className={`w-[20px] h-[20px] relative z-10 transition-colors`} />
+                        <Brain className="w-5 h-5 relative z-10" />
                       </motion.button>
                     </div>
                   </div>
@@ -7905,7 +7907,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   <div className="flex-1 flex items-center min-w-0 bg-transparent border-0 ring-0 focus:ring-0">
                     <AnimatePresence>
                       {(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-[calc(100vw-24px)] max-w-5xl px-2 z-[100] justify-start sm:justify-start">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 flex gap-2 overflow-x-auto no-scrollbar pointer-events-auto w-[calc(100vw-24px)] max-w-5xl px-6 z-[100] justify-start sm:justify-start">
                           {isCashFlowMode && (
                             <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0">
                               <TrendingUp size={12} strokeWidth={3} /> <span className="hidden sm:inline">AI CashFlow</span>
@@ -8101,7 +8103,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                 <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                                   <LegalLogo size={14} showText={false} color="white" />
                                 </div>
-                                <span 
+                                <span
                                   className="uppercase tracking-wide text-[10px] font-black truncate max-w-[120px] cursor-pointer hover:text-indigo-400 transition-colors"
                                   onClick={() => setActiveLegalToolkit(true)}
                                   title="Open AI Legal Toolkit"
@@ -8231,7 +8233,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                       }}
                       placeholder={isLimitReached ? t('limitReached') || "Chat limit reached. Sign in to continue." : (isVideoGeneration ? t('describeVideo') || "Describe the video you want to generate..." : isAudioConvertMode ? t('enterTextToConvert') || "Enter text to convert..." : isDocumentConvert ? t('uploadFileToConvert') || "Upload file & ask to convert..." : typedPlaceholder)}
                       rows={1}
-                      className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none px-3.5 py-2 sm:px-4 sm:py-3 text-slate-800 dark:text-zinc-100 text-left placeholder-slate-400 dark:placeholder-zinc-500 resize-none overflow-y-auto custom-scrollbar font-bold leading-relaxed text-[16px] ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
+                      className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none px-3.5 py-2 sm:px-4 sm:py-3 text-slate-800 dark:text-zinc-100 text-left placeholder-slate-400 dark:placeholder-zinc-500 resize-none overflow-y-auto custom-scrollbar font-normal leading-relaxed text-[16px] ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
                       style={{ minHeight: '40px', height: 'auto', maxHeight: '180px', lineHeight: '1.5' }}
                     />
                   </div>
@@ -8250,18 +8252,18 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         {getAgentCapabilities(activeAgent.agentName, activeAgent.category).canVoice && (
                           <div className="relative">
 
-                              <motion.button
-                                type="button"
-                                whileHover={{ scale: 1.15, rotate: [0, -10, 10, 0] }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => {
-                                  handleVoiceInput();
-                                }}
-                                className="w-[36px] h-[36px] rounded-full flex items-center justify-center bg-secondary/80 text-subtext hover:text-primary transition-colors shadow-lg relative overflow-visible z-20"
-                                title={t('voiceInput')}
-                              >
-                                <Mic className={`w-[20px] h-[20px] shrink-0 transition-colors`} />
-                              </motion.button>
+                            <motion.button
+                              type="button"
+                              whileHover={{ scale: 1.15, rotate: [0, -10, 10, 0] }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => {
+                                handleVoiceInput();
+                              }}
+                              className="w-[36px] h-[36px] rounded-full flex items-center justify-center bg-secondary/80 text-subtext hover:text-primary transition-colors shadow-lg relative overflow-visible z-20"
+                              title={t('voiceInput')}
+                            >
+                              <Mic className={`w-[20px] h-[20px] shrink-0 transition-colors`} />
+                            </motion.button>
                           </div>
                         )}
                       </>

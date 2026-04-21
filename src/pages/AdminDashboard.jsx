@@ -1333,8 +1333,8 @@ const AdminDashboard = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-                            <Shield className="w-6 h-6 text-white" />
+                        <div className="w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-xl flex items-center justify-center shadow-lg border border-white/10 overflow-hidden">
+                            <img src="/logo/Logo.svg" alt="AISA" className="w-9 h-9 object-contain" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-black text-maintext tracking-tight">{t('adminDashboard')}</h1>

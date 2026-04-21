@@ -41,7 +41,7 @@ const Login = () => {
 
     if (isSocialAuth && token && userId) {
       toast.success(`Successfully authenticated as ${userName}!`);
-      
+
       const userData = {
         id: userId,
         name: userName,
@@ -152,13 +152,13 @@ const Login = () => {
 
       {/* Content Container - Vertically Centered */}
       <div className="relative w-full max-w-[400px] flex flex-col items-center z-50 transform -translate-y-2">
-        
-        {/* Robot Logo - Scaled for all devices */}
-        <div className="w-full flex justify-center mb-1 shrink-0">
+
+        {/* Canonical Logo - Scaled for all devices */}
+        <div className="w-full flex justify-center mb-4 shrink-0">
           <img
-            src={loginBg}
+            src="/logo/Logo.svg"
             alt="AISA™ Logo"
-            className="w-[120px] sm:w-[150px] h-auto object-contain opacity-[1] brightness-110 drop-shadow-2xl"
+            className="w-[80px] sm:w-[100px] h-auto object-contain brightness-110 drop-shadow-2xl"
           />
         </div>
 

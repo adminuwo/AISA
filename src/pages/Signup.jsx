@@ -141,20 +141,20 @@ const Signup = () => {
               <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">{t('joinAISA')}</p>
             </div>
 
-          <AnimatePresence mode="wait">
-            {(error || passwordError) && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 justify-center backdrop-blur-md"
-              >
-                <AlertCircle className="w-3.5 h-3.5" />
-                {error || passwordError}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {(error || passwordError) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-8 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 justify-center backdrop-blur-md"
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {error || passwordError}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name Field - Glassy Style */}
               <div className="relative group">
                 <div className="absolute inset-0 bg-white/30 dark:bg-slate-900/40 rounded-2xl blur-sm transition-all group-focus-within:bg-white/50 dark:group-focus-within:bg-slate-900/60" />
@@ -234,8 +234,8 @@ const Signup = () => {
                 type="submit"
                 disabled={isLoading || !agreedToTerms}
                 className={`w-full py-4 rounded-2xl font-bold text-lg text-white shadow-xl transition-all duration-300 flex items-center justify-center gap-2 mt-4 ${agreedToTerms
-                    ? 'bg-primary shadow-primary/30 hover:shadow-primary/40 cursor-pointer'
-                    : 'bg-slate-300 dark:bg-slate-700 shadow-none cursor-not-allowed opacity-60'
+                  ? 'bg-primary shadow-primary/30 hover:shadow-primary/40 cursor-pointer'
+                  : 'bg-slate-300 dark:bg-slate-700 shadow-none cursor-not-allowed opacity-60'
                   }`}
               >
                 {isLoading ? (
@@ -294,7 +294,7 @@ const Signup = () => {
                 <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Apple ID</span>
               </motion.button>
             </div>
-            
+
 
 
             <div className="mt-10 pt-8 border-t border-white/10 dark:border-slate-800/50 text-center text-xs font-bold text-slate-400 tracking-wide uppercase relative">

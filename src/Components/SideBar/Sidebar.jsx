@@ -13,7 +13,6 @@ import {
   X,
   Video,
   FileText,
-  Bell,
   Headphones,
   HelpCircle,
   ChevronDown,
@@ -44,6 +43,7 @@ import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
+
 import { chatStorageService } from '../../services/chatStorageService';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -52,6 +52,7 @@ import { getSubscriptionDetails } from '../../services/pricingService';
 import FaqModal from '../FaqModal.jsx';
 import apiService from '../../services/apiService';
 import DeleteConfirmModal from '../DeleteConfirmModal.jsx';
+
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
@@ -64,7 +65,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [currentUserData, setUserRecoil] = useRecoilState(userData);
   const user = currentUserData.user || getUserData() || { name: "Loading...", email: "...", role: "user" };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+
   const [isFaqOpen, setIsFaqOpen] = useState(false);
   const [sessions, setSessions] = useRecoilState(sessionsData);
   const { sessionId } = useParams();
@@ -141,21 +142,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       });
     }
 
-    const fetchNotifications = async () => {
-      try {
-        const res = await axios.get(apis.notifications, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        setNotifications(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("Notifications fetch failed", err);
-      }
-    };
-
     if (token) {
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
-
       getSubscriptionDetails().then(data => {
         if (data.founderStatus) {
           setPlanName("Founder");
@@ -165,8 +152,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           setPlanName("Free Plan");
         }
       }).catch(err => console.log(err));
-
-      return () => clearInterval(interval);
     }
   }, [token]);
 
@@ -396,11 +381,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const currentProject = projects.find(p => p._id === currentProjectId);
 
-  if (notifiyTgl.notify) {
-    setTimeout(() => {
-      setNotifyTgl(prev => ({ ...prev, notify: false }));
-    }, 2000);
-  }
 
   const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group font-medium border border-transparent ${isActive
@@ -456,17 +436,21 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
         {/* Brand & Top Actions */}
         <div className="p-6 pb-2 mb-2 flex items-center justify-between relative z-10">
-          <Link to="/" state={{ fromLogo: true }} className="group/logo flex items-center gap-2">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 animate-pulse opacity-0 group-hover/logo:opacity-100 transition-opacity" />
-              <img
-                src={"/logo/Logo.svg"}
-                alt="AISA™"
-                className="h-10 w-auto relative z-10 transition-transform duration-500 group-hover/logo:scale-110 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-              />
-            </div>
-            <span className="text-xl font-black text-maintext tracking-tighter group-hover/logo:text-primary transition-colors">AISA<sup className="text-[0.6em] ml-0.5">™</sup></span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/" state={{ fromLogo: true }} className="group/logo flex items-center gap-2">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 animate-pulse opacity-0 group-hover/logo:opacity-100 transition-opacity" />
+                <img
+                  src={"/logo/Logo.svg"}
+                  alt="AISA™"
+                  className="h-9 w-auto relative z-10 transition-transform duration-500 group-hover/logo:scale-110 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"
+                />
+              </div>
+              <span className="text-xl font-black text-maintext tracking-tighter group-hover/logo:text-primary transition-colors">AISA<sup className="text-[0.6em] ml-0.5">™</sup></span>
+            </Link>
+
+
+          </div>
 
           <button
             onClick={onClose}
@@ -970,6 +954,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         shareId={currentShareId}
         sessionTitle={sessionToShare?.title || "Shared Chat"}
       />
+
     </>
   );
 };
