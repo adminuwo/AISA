@@ -481,7 +481,9 @@ const Chat = () => {
   const [isMagicEditing, setIsMagicEditing] = useState(false);
   const [editRefImage, setEditRefImage] = useState(null);
   const [isMagicVideoModalOpen, setIsMagicVideoModalOpen] = useState(false);
-  const [isSocialMediaDashboardOpen, setIsSocialMediaDashboardOpen] = useState(false);
+  const [isSocialMediaDashboardOpen, setIsSocialMediaDashboardOpen] = useState(
+    () => localStorage.getItem('aisa_aiads_open') === 'true'
+  );
   const [activeTab, setActiveTab] = useState('all');
 
   const [isBrainHovered, setIsBrainHovered] = useState(false);
@@ -626,6 +628,15 @@ const Chat = () => {
       navigate(location.pathname, { replace: true });
     }
   }, [location.search]);
+
+  // ─── AI Ads Dashboard persistence: restore on refresh ───
+  useEffect(() => {
+    if (isSocialMediaDashboardOpen) {
+      localStorage.setItem('aisa_aiads_open', 'true');
+    } else {
+      localStorage.removeItem('aisa_aiads_open');
+    }
+  }, [isSocialMediaDashboardOpen]);
 
   // ─── Direct Feature Link Handling ───
   useEffect(() => {
@@ -7122,8 +7133,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         <AnimatePresence>
           {messages.length === 0 && 
             currentMode !== 'LEGAL_TOOLKIT' && 
-            (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && 
-            !(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit) && (
+            (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
             <motion.div
               key="welcome-screen"
               initial={{ opacity: 0 }}
@@ -7158,7 +7168,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                                     isMagicEditing ? 'edit_image' :
                                       isMagicVideoModalOpen ? 'image_to_video' :
                                         isStockModalOpen ? 'ai_cashflow' :
-                                          (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
+                                          isSocialMediaDashboardOpen ? 'aiad_agent' :
+                                            (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT') ? 'legal' : null
                     }
                     onToolSelect={(id) => {
                       setIsImageGeneration(false);
@@ -8900,7 +8911,10 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
       />
       <AiSocialMediaDashboard
         isOpen={isSocialMediaDashboardOpen}
-        onClose={() => setIsSocialMediaDashboardOpen(false)}
+        onClose={() => {
+          setIsSocialMediaDashboardOpen(false);
+          localStorage.removeItem('aisa_aiads_open');
+        }}
         userPlan={userPlanName}
         isPremium={isPremiumUser}
         isAdmin={isAdminUser}
