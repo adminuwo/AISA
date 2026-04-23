@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ImagePlus, PlaySquare, Headphones, Code, Sparkles, Zap, Search, Globe, FileText, Wand2, PlayCircle, Scale, Video, Brain, TrendingUp, Megaphone, Lock } from 'lucide-react';
-import LegalLogo from './LegalLogo';
+import LegalLogo from '../Tools/AI_Legal/LegalLogo';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -311,7 +311,12 @@ const ToolCard = ({ tool, onToolSelect, index }) => {
                 boxShadow: isActive ? '0 0 15px var(--primary)' : 'none'
               }}
             >
-              <Icon size={18} style={{ color: isActive ? '#fff' : tool.color }} />
+              <Icon 
+                size={18} 
+                showText={tool.id === 'legal'} 
+                style={{ color: isActive ? '#fff' : tool.color }} 
+              />
+
             </div>
             
             <div className="flex items-center gap-1.5">

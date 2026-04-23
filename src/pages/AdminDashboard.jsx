@@ -1138,7 +1138,7 @@ const LegalPagesTab = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-2 bg-white/20 dark:bg-white/5 rounded-xl p-1 border border-white/10 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-2 bg-white/20 dark:bg-white/5 rounded-xl p-1 border border-white/10 overflow-x-auto admin-horizontal-scrollbar">
                     {['cookie-policy', 'terms-of-service', 'privacy-policy'].map(type => (
                         <button
                             key={type}
@@ -1513,7 +1513,7 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 admin-horizontal-scrollbar">
                     {tabs.map(tab => (
                         <TabButton
                             key={tab.id}

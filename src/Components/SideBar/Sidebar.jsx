@@ -264,13 +264,13 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const handleNewChat = () => {
-    // Reset to global context so user can access the main tool cards dashboard
+    // Reset to global context
     setCurrentProjectId('default');
-    setMode('NORMAL_CHAT');
-    setLegalTool(null);
+    // Don't force reset mode here, let it persist if user hasn't cancelled it
     navigate('/dashboard/chat/new');
     onClose();
   };
+
 
   const handleDeleteSession = async (e, sessionIdToDelete) => {
     e.stopPropagation();
@@ -455,7 +455,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   className="h-9 w-auto relative z-10 transition-transform duration-500 group-hover/logo:scale-110 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"
                 />
               </div>
-              <span className="text-xl font-black tracking-tighter group-hover/logo:text-primary transition-colors" style={{ color: '#9333ea', fontFamily: '"Times New Roman", Times, serif' }}>AISA<sup className="text-[0.6em] ml-0.5">™</sup></span>
+              <span className="text-xl font-black tracking-tighter transition-all duration-300" style={{ background: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontFamily: '"Times New Roman", Times, serif', display: 'inline-block', paddingRight: '2px' }}>AISA<span style={{ fontSize: '0.6em', verticalAlign: 'super', marginLeft: '2px' }}>™</span></span>
             </Link>
 
 
@@ -818,7 +818,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 className="group relative"
                               >
                                 {editingSessionId === session.sessionId ? (
-                                  <div className="flex items-center gap-3 px-4 py-4 bg-white/5 rounded-2xl border border-primary/40 shadow-2xl mx-2 mb-1">
+                                  <div className="flex items-center gap-3 px-4 py-4 bg-white/5 rounded-2xl border border-primary/40 shadow-2xl mx-2">
                                     <input
                                       autoFocus
                                       type="text"
@@ -844,7 +844,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                         navigate(`/dashboard/chat/${session.sessionId}`);
                                         onClose();
                                       }}
-                                      className={`sidebar-chat-item group/item transition-all duration-500 mb-1 mx-2 cursor-pointer
+                                      className={`sidebar-chat-item group/item transition-all duration-500 mx-2 cursor-pointer
                                     ${currentSessionId === session.sessionId
                                           ? (theme === 'dark' ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl' : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5')
                                           : (theme === 'dark' ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent' : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]')
@@ -858,14 +858,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                                         />
                                       )}
                                       <div className="sidebar-chat-title-group text-left flex-1 min-w-0">
-                                        <div className="sidebar-chat-title mb-1 truncate">
+                                        <div className="sidebar-chat-title truncate">
                                           {highlightMatch(session.title || "Untitled Intelligence", searchQuery)}
                                         </div>
                                         <div className="flex items-center gap-2">
-                                          <div className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${theme === 'dark' ? 'text-subtext/40' : 'text-slate-500'}`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${currentSessionId === session.sessionId ? 'bg-primary animate-pulse' : (theme === 'dark' ? 'bg-white/20' : 'bg-slate-300')}`}></span>
-                                            {new Date(session.lastModified).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                          </div>
                                           {searchQuery && session.projectId && (
                                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/10 border border-primary/20">
                                               <Folder className="w-2.5 h-2.5 text-primary" />
@@ -914,13 +910,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
                   <User className="w-6 h-6 text-primary" />
                 </div>
-                <p className="text-xs text-subtext mb-2">{t('loginToSaveHistory')}</p>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="text-xs font-bold text-primary hover:underline"
-                >
-                  {t('logInNow')}
-                </button>
+                <p className="text-xs text-subtext">{t('loginToSaveHistory')}</p>
               </div>
             )}
           </div>
@@ -930,19 +920,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="p-4 border-t border-white/5 relative z-20 space-y-3">
 
 
-          {!token && (
-            <div
-              onClick={() => navigate(AppRoute.LOGIN)}
-              className="rounded-xl border border-transparent hover:bg-white/20 dark:hover:bg-white/10 transition-all cursor-pointer flex items-center gap-3 px-3 py-2 group relative z-10"
-            >
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase shrink-0 border border-primary/10 group-hover:bg-primary/20 transition-colors">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="font-bold text-maintext text-xs group-hover:text-primary transition-colors">
-                {t('logIn')}
-              </div>
-            </div>
-          )}
 
 
           <div className="flex flex-col gap-1 px-4 pt-4 border-t border-white/5">

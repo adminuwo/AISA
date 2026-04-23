@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Outlet, Navigate, BrowserRouter, useNavigate, useLocation, Link } from 'react-router-dom';
 
 import Landing from './landingpage/Landing';
@@ -16,12 +16,13 @@ import SharedChat from './pages/SharedChat';
 
 
 import { AppRoute } from './types';
-import { Menu, Bell } from 'lucide-react';
-import NeuralBackground from './Components/NeuralBackground.jsx';
+import { Menu, Bell, Sun, Moon, LogIn, User } from 'lucide-react';
+import { useTheme } from './context/ThemeContext';
 import { useRecoilState } from 'recoil';
-import { toggleState, getUserData } from './userStore/userData';
+import { toggleState, getUserData, clearUser } from './userStore/userData';
 import { usePersonalization } from './context/PersonalizationContext';
 import NotificationCenter from './Components/NotificationBar/NotificationCenter.jsx';
+import ProfileSettingsDropdown from './Components/ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
 
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
@@ -122,36 +123,72 @@ const DashboardLayout = () => {
   const user = getUserData() || { name: 'Guest' };
   const token = getUserData()?.token;
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // ─── Scroll Direction Logic for Auto-Hide Navbar ───
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const scrollThreshold = 15; // px
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      // Support both window scroll and element scroll via capture
+      const currentScrollY = e.target === document ? window.scrollY : (e.target.scrollTop || 0);
+
+      // Avoid jitter at the very top
+      if (currentScrollY < 10) {
+        setIsVisible(true);
+        setLastScrollY(currentScrollY);
+        return;
+      }
+
+      const diff = currentScrollY - lastScrollY;
+
+      if (Math.abs(diff) > scrollThreshold) {
+        if (diff > 0 && isVisible) {
+          // Scrolling Down
+          setIsVisible(false);
+        } else if (diff < 0 && !isVisible) {
+          // Scrolling Up
+          setIsVisible(true);
+        }
+        setLastScrollY(currentScrollY);
+      }
+    };
+
+    // Use capture: true to catch scroll events from any nested scrollable container (like Chat.jsx)
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [lastScrollY, isVisible]);
 
   return (
     <div className="fixed inset-0 flex bg-transparent text-maintext overflow-hidden aisa-scalable-text">
       {/* ─── Animated Atmospheric Background ─── */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         {/* Light mode gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#f8fafc] via-[#eef2ff] to-[#fce7f3] dark:opacity-0 transition-opacity duration-500" />
-        {/* Dark mode deep space */}
+        <div className="absolute inset-0 bg-white dark:opacity-0 transition-opacity duration-500" />
+        {/* Dark mode deep black space */}
         <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500"
-          style={{ background: 'radial-gradient(ellipse at 15% 20%, rgba(139,92,246,0.14) 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(59,130,246,0.12) 0%, transparent 55%), linear-gradient(160deg, #050816 0%, #0a0f2e 50%, #060b20 100%)' }} />
+          style={{ background: 'radial-gradient(ellipse at 15% 20%, rgba(139,92,246,0.08) 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(59,130,246,0.06) 0%, transparent 55%), #000000' }} />
         {/* Dark mode neural background */}
-        <div className="dark:block hidden">
-          <NeuralBackground />
-        </div>
+        {/* Neural background removed as per user request */}
         {/* Light mode orbs */}
         <motion.div
           animate={{ y: [0, 30, 0], x: [0, 20, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-primary/20 dark:bg-violet-600/6 blur-[120px]"
+          className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-transparent dark:bg-violet-600/6 blur-[120px]"
         />
         <motion.div
           animate={{ y: [0, -40, 0], x: [0, -30, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/20 dark:bg-blue-600/6 blur-[120px]"
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-transparent dark:bg-blue-600/6 blur-[120px]"
         />
         <motion.div
           animate={{ opacity: [0.1, 0.3, 0.1] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-[30%] left-[20%] w-[40%] h-[40%] rounded-full bg-primary/10 dark:bg-orange-500/3 blur-[100px]"
+          className="absolute top-[30%] left-[20%] w-[40%] h-[40%] rounded-full bg-transparent dark:bg-orange-500/3 blur-[100px]"
         />
       </div>
 
@@ -161,7 +198,18 @@ const DashboardLayout = () => {
 
         {/* Unified Mobile Header (Hides when sidebar is open to prevent overlap) */}
         {!isFullScreen && !isSidebarOpen && (
-          <div className="lg:hidden flex items-center justify-start px-6 py-4 bg-white/40 dark:bg-black/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shrink-0 z-[1001] shadow-xl">
+          <motion.div
+            initial={false}
+            animate={{
+              y: isVisible ? 0 : '-100%',
+              opacity: isVisible ? 1 : 0
+            }}
+            transition={{
+              duration: 0.3,
+              ease: "easeInOut"
+            }}
+            className="lg:hidden flex items-center justify-between px-6 py-3 bg-white/70 dark:bg-black/40 backdrop-blur-xl border-b border-white/10 dark:border-white/5 shrink-0 z-[1001] fixed top-0 left-0 right-0 shadow-lg shadow-black/5"
+          >
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsSidebarOpen(true)}
@@ -169,7 +217,53 @@ const DashboardLayout = () => {
             >
               <Menu className="w-6 h-6 stroke-[2.5]" />
             </motion.button>
-          </div>
+
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/30 text-primary"
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </motion.button>
+
+              {token ? (
+                <div className="relative profile-menu-container">
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/30 text-primary overflow-hidden"
+                  >
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt="P" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={20} />
+                    )}
+                  </motion.button>
+                  <AnimatePresence>
+                    {isProfileMenuOpen && (
+                      <ProfileSettingsDropdown
+                        onClose={() => setIsProfileMenuOpen(false)}
+                        onLogout={() => {
+                          clearUser();
+                          navigate('/login');
+                          setIsProfileMenuOpen(false);
+                        }}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => navigate('/login')}
+                  className="px-4 h-10 flex items-center justify-center bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20"
+                >
+                  Login
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
         )}
 
         <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
