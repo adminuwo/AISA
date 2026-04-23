@@ -127,10 +127,18 @@ export const activeProjectIdData = atom({
 
 export const activeModeData = atom({
   key: 'activeModeData',
-  default: 'NORMAL_CHAT'
+  default: localStorage.getItem('aisa_active_mode') || 'NORMAL_CHAT'
 })
 
 export const activeLegalToolData = atom({
   key: 'activeLegalToolData',
-  default: null
+  default: (() => {
+    try {
+      const saved = localStorage.getItem('aisa_active_legal_tool_data');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  })()
 })
+

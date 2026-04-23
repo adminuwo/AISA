@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Sparkles, MessageSquare, FileText, Image, Cloud, Camera, Mic, Share2, Scan, FileDiff, FileType, Search } from 'lucide-react';
+import { Bot, X, Sparkles, MessageSquare, FileText, Image, Cloud, Camera, Mic, Share2, Scan, FileDiff, FileType, Search, Video, Globe, Headphones, Code, Wand2, TrendingUp, PlaySquare, Megaphone } from 'lucide-react';
+import LegalLogo from '../Tools/AI_Legal/LegalLogo';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -29,17 +30,18 @@ const AboutAISA = ({ isOpen, onClose }) => {
     ];
 
     const features = [
-        { title: t('smartChat'), icon: <MessageSquare className="w-4 h-4" />, desc: t('smartChatDesc') },
-        { title: t('docAnalysis'), icon: <FileText className="w-4 h-4" />, desc: t('docAnalysisDesc') },
-        { title: t('imageUnderstanding'), icon: <Image className="w-4 h-4" />, desc: t('imageUnderstandingDesc') },
-        { title: t('addFromDrive'), icon: <Cloud className="w-4 h-4" />, desc: t('addFromDriveDesc') },
-        { title: t('liveCamera'), icon: <Camera className="w-4 h-4" />, desc: t('liveCameraDesc') },
-        { title: t('voiceAssistant'), icon: <Mic className="w-4 h-4" />, desc: t('voiceAssistantDesc') },
-        { title: t('imageGen'), icon: <Share2 className="w-4 h-4" />, desc: t('imageGenDesc') },
-        { title: t('multiModal'), icon: <FileDiff className="w-4 h-4" />, desc: t('multiModalDesc') },
-        { title: t('smartScan'), icon: <Scan className="w-4 h-4" />, desc: t('smartScanDesc') },
-        { title: t('pdfToDoc'), icon: <FileType className="w-4 h-4" />, desc: t('pdfToDocDesc') },
-        { title: t('deepSearch'), icon: <Search className="w-4 h-4" />, desc: t('deepSearchDesc') }
+        { title: t('generateImage'), icon: <Image className="w-4 h-4" />, desc: t('createVisualsFromText') },
+        { title: t('generateVideo'), icon: <Video className="w-4 h-4" />, desc: t('textToCinematicVideo') },
+        { title: t('webSearch'), icon: <Globe className="w-4 h-4" />, desc: t('liveWebDataAccess') },
+        { title: t('deepSearch'), icon: <Search className="w-4 h-4" />, desc: t('researchComplexTopics') },
+        { title: t('convertToAudio'), icon: <Headphones className="w-4 h-4" />, desc: t('textDocsToVoice') },
+        { title: t('analyzeDocument'), icon: <FileText className="w-4 h-4" />, desc: t('chatWithPdfsDocs') },
+        { title: t('codeWriter'), icon: <Code className="w-4 h-4" />, desc: t('writeDebugCode') },
+        { title: t('editImage'), icon: <Wand2 className="w-4 h-4" />, desc: t('magicImageEditor') },
+        { title: t('aiCashFlow'), icon: <TrendingUp className="w-4 h-4" />, desc: t('liveAnalysisReports') },
+        { title: t('aiLegal'), icon: <LegalLogo size={16} />, desc: t('specializedAiLegalTools') },
+        { title: t('imageToVideo'), icon: <PlaySquare className="w-4 h-4" />, desc: t('imageToVideoMagic') },
+        { title: t('aiAds'), icon: <Megaphone className="w-4 h-4" />, desc: t('automateSocialMedia') }
     ];
 
     return (

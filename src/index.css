@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    --background: 228 33% 98%;
-    /* Main Background #f8f9fc */
+    --background: 0 0% 100%;
+    /* Main Background Pure White */
     --foreground: 0 0% 0%;
     /* Black */
 
@@ -49,14 +49,14 @@
 
   :root.dark,
   .dark {
-    --background: 227 39% 9%;
-    /* #0E1220 - Deep Calm Charcoal/Navy */
+    --background: 0 0% 0%;
+    /* Pure Black #000000 */
     --foreground: 210 20% 90%;
     /* Soft Off-White for Headings */
-    --card: 228 35% 13%;
-    /* #161B2E - Matte Dark Card */
+    --card: 0 0% 4%;
+    /* Very Dark Gray #0a0a0a - Matte Dark Card */
     --card-foreground: 210 15% 80%;
-    --popover: 227 39% 9%;
+    --popover: 0 0% 0%;
     --popover-foreground: 210 15% 80%;
     --primary: 225 60% 55%;
     --primary-light: 225 60% 70%;
@@ -64,19 +64,19 @@
     --primary-bg: 225 30% 12%;
     --primary-border: 225 60% 55% / 0.15;
     --primary-foreground: 210 40% 98%;
-    --secondary: 228 30% 18%;
-    /* Subtle darker surface */
+    --secondary: 0 0% 6%;
+    /* Subtle darker surface #0f0f0f */
     --secondary-foreground: 210 20% 90%;
-    --muted: 228 30% 18%;
+    --muted: 0 0% 8%;
     --muted-foreground: 215 15% 65%;
     /* Muted Gray for body text */
-    --accent: 228 30% 18%;
+    --accent: 0 0% 6%;
     --accent-foreground: 210 20% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 228 30% 18%;
+    --border: 0 0% 10%;
     /* Subtle border, blending in */
-    --input: 228 30% 18%;
+    --input: 0 0% 8%;
     --ring: 225 60% 55%;
   }
 }
@@ -491,6 +491,26 @@ body,
   display: none;
   /* Chrome, Safari and Opera */
 }
+
+.admin-horizontal-scrollbar {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.admin-horizontal-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.admin-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
 
 .demo-scroll-thumb {
   scrollbar-width: thin;
@@ -1090,7 +1110,7 @@ html.lenis body {
   justify-content: space-between !important;
   align-items: center !important;
   width: 100% !important;
-  padding: 10px 12px !important;
+  padding: 5px 12px !important;
   gap: 10px !important;
   border-radius: 14px !important;
 }
@@ -1219,7 +1239,7 @@ html.lenis body {
     width: 24px !important;
     height: 24px !important;
   }
-  
+
   .ai-row .chatgpt-avatar-container img {
     width: 18px !important;
     height: 14px !important;

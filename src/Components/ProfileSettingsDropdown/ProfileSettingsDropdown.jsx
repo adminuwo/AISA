@@ -6,7 +6,7 @@ import {
     Settings, Bell, Sparkles, LayoutGrid,
     Database, Shield, Lock, User,
     X, ChevronDown, Play, Globe, Camera,
-    LogOut, Monitor, MonitorOff, Mic, Check, HelpCircle,
+    LogOut, Monitor, MonitorOff, Mic, Check, HelpCircle, Smartphone, Tablet,
     ChevronLeft, ChevronRight, Trash2, ShieldCheck, Mail, Volume2, Plus, MessageSquare, Send, Clock,
     Palette, Type, RefreshCcw, Languages, Crown, History, Calendar, CreditCard, Download, Search, Zap
 } from 'lucide-react';
@@ -98,8 +98,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     }, [chatSessions]);
 
     useEffect(() => {
-        setNicknameInput(personalizations.account?.nickname || '');
-    }, [personalizations.account?.nickname]);
+        setNicknameInput(personalizations.account?.nickname || user.name || '');
+    }, [personalizations.account?.nickname, user.name]);
 
     useEffect(() => {
         if (user?.token) {
@@ -215,13 +215,20 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             updatePersonalization('account', { nickname: nicknameInput });
             try {
                 if (user?.token) {
-                    await axios.put(apis.profile, { name: nicknameInput }, {
+                    const res = await axios.put(apis.profile, { name: nicknameInput }, {
                         headers: { 'Authorization': `Bearer ${user.token}` }
                     });
+                    
+                    if (res.data) {
+                        // Update local state and storage
+                        const updatedUser = setUserData(res.data);
+                        setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+                    }
                 }
                 toast.success(t('profileUpdatedSuccess') || 'Profile updated successfully');
             } catch (error) {
-                toast.success(t('profileUpdatedLocally') || 'Profile updated locally');
+                console.error("Profile update failed", error);
+                toast.error(error.response?.data?.error || 'Failed to update profile on server');
             }
         }
     };
@@ -770,7 +777,13 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner transition-transform group-hover:scale-110 ${
                                                 session.device === 'Mobile' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-500'
                                             }`}>
-                                                {session.device === 'Mobile' ? <Monitor className="w-6 h-6 rotate-180" /> : <Monitor className="w-6 h-6" />}
+                                                {session.device === 'Mobile' ? (
+                                                    <Smartphone className="w-6 h-6" />
+                                                ) : session.device === 'Tablet' ? (
+                                                    <Tablet className="w-6 h-6" />
+                                                ) : (
+                                                    <Monitor className="w-6 h-6" />
+                                                )}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 mb-0.5">
@@ -1167,6 +1180,13 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
         <AnimatePresence>
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[2px]" onClick={onClose}>
                 <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="w-full sm:max-w-[850px] h-full sm:h-[85vh] bg-white dark:bg-[#161B2E] flex flex-col sm:flex-row shadow-2xl sm:rounded-[2rem] overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleImageUpload} 
+                        accept="image/*" 
+                        style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} 
+                    />
                     <div className={`w-full sm:w-[240px] bg-gray-50 dark:bg-black/20 flex flex-col border-r border-gray-100 dark:border-white/5 ${view === 'detail' ? 'hidden sm:flex' : 'flex'}`}>
                         <div className="p-5 flex justify-between items-center">
                             <h2 className="text-lg font-bold">Settings</h2>

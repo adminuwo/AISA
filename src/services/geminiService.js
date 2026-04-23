@@ -127,12 +127,14 @@ export const generateChatResponse = async (history, currentMessage, systemInstru
  */
 export const generateFollowUpPrompts = async (prompt, type = 'image') => {
     try {
-        const systemInstruction = `You are AISA™ Prompt Engineer.
-Based on this ${type} request: "${prompt}", generate exactly 3 highly relevant, creative, and varied follow-up prompts.
-- Prompts must be concise (max 10 words).
-- Format: A simple numbered or bulleted list.
-- Do NOT include any intro or outro text.
-- Match the language of the original prompt if possible.`;
+        const systemInstruction = `You are a smart suggestion engine for an AI assistant.
+Your job is to generate exactly 3 highly relevant, context-aware, and ACTION-ORIENTED follow-up suggestions for ${type} mode.
+
+STRICT RULES:
+1. NO GENERIC SUGGESTIONS: Never return "Explain more", "Give examples", or "Summarize".
+2. ACTION-ORIENTED: Suggestions must feel like a next step.
+3. LENGTH: 5–10 words max.
+4. FORMAT: Return ONLY a JSON array: ["S1", "S2", "S3"]`;
 
         const response = await generateChatResponse([], prompt, systemInstruction, [], 'English');
 
@@ -140,11 +142,25 @@ Based on this ${type} request: "${prompt}", generate exactly 3 highly relevant, 
         const replyText = response?.reply || (typeof response === 'string' ? response : null);
 
         if (replyText && !replyText.includes('Log In') && !replyText.includes('System Message')) {
-            // Split by newline or standard bullet patterns (1., -, *, •)
+            // Attempt to parse as JSON first
+            try {
+                // Remove markdown code blocks if present
+                const jsonMatch = replyText.match(/\[\s*".*?"\s*\]/s) || replyText.match(/\[.*\]/s);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    if (Array.isArray(parsed)) {
+                        return parsed.map(s => s.trim()).filter(s => s.length > 2).slice(0, 3);
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to parse suggestions as JSON, falling back to line splitting.");
+            }
+
+            // Fallback: Split by newline or standard bullet patterns (1., -, *, •)
             return replyText
                 .split(/\n|(?=\b\d+\.)|(?=\b[-*•]\s)/)
-                .map(line => line.replace(/^\s*[-*•\d+.]\s*/, '').trim())
-                .filter(line => line.length > 3 && line.length < 150)
+                .map(line => line.replace(/^\s*[-*•\d+.]\s*/, '').replace(/["'\[\]]/g, '').trim())
+                .filter(line => line.length > 2 && line.length < 100)
                 .slice(0, 3);
         }
         return [];
