@@ -3610,7 +3610,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                 >
                   <div className="aspect-square rounded-[24px] sm:rounded-[36px] overflow-hidden relative cursor-pointer border-2 sm:border-4 border-white dark:border-zinc-900 shadow-xl group-hover:scale-[1.03] active:scale-95 transition-all duration-500">
                     <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
-
+                    
                     {thumbnailUrl ? (
                       <img
                         src={toProxyUrl(thumbnailUrl)}
@@ -3754,8 +3754,8 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                       {selectedAsset.metadata.slides.map((url, i) => (
                         <div key={i} className="snap-center relative shrink-0 w-80 group/slide rounded-[32px] overflow-hidden border-4 border-white shadow-xl aspect-square bg-zinc-900 flex items-center justify-center">
                           <img 
-                            src={toProxyUrl(url)} 
-                            className="w-full h-full object-contain cursor-zoom-in transition-transform duration-700 group-hover/slide:scale-[1.05]" 
+                            src={toProxyUrl(url)}
+                            className="w-full h-full object-contain cursor-zoom-in transition-transform duration-700 group-hover/slide:scale-[1.05]"
                             alt={`Slide ${i + 1}`}
                             onClick={() => setExpandedImage(toProxyUrl(url))}
                           />
@@ -3818,7 +3818,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                       <>
                         <img 
                           src={toProxyUrl(selectedAsset.gcsUrl)} 
-                          className="w-full h-full object-contain cursor-zoom-in transition-transform duration-700 group-hover/hero:scale-[1.02]" 
+                          className="w-full h-full object-contain cursor-zoom-in transition-transform duration-700 group-hover/hero:scale-[1.02]"
                           alt="Artifact Full Preview"
                           onClick={() => setExpandedImage(toProxyUrl(selectedAsset.gcsUrl))}
                         />
