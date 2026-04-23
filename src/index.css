@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    --background: 228 33% 98%;
-    /* Main Background #f8f9fc */
+    --background: 0 0% 100%;
+    /* Main Background Pure White */
     --foreground: 0 0% 0%;
     /* Black */
 
@@ -491,6 +491,26 @@ body,
   display: none;
   /* Chrome, Safari and Opera */
 }
+
+.admin-horizontal-scrollbar {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.admin-horizontal-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.admin-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
 
 .demo-scroll-thumb {
   scrollbar-width: thin;
@@ -1090,7 +1110,7 @@ html.lenis body {
   justify-content: space-between !important;
   align-items: center !important;
   width: 100% !important;
-  padding: 10px 12px !important;
+  padding: 5px 12px !important;
   gap: 10px !important;
   border-radius: 14px !important;
 }
@@ -1219,7 +1239,7 @@ html.lenis body {
     width: 24px !important;
     height: 24px !important;
   }
-  
+
   .ai-row .chatgpt-avatar-container img {
     width: 18px !important;
     height: 14px !important;

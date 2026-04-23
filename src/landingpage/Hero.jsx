@@ -179,6 +179,37 @@ const Hero = () => {
   const heroRef = useRef(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  // ─── Scroll Direction Logic for Auto-Hide Navbar ───
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const scrollThreshold = 15;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY < 10) {
+        setIsVisible(true);
+        setLastScrollY(currentScrollY);
+        return;
+      }
+
+      const diff = currentScrollY - lastScrollY;
+
+      if (Math.abs(diff) > scrollThreshold) {
+        if (diff > 0 && isVisible) {
+          setIsVisible(false);
+        } else if (diff < 0 && !isVisible) {
+          setIsVisible(true);
+        }
+        setLastScrollY(currentScrollY);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY, isVisible]);
+
   // Transition State
   const [introStage, setIntroStage] = useState('animating'); // waiting, animating, finished
 
@@ -300,17 +331,25 @@ const Hero = () => {
 
       {/* ── Header / Nav ── */}
       <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={introStage === 'finished' ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        initial={false}
+        animate={{
+          y: isVisible ? 0 : '-100%',
+          opacity: isVisible ? 1 : 0
+        }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         style={{
-          position: 'absolute', top: 0, left: 0, right: 0,
-          padding: window.innerWidth < 640 ? '0.2rem 1rem' : '0.4rem 2.5rem',
-          zIndex: 50,
+          position: 'fixed', top: 0, left: 0, right: 0,
+          padding: window.innerWidth < 640 ? '0.6rem 1.5rem' : '0.8rem 3rem',
+          zIndex: 100,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'transparent',
-          backdropFilter: 'none',
-          borderBottom: 'none'
+          background: isVisible && lastScrollY > 50
+            ? (isDarkMode ? 'rgba(4, 4, 14, 0.7)' : 'rgba(238, 242, 255, 0.7)')
+            : 'transparent',
+          backdropFilter: isVisible && lastScrollY > 50 ? 'blur(20px)' : 'none',
+          borderBottom: isVisible && lastScrollY > 50
+            ? (isDarkMode ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(99, 102, 241, 0.1)')
+            : 'none',
+          boxShadow: isVisible && lastScrollY > 50 ? '0 4px 30px rgba(0,0,0,0.1)' : 'none'
         }}
       >
         <motion.div
@@ -335,12 +374,15 @@ const Hero = () => {
             fontSize: window.innerWidth < 640 ? '0.6rem' : '0.75rem',
             fontWeight: 900,
             letterSpacing: '0.25em',
-            color: '#9333ea',
+            background: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
             fontFamily: '"Times New Roman", Times, serif',
-            marginTop: window.innerWidth < 640 ? '-2px' : '-5px',
-            transition: 'all 0.3s'
-          }} className="group-hover:text-primary">
-            AISA<sup style={{ fontSize: '0.6em', marginLeft: '2px' }}>TM</sup>
+            marginTop: window.innerWidth < 640 ? '2px' : '4px',
+            transition: 'all 0.3s',
+            display: 'inline-block'
+          }}>
+            AISA<span style={{ fontSize: '0.6em', verticalAlign: 'super', marginLeft: '2px' }}>™</span>
           </span>
         </motion.div>
 
