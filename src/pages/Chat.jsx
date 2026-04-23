@@ -7333,8 +7333,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         {/* Unified Chat Input Container */}
         {legalView !== 'DASHBOARD' && (
           <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
-            {/* Gradient Mask to hide text scrolling behind/below input */}
-            <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#f8f9fc] via-[#f8f9fc] to-transparent dark:from-zinc-950 dark:via-zinc-950 to-transparent z-10" />
+            {/* Gradient Mask to hide text scrolling behind/below input - Removed to eliminate white shade */}
 
             <div className="relative z-20" style={{ padding: '0 1rem calc(1rem + env(safe-area-inset-bottom, 0px)) 1rem' }}>
               <div className="max-w-4xl mx-auto w-full pointer-events-auto">
