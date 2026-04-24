@@ -149,7 +149,7 @@ const TOOL_PRICING = {
   },
   document: {
     models: [
-      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
+      { id: 'gemini-2.5-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
       { id: 'gemini-pro', name: 'AISA™ Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
       { id: 'gpt4', name: 'AISA™ Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' }
     ]
@@ -555,10 +555,10 @@ const Chat = () => {
   const [activeAgent, setActiveAgent] = useState({ agentName: 'AI Ads', category: 'General' });
   const [userAgents, setUserAgents] = useState([]);
   const [toolModels, setToolModels] = useState({
-    chat: 'gemini-flash',
-    image: 'gemini-flash',
-    document: 'gemini-flash',
-    voice: 'gemini-flash'
+    chat: 'gemini-2.5-flash',
+    image: 'gemini-2.5-flash',
+    document: 'gemini-2.5-flash',
+    voice: 'gemini-2.5-flash'
   });
   const uploadInputRef = useRef(null);
   const driveInputRef = useRef(null);
@@ -598,7 +598,7 @@ const Chat = () => {
   const [selectedLegalTool, setSelectedLegalTool] = useRecoilState(activeLegalToolData);
   const [videoAspectRatio, setVideoAspectRatio] = useState('');
   const [videoModelId, setVideoModelId] = useState('veo-3.1-fast-generate-001');
-  const [editModelId, setEditModelId] = useState('gemini-3.1-flash-image-preview');
+  const [editModelId, setEditModelId] = useState('gemini-2.5-flash');
   const [videoResolution, setVideoResolution] = useState('1080p');
   const v = personalizations?.voice || { languageCode: 'en-US', voiceName: 'en-US-Chirp3-HD-Autonoe', pitch: 0, speed: 1.0 };
   const [audioLangCode, setAudioLangCode] = useState(v.languageCode);
@@ -612,7 +612,7 @@ const Chat = () => {
   const [isPlayingSample, setIsPlayingSample] = useState(false);
   const sampleAudioRef = useRef(null);
   const [imageAspectRatio, setImageAspectRatio] = useState('1:1');
-  const [imageModelId, setImageModelId] = useState('gemini-3.1-flash-image-preview');
+  const [imageModelId, setImageModelId] = useState('gemini-2.5-flash');
   const [isMagicSettingsOpen, setIsMagicSettingsOpen] = useState(false);
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
@@ -4484,7 +4484,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           let displayedContent = '';
 
           // Decide speed based on length (shorter = slower, longer = faster)
-          const delay = words.length > 200 ? 10 : (words.length > 50 ? 20 : 35);
+          const delay = words.length > 200 ? 2 : (words.length > 50 ? 5 : 8);
 
           // Typewriter effect simulation — lock auto-scroll during streaming
           isStreamingRef.current = true;
