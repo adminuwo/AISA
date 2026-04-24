@@ -7241,9 +7241,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         {/* Welcome Screen - Integrated Hub */}
         <AnimatePresence>
           {messages.length === 0 &&
-            currentMode !== 'LEGAL_TOOLKIT' &&
-            (!currentCase || selectedLegalTool?.id !== 'legal_my_case') &&
-            !(isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || activeLegalToolkit) && (
+            (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
               <motion.div
                 key="welcome-screen"
                 initial={{ opacity: 0 }}
