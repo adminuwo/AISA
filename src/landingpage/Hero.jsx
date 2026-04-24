@@ -179,36 +179,7 @@ const Hero = () => {
   const heroRef = useRef(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // ─── Scroll Direction Logic for Auto-Hide Navbar ───
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const scrollThreshold = 15;
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY < 10) {
-        setIsVisible(true);
-        setLastScrollY(currentScrollY);
-        return;
-      }
-
-      const diff = currentScrollY - lastScrollY;
-
-      if (Math.abs(diff) > scrollThreshold) {
-        if (diff > 0 && isVisible) {
-          setIsVisible(false);
-        } else if (diff < 0 && !isVisible) {
-          setIsVisible(true);
-        }
-        setLastScrollY(currentScrollY);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY, isVisible]);
 
   // Transition State
   const [introStage, setIntroStage] = useState('animating'); // waiting, animating, finished
@@ -329,118 +300,108 @@ const Hero = () => {
         }}
       />
 
-      {/* ── Header / Nav ── */}
-      <motion.header
-        initial={false}
-        animate={{
-          y: isVisible ? 0 : '-100%',
-          opacity: isVisible ? 1 : 0
-        }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          position: 'fixed', top: 0, left: 0, right: 0,
-          padding: window.innerWidth < 640 ? '0.6rem 1.5rem' : '0.8rem 3rem',
-          zIndex: 100,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: isVisible && lastScrollY > 50
-            ? (isDarkMode ? 'rgba(4, 4, 14, 0.7)' : 'rgba(238, 242, 255, 0.7)')
-            : 'transparent',
-          backdropFilter: isVisible && lastScrollY > 50 ? 'blur(20px)' : 'none',
-          borderBottom: isVisible && lastScrollY > 50
-            ? (isDarkMode ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(99, 102, 241, 0.1)')
-            : 'none',
-          boxShadow: isVisible && lastScrollY > 50 ? '0 4px 30px rgba(0,0,0,0.1)' : 'none'
-        }}
-      >
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-          onClick={() => navigate('/')}
-          className="group"
-        >
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img src={logo} alt="AISA™"
-              style={{
-                height: window.innerWidth < 640 ? '32px' : '50px',
-                width: 'auto',
-                objectFit: 'cover',
-                objectPosition: 'top'
-              }}
-              className="drop-shadow-[0_0_40px_rgba(99,102,241,0.6)] relative transition-all duration-500"
-            />
-          </div>
-          <span style={{
-            fontSize: window.innerWidth < 640 ? '0.6rem' : '0.75rem',
-            fontWeight: 900,
-            letterSpacing: '0.25em',
-            background: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontFamily: '"Times New Roman", Times, serif',
-            marginTop: window.innerWidth < 640 ? '2px' : '4px',
-            transition: 'all 0.3s',
-            display: 'inline-block'
-          }}>
-            AISA<span style={{ fontSize: '0.6em', verticalAlign: 'super', marginLeft: '2px' }}>™</span>
-          </span>
-        </motion.div>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: window.innerWidth < 640 ? '0.8rem' : '1.5rem'
-        }}>
-          <ThemeToggle />
-          {user ? (
-            <div style={{ position: 'relative' }}>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                style={{ background: 'none', border: 'none', color: isDarkMode ? '#fff' : '#0F172A', cursor: 'pointer' }}
-              >
-                <CircleUser size={30} color={isDarkMode ? "#a78bfa" : "#6366f1"} />
-              </motion.button>
-              <AnimatePresence>
-                {isProfileOpen && (
-                  <ProfileSettingsDropdown
-                    onClose={() => setIsProfileOpen(false)}
-                    onLogout={async () => {
-                      if (window.resetSocialOnboarding) {
-                        window.resetSocialOnboarding();
-                      }
-                      localStorage.clear();
-                      window.location.reload();
-                    }}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.05, background: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(99, 102, 241, 0.1)' }}
-              onClick={() => navigate('/login')}
-              style={{
-                background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(99, 102, 241, 0.05)',
-                border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99, 102, 241, 0.2)',
-                color: isDarkMode ? '#fff' : '#0F172A', padding: '10px 24px',
-                borderRadius: '12px', cursor: 'pointer', fontWeight: 600,
-                transition: '0.3s'
-              }}
-            >
-              {t('getStarted')}
-            </motion.button>
-          )}
-        </div>
-      </motion.header>
-
       {/* ── Foreground Content ── */}
       <div style={{
         position: 'relative', zIndex: 10,
-        textAlign: 'center', maxWidth: '1000px',
-        padding: window.innerWidth < 640 ? '160px 1.25rem 60px' : '120px 1.5rem 60px',
-        transform: 'translateY(-40px)'
+        textAlign: 'center', maxWidth: '1400px',
+        width: '100%',
+        padding: window.innerWidth < 640 ? '5px 1.25rem 60px' : '10px 1.5rem 60px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}>
+        {/* ── Integrated Nav Area ── */}
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: window.innerWidth < 640 ? '30px' : '40px',
+            padding: window.innerWidth < 640 ? '5px 0' : '10px 0',
+          }}
+        >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            onClick={() => navigate('/')}
+            className="group"
+          >
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <img src={logo} alt="AISA™"
+                style={{
+                  height: window.innerWidth < 640 ? '32px' : '50px',
+                  width: 'auto',
+                  objectFit: 'cover',
+                  objectPosition: 'top'
+                }}
+                className="drop-shadow-[0_0_40px_rgba(99,102,241,0.6)] relative transition-all duration-500"
+              />
+            </div>
+            <span style={{
+              fontSize: window.innerWidth < 640 ? '0.6rem' : '0.75rem',
+              fontWeight: 900,
+              letterSpacing: '0.25em',
+              background: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontFamily: '"Times New Roman", Times, serif',
+              marginTop: window.innerWidth < 640 ? '2px' : '4px',
+              transition: 'all 0.3s',
+              display: 'inline-block'
+            }}>
+              AISA<span style={{ fontSize: '0.6em', verticalAlign: 'super', marginLeft: '2px' }}>™</span>
+            </span>
+          </motion.div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: window.innerWidth < 640 ? '0.8rem' : '1.5rem'
+          }}>
+            <ThemeToggle />
+            {user ? (
+              <div style={{ position: 'relative' }}>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  style={{ background: 'none', border: 'none', color: isDarkMode ? '#fff' : '#0F172A', cursor: 'pointer' }}
+                >
+                  <CircleUser size={30} color={isDarkMode ? "#a78bfa" : "#6366f1"} />
+                </motion.button>
+                <AnimatePresence>
+                  {isProfileOpen && (
+                    <ProfileSettingsDropdown
+                      onClose={() => setIsProfileOpen(false)}
+                      onLogout={async () => {
+                        if (window.resetSocialOnboarding) {
+                          window.resetSocialOnboarding();
+                        }
+                        localStorage.clear();
+                        window.location.reload();
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05, background: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(99, 102, 241, 0.1)' }}
+                onClick={() => navigate('/login')}
+                style={{
+                  background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(99, 102, 241, 0.05)',
+                  border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99, 102, 241, 0.2)',
+                  color: isDarkMode ? '#fff' : '#0F172A', padding: '10px 24px',
+                  borderRadius: '12px', cursor: 'pointer', fontWeight: 600,
+                  transition: '0.3s'
+                }}
+              >
+                {t('getStarted')}
+              </motion.button>
+            )}
+          </div>
+        </div>
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
