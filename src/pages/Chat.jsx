@@ -1299,37 +1299,37 @@ const Chat = () => {
   const toolsMenuRef = useRef(null);
 
   useEffect(() => {
-    if (isImageGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isImageGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isImageGeneration]);
   useEffect(() => {
-    if (isVideoGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsImageGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isVideoGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsImageGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isVideoGeneration]);
   useEffect(() => {
-    if (isDeepSearch) { setIsImageGeneration(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isDeepSearch) { setIsImageGeneration(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isDeepSearch]);
   useEffect(() => {
-    if (isWebSearch) { setIsImageGeneration(false); setIsDeepSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isWebSearch) { setIsImageGeneration(false); setIsDeepSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isWebSearch]);
   useEffect(() => {
-    if (isAudioConvertMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isAudioConvertMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isAudioConvertMode]);
   useEffect(() => {
-    if (isDocumentConvert) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isDocumentConvert) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isDocumentConvert]);
   useEffect(() => {
-    if (isCodeWriter) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isCodeWriter) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isCodeWriter]);
   useEffect(() => {
-    if (isMagicEditing) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); }
+    if (isMagicEditing) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isMagicEditing]);
   useEffect(() => {
-    if (isFileAnalysis) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsMagicVideoModalOpen(false); }
+    if (isFileAnalysis) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isFileAnalysis]);
   useEffect(() => {
-    if (isMagicVideoModalOpen) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setActiveLegalToolkit(false); }
+    if (isMagicVideoModalOpen) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isMagicVideoModalOpen]);
   useEffect(() => {
-    if (isCashFlowMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); }
+    if (isCashFlowMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isCashFlowMode]);
   useEffect(() => {
     if (activeLegalToolkit) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); }
@@ -7346,6 +7346,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                         setIsCashFlowMode(false);
                         if (id !== 'legal') {
                           setActiveLegalToolkit(false);
+                          setCurrentMode(null);
+                          setSelectedLegalTool(null);
                         }
 
                         if (id === 'image') {
