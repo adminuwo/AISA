@@ -169,7 +169,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
   const [visualGenRowId, setVisualGenRowId] = useState(null); // tracks which card is actively generating
 
   // Gen Post Format Modal
-  const [genPostModal, setGenPostModal] = useState({ open: false, entry: null, format: 'single', aspectRatio: '1:1' });
+  const [genPostModal, setGenPostModal] = useState({ open: false, entry: null, format: 'single', aspectRatio: '1:1', carouselCount: 3 });
 
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
@@ -325,39 +325,8 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
     }
   }, [brandLogo, workspace?._id]);
 
-  // REAL MAGIC: Auto-extract DNA from ALL PDFs/Docs
-  useEffect(() => {
-    const allFiles = [...overviewFiles, ...onboardingFiles];
-    if (allFiles.length > 0) {
-      const analyzeDocs = async () => {
-        setIsSyncing(true);
-        const toastId = toast.loading(`AI Generation: Distilling brand DNA from ${allFiles.length} files...`);
-        try {
-          const res = await apiService.quickAnalysis(allFiles, workspace?._id);
-          if (res.success) {
-            setBrandProfile(prev => ({
-              ...prev,
-              companyName: res.brandName || prev.companyName,
-              extractedBrandSummary: [
-                prev.extractedBrandSummary,
-                res.extractedBrandSummary
-              ].filter(Boolean).join('\n\n---\n\n ANALYSIS: [Documents] \n'),
-              toneOfVoice: res.toneOfVoice || prev.toneOfVoice,
-              brandColors: Array.from(new Set([...(prev.brandColors || []), ...(res.brandColors || [])]))
-            }));
-            toast.success("AI Generation: Identity synchronized!", { id: toastId });
-          } else {
-            toast.error(res.error || "AI could not read these document formats.", { id: toastId });
-          }
-        } catch (e) {
-          toast.error("AI engine is currently busy. Please try manual entry.", { id: toastId });
-        } finally {
-          setIsSyncing(false);
-        }
-      };
-      analyzeDocs();
-    }
-  }, [overviewFiles, onboardingFiles, workspace?._id]);
+  // Documents are staged locally and uploaded to GCS silently when the user clicks Save.
+  // No auto-analysis or toast fires on file selection.
 
 
   // --- 1. Dashboard Initialization & Splash ---
@@ -1240,7 +1209,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
    * 2. Vertex AI Imagen 3/4 renders the high-quality visual
    * 3. Polls for completion, then auto-redirects to Post Generation tab
    */
-  const handleVisualPostGeneration = async (entry, postFormat = 'single', aspectRatio = '1:1') => {
+  const handleVisualPostGeneration = async (entry, postFormat = 'single', aspectRatio = '1:1', carouselCount = 3) => {
     if (!workspace || !entry) return;
 
     console.log("[AISA] Visual Gen - Plan check:", { isPremium, userPlan });
@@ -1272,7 +1241,8 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         entryId,
         undefined,   // modelId — use backend default
         postFormat,  // 'single' | 'carousel'
-        aspectRatio  // '1:1' | '4:3' | '16:9' | '9:16'
+        aspectRatio, // '1:1' | '4:3' | '16:9' | '9:16'
+        carouselCount
       );
 
       if (!res?.success || !res?.jobId) {
@@ -1280,7 +1250,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
       }
 
       const toastDuration = postFormat === 'carousel' ? 360000 : 120000;
-      toast.loading('🤔 AISA™ generating post visual...', { id: toastId, duration: toastDuration });
+      toast.loading(`🤔 AISA™ generating post visual...${postFormat === 'carousel' ? ` (0/${carouselCount})` : ''}`, { id: toastId, duration: toastDuration });
 
       // Step 2: Poll for job completion (max 90s)
       const jobId = res.jobId;
@@ -1291,6 +1261,13 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
       while (attempts < maxAttempts) {
         await new Promise(r => setTimeout(r, 3000));
         const statusRes = await apiService.getSocialAgentJobStatus(jobId);
+        
+        if (postFormat === 'carousel' && statusRes?.job) {
+          const completed = statusRes.job.completedCount || 0;
+          const requested = statusRes.job.requestedCount || carouselCount;
+          toast.loading(`🖼️ Generating carousel slides... (${completed}/${requested})`, { id: toastId, duration: toastDuration });
+        }
+
         if (statusRes?.job?.status === 'completed') {
           jobResult = statusRes.job;
           break;
@@ -2174,6 +2151,8 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                   </div>
                 </div>
               </div>
+
+
 
               {/* SOCIAL ENGINE CONFIG (NEW) */}
               <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-4">
@@ -4314,7 +4293,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         {/* Backdrop */}
         <div
           className="absolute inset-0 bg-black/70 backdrop-blur-md"
-          onClick={() => !isGeneratingThis && setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1' })}
+          onClick={() => !isGeneratingThis && setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1', carouselCount: 3 })}
         />
 
         {/* Modal Card */}
@@ -4345,7 +4324,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
               </div>
             </div>
             <button
-              onClick={() => setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1' })}
+              onClick={() => setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1', carouselCount: 3 })}
               disabled={isGeneratingThis}
               className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all hover:scale-110 disabled:opacity-40 flex-shrink-0 mt-1"
             >
@@ -4379,6 +4358,21 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                 </button>
               ))}
             </div>
+            {format === 'carousel' && (
+              <div className="mt-4 animate-in slide-in-from-top-2">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[3px] mb-2">Number of Images</p>
+                <CustomSelect
+                  value={genPostModal.carouselCount || 3}
+                  onChange={(val) => setGenPostModal(prev => ({ ...prev, carouselCount: val }))}
+                  options={[
+                    { value: 2, label: '2 Images' },
+                    { value: 3, label: '3 Images' },
+                    { value: 4, label: '4 Images' }
+                  ]}
+                  color="primary"
+                />
+              </div>
+            )}
           </div>
 
           {/* Aspect Ratio Selector */}
@@ -4416,7 +4410,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
           {/* Footer Actions */}
           <div className="px-8 pb-8 flex gap-3">
             <button
-              onClick={() => setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1' })}
+              onClick={() => setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1', carouselCount: 3 })}
               disabled={isGeneratingThis}
               className="flex-1 h-12 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all disabled:opacity-40"
             >
@@ -4427,8 +4421,9 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                 const currentEntry = genPostModal.entry;
                 const currentFormat = genPostModal.format;
                 const currentAspectRatio = genPostModal.aspectRatio || '1:1';
-                setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1' });
-                handleVisualPostGeneration(currentEntry, currentFormat, currentAspectRatio);
+                const currentCarouselCount = genPostModal.carouselCount || 3;
+                setGenPostModal({ open: false, entry: null, format: 'single', aspectRatio: '1:1', carouselCount: 3 });
+                handleVisualPostGeneration(currentEntry, currentFormat, currentAspectRatio, currentCarouselCount);
               }}
               disabled={isGeneratingThis}
               className="flex-1 h-12 bg-primary text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
