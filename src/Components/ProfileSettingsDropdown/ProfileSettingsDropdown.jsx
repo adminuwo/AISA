@@ -28,7 +28,7 @@ import { logo, faqs } from '../../constants';
 const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const fileInputRef = useRef(null);
     const [currentUserData, setUserRecoil] = useRecoilState(userData);
-    const user = currentUserData.user || getUserData();
+    const user = currentUserData.user || getUserData() || {};
     const {
         personalizations,
         updatePersonalization,
@@ -98,7 +98,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     }, [chatSessions]);
 
     useEffect(() => {
-        setNicknameInput(personalizations.account?.nickname || user.name || '');
+        setNicknameInput(personalizations.account?.nickname || user?.name || '');
     }, [personalizations.account?.nickname, user.name]);
 
     useEffect(() => {

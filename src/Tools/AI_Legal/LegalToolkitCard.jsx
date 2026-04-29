@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LegalLogo from '../../Components/LegalLogo';
+import { useIsDark } from '../../context/ThemeContext';
 
 const SECTIONS = {
   CORE: ['legal_draft_maker', 'legal_contract_analyzer', 'legal_case_predictor'],
@@ -116,8 +117,8 @@ export const PREMIUM_TOOLS = [
 ];
 
 
-const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect }) => {
-  const isUnlocked = true; // All legal tools are now available for ALL tiers (Free included)
+const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect, isDark }) => {
+  const isUnlocked = true;
   const Icon = tool.icon;
   const [showWorkflow, setShowWorkflow] = useState(false);
 
@@ -127,10 +128,10 @@ const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect }) =
       onClick={() => { if (isUnlocked) { onClose(); onSelect(tool, isUnlocked); } }}
       className={`group relative cursor-pointer rounded-[1.4rem] p-4 transition-all duration-300 border overflow-hidden`}
       style={{
-        background: 'rgba(255,255,255,0.65)',
-        border: '1px solid rgba(255,255,255,0.75)',
+        background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.65)',
+        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.75)',
         backdropFilter: 'blur(12px)',
-        boxShadow: '0 4px 16px rgba(99,102,241,0.06)',
+        boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(99,102,241,0.06)',
       }}
     >
       {/* Workflow Overlay */}
@@ -204,7 +205,7 @@ const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect }) =
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <h5 className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors tracking-tight text-[14px]">
+            <h5 className={`font-bold group-hover:text-indigo-${isDark ? '400' : '700'} transition-colors tracking-tight text-[14px] ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
               {tool.name}
             </h5>
             {isUnlocked ? (
@@ -213,7 +214,7 @@ const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect }) =
               <span className="text-[7.5px] font-black text-slate-400 bg-white/70 px-1.5 py-0.5 rounded-full border border-white/80 uppercase tracking-tighter">Pro</span>
             )}
           </div>
-          <p className="text-slate-500 text-[11px] leading-relaxed font-medium line-clamp-2">
+          <p className={`text-[11px] leading-relaxed font-medium line-clamp-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {tool.desc}
           </p>
         </div>
@@ -233,6 +234,7 @@ const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect }) =
 
 const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdmin = false }) => {
   const [isMaximized, setIsMaximized] = useState(false);
+  const isDark = useIsDark();
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -260,9 +262,9 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
 
   const SectionTitle = ({ children }) => (
     <div className="flex items-center gap-4 mb-5 mt-8 first:mt-0">
-      <div className="w-1 h-1 rounded-full bg-slate-500" />
-      <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.28em] whitespace-nowrap">{children}</h4>
-      <div className="h-[1px] flex-1 bg-black/[0.06]" />
+      <div className={`w-1 h-1 rounded-full ${isDark ? 'bg-slate-500' : 'bg-slate-400'}`} />
+      <h4 className={`text-[9px] font-black uppercase tracking-[0.28em] whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{children}</h4>
+      <div className={`h-[1px] flex-1 ${isDark ? 'bg-white/[0.06]' : 'bg-black/[0.06]'}`} />
     </div>
   );
 
@@ -418,7 +420,7 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
                 <SectionTitle>Professional Legal Engines</SectionTitle>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {PREMIUM_TOOLS.map((tool, idx) => (
-                    <ToolCard key={tool.id} tool={tool} index={idx} onClose={onClose} onSelect={onSelect} />
+                    <ToolCard key={tool.id} tool={tool} index={idx} isDark={isDark} onClose={onClose} onSelect={onSelect} />
                   ))}
                 </div>
 
@@ -430,10 +432,10 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
                     transition={{ delay: 0.4 }}
                     className="mt-12 p-8 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6"
                     style={{
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(99,102,241,0.04)',
+                      border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(99,102,241,0.12)',
                       backdropFilter: 'blur(20px)',
-                      boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                      boxShadow: isDark ? '0 10px 40px rgba(0,0,0,0.2)' : '0 10px 40px rgba(99,102,241,0.08)',
                     }}
                   >
                     <div className="flex items-center gap-5">
