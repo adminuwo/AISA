@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import LegalLogo from '../../Components/LegalLogo';
 
 const SECTIONS = {
-  CORE: ['legal_draft_maker', 'legal_contract_analyzer', 'legal_case_predictor'],
+  CORE: ['legal_draft_maker', 'legal_contract_analyzer', 'legal_precedents', 'legal_case_predictor'],
   ADVANCED: ['legal_strategy_engine', 'legal_evidence_checker', 'legal_research_assistant', 'legal_argument_builder']
 };
 
@@ -63,6 +63,18 @@ export const PREMIUM_TOOLS = [
       'Input case facts, evidence, and legal claims.',
       'AI evaluates scenarios against legal precedents.',
       'Receive success probability and predicted judicial verdict.'
+    ]
+  },
+  {
+    id: 'legal_precedents',
+    name: 'Legal Precedents',
+    icon: Gavel,
+    desc: 'Discover, Understand & Apply Relevant Case Laws',
+    price: '₹999',
+    workflow: [
+      'Enter case facts or a manual search query.',
+      'AI retrieves top precedents from internal and global databases.',
+      'Get extracted legal principles (Ratio Decidendi) for courtroom use.'
     ]
   },
   {

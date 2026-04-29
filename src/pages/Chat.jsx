@@ -28,6 +28,7 @@ const MagicToolSettingsCard = React.lazy(() => import('../Tools/MagicTools/Magic
 const CashFlowStockModal = React.lazy(() => import('../Tools/AI_Cashflow/CashFlowStockModal').catch(() => ({ default: () => null })));
 const CashFlowChartWidget = React.lazy(() => import('../Tools/AI_Cashflow/CashFlowChartWidget').catch(() => ({ default: () => null })));
 const LegalToolkitCard = React.lazy(() => import('../Tools/AI_Legal/LegalToolkitCard').catch(() => ({ default: () => null })));
+import LegalPrecedents from '../Tools/AI_Legal/LegalPrecedents';
 import { PREMIUM_TOOLS } from '../constants/legalTools';
 import axios from 'axios';
 import { apis, API } from '../types';
@@ -690,6 +691,7 @@ const Chat = () => {
     }
   }, [location.search, navigate, location.pathname]);
 
+
   // Sync AI Ads Dashboard state to the URL so it persists on refresh
   useEffect(() => {
     const url = new URL(window.location);
@@ -740,7 +742,21 @@ const Chat = () => {
   const isManualStopRef = useRef(false); // Track manual stop to avoid recursive loops
   const isDetectionPausedRef = useRef(false); // Pause detection after explicit dismissal
   const [currentProjectId, setCurrentProjectId] = useRecoilState(activeProjectIdData);
-  
+
+  // ─── Deep Link Case Handling ───
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const caseIdInUrl = params.get('caseId');
+
+    if (caseIdInUrl) {
+      console.log(`[DeepLink] Case ID detected in URL: ${caseIdInUrl}`);
+      // Validate format
+      if (/^[a-f\d]{24}$/i.test(caseIdInUrl)) {
+        setCurrentProjectId(caseIdInUrl);
+      }
+    }
+  }, [location.search, setCurrentProjectId]);
+
   // Listen for 'forceGlobal' navigation state to reset case context
   useEffect(() => {
     if (location.state?.forceGlobal) {
@@ -749,7 +765,7 @@ const Chat = () => {
       setCurrentCase(null);
       setCurrentMode('NORMAL_CHAT');
       setSelectedLegalTool(null);
-      
+
       // Clear the state so it doesn't re-fire on other renders
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -867,7 +883,7 @@ const Chat = () => {
         }
       } else {
         const newCase = await apiService.createProject(payload);
-        
+
         // Step 4: Auto Analyze Flow
         try {
           const analyzedCase = await apiService.analyzeProject(newCase._id);
@@ -1282,9 +1298,11 @@ const Chat = () => {
       if (currentCase?._id === currentProjectId) {
         if (currentCase.isLegalCase && currentMode !== 'LEGAL_TOOLKIT') {
           setCurrentMode('LEGAL_TOOLKIT');
-          setSelectedLegalTool({ id: 'legal_my_case', name: 'My Case Assistant' });
-          // If we are already in a case, don't force-switch view to CHAT if they are in DASHBOARD
-          if (legalView !== 'DASHBOARD') setLegalView('CHAT');
+          if (selectedLegalTool?.id !== 'legal_precedents' && selectedLegalTool?.id !== 'legal_case_law_research') {
+            setSelectedLegalTool({ id: 'legal_my_case', name: 'My Case Assistant' });
+          }
+          // If we are already in a case, don't force-switch view to CHAT if they are in DASHBOARD or PRECEDENTS
+          if (legalView !== 'DASHBOARD' && legalView !== 'PRECEDENTS') setLegalView('CHAT');
         }
         return;
       }
@@ -1295,17 +1313,21 @@ const Chat = () => {
           setCurrentCase(response);
           if (response.isLegalCase) {
             setCurrentMode('LEGAL_TOOLKIT');
-            setSelectedLegalTool({ id: 'legal_my_case', name: 'My Case Assistant' });
-            setLegalView('CHAT');
+            if (selectedLegalTool?.id !== 'legal_precedents' && selectedLegalTool?.id !== 'legal_case_law_research') {
+              setSelectedLegalTool({ id: 'legal_my_case', name: 'My Case Assistant' });
+            }
+            if (legalView !== 'PRECEDENTS') {
+              setLegalView('CHAT');
 
-            if (location.pathname === '/dashboard/chat/new') {
-              try {
-                const caseSessions = await chatStorageService.getSessions(currentProjectId);
-                if (Array.isArray(caseSessions) && caseSessions.length > 0) {
-                  navigate(`/dashboard/chat/${caseSessions[0].sessionId}`);
+              if (location.pathname === '/dashboard/chat/new') {
+                try {
+                  const caseSessions = await chatStorageService.getSessions(currentProjectId);
+                  if (Array.isArray(caseSessions) && caseSessions.length > 0) {
+                    navigate(`/dashboard/chat/${caseSessions[0].sessionId}`);
+                  }
+                } catch (sessionErr) {
+                  console.error("Failed to fetch case sessions:", sessionErr);
                 }
-              } catch (sessionErr) {
-                console.error("Failed to fetch case sessions:", sessionErr);
               }
             }
           }
@@ -1506,23 +1528,7 @@ const Chat = () => {
       return;
     }
 
-    setSelectedLegalTool({ id: toolId, name: toolName });
-    setActiveTool(toolName); // Set dynamic tool name
-    setActiveLegalToolkit(false); // Close toolkit if open
-    setCurrentMode('LEGAL_TOOLKIT');
-    setLegalView('CHAT'); // Ensure input box appears
-
-    if (inputRef.current) inputRef.current.focus();
-
-    toast.success(`✅ AI Legal Activated: ${toolName} ✨`, {
-      style: {
-        background: '#F0FDF4',
-        color: '#166534',
-        borderRadius: '16px',
-        fontWeight: 'bold',
-        border: '1px solid #BBF7D0',
-      }
-    });
+    activateToolWithTypingEffect(toolId, toolName);
   };
 
   const handleDismissSuggestion = () => {
@@ -3690,7 +3696,7 @@ const Chat = () => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 350;
-      
+
       shouldAutoScrollRef.current = isNearBottom;
 
       if (force || isNearBottom) {
@@ -3741,43 +3747,69 @@ const Chat = () => {
 
 
   const activateToolWithTypingEffect = (toolKey, toolName) => {
+    // 1. Set Primary Modes
     setCurrentMode('LEGAL_TOOLKIT');
-    
+    setActiveLegalToolkit(false); // Close the toolkit modal immediately
+
     const TOOL_NAMES = {
+      legal_my_case: "My Case Assistant",
+      legal_precedents: "Legal Precedents",
+      legal_case_law_research: "Legal Precedents",
       legal_draft_maker: "Draft Maker",
       legal_case_predictor: "Case Predictor",
       legal_argument_builder: "Argument Builder",
       legal_evidence_checker: "Evidence Analyst",
       legal_contract_analyzer: "Contract Analyzer",
       legal_strategy_engine: "Strategy Engine",
-      legal_case_law_research: "Research Assistant",
       legal_compliance_checker: "Compliance Checker"
     };
+
     const finalToolName = toolName || TOOL_NAMES[toolKey] || toolKey;
-    
-    if (selectedLegalTool?.id !== 'legal_my_case') {
-      setSelectedLegalTool({ id: toolKey, name: finalToolName });
-    }
+
+    // 2. Set Active Tool Context
+    setSelectedLegalTool({ id: toolKey, name: finalToolName });
     setActiveTool(finalToolName);
 
-    inputRef.current?.focus();
+    // 3. UI View Logic (Switch to specific panels if needed)
+    if (toolKey === 'legal_precedents' || toolKey === 'legal_case_law_research') {
+      setLegalView('PRECEDENTS');
+      fetchLegalCases();
+    } else if (toolKey === 'legal_my_case') {
+      setLegalView('DASHBOARD');
+      fetchLegalCases();
+    } else {
+      setLegalView('CHAT'); // Default to AI Chat Assistant view
+    }
 
-    const successMsg = (currentCase && selectedLegalTool?.id === 'legal_my_case')
-      ? `✅ ${finalToolName} activated for ${currentCase?.clientName || 'this case'} ✨`
-      : `✅ AI Legal Activated: ${finalToolName} ✨`;
+    // 4. Ensure Input Box is clean
+    setInputValue('');
+    if (inputRef.current) inputRef.current.focus();
 
-    toast.success(successMsg, {
-      position: 'top-right',
-      style: {
-        background: '#F0FDF4',
-        color: '#166534',
-        borderRadius: '16px',
-        padding: '16px 24px',
-        fontWeight: 'bold',
-        border: '1px solid #BBF7D0',
-        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+    // 5. Professional Activation Feedback (Toast)
+    const feedbackMsg = toolKey === 'legal_precedents' || toolKey === 'legal_case_law_research'
+      ? "Fetching relevant case laws..."
+      : "Initializing legal workflow...";
+
+    toast.success(
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <Scale size={14} className="text-indigo-600" />
+          <span className="font-black text-[13px] text-slate-900">⚖️ {finalToolName} Activated</span>
+        </div>
+        <p className="text-[11px] text-slate-500 font-medium ml-6">{feedbackMsg}</p>
+      </div>,
+      {
+        duration: 4000,
+        style: {
+          background: '#FFFFFF',
+          color: '#1E293B',
+          borderRadius: '20px',
+          padding: '12px 20px',
+          border: '1px solid rgba(79, 70, 229, 0.1)',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        }
       }
-    });
+    );
   };
 
   const handleSuggestionClick = (text) => {
@@ -3791,8 +3823,8 @@ const Chat = () => {
         'create a legal notice': 'legal_draft_maker',
         'analyze this document': 'legal_contract_analyzer',
         'analyze a contract': 'legal_contract_analyzer',
-        'search relevant case laws': 'legal_case_law_research',
-        'research case laws': 'legal_case_law_research',
+        'search relevant case laws': 'legal_precedents',
+        'research case laws': 'legal_precedents',
         'identify legal risks': 'legal_compliance_checker',
         'check compliance': 'legal_compliance_checker'
       };
@@ -3800,7 +3832,7 @@ const Chat = () => {
       for (const [phrase, toolId] of Object.entries(toolMap)) {
         if (lowerText.includes(phrase)) {
           console.log(`[LegalRedirect] Redirecting to tool: ${toolId}`);
-          
+
           const legalTool = PREMIUM_TOOLS.find(t => t.id === toolId);
           activateToolWithTypingEffect(toolId, legalTool?.name);
           return;
@@ -4004,8 +4036,8 @@ const Chat = () => {
           const newUserMsg = {
             id: userMsgId,
             role: 'user',
-            content: (contentToSend === 'legal drafting engine' || contentToSend === 'DRAFT NOTICE') 
-              ? 'Drafting Legal Notice for the case... 📄⚖️' 
+            content: (contentToSend === 'legal drafting engine' || contentToSend === 'DRAFT NOTICE')
+              ? 'Drafting Legal Notice for the case... 📄⚖️'
               : contentToSend,
             timestamp: new Date(),
             attachments: filePreviews.map(fp => ({
@@ -4036,7 +4068,7 @@ const Chat = () => {
           if (res.data.success) {
             const aiMsgId = (Date.now() + 1).toString();
             const fullReply = res.data.reply;
-            
+
             const aiMsg = {
               id: aiMsgId,
               role: 'model',
@@ -4045,37 +4077,37 @@ const Chat = () => {
               toolUsed: res.data.toolUsed || activeToolId,
               mode: MODES.LEGAL_TOOLKIT
             };
-            
+
             if (res.data.toolUsed) setActiveTool(res.data.toolUsed);
             setMessages(prev => [...prev, aiMsg]);
             setTypingMessageId(aiMsgId);
-            
+
             // ⚖️ CHUNK-BY-CHUNK STREAMING LOGIC FOR LEGAL TOOLS
             // Split by newlines or sentences to simulate realistic reading/typing flow
             const chunks = fullReply.match(/.*?[.\n!?](?:\s|$)|.+/g) || [fullReply];
             let displayedContent = '';
-            
+
             isStreamingRef.current = true;
-            
+
             for (let i = 0; i < chunks.length; i++) {
               if (!isSendingRef.current) break;
-              
+
               displayedContent += chunks[i];
               setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: displayedContent } : m));
-              
+
               // Delay: simulate real-time typing (NOT instant) per chunk
               const delay = Math.min(400, Math.max(80, chunks[i].length * 3));
               await new Promise(resolve => setTimeout(resolve, delay));
             }
-            
+
             isStreamingRef.current = false;
             setTypingMessageId(null);
-            
+
             if (!isSendingRef.current) {
               setIsLoading(false);
               return;
             }
-            
+
             const finalAiMsg = { ...aiMsg, content: fullReply };
             setMessages(prev => prev.map(m => m.id === aiMsgId ? finalAiMsg : m));
 
@@ -6353,12 +6385,23 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         <div
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className={`relative flex-1 aisa-scalable-text ${legalView === 'DASHBOARD' && currentMode === 'LEGAL_TOOLKIT' && selectedLegalTool?.id === 'legal_my_case'
-            ? 'overflow-hidden'
+          className={`relative flex-1 aisa-scalable-text ${(legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT'
+            ? 'z-20 h-full w-full overflow-hidden flex flex-col bg-slate-50'
             : 'overflow-y-auto chatgpt-container pt-20 lg:pt-6 pb-64 md:pb-72 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent'
             }`}
         >
-          {legalView === 'DASHBOARD' && currentMode === 'LEGAL_TOOLKIT' && selectedLegalTool?.id === 'legal_my_case' ? (
+          {legalView === 'PRECEDENTS' && currentMode === 'LEGAL_TOOLKIT' ? (
+            <LegalPrecedents
+              projectId={currentCase?._id}
+              onBack={() => setLegalView('CHAT')}
+              cases={legalCases}
+              onSelectCase={(c) => {
+                setCurrentProjectId(c._id);
+                setCurrentCase(c);
+              }}
+              onCreateCase={() => setIsNewProjectModalOpen(true)}
+            />
+          ) : legalView === 'DASHBOARD' && currentMode === 'LEGAL_TOOLKIT' && selectedLegalTool?.id === 'legal_my_case' ? (
             renderCaseDashboard()
           ) : (
             <>
@@ -6468,20 +6511,20 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           </div>
 
                           <div className="flex-1 chatgpt-text">
-                             {/* Mode Badge - Integrated Tool Indicator */}
-                             {msg.role === 'user' && msg.mode && getModeInfo(msg.mode) && (
-                               <motion.div
-                                 initial={{ opacity: 0, scale: 0.9 }}
-                                 animate={{ opacity: 1, scale: 1 }}
-                                 className={`inline-flex !flex-row !items-center w-fit gap-2 px-3 py-1 rounded-full border shadow-sm ${getModeInfo(msg.mode).bg} ${getModeInfo(msg.mode).border} ${getModeInfo(msg.mode).color} mb-3`}
-                               >
-                                 {(() => {
-                                   const Icon = getModeInfo(msg.mode).icon;
-                                   return <Icon size={12} className="shrink-0" strokeWidth={3} />;
-                                 })()}
-                                 <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap leading-none">{getModeInfo(msg.mode).label}</span>
-                               </motion.div>
-                             )}
+                            {/* Mode Badge - Integrated Tool Indicator */}
+                            {msg.role === 'user' && msg.mode && getModeInfo(msg.mode) && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className={`inline-flex !flex-row !items-center w-fit gap-2 px-3 py-1 rounded-full border shadow-sm ${getModeInfo(msg.mode).bg} ${getModeInfo(msg.mode).border} ${getModeInfo(msg.mode).color} mb-3`}
+                              >
+                                {(() => {
+                                  const Icon = getModeInfo(msg.mode).icon;
+                                  return <Icon size={12} className="shrink-0" strokeWidth={3} />;
+                                })()}
+                                <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap leading-none">{getModeInfo(msg.mode).label}</span>
+                              </motion.div>
+                            )}
 
 
 
@@ -7371,7 +7414,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 </>
               )}
 
-              {messages.length === 0 && currentCase && selectedLegalTool?.id === 'legal_my_case' && (
+              {messages.length === 0 && currentCase && selectedLegalTool?.id === 'legal_my_case' && legalView === 'CHAT' && (
                 <div className="flex-1 flex flex-col items-center justify-center py-12 px-6 text-center animate-in fade-in zoom-in duration-500 absolute inset-0 pointer-events-none">
                   <div className="pointer-events-auto flex flex-col items-center">
                     <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mb-6 shadow-inner ring-1 ring-primary/20">
@@ -7396,7 +7439,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         {/* Welcome Screen - Integrated Hub */}
         <AnimatePresence>
           {messages.length === 0 &&
-            legalView !== 'DASHBOARD' &&
+            legalView === 'CHAT' &&
             (!currentCase || selectedLegalTool?.id !== 'legal_my_case') && (
               <motion.div
                 key="welcome-screen"
@@ -7519,7 +7562,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         </AnimatePresence>
 
         {/* Unified Chat Input Container */}
-        {legalView !== 'DASHBOARD' && (
+        {legalView !== 'DASHBOARD' && legalView !== 'PRECEDENTS' && (
           <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
             {/* Gradient Mask to hide text scrolling behind/below input - Removed to eliminate white shade */}
 
@@ -9301,21 +9344,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
               return;
             }
 
-            if (tool.id === 'legal_my_case') {
-              setLegalView('DASHBOARD');
-              setSelectedLegalTool({ id: tool.id, name: tool.name });
-              setCurrentMode('LEGAL_TOOLKIT');
-              setActiveLegalToolkit(false);
-              fetchLegalCases();
-              return;
-            }
-
-            // If we are currently inside a specific case (My Case context), stay in that context visually
-            // rather than switching to a generic tool card.
+            // Refactored unified tool activation (handles UI panels, clean input, and toasts)
             activateToolWithTypingEffect(tool.id, tool.name);
-            
-            setLegalView('CHAT'); // Ensure chat view is active for specific tools
-            setActiveLegalToolkit(false);
           }}
         />
       </React.Suspense>
