@@ -314,16 +314,14 @@ const PlaceholderPage = ({ title }) => (
 import { Toaster } from 'react-hot-toast';
 import CookieConsentBanner from './landingpage/CookieConsentBanner';
 
-// Inner component so it can use useLocation (must be inside BrowserRouter)
-const AppContent = () => {
-  const location = useLocation();
-  const isDashboard = location.pathname.startsWith('/dashboard');
+const NavigateProvider = () => {
+  const [tglState] = useRecoilState(toggleState);
 
   return (
     <>
       <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
       <CreditUpsellPopup />
-      {isDashboard && <CookieConsentBanner />}
+      <CookieConsentBanner />
       <Routes>
         {/* Public Routes */}
         <Route path={AppRoute.LANDING} element={<Landing />} />
@@ -374,11 +372,6 @@ const AppContent = () => {
       </Routes>
     </>
   );
-};
-
-const NavigateProvider = () => {
-  const [tglState] = useRecoilState(toggleState);
-  return <AppContent />;
 };
 
 export default NavigateProvider;
