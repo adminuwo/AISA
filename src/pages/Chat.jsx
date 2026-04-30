@@ -7443,8 +7443,12 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                           toast.success("Upload document for analysis");
                         } else if (id === 'edit_image') {
                           if (!checkPremiumTool('Edit Image')) return;
-                          setIsMagicImageModalOpen(true);
-                          toast.success("Image Editor Active");
+                          setIsMagicEditing(true);
+                          if (!editRefImage && messages.length > 0) {
+                            const lastImg = [...messages].reverse().find(m => m.imageUrl);
+                            if (lastImg) setEditRefImage({ url: lastImg.imageUrl, name: 'Last Generated', type: 'image' });
+                          }
+                          toast.success("Image Editing Mode Active");
                         } else if (id === 'image_to_video') {
                           if (!checkPremiumTool('Image to Video')) return;
                           setIsMagicVideoModalOpen(true);
