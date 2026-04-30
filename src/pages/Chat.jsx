@@ -5973,7 +5973,11 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         updatedMsg.content,
         SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
         updatedMsg.attachments || (updatedMsg.attachment ? [updatedMsg.attachment] : []),
-        personalizations?.general?.language || 'English'
+        personalizations?.general?.language || 'English',
+        null, // abortSignal
+        currentMode,
+        sessionId,
+        currentProjectId
       );
 
       let reply = "";
@@ -6008,8 +6012,8 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
       console.error("Error regenerating response:", error);
       toast.error("Failed to regenerate response. Please try again.");
       // Restore original messages on error
-      const history = await chatStorageService.getHistory(sessionId);
-      setMessages(history);
+      const historyData = await chatStorageService.getHistory(sessionId);
+      setMessages(historyData.messages || (Array.isArray(historyData) ? historyData : []));
     } finally {
       setIsLoading(false);
     }
