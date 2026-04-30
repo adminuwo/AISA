@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText, Shield, FileCheck, Scale, Binary,
   Mail, PenTool, AlertTriangle, Edit3, Brain,
