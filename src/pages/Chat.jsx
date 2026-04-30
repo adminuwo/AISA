@@ -1004,6 +1004,10 @@ const Chat = () => {
         isLegalCase: true
       };
 
+      setIsNewCaseModalOpen(false);
+      setEditingCaseId(null);
+      setNewCaseForm({ clientName: '', caseType: '', otherCaseType: '', accused: '', caseSummary: '' });
+
       if (editingCaseId) {
         await apiService.updateProject(editingCaseId, payload);
         toast.success("Case updated successfully!", { id: tid });
@@ -1027,10 +1031,6 @@ const Chat = () => {
           handleOpenCase(newCase, true);
         }
       }
-
-      setIsNewCaseModalOpen(false);
-      setEditingCaseId(null);
-      setNewCaseForm({ clientName: '', caseType: '', otherCaseType: '', accused: '', caseSummary: '' });
     } catch (err) {
       toast.error(editingCaseId ? "Failed to update case" : "Failed to create case", { id: tid });
     }
