@@ -547,6 +547,16 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             ))
         });
 
+        // Region & Language
+        settings.push({
+            id: 'region', tab: 'personalization', label: t('region'), description: t('regionDesc'), keywords: 'country region location',
+            component: renderSettingRow(t('region'), t('regionDesc'), renderDropdown(region, Object.keys(regions), (e) => setRegion(e.target.value), Globe))
+        });
+        settings.push({
+            id: 'language', tab: 'personalization', label: t('language'), description: t('languageDesc'), keywords: 'language translation hindi english',
+            component: renderSettingRow(t('language'), t('languageDesc'), renderDropdown(language, regions[region] || [], (e) => setLanguage(e.target.value), Languages))
+        });
+
         // Personalization
         settings.push({
             id: 'multiScheduleReminder', tab: 'personalization', label: 'Multi Schedule Reminder', keywords: 'alarm scheduler calendar schedule',
