@@ -102,7 +102,7 @@ const getUser = () => {
 }
 export const toggleState = atom({
   key: "toggle",
-  default: { subscripPgTgl: false, notify: false, sidebarOpen: false, platformSubTgl: false }
+  default: { subscripPgTgl: false, notify: false, sidebarOpen: false, platformSubTgl: false, focusMode: false }
 })
 
 export const userData = atom({
@@ -135,3 +135,7 @@ export const activeLegalToolData = atom({
   default: null
 })
 
+export const activeProjectsData = atom({
+  key: 'activeProjectsData',
+  default: []
+})

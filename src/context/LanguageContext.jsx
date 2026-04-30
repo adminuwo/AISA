@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { usePersonalization } from './PersonalizationContext';
+import { legalTranslations } from '../Tools/AI_Legal/translations/legal.translations';
 
 const LanguageContext = createContext();
 
@@ -11,6 +12,15 @@ export const LanguageProvider = ({ children }) => {
     const rawLanguage = personalizations?.general?.language || 'English';
     const language = rawLanguage;
     const region = personalizations?.general?.region || 'India';
+
+    const [toolkitLanguage, setToolkitLanguageState] = React.useState(() => {
+        return localStorage.getItem('ai_legal_lang') || 'English';
+    });
+
+    const setToolkitLanguage = (lang) => {
+        localStorage.setItem('ai_legal_lang', lang);
+        setToolkitLanguageState(lang);
+    };
 
     const setLanguage = (lang) => updatePersonalization('general', { language: lang });
     const setRegion = (reg) => updatePersonalization('general', { region: reg });
@@ -774,18 +784,10 @@ export const LanguageProvider = ({ children }) => {
             aiLegal: "AI Legal™",
             aiCashFlow: "AI CashFlow™",
             aiAds: "AI ADS™",
-            createVisualsFromText: "Create visuals from text",
-            textToCinematicVideo: "Text to Cinematic Video",
-            imageToVideoMagic: "Image to Video Magic",
-            magicImageEditor: "Magic Image Editor",
-            researchComplexTopics: "Research complex topics",
-            liveWebDataAccess: "Live web data access",
-            chatWithPdfsDocs: "Chat with PDFs & Docs",
-            writeDebugCode: "Write & debug code",
-            textDocsToVoice: "Text/Docs to Voice",
-            specializedAiLegalTools: "Specialized AI legal tools",
-            liveAnalysisReports: "Live Analysis & Reports",
-            comingSoon: "Coming Soon...",
+            aiStrategy: "AI Strategy™",
+            digitalTwin: "AI Digital Twin™",
+            creativeWriter: "Creative Writer™",
+            voiceClone: "Voice Clone™",
             badgeImage: "IMAGE",
             badgeVideo: "VIDEO",
             badgeAnimate: "ANIMATE",
@@ -798,6 +800,10 @@ export const LanguageProvider = ({ children }) => {
             badgeLegal: "LEGAL",
             badgeFinance: "FINANCE",
             badgeAds: "ADS",
+            badgeStrategy: "STRATEGY",
+            badgePersonalize: "PERSONALIZE",
+            badgeCreative: "CREATIVE",
+            badgeClone: "CLONE",
             aisaAiGenerating: "AISA AI is Generating...",
             aiResultConfirmed: "AI Result Confirmed",
             active: "ACTIVE",
@@ -7102,13 +7108,29 @@ export const LanguageProvider = ({ children }) => {
         }
     };
 
+    // Merge AI Legal specific translations
+    Object.keys(legalTranslations).forEach(lang => {
+        if (translations[lang]) {
+            Object.assign(translations[lang], legalTranslations[lang]);
+        }
+    });
+
     const t = (key) => {
         const langData = translations[language] || translations['English'];
         return langData[key] || translations['English'][key] || key;
     };
 
+    const tLegal = (key) => {
+        const langData = translations[toolkitLanguage] || translations['English'];
+        return langData[key] || translations['English'][key] || key;
+    };
+
     return (
-        <LanguageContext.Provider value={{ language, setLanguage, t, languages: uniqueLanguages, region, setRegion, regions, regionFlags, allTimezones, regionTimezones }}>
+        <LanguageContext.Provider value={{ 
+            language, setLanguage, t, 
+            toolkitLanguage, setToolkitLanguage, tLegal,
+            languages: uniqueLanguages, region, setRegion, regions, regionFlags, allTimezones, regionTimezones 
+        }}>
             {children}
         </LanguageContext.Provider>
     );
