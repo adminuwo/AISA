@@ -4492,7 +4492,7 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
           userMsg.content,
           SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
           finalAttachments,
-          currentLang,
+          personalizations?.general?.language || 'English',
           abortControllerRef.current.signal,
           detectedMode,
           activeSessionId,
@@ -5881,7 +5881,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         updatedMsg.content,
         SYSTEM_INSTRUCTION + getSystemPromptExtensions(),
         updatedMsg.attachments || (updatedMsg.attachment ? [updatedMsg.attachment] : []),
-        currentLang
+        personalizations?.general?.language || 'English'
       );
 
       let reply = "";
@@ -6558,10 +6558,20 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             {editingMessageId === msg.id ? (
                               <div className="flex flex-col gap-3 min-w-[200px] w-full mt-2">
                                 <textarea
+                                  ref={(el) => {
+                                    if (el) {
+                                      el.style.height = 'auto';
+                                      el.style.height = `${el.scrollHeight}px`;
+                                    }
+                                  }}
                                   value={editContent}
-                                  onChange={(e) => setEditContent(e.target.value)}
-                                  className="w-full bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white rounded-xl p-5 text-sm focus:outline-none border border-black/10 dark:border-white/20 placeholder-slate-400 dark:placeholder-white/50 min-h-[500px] lg:min-h-[650px] font-mono leading-[1.8] resize-y shadow-inner transition-all hover:border-primary/30"
-                                  rows={25}
+                                  onChange={(e) => {
+                                    setEditContent(e.target.value);
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                  }}
+                                  className="w-full bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl p-4 text-[15px] focus:outline-none border border-slate-200 dark:border-white/10 placeholder-slate-400 dark:placeholder-white/40 min-h-[56px] max-h-[400px] leading-relaxed resize-none shadow-sm transition-all focus:border-primary/40 focus:ring-4 focus:ring-primary/10 overflow-y-auto scrollbar-thin"
+                                  rows={1}
                                   autoFocus
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
