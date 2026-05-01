@@ -69,8 +69,7 @@ export const removeAccount = (email) => {
   }
 }
 export const clearUser = () => {
-  localStorage.removeItem('user');
-  localStorage.removeItem('accounts');
+  localStorage.clear();
 }
 export const updateUser = (updates) => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
