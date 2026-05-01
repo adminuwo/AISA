@@ -64,8 +64,8 @@ const CustomSelect = ({ value, onChange, options, color = 'indigo', className = 
       if (opt?.disabled) return; // Block disabled options
       onChange(val);
     }}>
-      <div className="relative w-full">
-        <Listbox.Button className={`w-full flex items-center justify-between text-left cursor-pointer outline-none transition-all shadow-inner hover:bg-white dark:hover:bg-white/5 truncate pr-10 ${className}`}>
+      <div className="relative w-full overflow-visible">
+        <Listbox.Button className={`w-full flex items-center justify-between text-left cursor-pointer outline-none transition-all shadow-inner hover:shadow-md hover:bg-white dark:hover:bg-white/5 truncate pr-10 border border-slate-200 dark:border-white/10 hover:border-primary/40 ${className}`}>
           <span className="block truncate font-black">{selectedLabel}</span>
           <span className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 pointer-events-none">
             <ChevronDown className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
@@ -80,7 +80,7 @@ const CustomSelect = ({ value, onChange, options, color = 'indigo', className = 
           leaveFrom="opacity-100 translate-y-0"
           leaveTo="opacity-0 translate-y-1"
         >
-          <Listbox.Options className="absolute z-[999] mt-3 max-h-72 w-full overflow-auto rounded-[24px] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl py-3 text-sm shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] ring-1 ring-black/5 dark:ring-white/10 focus:outline-none border border-slate-100/50 dark:border-white/10 animate-in fade-in slide-in-from-top-2 custom-scrollbar">
+          <Listbox.Options className="absolute z-[2000] mt-3 max-h-72 w-full overflow-auto rounded-[24px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl py-3 text-sm shadow-[0_30px_70px_-10px_rgba(0,0,0,0.4)] dark:shadow-[0_30px_70px_-10px_rgba(0,0,0,0.7)] ring-1 ring-black/5 dark:ring-white/10 focus:outline-none border border-slate-100/50 dark:border-white/10 animate-in fade-in slide-in-from-top-2 custom-scrollbar">
             {options.map((option, idx) => {
               const optValue = typeof option === 'string' ? option : option.value;
               const optLabel = typeof option === 'string' ? option : option.label;
@@ -1761,7 +1761,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         </div>
 
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start relative z-[10]">
 
 
 
@@ -2083,7 +2083,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
 
 
             {/* STEP 4: INTELLIGENCE CORE (MATCHED TO REFERENCE) */}
-            <div className="p-4 rounded-[16px] bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-4 hover:border-emerald-500/20 transition-all duration-500 group">
+            <div className="p-4 rounded-[16px] bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-4 hover:border-emerald-500/20 transition-all duration-500 group overflow-visible">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
@@ -2165,7 +2165,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                   </div>
                   <span className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-widest">Social Engine</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-[60]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-[1000]">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Campaign Month</label>
                     <CustomSelect
@@ -2199,7 +2199,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         </div>
 
         {/* REDESIGNED MASTER SAVE BUTTON */}
-        <div className="pt-12 space-y-6 max-w-5xl mx-auto w-full relative z-0">
+        <div className="pt-20 pb-32 space-y-6 max-w-5xl mx-auto w-full relative z-0">
           {calendarEntries.length === 0 && (
             <div className="group relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-[24px] blur opacity-75"></div>
@@ -5728,7 +5728,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
 
 
                         {/* Scrollable Content */}
-                        <main className={`flex-1 overflow-y-auto ${activeTab === 'generation' ? 'p-4 lg:p-10' : 'p-6 lg:p-12'} custom-scrollbar relative mesh-bg`} data-lenis-prevent>
+                        <main className={`flex-1 overflow-y-auto ${activeTab === 'generation' ? 'p-4 lg:p-10' : 'p-6 lg:p-12 pb-32'} custom-scrollbar relative mesh-bg`} data-lenis-prevent>
                           {renderContent()}
                         </main>
                       </div>
