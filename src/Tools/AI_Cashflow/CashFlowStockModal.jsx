@@ -130,7 +130,9 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
    useEffect(() => {
       if (isOpen && !socket) {
          const wsUrl = baseURL.replace('/api', '');
-         const newSocket = io(wsUrl);
+         const newSocket = io(wsUrl, {
+            transports: ['websocket'],
+         });
          setSocket(newSocket);
       }
       if (!isOpen && socket) {
