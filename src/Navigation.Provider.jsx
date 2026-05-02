@@ -19,7 +19,7 @@ import { AppRoute } from './types';
 import { Menu, Bell, Sun, Moon, LogIn, User } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { toggleState, getUserData, clearUser, activeModeData } from './userStore/userData';
+import { toggleState, getUserData, clearUser, activeModeData, activeLegalToolData, legalViewData } from './userStore/userData';
 import { usePersonalization } from './context/PersonalizationContext';
 import NotificationCenter from './Components/NotificationBar/NotificationCenter.jsx';
 import ProfileSettingsDropdown from './Components/ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
@@ -128,22 +128,33 @@ const DashboardLayout = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const currentMode = useRecoilValue(activeModeData);
+  const selectedLegalTool = useRecoilValue(activeLegalToolData);
+  const legalView = useRecoilValue(legalViewData);
   const isMobile = window.innerWidth <= 768;
   const isLegalMode = currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/cases';
-  const isMainChat = location.pathname.startsWith('/dashboard/chat') && !isLegalMode;
+  const isMainChat = (location.pathname.startsWith('/dashboard/chat') || location.pathname === '/dashboard') && !isLegalMode;
   
-  // Rule: In mobile view, navbar only on main chat screen. Hide for AI Legal and other features.
-  const shouldHideMobileNavbar = isMobile && (!isMainChat || isLegalMode);
+  // Screens that should have a fixed, non-hiding navbar
+  const isWhitelistedLegalView = isLegalMode && (
+    selectedLegalTool?.id === 'legal_my_case' || 
+    selectedLegalTool?.id === 'legal_precedents' ||
+    legalView === 'DASHBOARD' || 
+    legalView === 'PRECEDENTS'
+  );
+
+  // Rule: In mobile view, render the navbar for Main Chat and ALL Legal Toolkit features.
+  // Auto-hide will be handled by isVisible state.
+  const shouldHideMobileNavbar = isMobile && !isMainChat && !isLegalMode;
 
   // ─── Scroll Direction Logic for Auto-Hide Navbar ───
-  const [isVisible, setIsVisible] = useState(false); // hidden by default on mobile, reveals on scroll-up
+  const [isVisible, setIsVisible] = useState(true); // visible by default as per requirement
   const lastScrollYRef = useRef(0); // useRef avoids stale closure in the scroll handler
   const scrollThreshold = 15; // px
 
   useEffect(() => {
     const handleScroll = (e) => {
-      // Only apply on mobile (lg and above use desktop sidebar — no mobile header)
-      if (window.innerWidth >= 1024) return;
+      // Only apply on mobile as per user requirement (<= 768px)
+      if (window.innerWidth > 768) return;
 
       // Get scroll position from any scrollable element
       const target = e.target;
@@ -152,8 +163,8 @@ const DashboardLayout = () => {
           ? window.scrollY
           : (target.scrollTop ?? 0);
 
-      // Always show header when at the very top
-      if (currentScrollY < 10) {
+      // Always show header when at the very top or if in whitelisted view
+      if (currentScrollY < 10 || isWhitelistedLegalView) {
         setIsVisible(true);
         lastScrollYRef.current = currentScrollY;
         return;
@@ -170,7 +181,14 @@ const DashboardLayout = () => {
     // capture: true catches scroll from ALL nested containers (Chat internal scroll, window, etc.)
     window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     return () => window.removeEventListener('scroll', handleScroll, { capture: true, passive: true });
-  }, []);
+  }, [isWhitelistedLegalView]); // Re-bind scroll listener if whitelist changes to ensure correct behavior
+
+  // Force visibility when entering a whitelisted view (e.g. My Case dashboard)
+  useEffect(() => {
+    if (isWhitelistedLegalView) {
+      setIsVisible(true);
+    }
+  }, [isWhitelistedLegalView]);
 
   // Sync CSS variable so child pages (Chat) can transition their top-padding in lockstep
   useEffect(() => {
@@ -285,7 +303,10 @@ const DashboardLayout = () => {
 
         <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
         {/* Outlet for pages */}
-        <main className={`flex-1 ${location.pathname.includes('/chat') ? 'overflow-hidden' : 'overflow-y-auto'} relative w-full scroll-smooth p-0 scrollbar-hide`}>
+        <main 
+          className={`flex-1 ${(location.pathname.includes('/chat') || location.pathname.includes('/cases')) ? 'overflow-hidden' : 'overflow-y-auto'} relative w-full scroll-smooth p-0 scrollbar-hide transition-all duration-300 ease-in-out`}
+          style={{ paddingTop: 'var(--mobile-nav-h)' }}
+        >
           <Outlet />
         </main>
       </div>

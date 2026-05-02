@@ -146,3 +146,8 @@ export const activeProjectsData = atom({
   key: 'activeProjectsData',
   default: []
 })
+
+export const legalViewData = atom({
+  key: 'legalViewData',
+  default: localStorage.getItem('aisa_legal_view') || 'CHAT'
+})

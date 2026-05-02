@@ -13,7 +13,7 @@ const LegalWorkspaceHeader = ({
 }) => {
   const { tLegal } = useLanguage();
   return (
-    <div className="w-full px-6 sm:px-12 pt-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-zinc-800/50 pb-6">
+    <div className="w-full px-6 sm:px-12 pt-0 sm:pt-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-zinc-800/50 pb-6">
       <div className="flex flex-col gap-4">
         <button
           onClick={handleBackToDashboard}

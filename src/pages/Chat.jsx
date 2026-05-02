@@ -36,7 +36,7 @@ import { jsPDF } from 'jspdf';
 import { toCanvas } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
-import { userData, getUserData, clearUser, sessionsData, toggleState, memoryData, activeProjectIdData, activeModeData, activeLegalToolData, activeProjectsData } from '../userStore/userData';
+import { userData, getUserData, clearUser, sessionsData, toggleState, memoryData, activeProjectIdData, activeModeData, activeLegalToolData, activeProjectsData, legalViewData } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
 import PremiumUpsellModal from '../Components/PremiumUpsellModal';
@@ -641,7 +641,7 @@ const Chat = () => {
   const USER_MSG_COLLAPSE_CHARS = 200; // Collapse threshold
 
   // --- MY CASE CRM STATES ---
-  const [legalView, setLegalView] = useState(() => localStorage.getItem('aisa_legal_view') || 'CHAT'); // 'DASHBOARD' | 'CHAT'
+  const [legalView, setLegalView] = useRecoilState(legalViewData); // 'DASHBOARD' | 'CHAT' | 'PRECEDENTS'
 
   useEffect(() => {
     if (legalView) {
@@ -842,6 +842,21 @@ const Chat = () => {
     legalView,
     setLegalView
   });
+  
+  // ─── Mobile Scroll Reset for Legal Views ──────────────────────────────────
+  // Ensure that when a case is opened or the legal view changes, we start from the top
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile && currentMode === 'LEGAL_TOOLKIT') {
+      if (chatContainerRef.current) {
+        // Reset scroll position to top instantly
+        chatContainerRef.current.scrollTop = 0;
+        // Also ensure any smooth scroll animations are canceled
+        chatContainerRef.current.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    }
+  }, [currentProjectId, legalView, sessionId, location.pathname]);
+
 
 
 
@@ -5985,11 +6000,10 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           ref={chatContainerRef}
           onScroll={handleScroll}
           className={`relative flex-1 aisa-scalable-text chatgpt-container scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent ${(legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT'
-            ? 'z-20 h-full w-full overflow-hidden flex flex-col bg-slate-50'
+            ? 'z-20 h-full w-full overflow-hidden flex flex-col bg-slate-50 min-h-0'
             : 'overflow-y-auto lg:pt-6 pb-64 md:pb-72'
             }`}
           style={{ 
-            paddingTop: window.innerWidth < 1024 ? 'var(--mobile-nav-h, 0px)' : undefined,
             overflowY: ((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') ? 'hidden' : 'auto', 
             height: '100%',
             flex: '1 1 auto',
@@ -6006,7 +6020,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col w-full h-full"
+                className="flex-1 flex flex-col w-full h-full min-h-0"
               >
                 <LegalPrecedents
                   projectId={currentCase?._id}
@@ -6031,7 +6045,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex-1 flex flex-col w-full select-text"
+                className="flex-1 flex flex-col w-full select-text min-h-0"
               >
                 {renderCaseDashboard()}
               </motion.div>
@@ -7055,14 +7069,14 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-                className="absolute inset-0 z-10 pointer-events-auto flex flex-col items-center overflow-y-auto overflow-x-hidden pt-20 lg:pt-2 pb-40 sm:pt-8 md:pb-48 scrollbar-hide"
+                className="absolute inset-0 z-10 pointer-events-auto flex flex-col items-center overflow-y-auto overflow-x-hidden pt-6 lg:pt-2 pb-40 sm:pt-4 md:pb-48 scrollbar-hide"
               >
                 <div className="relative z-10 flex flex-col items-center w-full max-w-7xl mx-auto px-4 sm:px-6 h-max">
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="mb-6"
+                    className="mb-4"
                   >
                     <img
                       src={logo}

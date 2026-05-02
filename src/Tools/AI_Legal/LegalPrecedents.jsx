@@ -477,7 +477,7 @@ const LegalPrecedents = ({ projectId: initialProjectId, onBack, cases = [], onSe
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 overflow-y-auto custom-scrollbar overscroll-contain touch-pan-y">
                 {isLoading ? renderLoading() : (
                     <>
                         {mode === 'CURRENT' && !selectedProjectId ? renderCaseSelection() : (
@@ -783,7 +783,7 @@ export const CaseDetailView = ({
                 {/* Content Grid */}
                 <div className="precedent-modal-body flex-1 overflow-hidden flex flex-col md:flex-row">
                     {/* LEFT PANEL - Primary Content (65%) */}
-                    <div className="precedent-modal-main md:w-[65%] overflow-y-auto custom-scrollbar px-6 sm:px-8 py-6 sm:py-8 space-y-6">
+                    <div className="precedent-modal-main md:w-[65%] overflow-y-auto custom-scrollbar px-6 sm:px-8 py-6 sm:py-8 space-y-6 min-h-0 overscroll-contain">
 
                         {/* Case Facts */}
                         <div className="bg-white p-6 rounded-[20px] border border-[#E2E8F0] shadow-sm">
