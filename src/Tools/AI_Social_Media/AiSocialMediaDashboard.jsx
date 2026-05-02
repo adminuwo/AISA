@@ -1688,7 +1688,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
 
 
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col space-y-16 pb-72">
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col space-y-8 sm:space-y-16 pb-24 sm:pb-72">
         <AnimatePresence>
           {isExtracting && (
             <motion.div
@@ -2199,7 +2199,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         </div>
 
         {/* REDESIGNED MASTER SAVE BUTTON */}
-        <div className="pt-20 pb-32 space-y-6 max-w-5xl mx-auto w-full relative z-0">
+        <div className="pt-10 sm:pt-20 pb-16 sm:pb-32 space-y-6 max-w-5xl mx-auto w-full relative z-0">
           {calendarEntries.length === 0 && (
             <div className="group relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-[24px] blur opacity-75"></div>
@@ -4920,7 +4920,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
             <div className="space-y-5">
               <div className="space-y-2">
                 <label htmlFor="onboardingWebsite" className="text-xs font-black uppercase tracking-widest text-slate-500 cursor-pointer">Your Website URL</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     id="onboardingWebsite"
                     type="url"
@@ -4929,13 +4929,13 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                     value={onboardingData.website || ''}
                     disabled={onboardingData.noWebsite || isOnboardingFetching}
                     onChange={e => setOnboardingData({ ...onboardingData, website: e.target.value })}
-                    className="flex-1 h-14 px-5 rounded-2xl border-2 border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm font-semibold text-slate-800 transition-all bg-white shadow-sm disabled:opacity-50"
+                    className="w-full sm:flex-1 h-14 px-5 rounded-2xl border-2 border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm font-semibold text-slate-800 transition-all bg-white shadow-sm disabled:opacity-50"
                   />
                   <button
                     type="button"
                     disabled={!onboardingData.website || onboardingData.noWebsite || isExtracting}
                     onClick={() => handleAiFetch(onboardingData.website, 'onboarding')}
-                    className="h-14 px-5 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-lg shadow-primary/20 active:scale-95 shrink-0"
+                    className="w-full sm:w-auto h-14 px-6 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-indigo-700 transition-all shadow-lg shadow-primary/20 active:scale-95 shrink-0"
                   >
                     {isExtracting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                     {isExtracting ? 'Scanning...' : 'Auto Fill'}
