@@ -90,6 +90,7 @@ const Login = () => {
 
     try {
       const payload = { email, password };
+      console.log(`[AUTH] Attempting login for ${email} at ${apis.logIn}`);
       const res = await axios.post(apis.logIn, payload);
 
       toast.success(t('successLogin'));
