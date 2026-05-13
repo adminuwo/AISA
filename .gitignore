@@ -30,3 +30,21 @@ dist-ssr
 geminiService1.js
 oldGeminiService.js
 .env.production
+
+# Scratch / temp directories
+scratch/
+
+# Dev fix & utility scripts (not production code)
+fix_*.js
+fix_*.cjs
+remove_magic.cjs
+git_helper.cjs
+resolve_conflicts.js
+fix_all.js
+
+# Old/archived files
+Chat_old.jsx
+index_prev.css
+
+# Patch files
+*.patch
