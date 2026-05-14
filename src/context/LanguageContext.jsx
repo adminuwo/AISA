@@ -783,7 +783,7 @@ export const LanguageProvider = ({ children }) => {
             codeWriter: "Code Writer",
             convertToAudio: "Convert to Audio",
             aiLegal: "AI Legal™",
-            aiCashFlow: "AI CashFlow™",
+            aiCashFlow: "AICashflow",
             aiAds: "AI ADS™",
             aiStrategy: "AI Strategy™",
             digitalTwin: "AI Digital Twin™",

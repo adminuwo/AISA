@@ -527,7 +527,7 @@ const AiCashflowDemo = ({ active }) => {
 
   return (
     <div style={panelStyle('#34d399')}>
-      <PanelChrome color={color} label="Finance AI" />
+      <PanelChrome color={color} label="AICashflow" />
       <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -748,7 +748,7 @@ const StackedFeatures = () => {
               'Web Search': { title: 'webSearchTitle', desc: 'webSearchLongDesc' },
               'Code Builder': { title: 'codeBuilderTitle', desc: 'codeBuilderLongDesc' },
               'AI Legal': { title: 'Legal AI', desc: 'Advanced legal intelligence for document analysis and risk detection.' },
-              'AI Cashflow': { title: 'Finance AI', desc: 'Intelligent financial forecasting and real-time revenue analysis.' },
+              'AI Cashflow': { title: 'AICashflow', desc: 'Intelligent financial forecasting and real-time revenue analysis.' },
               'AI Ads': { title: 'Ad Agent', desc: 'Automated high-conversion ad campaign generation and creative copywriting.' }
             };
             const Icon = feat.icon;
