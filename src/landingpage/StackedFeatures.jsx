@@ -485,7 +485,7 @@ const AiLegalDemo = ({ active }) => {
 
   return (
     <div style={panelStyle('#fb7185')}>
-      <PanelChrome color={color} label="Legal AI" />
+      <PanelChrome color={color} label="AI Legal" />
       <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 10, background: 'rgba(251,113,133,0.08)', border: `1px solid ${color}30` }}>
           <Scale size={12} style={{ color }} />
@@ -527,7 +527,7 @@ const AiCashflowDemo = ({ active }) => {
 
   return (
     <div style={panelStyle('#34d399')}>
-      <PanelChrome color={color} label="AICashflow" />
+      <PanelChrome color={color} label="AI Cashflow" />
       <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -567,7 +567,7 @@ const AiAdsDemo = ({ active }) => {
 
   return (
     <div style={panelStyle('#6366f1')}>
-      <PanelChrome color={color} label="Ad Agent" />
+      <PanelChrome color={color} label="AI Ads" />
       <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 10, background: 'rgba(99,102,241,0.08)', border: `1px solid ${color}30` }}>
           <Megaphone size={12} style={{ color }} />
@@ -747,9 +747,9 @@ const StackedFeatures = () => {
               'Video Generation': { title: 'videoGenTitle', desc: 'videoGenLongDesc' },
               'Web Search': { title: 'webSearchTitle', desc: 'webSearchLongDesc' },
               'Code Builder': { title: 'codeBuilderTitle', desc: 'codeBuilderLongDesc' },
-              'AI Legal': { title: 'Legal AI', desc: 'Advanced legal intelligence for document analysis and risk detection.' },
-              'AI Cashflow': { title: 'AICashflow', desc: 'Intelligent financial forecasting and real-time revenue analysis.' },
-              'AI Ads': { title: 'Ad Agent', desc: 'Automated high-conversion ad campaign generation and creative copywriting.' }
+              'AI Legal': { title: 'AI Legal', desc: 'Advanced legal intelligence for document analysis and risk detection.' },
+              'AI Cashflow': { title: 'AI Cashflow', desc: 'Intelligent financial forecasting and real-time revenue analysis.' },
+              'AI Ads': { title: 'AI Ads', desc: 'Automated high-conversion ad campaign generation and creative copywriting.' }
             };
             const Icon = feat.icon;
             const { Demo } = feat;
