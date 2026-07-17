@@ -66,6 +66,19 @@ export default defineConfig({
     outDir: 'dist',
     reportCompressedSize: true,
     minify: 'esbuild',
-    rollupOptions: {},
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts') || id.includes('d3')) return 'vendor-charts';
+            if (id.includes('framer-motion') || id.includes('gsap') || id.includes('lenis')) return 'vendor-animation';
+            if (id.includes('@monaco-editor') || id.includes('@codesandbox')) return 'vendor-editor';
+            if (id.includes('jspdf') || id.includes('xlsx') || id.includes('docx')) return 'vendor-file-parsers';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            return 'vendor-core';
+          }
+        }
+      }
+    },
   },
 });

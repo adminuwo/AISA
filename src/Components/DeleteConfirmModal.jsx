@@ -1,11 +1,12 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, X, AlertTriangle } from 'lucide-react';
 
 const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title = "Delete Message?", description = "Are you sure you want to delete this message? This action cannot be undone.", confirmText = "Delete Message" }) => {
-    if (!isOpen) return null;
+    if (typeof document === 'undefined') return null;
 
-    return (
+    return createPortal(
         <AnimatePresence>
             {isOpen && (
                 <motion.div
@@ -70,7 +71,8 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title = "Delete Messag
                     </motion.div>
                 </motion.div>
             )}
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body
     );
 };
 
