@@ -124,8 +124,9 @@ const areEqual = (prevProps, nextProps) => {
   return true;
 };
 
-const CustomAudioPlayer = ({ src, fileName, fileSize, charCount }) => {
+const CustomAudioPlayer = ({ src, file, mimeType, fileName, fileSize, charCount }) => {
   const audioRef = React.useRef(null);
+  const [audioUrl, setAudioUrl] = React.useState('');
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
@@ -138,9 +139,40 @@ const CustomAudioPlayer = ({ src, fileName, fileSize, charCount }) => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  // Convert base64 to seekable Blob URL on mount
+  React.useEffect(() => {
+    let url = src;
+    let createdLocalUrl = false;
+
+    if (file) {
+      try {
+        const byteCharacters = atob(file);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType || 'audio/mpeg' });
+        url = URL.createObjectURL(blob);
+        createdLocalUrl = true;
+      } catch (err) {
+        console.error('[AudioPlayer] Blob generation failed:', err);
+        url = src || `data:${mimeType || 'audio/mpeg'};base64,${file}`;
+      }
+    }
+
+    setAudioUrl(url);
+
+    return () => {
+      if (createdLocalUrl && url && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [src, file, mimeType]);
+
   React.useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !audioUrl) return;
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
@@ -151,6 +183,7 @@ const CustomAudioPlayer = ({ src, fileName, fileSize, charCount }) => {
       }
     };
     const handleEnded = () => {
+      audio.currentTime = 0;
       setIsPlaying(false);
       setCurrentTime(0);
     };
@@ -176,7 +209,7 @@ const CustomAudioPlayer = ({ src, fileName, fileSize, charCount }) => {
         window.activeAudioInstance = null;
       }
     };
-  }, [src]);
+  }, [audioUrl]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -185,6 +218,9 @@ const CustomAudioPlayer = ({ src, fileName, fileSize, charCount }) => {
     if (isPlaying) {
       audio.pause();
     } else {
+      if (audio.currentTime >= audio.duration) {
+        audio.currentTime = 0;
+      }
       if (window.activeAudioInstance && window.activeAudioInstance !== audio) {
         try {
           window.activeAudioInstance.pause();
@@ -248,7 +284,7 @@ const CustomAudioPlayer = ({ src, fileName, fileSize, charCount }) => {
         border: '1px solid rgba(139,92,246,0.2)',
       }}
     >
-      <audio ref={audioRef} src={src} preload="metadata" style={{ display: 'none' }} />
+      <audio ref={audioRef} src={audioUrl} preload="metadata" style={{ display: 'none' }} />
       <div className="flex items-center gap-2.5 mb-2.5">
         <div
           className="w-7.5 h-7.5 rounded-lg flex items-center justify-center shrink-0"
@@ -1390,6 +1426,8 @@ const ChatBubble = React.memo(
                     return (
                       <CustomAudioPlayer
                         src={audioSrc}
+                        file={msg.conversion.file}
+                        mimeType={msg.conversion.mimeType}
                         fileName={msg.conversion.fileName}
                         fileSize={msg.conversion.fileSize}
                         charCount={msg.conversion.charCount}
