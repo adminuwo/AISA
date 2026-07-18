@@ -1,8 +1,9 @@
-
-
-const getAvatarUrl = (user) => {
-  if (!user || !user.email) return "";
-  let baseUrl = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://127.0.0.1:8080/api";
+const getAvatarUrl = user => {
+  if (!user || !user.email) return '';
+  let baseUrl =
+    window._env_?.VITE_AISA_BACKEND_API ||
+    import.meta.env.VITE_AISA_BACKEND_API ||
+    'http://127.0.0.1:8080/api';
   // Remove /api suffix to get the base host for the proxy avatar URL
   if (baseUrl.endsWith('/api')) {
     baseUrl = baseUrl.slice(0, -4);
@@ -11,7 +12,7 @@ const getAvatarUrl = (user) => {
   return `${baseUrl}/api/auth/proxy-avatar?email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(name)}`;
 };
 
-const processUser = (user) => {
+const processUser = user => {
   if (user) {
     // Fallback if no avatar exists or it's the default placeholder
     if (!user.avatar || user.avatar === '/User.jpeg' || user.avatar === '') {
@@ -21,12 +22,12 @@ const processUser = (user) => {
   return user;
 };
 
-export const setUserData = (data) => {
+export const setUserData = data => {
   const existing = JSON.parse(localStorage.getItem('user') || '{}');
   const token = data.token || existing.token;
 
   // Preserve local name if backend returns default "Demo User" (Offline/Fallback mode)
-  if (data.name === "Demo User" && existing.name && existing.name !== "Demo User") {
+  if (data.name === 'Demo User' && existing.name && existing.name !== 'Demo User') {
     data.name = existing.name;
   }
 
@@ -34,8 +35,8 @@ export const setUserData = (data) => {
   const finalData = { ...processedData, token };
 
   // Update primary user
-  localStorage.setItem("user", JSON.stringify(finalData));
-  
+  localStorage.setItem('user', JSON.stringify(finalData));
+
   // Clear guest chat limit count upon login
   localStorage.removeItem('aisa_guest_chat_count');
 
@@ -49,28 +50,28 @@ export const setUserData = (data) => {
   }
   localStorage.setItem('accounts', JSON.stringify(accounts));
   return finalData;
-}
+};
 export const getUserData = () => {
   try {
     const item = localStorage.getItem('user');
-    if (!item || item === "undefined" || item === "null") return null;
+    if (!item || item === 'undefined' || item === 'null') return null;
     const data = JSON.parse(item);
     return processUser(data);
   } catch (e) {
     return null;
   }
-}
+};
 export const getAccounts = () => {
   try {
     const item = localStorage.getItem('accounts');
-    if (!item || item === "undefined" || item === "null") return [];
+    if (!item || item === 'undefined' || item === 'null') return [];
     const data = JSON.parse(item);
     return data.map(processUser);
   } catch (e) {
     return [];
   }
-}
-export const removeAccount = (email) => {
+};
+export const removeAccount = email => {
   const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
   const filtered = accounts.filter(a => a.email !== email);
   localStorage.setItem('accounts', JSON.stringify(filtered));
@@ -82,19 +83,19 @@ export const removeAccount = (email) => {
       localStorage.setItem('user', JSON.stringify(filtered[0]));
     }
   }
-}
+};
 export const clearUser = () => {
   const cookieConsent = localStorage.getItem('aisa_cookie_consent');
   const appTheme = localStorage.getItem('app_theme');
   const appAccent = localStorage.getItem('app_accent');
-  
+
   localStorage.clear();
-  
+
   if (cookieConsent) localStorage.setItem('aisa_cookie_consent', cookieConsent);
   if (appTheme) localStorage.setItem('app_theme', appTheme);
   if (appAccent) localStorage.setItem('app_accent', appAccent);
-}
-export const updateUser = (updates) => {
+};
+export const updateUser = updates => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const updatedUser = { ...user, ...updates };
   localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -107,19 +108,18 @@ export const updateUser = (updates) => {
     localStorage.setItem('accounts', JSON.stringify(accounts));
   }
   return updatedUser;
-}
+};
 const getUser = () => {
   try {
     const item = localStorage.getItem('user');
-    if (!item || item === "undefined" || item === "null") return null;
+    if (!item || item === 'undefined' || item === 'null') return null;
     const user = JSON.parse(item);
     if (user) {
-      return processUser(user)
+      return processUser(user);
     }
   } catch (e) {
-    console.error("Error parsing user from localStorage", e);
+    console.error('Error parsing user from localStorage', e);
     localStorage.removeItem('user'); // Clear corrupted data
   }
-  return null
-}
-
+  return null;
+};

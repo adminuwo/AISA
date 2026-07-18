@@ -45,8 +45,12 @@ const NeuralCanvas = ({ mousePos, isDarkMode }) => {
           z: Math.random() * 2, // depth factor
           size: 1 + Math.random() * 3,
           color: isDarkMode
-            ? (Math.random() > 0.5 ? '#60a5fa' : '#e879f9')
-            : (Math.random() > 0.5 ? '#4f46e5' : '#7c3aed'),
+            ? Math.random() > 0.5
+              ? '#60a5fa'
+              : '#e879f9'
+            : Math.random() > 0.5
+              ? '#4f46e5'
+              : '#7c3aed',
         });
       }
 
@@ -114,18 +118,22 @@ const NeuralCanvas = ({ mousePos, isDarkMode }) => {
           const dist = Math.sqrt((n1.x - n2.x) ** 2 + (n1.y - n2.y) ** 2);
           if (dist < 300) {
             const alpha = (1 - dist / 300) * (isDarkMode ? 0.2 : 0.08);
-            ctx.strokeStyle = isDarkMode ? `rgba(139, 92, 246, ${alpha})` : `rgba(79, 70, 229, ${alpha})`;
+            ctx.strokeStyle = isDarkMode
+              ? `rgba(139, 92, 246, ${alpha})`
+              : `rgba(79, 70, 229, ${alpha})`;
             ctx.beginPath();
             ctx.moveTo(n1.x, n1.y);
             ctx.lineTo(n2.x, n2.y);
             ctx.stroke();
 
             /* Data Flow Animation */
-            if (dist < 220 && (i % 3 === 0)) {
+            if (dist < 220 && i % 3 === 0) {
               const flowPos = (tick * 0.006 + i) % 1;
               const fx = n1.x + (n2.x - n1.x) * flowPos;
               const fy = n1.y + (n2.y - n1.y) * flowPos;
-              ctx.fillStyle = isDarkMode ? `rgba(232, 121, 249, ${alpha * 2.5})` : `rgba(79, 70, 229, ${alpha * 2})`;
+              ctx.fillStyle = isDarkMode
+                ? `rgba(232, 121, 249, ${alpha * 2.5})`
+                : `rgba(79, 70, 229, ${alpha * 2})`;
               ctx.beginPath();
               ctx.arc(fx, fy, 1.8, 0, Math.PI * 2);
               ctx.fill();
@@ -148,7 +156,9 @@ const NeuralCanvas = ({ mousePos, isDarkMode }) => {
 
       /* ── Digital Dust ── */
       particles.forEach(p => {
-        ctx.fillStyle = isDarkMode ? `rgba(255, 255, 255, ${p.alpha * 0.5})` : `rgba(79, 70, 229, ${p.alpha * 0.2})`;
+        ctx.fillStyle = isDarkMode
+          ? `rgba(255, 255, 255, ${p.alpha * 0.5})`
+          : `rgba(79, 70, 229, ${p.alpha * 0.2})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
@@ -164,7 +174,12 @@ const NeuralCanvas = ({ mousePos, isDarkMode }) => {
     return () => cancelAnimationFrame(animRef.current);
   }, []);
 
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }}
+    />
+  );
 };
 
 /* ─────────────────────────────────────────────────────────
@@ -179,19 +194,19 @@ const Hero = () => {
   const heroRef = useRef(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-
-
   // Transition State
   const [introStage, setIntroStage] = useState('animating'); // waiting, animating, finished
 
   const normalizedTheme = typeof theme === 'string' ? theme.toLowerCase() : 'system';
-  const isDarkMode = normalizedTheme === 'dark' || (normalizedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDarkMode =
+    normalizedTheme === 'dark' ||
+    (normalizedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseMove = useCallback(e => {
     setMousePos({ x: e.clientX, y: e.clientY });
   }, []);
 
-  const headingText = "The Future of Conversational AI";
+  const headingText = 'The Future of Conversational AI';
 
   // Variants for the character generation
   const container = {
@@ -209,7 +224,7 @@ const Hero = () => {
       filter: 'blur(0px)',
       transition: {
         duration: 0.8,
-        ease: [0.22, 1, 0.36, 1]
+        ease: [0.22, 1, 0.36, 1],
       },
     },
     hidden: {
@@ -237,18 +252,21 @@ const Hero = () => {
       {/* ── Background: Deep Gradient Space ── */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={introStage === 'finished' ? { opacity: introStage === 'finished' ? 1 : 0 } : { opacity: 0 }}
+        animate={
+          introStage === 'finished'
+            ? { opacity: introStage === 'finished' ? 1 : 0 }
+            : { opacity: 0 }
+        }
         transition={{ duration: 2 }}
         style={{
-          position: 'absolute', inset: 0,
+          position: 'absolute',
+          inset: 0,
           background: isDarkMode
             ? 'radial-gradient(ellipse 120% 80% at 50% 50%, #0c0018 0%, #04040e 100%)'
             : 'radial-gradient(ellipse 120% 80% at 50% 50%, #E0E7FF 0%, #EEF2FF 100%)',
-          zIndex: 0
+          zIndex: 0,
         }}
       />
-
-
 
       {/* Immersive Glowing Lights */}
       <motion.div
@@ -257,20 +275,34 @@ const Hero = () => {
         transition={{ duration: 2.5 }}
         style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
       >
-        <div style={{
-          position: 'absolute', top: '5%', left: '10%', width: '45vw', height: '45vw',
-          background: isDarkMode
-            ? 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 75%)'
-            : 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 75%)',
-          filter: 'blur(80px)', animation: 'float-glow 8s infinite alternate'
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '5%', right: '10%', width: '50vw', height: '50vw',
-          background: isDarkMode
-            ? 'radial-gradient(circle, rgba(236,72,153,0.14) 0%, transparent 75%)'
-            : 'radial-gradient(circle, rgba(232,121,249,0.08) 0%, transparent 75%)',
-          filter: 'blur(100px)', animation: 'float-glow 10s infinite alternate-reverse'
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: '5%',
+            left: '10%',
+            width: '45vw',
+            height: '45vw',
+            background: isDarkMode
+              ? 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 75%)'
+              : 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 75%)',
+            filter: 'blur(80px)',
+            animation: 'float-glow 8s infinite alternate',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '5%',
+            right: '10%',
+            width: '50vw',
+            height: '50vw',
+            background: isDarkMode
+              ? 'radial-gradient(circle, rgba(236,72,153,0.14) 0%, transparent 75%)'
+              : 'radial-gradient(circle, rgba(232,121,249,0.08) 0%, transparent 75%)',
+            filter: 'blur(100px)',
+            animation: 'float-glow 10s infinite alternate-reverse',
+          }}
+        />
       </motion.div>
 
       {/* ── 3D Neural Scene ── */}
@@ -289,14 +321,24 @@ const Hero = () => {
         animate={introStage === 'finished' ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
         transition={{ duration: 2 }}
         style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: '500px', height: '500px', borderRadius: '50%',
-          border: isDarkMode ? '1px solid rgba(99, 102, 241, 0.1)' : '1px solid rgba(99, 102, 241, 0.2)',
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          border: isDarkMode
+            ? '1px solid rgba(99, 102, 241, 0.1)'
+            : '1px solid rgba(99, 102, 241, 0.2)',
           background: isDarkMode
             ? 'radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)'
             : 'radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
-          zIndex: 1, pointerEvents: 'none',
-          boxShadow: isDarkMode ? '0 0 100px rgba(99, 102, 241, 0.1)' : '0 0 80px rgba(99, 102, 241, 0.05)'
+          zIndex: 1,
+          pointerEvents: 'none',
+          boxShadow: isDarkMode
+            ? '0 0 100px rgba(99, 102, 241, 0.1)'
+            : '0 0 80px rgba(99, 102, 241, 0.05)',
         }}
       />
 
@@ -318,80 +360,100 @@ const Hero = () => {
       >
         <motion.div
           whileHover={{ scale: 1.05 }}
-          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
           onClick={() => navigate('/')}
           className="group"
         >
           <div className="relative">
             <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img src={logo} alt="AISA™"
+            <img
+              src={logo}
+              alt="AISA™"
               style={{
                 height: window.innerWidth < 640 ? '32px' : '50px',
                 width: 'auto',
                 objectFit: 'cover',
-                objectPosition: 'top'
+                objectPosition: 'top',
               }}
               className="drop-shadow-[0_0_40px_rgba(99,102,241,0.6)] relative transition-all duration-500"
             />
           </div>
-          <span aria-label="AISA™" style={{
-            fontSize: window.innerWidth < 640 ? '0.6rem' : '0.75rem',
-            fontWeight: 900,
-            letterSpacing: '0.25em',
-            background: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontFamily: '"Times New Roman", Times, serif',
-            marginTop: window.innerWidth < 640 ? '2px' : '4px',
-            transition: 'all 0.3s',
-            display: 'inline-block'
-          }}>
-            AISA<span aria-hidden="true" style={{ fontSize: '0.55em', verticalAlign: 'super', marginLeft: '1px' }}>™</span>
+          <span
+            aria-label="AISA™"
+            style={{
+              fontSize: window.innerWidth < 640 ? '0.6rem' : '0.75rem',
+              fontWeight: 900,
+              letterSpacing: '0.25em',
+              background: 'linear-gradient(135deg, #9333ea 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontFamily: '"Times New Roman", Times, serif',
+              marginTop: window.innerWidth < 640 ? '2px' : '4px',
+              transition: 'all 0.3s',
+              display: 'inline-block',
+            }}
+          >
+            AISA
+            <span
+              aria-hidden="true"
+              style={{ fontSize: '0.55em', verticalAlign: 'super', marginLeft: '1px' }}
+            >
+              ™
+            </span>
           </span>
         </motion.div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: window.innerWidth < 640 ? '0.8rem' : '1.5rem'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: window.innerWidth < 640 ? '0.8rem' : '1.5rem',
+          }}
+        >
           <ThemeToggle />
           {user ? (
             <div style={{ position: 'relative' }}>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: isDarkMode ? '#fff' : '#0F172A', 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: isDarkMode ? '#fff' : '#0F172A',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: 0
+                  padding: 0,
                 }}
               >
                 {user?.avatar ? (
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    border: isDarkMode ? '2px solid #a78bfa' : '2px solid #6366f1'
-                  }}>
-                    <img 
-                      src={user.avatar} 
-                      alt="Profile" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                      onError={(e) => { 
-                        e.currentTarget.onerror = null; 
-                        e.currentTarget.src = '/account.png'; 
-                      }} 
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      border: isDarkMode ? '2px solid #a78bfa' : '2px solid #6366f1',
+                    }}
+                  >
+                    <img
+                      src={user.avatar}
+                      alt="Profile"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/account.png';
+                      }}
                     />
                   </div>
                 ) : (
-                  <CircleUser size={30} color={isDarkMode ? "#a78bfa" : "#6366f1"} />
+                  <CircleUser size={30} color={isDarkMode ? '#a78bfa' : '#6366f1'} />
                 )}
               </motion.button>
               <AnimatePresence>
@@ -411,14 +473,22 @@ const Hero = () => {
             </div>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.05, background: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(99, 102, 241, 0.1)' }}
+              whileHover={{
+                scale: 1.05,
+                background: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(99, 102, 241, 0.1)',
+              }}
               onClick={() => navigate('/signup')}
               style={{
                 background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(99, 102, 241, 0.05)',
-                border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99, 102, 241, 0.2)',
-                color: isDarkMode ? '#fff' : '#0F172A', padding: '10px 24px',
-                borderRadius: '12px', cursor: 'pointer', fontWeight: 600,
-                transition: '0.3s'
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(99, 102, 241, 0.2)',
+                color: isDarkMode ? '#fff' : '#0F172A',
+                padding: '10px 24px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                transition: '0.3s',
               }}
             >
               {t('getStarted')}
@@ -428,29 +498,43 @@ const Hero = () => {
       </div>
 
       {/* ── Foreground Content ── */}
-      <div style={{
-        position: 'relative', zIndex: 10,
-        textAlign: 'center', maxWidth: '1400px',
-        width: '100%',
-        padding: window.innerWidth < 640 ? '80px 1.25rem 20px' : '100px 1.5rem 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          textAlign: 'center',
+          maxWidth: '1400px',
+          width: '100%',
+          padding: window.innerWidth < 640 ? '80px 1.25rem 20px' : '100px 1.5rem 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={introStage === 'finished' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 1 }}
         >
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '10px',
-            padding: '8px 20px', borderRadius: '999px',
-            background: isDarkMode ? 'rgba(99, 102, 241, 0.12)' : 'rgba(99, 102, 241, 0.08)',
-            border: isDarkMode ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid rgba(99, 102, 241, 0.3)',
-            color: isDarkMode ? '#a5b4fc' : '#4f46e5', fontSize: '0.85rem', fontWeight: 700,
-            marginBottom: '1rem', letterSpacing: '0.1em'
-          }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '8px 20px',
+              borderRadius: '999px',
+              background: isDarkMode ? 'rgba(99, 102, 241, 0.12)' : 'rgba(99, 102, 241, 0.08)',
+              border: isDarkMode
+                ? '1px solid rgba(99, 102, 241, 0.4)'
+                : '1px solid rgba(99, 102, 241, 0.3)',
+              color: isDarkMode ? '#a5b4fc' : '#4f46e5',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              marginBottom: '1rem',
+              letterSpacing: '0.1em',
+            }}
+          >
             Powered by UWO™
           </div>
         </motion.div>
@@ -460,8 +544,10 @@ const Hero = () => {
           <motion.h1
             variants={container}
             initial="hidden"
-            animate={introStage !== 'waiting' ? "visible" : "hidden"}
-            onAnimationComplete={() => { if (introStage === 'animating') setIntroStage('finished'); }}
+            animate={introStage !== 'waiting' ? 'visible' : 'hidden'}
+            onAnimationComplete={() => {
+              if (introStage === 'animating') setIntroStage('finished');
+            }}
             style={{
               fontSize: 'clamp(2.2rem, 10vw, 5.5rem)',
               fontWeight: 900,
@@ -472,42 +558,56 @@ const Hero = () => {
               textAlign: 'center',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             {/* Line 1: The Future of */}
-            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.25em' }}>
-              {t('heroTitleLine1').split(" ").map((word, index) => (
-                <motion.span
-                  key={`l1-${index}`}
-                  variants={child}
-                  style={{ display: 'inline-block' }}
-                >
-                  {word}
-                </motion.span>
-              ))}
+            <div
+              style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.25em' }}
+            >
+              {t('heroTitleLine1')
+                .split(' ')
+                .map((word, index) => (
+                  <motion.span
+                    key={`l1-${index}`}
+                    variants={child}
+                    style={{ display: 'inline-block' }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
             </div>
 
             {/* Line 2: Conversational AI (with Gradient across words) */}
-            <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', flexWrap: 'wrap', gap: '0.25em' }}>
-              {t('heroTitleLine2').split(" ").map((word, index, arr) => (
-                <motion.span
-                  key={`l2-${index}`}
-                  variants={child}
-                  style={{
-                    display: 'inline-block',
-                    // Gradient technique: each word shows a slice of a larger gradient
-                    background: 'linear-gradient(90deg, #60a5fa 0%, #a78bfa 50%, #e879f9 100%)',
-                    backgroundSize: `${arr.length * 100}% 100%`,
-                    backgroundPosition: `${arr.length > 1 ? (index / (arr.length - 1)) * 100 : 50}% center`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  {word}
-                </motion.span>
-              ))}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                position: 'relative',
+                flexWrap: 'wrap',
+                gap: '0.25em',
+              }}
+            >
+              {t('heroTitleLine2')
+                .split(' ')
+                .map((word, index, arr) => (
+                  <motion.span
+                    key={`l2-${index}`}
+                    variants={child}
+                    style={{
+                      display: 'inline-block',
+                      // Gradient technique: each word shows a slice of a larger gradient
+                      background: 'linear-gradient(90deg, #60a5fa 0%, #a78bfa 50%, #e879f9 100%)',
+                      backgroundSize: `${arr.length * 100}% 100%`,
+                      backgroundPosition: `${arr.length > 1 ? (index / (arr.length - 1)) * 100 : 50}% center`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
 
               {/* Immersive Glow behind second line */}
               <motion.div
@@ -515,9 +615,12 @@ const Hero = () => {
                 animate={introStage === 'finished' ? { opacity: 0.4 } : { opacity: 0 }}
                 transition={{ duration: 1.5 }}
                 style={{
-                  position: 'absolute', inset: '-10% -20%',
+                  position: 'absolute',
+                  inset: '-10% -20%',
                   background: 'linear-gradient(90deg, #3b82f6 0%, #d946ef 100%)',
-                  filter: 'blur(50px)', zIndex: -1, pointerEvents: 'none'
+                  filter: 'blur(50px)',
+                  zIndex: -1,
+                  pointerEvents: 'none',
                 }}
               />
             </div>
@@ -541,7 +644,10 @@ const Hero = () => {
             textAlign: 'center',
           }}
         >
-          AISA™ is an advanced AI platform designed to empower users with intelligent tools for comprehensive research, creative content generation, and insightful data analysis. We use Google Sign-In to securely authenticate users, personalize their workspaces, and synchronize their tasks across devices.
+          AISA™ is an advanced AI platform designed to empower users with intelligent tools for
+          comprehensive research, creative content generation, and insightful data analysis. We use
+          Google Sign-In to securely authenticate users, personalize their workspaces, and
+          synchronize their tasks across devices.
         </motion.p>
 
         {/* Subtitle removed to avoid scrolling and fit buttons on screen */}
@@ -549,7 +655,11 @@ const Hero = () => {
         {/* Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={introStage === 'finished' ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
+          animate={
+            introStage === 'finished'
+              ? { opacity: 1, y: 0, scale: 1 }
+              : { opacity: 0, y: 20, scale: 0.95 }
+          }
           transition={{ duration: 1, delay: 0.3 }}
           style={{
             display: 'flex',
@@ -558,39 +668,68 @@ const Hero = () => {
             flexWrap: 'wrap',
             flexDirection: window.innerWidth < 640 ? 'column' : 'row',
             alignItems: 'center',
-            width: window.innerWidth < 640 ? '100%' : 'auto'
+            width: window.innerWidth < 640 ? '100%' : 'auto',
           }}
         >
           <motion.button
-            whileHover={{ scale: 1.05, boxShadow: isDarkMode ? '0 20px 40px rgba(99, 102, 241, 0.5)' : '0 15px 35px rgba(79, 70, 229, 0.2)' }}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: isDarkMode
+                ? '0 20px 40px rgba(99, 102, 241, 0.5)'
+                : '0 15px 35px rgba(79, 70, 229, 0.2)',
+            }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/dashboard')}
             style={{
-              padding: '16px 42px', borderRadius: '16px', border: 'none',
+              padding: '16px 42px',
+              borderRadius: '16px',
+              border: 'none',
               background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-              color: '#fff', fontWeight: 800, fontSize: '1.1rem',
-              cursor: 'pointer', boxShadow: isDarkMode ? '0 20px 50px rgba(99, 102, 241, 0.4)' : '0 10px 40px rgba(79, 70, 229, 0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              cursor: 'pointer',
+              boxShadow: isDarkMode
+                ? '0 20px 50px rgba(99, 102, 241, 0.4)'
+                : '0 10px 40px rgba(79, 70, 229, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
               transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-              width: window.innerWidth < 640 ? '100%' : 'auto'
+              width: window.innerWidth < 640 ? '100%' : 'auto',
             }}
           >
             {user ? t('existingUser') : t('exploreAisa')} <ArrowRight size={22} />
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.05, background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(99, 102, 241, 0.12)' }}
+            whileHover={{
+              scale: 1.05,
+              background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(99, 102, 241, 0.12)',
+            }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = import.meta.env.VITE_AI_MALL || 'https://aimall24.com'}
+            onClick={() =>
+              (window.location.href = import.meta.env.VITE_AI_MALL || 'https://aimall24.com')
+            }
             style={{
-              padding: '16px 42px', borderRadius: '16px',
+              padding: '16px 42px',
+              borderRadius: '16px',
               background: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(99, 102, 241, 0.06)',
-              border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(99, 102, 241, 0.2)',
-              color: isDarkMode ? '#fff' : '#0F172A', fontWeight: 800, fontSize: '1.1rem',
-              cursor: 'pointer', backdropFilter: 'blur(20px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+              border: isDarkMode
+                ? '1px solid rgba(255, 255, 255, 0.2)'
+                : '1px solid rgba(99, 102, 241, 0.2)',
+              color: isDarkMode ? '#fff' : '#0F172A',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              cursor: 'pointer',
+              backdropFilter: 'blur(20px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
               transition: 'all 0.4s ease',
-              width: window.innerWidth < 640 ? '100%' : 'auto'
+              width: window.innerWidth < 640 ? '100%' : 'auto',
             }}
           >
             {t('exploreAiMall')} <Zap size={22} />
@@ -603,17 +742,35 @@ const Hero = () => {
         initial={{ opacity: 0 }}
         animate={introStage === 'finished' ? { opacity: 0.3 } : { opacity: 0 }}
         transition={{ duration: 1 }}
-        style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)' }}
+        style={{
+          position: 'absolute',
+          bottom: '2.5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}
       >
-        <div style={{
-          width: '32px', height: '54px', borderRadius: '16px',
-          border: isDarkMode ? '1.5px solid rgba(255,255,255,0.4)' : '1.5px solid rgba(15,23,42,0.4)',
-          display: 'flex', justifyContent: 'center', padding: '8px'
-        }}>
+        <div
+          style={{
+            width: '32px',
+            height: '54px',
+            borderRadius: '16px',
+            border: isDarkMode
+              ? '1.5px solid rgba(255,255,255,0.4)'
+              : '1.5px solid rgba(15,23,42,0.4)',
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '8px',
+          }}
+        >
           <motion.div
             animate={{ y: [0, 15, 0], opacity: [1, 0, 1] }}
             transition={{ duration: 2.5, repeat: Infinity }}
-            style={{ width: '4px', height: '10px', background: isDarkMode ? '#fff' : '#0F172A', borderRadius: '2px' }}
+            style={{
+              width: '4px',
+              height: '10px',
+              background: isDarkMode ? '#fff' : '#0F172A',
+              borderRadius: '2px',
+            }}
           />
         </div>
       </motion.div>

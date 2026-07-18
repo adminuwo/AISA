@@ -61,7 +61,9 @@ const AIOutputCard = ({
 
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   // Re-run whenever originalText or lang changes
@@ -92,24 +94,29 @@ const AIOutputCard = ({
     lastTranslatedRef.current = originalText;
 
     setIsTranslating(true);
-    translateText(originalText).then((translated) => {
-      if (!isMountedRef.current) return;
-      setDisplayText(translated);
-      setIsTranslating(false);
-    }).catch(() => {
-      if (!isMountedRef.current) return;
-      setDisplayText(originalText); // Fallback
-      setIsTranslating(false);
-    });
+    translateText(originalText)
+      .then(translated => {
+        if (!isMountedRef.current) return;
+        setDisplayText(translated);
+        setIsTranslating(false);
+      })
+      .catch(() => {
+        if (!isMountedRef.current) return;
+        setDisplayText(originalText); // Fallback
+        setIsTranslating(false);
+      });
   }, [originalText, outputLang, getDisplayText, translateText, setIsTranslating]);
 
-  const handleLangChange = useCallback((newLang) => {
-    setOutputLang(newLang);
-    if (newLang === 'en') {
-      setDisplayText(originalText);
-      lastTranslatedRef.current = '';
-    }
-  }, [setOutputLang, originalText]);
+  const handleLangChange = useCallback(
+    newLang => {
+      setOutputLang(newLang);
+      if (newLang === 'en') {
+        setDisplayText(originalText);
+        lastTranslatedRef.current = '';
+      }
+    },
+    [setOutputLang, originalText]
+  );
 
   const toolbarClasses = sticky
     ? 'sticky top-0 z-10 bg-white/95 dark:bg-[#0f162a]/95 backdrop-blur-sm'
@@ -120,9 +127,7 @@ const AIOutputCard = ({
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
       <div className={`flex items-center justify-between gap-2 pb-2 mb-1 ${toolbarClasses}`}>
         {/* Left slot */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {headerLeft}
-        </div>
+        <div className="flex items-center gap-2 min-w-0 flex-1">{headerLeft}</div>
 
         {/* Right: extra actions + toggle + copy */}
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
@@ -142,11 +147,12 @@ const AIOutputCard = ({
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
-      <div className={`transition-opacity duration-200 ${isTranslating ? 'opacity-60' : 'opacity-100'}`}>
+      <div
+        className={`transition-opacity duration-200 ${isTranslating ? 'opacity-60' : 'opacity-100'}`}
+      >
         {typeof children === 'function'
           ? children({ displayText, outputLang, isTranslating })
-          : children
-        }
+          : children}
       </div>
 
       {/* ── Translating overlay hint ─────────────────────────────────────── */}

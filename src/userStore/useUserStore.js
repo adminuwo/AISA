@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 
 // --- LocalStorage helpers ---
-const getAvatarUrl = (user) => {
-  if (!user || !user.email) return "";
-  let baseUrl = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://127.0.0.1:8080/api";
+const getAvatarUrl = user => {
+  if (!user || !user.email) return '';
+  let baseUrl =
+    window._env_?.VITE_AISA_BACKEND_API ||
+    import.meta.env.VITE_AISA_BACKEND_API ||
+    'http://127.0.0.1:8080/api';
   if (baseUrl.endsWith('/api')) {
     baseUrl = baseUrl.slice(0, -4);
   }
@@ -11,7 +14,7 @@ const getAvatarUrl = (user) => {
   return `${baseUrl}/api/auth/proxy-avatar?email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(name)}`;
 };
 
-const processUser = (user) => {
+const processUser = user => {
   if (user) {
     if (!user.avatar || user.avatar === '/User.jpeg' || user.avatar === '') {
       return { ...user, avatar: getAvatarUrl(user) };
@@ -23,7 +26,7 @@ const processUser = (user) => {
 const getUserFromStorage = () => {
   try {
     const item = localStorage.getItem('user');
-    if (!item || item === "undefined" || item === "null") return null;
+    if (!item || item === 'undefined' || item === 'null') return null;
     return processUser(JSON.parse(item));
   } catch (e) {
     return null;
@@ -42,7 +45,9 @@ export const useUserStore = create((set, get) => ({
     try {
       const saved = localStorage.getItem('aisa_active_legal_tool_data');
       return saved ? JSON.parse(saved) : null;
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   })(),
   activeProjects: [],
   legalView: localStorage.getItem('aisa_legal_view') || 'CHAT',
@@ -55,9 +60,14 @@ export const useUserStore = create((set, get) => ({
   },
 
   // Actions / Mutators
-  setUser: (dataOrObj) => {
+  setUser: dataOrObj => {
     let userData = dataOrObj;
-    if (dataOrObj && typeof dataOrObj === 'object' && 'user' in dataOrObj && Object.keys(dataOrObj).length === 1) {
+    if (
+      dataOrObj &&
+      typeof dataOrObj === 'object' &&
+      'user' in dataOrObj &&
+      Object.keys(dataOrObj).length === 1
+    ) {
       userData = dataOrObj.user;
     }
     if (!userData) {
@@ -67,13 +77,13 @@ export const useUserStore = create((set, get) => ({
     }
     const existing = JSON.parse(localStorage.getItem('user') || '{}');
     const token = userData.token || existing.token;
-    if (userData.name === "Demo User" && existing.name && existing.name !== "Demo User") {
+    if (userData.name === 'Demo User' && existing.name && existing.name !== 'Demo User') {
       userData.name = existing.name;
     }
     const processed = processUser(userData);
     const finalData = { ...processed, token };
 
-    localStorage.setItem("user", JSON.stringify(finalData));
+    localStorage.setItem('user', JSON.stringify(finalData));
     localStorage.removeItem('aisa_guest_chat_count');
 
     // Update account list
@@ -89,7 +99,7 @@ export const useUserStore = create((set, get) => ({
     set({ user: finalData });
   },
 
-  updateUser: (updates) => {
+  updateUser: updates => {
     const current = get().user || {};
     const updated = { ...current, ...updates };
     localStorage.setItem('user', JSON.stringify(updated));
@@ -107,9 +117,9 @@ export const useUserStore = create((set, get) => ({
     const cookieConsent = localStorage.getItem('aisa_cookie_consent');
     const appTheme = localStorage.getItem('app_theme');
     const appAccent = localStorage.getItem('app_accent');
-    
+
     localStorage.clear();
-    
+
     if (cookieConsent) localStorage.setItem('aisa_cookie_consent', cookieConsent);
     if (appTheme) localStorage.setItem('app_theme', appTheme);
     if (appAccent) localStorage.setItem('app_accent', appAccent);
@@ -126,30 +136,30 @@ export const useUserStore = create((set, get) => ({
     });
   },
 
-  setSessions: (sessions) => set({ sessions }),
-  setMemory: (memory) => set({ memory }),
-  setActiveProjectId: (id) => {
+  setSessions: sessions => set({ sessions }),
+  setMemory: memory => set({ memory }),
+  setActiveProjectId: id => {
     if (id) localStorage.setItem('aisa_active_project_id', id);
     else localStorage.removeItem('aisa_active_project_id');
     set({ activeProjectId: id });
   },
-  setActiveMode: (mode) => {
+  setActiveMode: mode => {
     localStorage.setItem('aisa_active_mode', mode);
     set({ activeMode: mode });
   },
-  setActiveLegalToolData: (data) => {
+  setActiveLegalToolData: data => {
     if (data) localStorage.setItem('aisa_active_legal_tool_data', JSON.stringify(data));
     else localStorage.removeItem('aisa_active_legal_tool_data');
     set({ activeLegalToolData: data });
   },
-  setActiveProjects: (activeProjects) => set({ activeProjects }),
-  setLegalView: (view) => {
+  setActiveProjects: activeProjects => set({ activeProjects }),
+  setLegalView: view => {
     localStorage.setItem('aisa_legal_view', view);
     set({ legalView: view });
   },
   setToggle: (key, value) => {
-    set((state) => ({
-      toggles: { ...state.toggles, [key]: value }
+    set(state => ({
+      toggles: { ...state.toggles, [key]: value },
     }));
-  }
+  },
 }));

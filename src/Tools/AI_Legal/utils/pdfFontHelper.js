@@ -1,7 +1,7 @@
 let regularFontBase64 = null;
 let boldFontBase64 = null;
 
-const arrayBufferToBase64 = (buffer) => {
+const arrayBufferToBase64 = buffer => {
   let binary = '';
   const bytes = new Uint8Array(buffer);
   const len = bytes.byteLength;
@@ -23,24 +23,21 @@ export const initDevanagariFonts = async () => {
   try {
     const [regRes, boldRes] = await Promise.all([
       fetch('/fonts/NotoSansDevanagari-Regular.ttf'),
-      fetch('/fonts/NotoSansDevanagari-Bold.ttf')
+      fetch('/fonts/NotoSansDevanagari-Bold.ttf'),
     ]);
 
     if (!regRes.ok || !boldRes.ok) {
-      throw new Error("Failed to load Devanagari font files from local server.");
+      throw new Error('Failed to load Devanagari font files from local server.');
     }
 
-    const [regBuf, boldBuf] = await Promise.all([
-      regRes.arrayBuffer(),
-      boldRes.arrayBuffer()
-    ]);
+    const [regBuf, boldBuf] = await Promise.all([regRes.arrayBuffer(), boldRes.arrayBuffer()]);
 
     regularFontBase64 = arrayBufferToBase64(regBuf);
     boldFontBase64 = arrayBufferToBase64(boldBuf);
 
     return { regularFont: regularFontBase64, boldFont: boldFontBase64 };
   } catch (err) {
-    console.error("[pdfFontHelper] Error loading Devanagari fonts:", err);
+    console.error('[pdfFontHelper] Error loading Devanagari fonts:', err);
     return null;
   }
 };
@@ -54,11 +51,11 @@ export const addDevanagariFontsToDoc = (doc, fonts) => {
     // Add Regular weight
     doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', fonts.regularFont);
     doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
-    
+
     // Add Bold weight
     doc.addFileToVFS('NotoSansDevanagari-Bold.ttf', fonts.boldFont);
     doc.addFont('NotoSansDevanagari-Bold.ttf', 'NotoSansDevanagari', 'bold');
   } catch (err) {
-    console.error("[pdfFontHelper] Error adding fonts to document:", err);
+    console.error('[pdfFontHelper] Error adding fonts to document:', err);
   }
 };

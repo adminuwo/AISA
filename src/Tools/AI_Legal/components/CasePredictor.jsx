@@ -1,14 +1,63 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { 
-  ChevronLeft, ChevronRight, Gavel, Plus, FileText, Copy, Share2, 
-  History, Search, X, ShieldCheck, Clock, Brain, Scale, 
-  BookOpen, AlertTriangle, TrendingUp, Mic, Database, Cpu, BarChart2, Users, Save, CheckCircle2,
-  Download, Printer, Edit3, Check, RefreshCw, AlertCircle, FilePlus, ChevronUp, ChevronDown,
-  Landmark, Sparkles, AlertOctagon, HelpCircle, Activity, Heart, DollarSign, Target, FileDown,
-  Briefcase, Upload, Lock, Unlock
+import {
+  ChevronLeft,
+  ChevronRight,
+  Gavel,
+  Plus,
+  FileText,
+  Copy,
+  Share2,
+  History,
+  Search,
+  X,
+  ShieldCheck,
+  Clock,
+  Brain,
+  Scale,
+  BookOpen,
+  AlertTriangle,
+  TrendingUp,
+  Mic,
+  Database,
+  Cpu,
+  BarChart2,
+  Users,
+  Save,
+  CheckCircle2,
+  Download,
+  Printer,
+  Edit3,
+  Check,
+  RefreshCw,
+  AlertCircle,
+  FilePlus,
+  ChevronUp,
+  ChevronDown,
+  Landmark,
+  Sparkles,
+  AlertOctagon,
+  HelpCircle,
+  Activity,
+  Heart,
+  DollarSign,
+  Target,
+  FileDown,
+  Briefcase,
+  Upload,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip as ChartTooltip, Legend } from 'recharts';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+  Legend,
+} from 'recharts';
 import toast from 'react-hot-toast';
 import { generateChatResponse } from '../../../services/geminiService';
 import { apiService } from '../../../services/apiService';
@@ -24,11 +73,18 @@ const QUICK_PRESETS = [
   { name: 'Bail Forecast', desc: 'Predict bail approval chances for financial disputes.' },
   { name: 'Adverse Possession', desc: 'Forecast land claim validity based on occupancy duration.' },
   { name: 'Contract Breach Claim', desc: 'Evaluate liability thresholds for delayed deliveries.' },
-  { name: 'Cyber Intrusion Risk', desc: 'Evaluate liability for remote contractor data breaches.' }
+  { name: 'Cyber Intrusion Risk', desc: 'Evaluate liability for remote contractor data breaches.' },
 ];
 
 // Context-aware smart legal default generator for robust fallbacks or legacy items
-const generateSmartDefaultPredictionData = (facts, category, court, sections, opponent, witness) => {
+const generateSmartDefaultPredictionData = (
+  facts,
+  category,
+  court,
+  sections,
+  opponent,
+  witness
+) => {
   const isCriminal = category === 'Criminal';
   const isProperty = category === 'Property';
   const isCorporate = category === 'Corporate' || category === 'Civil';
@@ -39,123 +95,267 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
   const evidenceStrength = Math.floor(Math.random() * 20) + 70;
   const caseStrength = Math.floor(Math.random() * 20) + 65;
   const settlementProbability = isCriminal ? 15 : Math.floor(Math.random() * 30) + 50;
-  const expectedHearings = isCriminal ? Math.floor(Math.random() * 8) + 15 : Math.floor(Math.random() * 6) + 8;
+  const expectedHearings = isCriminal
+    ? Math.floor(Math.random() * 8) + 15
+    : Math.floor(Math.random() * 6) + 8;
   const estimatedLegalCost = isCriminal ? 180000 : 120000;
 
   // 1. Positive/Negative Factors
   const positiveFactors = [
-    { factor: "Factual consistency in core timeline and filings.", severity: "High", confidence: 92, details: "The petitioner's initial accounts and pleadings align perfectly with standard timelines, leaving little room for contradiction." },
-    { factor: "Applicable statutory provisions directly govern client claims.", severity: "High", confidence: 88, details: `The citation of ${sections || 'governing sections'} establishes a clear legal trigger for our requested remedy.` }
+    {
+      factor: 'Factual consistency in core timeline and filings.',
+      severity: 'High',
+      confidence: 92,
+      details:
+        "The petitioner's initial accounts and pleadings align perfectly with standard timelines, leaving little room for contradiction.",
+    },
+    {
+      factor: 'Applicable statutory provisions directly govern client claims.',
+      severity: 'High',
+      confidence: 88,
+      details: `The citation of ${sections || 'governing sections'} establishes a clear legal trigger for our requested remedy.`,
+    },
   ];
   if (witness) {
-    positiveFactors.push({ factor: "Credible third-party witness deposition available.", severity: "Medium", confidence: 85, details: "Corroboration from independent witnesses reduces the burden of documentary proof." });
+    positiveFactors.push({
+      factor: 'Credible third-party witness deposition available.',
+      severity: 'Medium',
+      confidence: 85,
+      details: 'Corroboration from independent witnesses reduces the burden of documentary proof.',
+    });
   }
 
   const negativeFactors = [
-    { factor: "Opposing counsel likely to assert technical/procedural delays.", severity: "Medium", confidence: 78, details: "Procedural objections are commonly used as stall tactics in this jurisdiction." }
+    {
+      factor: 'Opposing counsel likely to assert technical/procedural delays.',
+      severity: 'Medium',
+      confidence: 78,
+      details: 'Procedural objections are commonly used as stall tactics in this jurisdiction.',
+    },
   ];
   if (opponent && opponent.toLowerCase().includes('state')) {
-    negativeFactors.push({ factor: "Involvement of state agencies typically prolongs disposal times.", severity: "High", confidence: 85, details: "Litigation against sovereign or public bodies is subject to extensive administrative review cycles." });
+    negativeFactors.push({
+      factor: 'Involvement of state agencies typically prolongs disposal times.',
+      severity: 'High',
+      confidence: 85,
+      details:
+        'Litigation against sovereign or public bodies is subject to extensive administrative review cycles.',
+    });
   }
 
   // 2. Risks
   const risks = [
-    { type: "Procedural Risk", severity: "Low", description: "Minor risk of delayed notice delivery to opposing respondents.", fix: "Optimize process serving via dasti or speed post tracking.", impact: "May cause 1-2 initial hearing adjournments." },
-    { type: "Witness Risk", severity: "Medium", description: "Potential availability issues for remote witnesses during cross-examination.", fix: "File an application for virtual recording under the new digital trial provisions.", impact: "Temporary delay of evidentiary stage by 2-3 months." },
-    { type: "Limitation Risk", severity: "Low", description: "Opponent may raise a preliminary objection on limitation timelines.", fix: "Submit a replication detailing the exact cause of action trigger date.", impact: "Critical if sustained, but records support timely filing." },
-    { type: "Delay Risk", severity: "High", description: "Backlog in current bench of selected jurisdiction.", fix: "Pre-compile all written notes and seek early hearing certificate.", impact: "Overall timeline might extend by 6-9 months." },
-    { type: "Appeal Risk", severity: "Medium", description: "Likelihood of appeal from losing party.", fix: "Ensure all lower court decrees are tightly formatted and lodge caveats in superior courts immediately.", impact: "Extension of final decree execution by 12-18 months." }
+    {
+      type: 'Procedural Risk',
+      severity: 'Low',
+      description: 'Minor risk of delayed notice delivery to opposing respondents.',
+      fix: 'Optimize process serving via dasti or speed post tracking.',
+      impact: 'May cause 1-2 initial hearing adjournments.',
+    },
+    {
+      type: 'Witness Risk',
+      severity: 'Medium',
+      description: 'Potential availability issues for remote witnesses during cross-examination.',
+      fix: 'File an application for virtual recording under the new digital trial provisions.',
+      impact: 'Temporary delay of evidentiary stage by 2-3 months.',
+    },
+    {
+      type: 'Limitation Risk',
+      severity: 'Low',
+      description: 'Opponent may raise a preliminary objection on limitation timelines.',
+      fix: 'Submit a replication detailing the exact cause of action trigger date.',
+      impact: 'Critical if sustained, but records support timely filing.',
+    },
+    {
+      type: 'Delay Risk',
+      severity: 'High',
+      description: 'Backlog in current bench of selected jurisdiction.',
+      fix: 'Pre-compile all written notes and seek early hearing certificate.',
+      impact: 'Overall timeline might extend by 6-9 months.',
+    },
+    {
+      type: 'Appeal Risk',
+      severity: 'Medium',
+      description: 'Likelihood of appeal from losing party.',
+      fix: 'Ensure all lower court decrees are tightly formatted and lodge caveats in superior courts immediately.',
+      impact: 'Extension of final decree execution by 12-18 months.',
+    },
   ];
 
   // 3. Evidence Intelligence
   const missingEvidence = [
-    { name: "Certified Registry Ledger Copy", priority: "High", reason: "Establishes registered root title documents.", impact: 8, expectedImprovement: "Raises success probability by 8% by nullifying forgery claims." },
-    { name: "Section 65B Electronic Evidence Affidavit", priority: "Critical", reason: "Mandatory for electronic communications (emails, chats) to be admissible.", impact: 12, expectedImprovement: "Protects electronic audit trail admissibility, raising confidence by 12%." }
+    {
+      name: 'Certified Registry Ledger Copy',
+      priority: 'High',
+      reason: 'Establishes registered root title documents.',
+      impact: 8,
+      expectedImprovement: 'Raises success probability by 8% by nullifying forgery claims.',
+    },
+    {
+      name: 'Section 65B Electronic Evidence Affidavit',
+      priority: 'Critical',
+      reason: 'Mandatory for electronic communications (emails, chats) to be admissible.',
+      impact: 12,
+      expectedImprovement:
+        'Protects electronic audit trail admissibility, raising confidence by 12%.',
+    },
   ];
-  const strongEvidence = ["Primary verified purchase records", "Registered notices sent with acknowledgment cards"];
-  const weakEvidence = ["Uncertified photocopy records of verbal communications"];
-  const contradictoryDocs = ["Internal unsigned drafts with conflicting boundary specifications"];
+  const strongEvidence = [
+    'Primary verified purchase records',
+    'Registered notices sent with acknowledgment cards',
+  ];
+  const weakEvidence = ['Uncertified photocopy records of verbal communications'];
+  const contradictoryDocs = ['Internal unsigned drafts with conflicting boundary specifications'];
 
   // 4. Precedents
   const precedents = [
     {
-      citation: isCriminal ? "Satender Kumar Antil v. CBI (2022)" : isProperty ? "Ravinder Kaur Grewal v. Manjit Kaur (2019)" : "ONGC v. Saw Pipes Ltd (2003)",
+      citation: isCriminal
+        ? 'Satender Kumar Antil v. CBI (2022)'
+        : isProperty
+          ? 'Ravinder Kaur Grewal v. Manjit Kaur (2019)'
+          : 'ONGC v. Saw Pipes Ltd (2003)',
       relevanceScore: 94,
-      summary: isCriminal ? "Sustains strict guidelines governing bail, minimizing arbitrary detention." : isProperty ? "Affirmed that adverse possession can declare title for plaintiff." : "Governs standards of proof and calculations for contract breach damages.",
-      applicability: "Provides binding judicial interpretation on key legal sections cited in this case.",
-      bench: "Supreme Court (2-Judge Bench)",
-      judge: "Justice M. R. Shah"
+      summary: isCriminal
+        ? 'Sustains strict guidelines governing bail, minimizing arbitrary detention.'
+        : isProperty
+          ? 'Affirmed that adverse possession can declare title for plaintiff.'
+          : 'Governs standards of proof and calculations for contract breach damages.',
+      applicability:
+        'Provides binding judicial interpretation on key legal sections cited in this case.',
+      bench: 'Supreme Court (2-Judge Bench)',
+      judge: 'Justice M. R. Shah',
     },
     {
-      citation: isCriminal ? "Arnesh Kumar v. State of Bihar (2014)" : isProperty ? "Indira v. Arumugam (1998)" : "Maula Bux v. Union of India (1969)",
+      citation: isCriminal
+        ? 'Arnesh Kumar v. State of Bihar (2014)'
+        : isProperty
+          ? 'Indira v. Arumugam (1998)'
+          : 'Maula Bux v. Union of India (1969)',
       relevanceScore: 89,
-      summary: isCriminal ? "Mandates non-custodial notices for offenses with jail terms under 7 years." : isProperty ? "Decided that plaintiff with proven title prevails unless defendant meets adverse standards." : "Restricts arbitrary forfeiture of earnest money without proving actual damage.",
-      applicability: "Substantiates arguments concerning arbitrary process violation.",
-      bench: "Supreme Court (3-Judge Bench)",
-      judge: "Justice C.K. Prasad"
-    }
+      summary: isCriminal
+        ? 'Mandates non-custodial notices for offenses with jail terms under 7 years.'
+        : isProperty
+          ? 'Decided that plaintiff with proven title prevails unless defendant meets adverse standards.'
+          : 'Restricts arbitrary forfeiture of earnest money without proving actual damage.',
+      applicability: 'Substantiates arguments concerning arbitrary process violation.',
+      bench: 'Supreme Court (3-Judge Bench)',
+      judge: 'Justice C.K. Prasad',
+    },
   ];
 
   // 5. Statutory provisions
   const statutoryProvisions = [
     {
-      section: sections || (isCriminal ? "Sec 420 IPC / Sec 318 BNS" : isProperty ? "Sec 65 Limitation Act" : "Sec 73 Indian Contract Act"),
-      description: isCriminal ? "Governs cheating and dishonestly inducing delivery of property." : isProperty ? "Establishes a 12-year limitation period for claiming possession of immovable property." : "Defines compensation rules for loss or damage caused by breach of contract.",
-      applicability: "Sets the legal boundaries and standard of proof required by our pleadings."
-    }
+      section:
+        sections ||
+        (isCriminal
+          ? 'Sec 420 IPC / Sec 318 BNS'
+          : isProperty
+            ? 'Sec 65 Limitation Act'
+            : 'Sec 73 Indian Contract Act'),
+      description: isCriminal
+        ? 'Governs cheating and dishonestly inducing delivery of property.'
+        : isProperty
+          ? 'Establishes a 12-year limitation period for claiming possession of immovable property.'
+          : 'Defines compensation rules for loss or damage caused by breach of contract.',
+      applicability: 'Sets the legal boundaries and standard of proof required by our pleadings.',
+    },
   ];
 
   // 6. Strategy
   const winningStrategy = {
     timelineSteps: [
-      { phase: "Immediate (Week 1)", action: "Prepare replication response to nullify preliminary objections.", timeline: "Immediate", riskMitigation: "Establishes evidentiary timeline on record before trial." },
-      { phase: "Evidence Filing (Month 2-4)", action: "Compile certified ledgers and file Section 65B affidavits.", timeline: "Month 2-4", riskMitigation: "Blocks opponent objections regarding admissibility of digital prints." },
-      { phase: "Trial & Prep (Month 6-12)", action: "Confront opponent witness on chronological contradictions.", timeline: "Month 6-12", riskMitigation: "Weakens opposing cross-statements under questioning." }
+      {
+        phase: 'Immediate (Week 1)',
+        action: 'Prepare replication response to nullify preliminary objections.',
+        timeline: 'Immediate',
+        riskMitigation: 'Establishes evidentiary timeline on record before trial.',
+      },
+      {
+        phase: 'Evidence Filing (Month 2-4)',
+        action: 'Compile certified ledgers and file Section 65B affidavits.',
+        timeline: 'Month 2-4',
+        riskMitigation: 'Blocks opponent objections regarding admissibility of digital prints.',
+      },
+      {
+        phase: 'Trial & Prep (Month 6-12)',
+        action: 'Confront opponent witness on chronological contradictions.',
+        timeline: 'Month 6-12',
+        riskMitigation: 'Weakens opposing cross-statements under questioning.',
+      },
     ],
     evidenceCollectionPlan: [
-      "Obtain secondary certification copies of public files.",
-      "Deposition statements from independent local neighbors."
+      'Obtain secondary certification copies of public files.',
+      'Deposition statements from independent local neighbors.',
     ],
     legalArguments: [
-      "Strict compliance with filing periods.",
-      "Documentary proof supersedes oral assertions as per Evidence Act."
+      'Strict compliance with filing periods.',
+      'Documentary proof supersedes oral assertions as per Evidence Act.',
     ],
-    courtroomSequence: "Establish jurisdiction → Demonstrate clear document trail → Reference Supreme Court binding judgments → Restrict oral hearsay during opponent cross.",
-    alternativeStrategy: "Initiate court-annexed mediation if a minor title settlement is acceptable to client.",
-    appealStrategy: "Lodge caveat in the High Court within 15 days of order to prevent surprise stay.",
-    settlementStrategy: "Offer 15% concession on claims if immediate settlement deed is executed before framing of issues."
+    courtroomSequence:
+      'Establish jurisdiction → Demonstrate clear document trail → Reference Supreme Court binding judgments → Restrict oral hearsay during opponent cross.',
+    alternativeStrategy:
+      'Initiate court-annexed mediation if a minor title settlement is acceptable to client.',
+    appealStrategy:
+      'Lodge caveat in the High Court within 15 days of order to prevent surprise stay.',
+    settlementStrategy:
+      'Offer 15% concession on claims if immediate settlement deed is executed before framing of issues.',
   };
 
   // 7. Settlement Intelligence
   const settlementIntelligence = {
-    recommendation: isCriminal ? "Compounding of offense possible under guidelines." : "Propose mediation, offering minor boundary alignment adjustment.",
-    recommendedAmount: isCriminal ? "N/A" : Math.floor(estimatedLegalCost * 2.5),
+    recommendation: isCriminal
+      ? 'Compounding of offense possible under guidelines.'
+      : 'Propose mediation, offering minor boundary alignment adjustment.',
+    recommendedAmount: isCriminal ? 'N/A' : Math.floor(estimatedLegalCost * 2.5),
     probability: settlementProbability,
     expectedSavings: Math.floor(estimatedLegalCost * 0.4),
-    timeSaved: "12 months",
+    timeSaved: '12 months',
     riskReduction: 38,
     negotiationTips: [
-      "Present concrete document proof early to signal strength.",
-      "Point out court backlog and mutual escalation of legal fees."
-    ]
+      'Present concrete document proof early to signal strength.',
+      'Point out court backlog and mutual escalation of legal fees.',
+    ],
   };
 
   // 8. Cross Examination
   const crossExamination = [
-    { target: "Plaintiff / Client Prep", questions: ["Detail the exact sequence on the date of breach.", "How did you document the loss immediately?"] },
-    { target: "Opposing Defendant", questions: ["Can you explain the discrepancy in receipt timestamps?", "Why was no written objection sent within 30 days?"] },
-    { target: "Expert Witness", questions: ["What scientific or electronic audit tool was used for calculation?", "Are these metrics standard practice under guidelines?"] }
+    {
+      target: 'Plaintiff / Client Prep',
+      questions: [
+        'Detail the exact sequence on the date of breach.',
+        'How did you document the loss immediately?',
+      ],
+    },
+    {
+      target: 'Opposing Defendant',
+      questions: [
+        'Can you explain the discrepancy in receipt timestamps?',
+        'Why was no written objection sent within 30 days?',
+      ],
+    },
+    {
+      target: 'Expert Witness',
+      questions: [
+        'What scientific or electronic audit tool was used for calculation?',
+        'Are these metrics standard practice under guidelines?',
+      ],
+    },
   ];
 
   // 9. Judge Profile
   const judgeIntelligence = {
-    profile: "Justice R. Subramanian (Simulated Bench Tendencies)",
-    averageDisposalTime: "12-16 months",
+    profile: 'Justice R. Subramanian (Simulated Bench Tendencies)',
+    averageDisposalTime: '12-16 months',
     acceptanceRate: 71,
-    typicalObservations: "Demands precise document indexation; strictly restricts extensions of time.",
-    frequentlyCitedLaws: ["CPC Sec 96", "Evidence Act Sec 65B", "Limitation Act Sec 5"],
-    historicalTrends: "Statistically resolves property and commercial disputes via written summaries without over-relying on prolonged hearings.",
-    commonReasonsForDismissal: "Late filing without Sec 5 condonation; failure to produce original certified documents."
+    typicalObservations:
+      'Demands precise document indexation; strictly restricts extensions of time.',
+    frequentlyCitedLaws: ['CPC Sec 96', 'Evidence Act Sec 65B', 'Limitation Act Sec 5'],
+    historicalTrends:
+      'Statistically resolves property and commercial disputes via written summaries without over-relying on prolonged hearings.',
+    commonReasonsForDismissal:
+      'Late filing without Sec 5 condonation; failure to produce original certified documents.',
   };
 
   // 10. Financial Info
@@ -166,19 +366,19 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
     travelCost: Math.floor(estimatedLegalCost * 0.05),
     miscCost: Math.floor(estimatedLegalCost * 0.1),
     totalLitigationCost: estimatedLegalCost,
-    settlementCostComparison: `Settling immediately reduces total costs to ₹${Math.floor(estimatedLegalCost * 0.3)} (saving ₹${Math.floor(estimatedLegalCost * 0.7)} and an estimated 18 months of billable hours).`
+    settlementCostComparison: `Settling immediately reduces total costs to ₹${Math.floor(estimatedLegalCost * 0.3)} (saving ₹${Math.floor(estimatedLegalCost * 0.7)} and an estimated 18 months of billable hours).`,
   };
 
   // 11. Reports Narrative
   const reports = {
-    predictionReport: `CASE VERDICT PREDICTION BRIEF\n\nBased on case facts regarding "${facts.substring(0, 120)}...", AI Neural Forecasting places the Success Probability at ${successRate}%.\n\nLegal Analysis:\n1. The pleadings rely on ${sections || "statutory provisions"} which carry clear binding precedents in this court.\n2. Evidentiary strength is rated at ${evidenceStrength}%. Main documents support the timeline, but electronic records must satisfy Sec 65B of the Indian Evidence Act.\n3. The defendant will likely focus on procedural limitations, but the timeline records protect our claims.\n\nConclusion:\nHighly favorable outlook, provided recommended uploads are completed.`,
-    
+    predictionReport: `CASE VERDICT PREDICTION BRIEF\n\nBased on case facts regarding "${facts.substring(0, 120)}...", AI Neural Forecasting places the Success Probability at ${successRate}%.\n\nLegal Analysis:\n1. The pleadings rely on ${sections || 'statutory provisions'} which carry clear binding precedents in this court.\n2. Evidentiary strength is rated at ${evidenceStrength}%. Main documents support the timeline, but electronic records must satisfy Sec 65B of the Indian Evidence Act.\n3. The defendant will likely focus on procedural limitations, but the timeline records protect our claims.\n\nConclusion:\nHighly favorable outlook, provided recommended uploads are completed.`,
+
     litigationStrategyReport: `ENTERPRISE LITIGATION STRATEGY BRIEF\n\nObjective: Maximize plaintiff leverage and secure rapid decree execution.\n\nStrategy Steps:\n- Phase 1: File Replication pleading immediately upon receipt of opposing written statement. Prevents opponent from securing a surprise delay.\n- Phase 2: Secure Section 65B electronic certificate. Ensure emails and chat exports match the certified logs of our contractor.\n- Phase 3: Initiate pre-trial settlement conference. If opponent refuses, push for strict scheduling under CPC Commercial Court guidelines.`,
-    
+
     judicialForecastReport: `JUDICIAL SPECTRUM BRIEF\n\nBench profile indicates high scrutiny of documentary files. Justice observations historical patterns demonstrate 71% favorability when proof matches registry entries.\n\nFocus Areas:\n- Maintain clean document exhibit table.\n- Restrict verbal speculation; anchor all arguments around the registered sale deed.`,
-    
+
     riskAssessmentReport: `RISK INTELLIGENCE ANALYSIS\n\nLitigation Risk level is flagged as "${isCriminal ? 'High' : 'Moderate'}".\n\nKey Vulnerability:\n- Potential appeal loop to High Court / Supreme Court could drag enforcement of orders by 18 months.\n\nMitigation plan: File caveat in appellate courts immediately post lower-court decree.`,
-    
+
     advocateBrief: `ADVOCATE READY COURTROOM BRIEF\n\nReady reference points for advocate presentation:\n\n1. Statutes and Code citations: ${sections || 'Relevant Laws'}.\n2. Leading precedent: ${precedents[0].citation} - binding on this bench.\n3. Opponent weaknesses: Lack of registered records; defense relies on verbal assertions.\n4. Core response: Section 92 of Indian Evidence Act bars oral evidence contradicting written contracts.`,
 
     clientReport: `CLIENT LITIGATION BRIEF\n\nSummary of Case Outlook for Client Review:\n\nSuccess probability is calculated at ${successRate}% with a ${risks[0].severity} procedural risk.\n\nTimeline expects final resolution in ${expectedHearings} hearings over an estimated duration of ${isProperty ? '18-24' : '12-18'} months. Sincere recommendation to allocate ₹${estimatedLegalCost} for litigation budget.`,
@@ -191,7 +391,7 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
 
     strategyReport: `TACTICAL LITIGATION TIMELINE STRATEGY\n\nWeekly milestones mapped for filings. Alternate strategy drafted in case of registry copy delays. Injunction application prepared in backup.`,
 
-    executiveSummary: `EXECUTIVE LITIGATION FORECAST SUMMARY\n\nAISA AI platform projects a ${successRate}% win probability for Case. Data quality is Excellent, matching 91% of target precedents. Direct advocate briefing recommended.`
+    executiveSummary: `EXECUTIVE LITIGATION FORECAST SUMMARY\n\nAISA AI platform projects a ${successRate}% win probability for Case. Data quality is Excellent, matching 91% of target precedents. Direct advocate briefing recommended.`,
   };
 
   return {
@@ -201,13 +401,13 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
     ipcSections: sections,
     courtName: court,
     facts: facts,
-    evidenceList: facts ? "Standard Evidence Set" : "",
+    evidenceList: facts ? 'Standard Evidence Set' : '',
     opponentDetails: opponent,
     witnessDetails: witness,
     stats: {
       successRate,
       defendantWinRate: 100 - successRate,
-      litigationRisk: isCriminal ? 'High' : (successRate > 70 ? 'Low' : 'Moderate'),
+      litigationRisk: isCriminal ? 'High' : successRate > 70 ? 'Low' : 'Moderate',
       evidenceStrength,
       caseStrength,
       missingDocsCount: missingEvidence.length,
@@ -215,9 +415,9 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
       settlementProbability,
       appealRisk: Math.floor(Math.random() * 20) + 20,
       confidenceScore,
-      estimatedDuration: isProperty ? "18-24 months" : "12-15 months",
+      estimatedDuration: isProperty ? '18-24 months' : '12-15 months',
       expectedHearings,
-      estimatedLegalCost
+      estimatedLegalCost,
     },
     explainPrediction: {
       whyPredicted: `Winning probability is high because: Strong documentary evidence, Admission by respondent, Binding precedent available, Limitation valid, Weak defence.`,
@@ -225,102 +425,165 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
       negativeFactors,
       confidenceExplanation: `Neural forecast has high match correlation (${confidenceScore}%) due to high data completeness and standard provisions.`,
       legalBasis: statutoryProvisions[0].section,
-      aiReasoning: "The evidentiary timeline demonstrates continuous possessory assertion, rendering alternative defense claims invalid.",
+      aiReasoning:
+        'The evidentiary timeline demonstrates continuous possessory assertion, rendering alternative defense claims invalid.',
       explainReasons: [
-        { reason: "Strong documentary evidence", evidence: "Purchase agreement & registered notice acknowledgment card", law: "Indian Evidence Act Section 91/92", judgment: "ONGC v. Saw Pipes Ltd (2003)" },
-        { reason: "Admissions by Respondent", evidence: "Reply notice dated 14th Feb admitting signature receipt", law: "CPC Order VIII Rule 5", judgment: "Badat & Co. v. East India Trading Co. (1964)" },
-        { reason: "Binding Precedent Available", evidence: "Supreme Court rulings govern the exact question of limitation in title disputes", law: "Limitation Act Sec 5 / CPC Sec 96", judgment: "Satender Kumar Antil v. CBI (2022)" },
-        { reason: "Limitation Valid", evidence: "Suit filed within 36 months of cause of action breach", law: "Limitation Act Article 55", judgment: "Maula Bux v. UOI (1969)" }
-      ]
+        {
+          reason: 'Strong documentary evidence',
+          evidence: 'Purchase agreement & registered notice acknowledgment card',
+          law: 'Indian Evidence Act Section 91/92',
+          judgment: 'ONGC v. Saw Pipes Ltd (2003)',
+        },
+        {
+          reason: 'Admissions by Respondent',
+          evidence: 'Reply notice dated 14th Feb admitting signature receipt',
+          law: 'CPC Order VIII Rule 5',
+          judgment: 'Badat & Co. v. East India Trading Co. (1964)',
+        },
+        {
+          reason: 'Binding Precedent Available',
+          evidence:
+            'Supreme Court rulings govern the exact question of limitation in title disputes',
+          law: 'Limitation Act Sec 5 / CPC Sec 96',
+          judgment: 'Satender Kumar Antil v. CBI (2022)',
+        },
+        {
+          reason: 'Limitation Valid',
+          evidence: 'Suit filed within 36 months of cause of action breach',
+          law: 'Limitation Act Article 55',
+          judgment: 'Maula Bux v. UOI (1969)',
+        },
+      ],
     },
     winLossFactors: {
       winningFactors: [
-        { factor: "Registered sale deed holds direct statutory presumption", severity: "Critical", impact: "High Impact", confidence: 92 },
-        { factor: "Defendant admitted receiving primary legal demand notice", severity: "High", impact: "High Impact", confidence: 85 }
+        {
+          factor: 'Registered sale deed holds direct statutory presumption',
+          severity: 'Critical',
+          impact: 'High Impact',
+          confidence: 92,
+        },
+        {
+          factor: 'Defendant admitted receiving primary legal demand notice',
+          severity: 'High',
+          impact: 'High Impact',
+          confidence: 85,
+        },
       ],
       losingFactors: [
-        { factor: "Backlog delay in territorial civil jurisdiction court", severity: "Medium", impact: "Moderate Impact", confidence: 78 },
-        { factor: "Absence of certified digital server log printouts", severity: "High", impact: "High Impact", confidence: 80 }
-      ]
+        {
+          factor: 'Backlog delay in territorial civil jurisdiction court',
+          severity: 'Medium',
+          impact: 'Moderate Impact',
+          confidence: 78,
+        },
+        {
+          factor: 'Absence of certified digital server log printouts',
+          severity: 'High',
+          impact: 'High Impact',
+          confidence: 80,
+        },
+      ],
     },
     legalRiskMatrix: {
-      jurisdictionRisk: "Low",
-      limitationRisk: "Low",
-      evidenceRisk: "Medium",
-      witnessRisk: "Medium",
-      proceduralRisk: "Low",
-      technicalRisk: "Low",
-      appealRisk: "Medium",
-      complianceRisk: "Low"
+      jurisdictionRisk: 'Low',
+      limitationRisk: 'Low',
+      evidenceRisk: 'Medium',
+      witnessRisk: 'Medium',
+      proceduralRisk: 'Low',
+      technicalRisk: 'Low',
+      appealRisk: 'Medium',
+      complianceRisk: 'Low',
     },
     courtStrategy: {
-      strategyType: "Balanced",
+      strategyType: 'Balanced',
       reasons: [
-        "Avoid oral statement expansions; push for immediate summary judgment under Order VIII CPC.",
-        "Pre-empt appellate review by filing lower court caveats immediately.",
-        "Initiate compounding negotiations at post-admission stage if commercial concession is viable."
-      ]
+        'Avoid oral statement expansions; push for immediate summary judgment under Order VIII CPC.',
+        'Pre-empt appellate review by filing lower court caveats immediately.',
+        'Initiate compounding negotiations at post-admission stage if commercial concession is viable.',
+      ],
     },
     opponentPrediction: {
       counterArguments: [
-        "Claiming mutual extension of performance deadlines without written record.",
-        "Asserting non-compete limits are unconstitutionally restrictive under Section 27."
+        'Claiming mutual extension of performance deadlines without written record.',
+        'Asserting non-compete limits are unconstitutionally restrictive under Section 27.',
       ],
       objections: [
-        "Oral objection on admissibility of uncertified photocopies.",
-        "Limitation timeline calculation variance objections."
+        'Oral objection on admissibility of uncertified photocopies.',
+        'Limitation timeline calculation variance objections.',
       ],
       applications: [
-        "Section 8 Arbitration Act referral motion.",
-        "Order VII Rule 11 rejection of plaint application."
+        'Section 8 Arbitration Act referral motion.',
+        'Order VII Rule 11 rejection of plaint application.',
       ],
       delayTactics: [
-        "Filing extensive amendment of written statement petitions.",
-        "Seeking multiple medical exemptions for cross-examination schedules."
+        'Filing extensive amendment of written statement petitions.',
+        'Seeking multiple medical exemptions for cross-examination schedules.',
       ],
-      proceduralMoves: [
-        "Demanding local court commissioner surveyor appointment."
-      ],
+      proceduralMoves: ['Demanding local court commissioner surveyor appointment.'],
       rebuttals: [
-        "State Section 92 of Indian Evidence Act debars oral variance of written contract covenenats.",
-        "Leverage signed postal receipt logs proving timeline execution."
-      ]
+        'State Section 92 of Indian Evidence Act debars oral variance of written contract covenenats.',
+        'Leverage signed postal receipt logs proving timeline execution.',
+      ],
     },
     precedentIntelligence: {
       supremeCourtCases: [
-        { caseName: "Satender Kumar Antil v. CBI", citation: "2022 SCC OnLine SC 825", type: "Binding", ratio: "Sustains strict guidelines governing non-custodial bail and trial delays." },
-        { caseName: "ONGC v. Saw Pipes Ltd", citation: "(2003) 5 SCC 705", type: "Binding", ratio: "Affirms calculation parameters for contractual liquidated damages." }
+        {
+          caseName: 'Satender Kumar Antil v. CBI',
+          citation: '2022 SCC OnLine SC 825',
+          type: 'Binding',
+          ratio: 'Sustains strict guidelines governing non-custodial bail and trial delays.',
+        },
+        {
+          caseName: 'ONGC v. Saw Pipes Ltd',
+          citation: '(2003) 5 SCC 705',
+          type: 'Binding',
+          ratio: 'Affirms calculation parameters for contractual liquidated damages.',
+        },
       ],
       highCourtCases: [
-        { caseName: "Badat & Co. v. East India Trading Co.", citation: "AIR 1964 SC 538", type: "Persuasive", ratio: "Governs implied admission standards under pleadings rules." }
-      ]
+        {
+          caseName: 'Badat & Co. v. East India Trading Co.',
+          citation: 'AIR 1964 SC 538',
+          type: 'Persuasive',
+          ratio: 'Governs implied admission standards under pleadings rules.',
+        },
+      ],
     },
     timelineForecast: {
-      admission: "1-2 Months",
-      evidence: "3-4 Months",
-      crossExamination: "3-5 Months",
-      arguments: "2-3 Months",
-      judgment: "1-2 Months",
-      appeal: "12-18 Months"
+      admission: '1-2 Months',
+      evidence: '3-4 Months',
+      crossExamination: '3-5 Months',
+      arguments: '2-3 Months',
+      judgment: '1-2 Months',
+      appeal: '12-18 Months',
     },
     documentIntelligence: {
       missingDocuments: missingEvidence,
       weakDocuments: weakEvidence,
-      criticalMissingEvidence: ["Original signed corporate mobilization receipt logs"],
-      recommendedAdditionalEvidence: ["Signed statutory board resolution proving signatory director authority"]
+      criticalMissingEvidence: ['Original signed corporate mobilization receipt logs'],
+      recommendedAdditionalEvidence: [
+        'Signed statutory board resolution proving signatory director authority',
+      ],
     },
     contradictionDetector: {
-      contradictions: ["Chronology mismatch: signature date in plaint is 3 days prior to stamp certificate date."],
-      timelineMismatches: ["Stamp paper validation date is post contract execution date."],
-      evidenceMismatches: ["Internal ledger contradicts custom declaration invoices."],
-      witnessInconsistencies: ["Independent witness timeline varies by 15 days from local supervisor deposition."],
-      lawInconsistencies: ["Provisions cited are under repealed Penal Code instead of new BNS rules."]
+      contradictions: [
+        'Chronology mismatch: signature date in plaint is 3 days prior to stamp certificate date.',
+      ],
+      timelineMismatches: ['Stamp paper validation date is post contract execution date.'],
+      evidenceMismatches: ['Internal ledger contradicts custom declaration invoices.'],
+      witnessInconsistencies: [
+        'Independent witness timeline varies by 15 days from local supervisor deposition.',
+      ],
+      lawInconsistencies: [
+        'Provisions cited are under repealed Penal Code instead of new BNS rules.',
+      ],
     },
     settlementEngine: {
       probability: settlementProbability,
       recommendedValue: Math.floor(estimatedLegalCost * 2),
-      negotiationWindow: `₹${(Math.floor(estimatedLegalCost * 1.5)).toLocaleString()} - ₹${(Math.floor(estimatedLegalCost * 3)).toLocaleString()}`,
-      bestTimeToSettle: "Post admission stage, prior to framing of trial issues."
+      negotiationWindow: `₹${Math.floor(estimatedLegalCost * 1.5).toLocaleString()} - ₹${Math.floor(estimatedLegalCost * 3).toLocaleString()}`,
+      bestTimeToSettle: 'Post admission stage, prior to framing of trial issues.',
     },
     evidenceIntelligence: {
       coverage: 85,
@@ -330,8 +593,8 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
       weakDocuments: weakEvidence,
       highImpactDocuments: strongEvidence,
       contradictoryDocuments: contradictoryDocs,
-      duplicateDocuments: ["Utility photocopy duplicates"],
-      recommendedUploads: ["Patwari Land Map", "Neighbor Affidavits"]
+      duplicateDocuments: ['Utility photocopy duplicates'],
+      recommendedUploads: ['Patwari Land Map', 'Neighbor Affidavits'],
     },
     riskDetection: risks,
     similarCases: precedents,
@@ -341,13 +604,17 @@ const generateSmartDefaultPredictionData = (facts, category, court, sections, op
     crossExamination,
     judgeIntelligence: {
       profile: "Hon'ble Justice Rajesh Malhotra",
-      averageDisposalTime: "12-15 Months",
+      averageDisposalTime: '12-15 Months',
       grantRate: 68,
-      injunctionTendency: "Highly conservative; strictly requires pre-institution mediation certificate.",
-      bailTendency: "Favorable for first-time economic offenses, strict on cyber offenses.",
-      strictness: "High (rejection rate of delayed motions is 82%)",
-      proceduralPreference: "Demands direct short synopsis submissions prior to oral hearings.",
-      pastSimilarDecisions: ["Rejection of non-compete stay in Techcorp v. Anil (2024)", "Allowed summary recovery decree in Bank of India v. Sharma (2023)"]
+      injunctionTendency:
+        'Highly conservative; strictly requires pre-institution mediation certificate.',
+      bailTendency: 'Favorable for first-time economic offenses, strict on cyber offenses.',
+      strictness: 'High (rejection rate of delayed motions is 82%)',
+      proceduralPreference: 'Demands direct short synopsis submissions prior to oral hearings.',
+      pastSimilarDecisions: [
+        'Rejection of non-compete stay in Techcorp v. Anil (2024)',
+        'Allowed summary recovery decree in Bank of India v. Sharma (2023)',
+      ],
     },
   };
 };
@@ -358,45 +625,52 @@ const REPORT_METADATA = [
     title: 'Litigation Forecast',
     desc: 'Predict win rates, statutory matches, and outcome risks.',
     icon: 'Scale',
-    purpose: 'Generate primary litigant forecast outlining success probability percentages, cited laws, and precedents.',
-    expected: 'Executive summary, probability indexes, cited sections, Supreme Court case law matches.',
-    estTime: '5-8 seconds'
+    purpose:
+      'Generate primary litigant forecast outlining success probability percentages, cited laws, and precedents.',
+    expected:
+      'Executive summary, probability indexes, cited sections, Supreme Court case law matches.',
+    estTime: '5-8 seconds',
   },
   {
     id: 'clientReport',
     title: 'Client Readiness',
     desc: 'Analyze case gaps, action points, and overall trial readiness.',
     icon: 'Users',
-    purpose: 'Create client readiness index and identify deficiency checklist for trial preparation.',
+    purpose:
+      'Create client readiness index and identify deficiency checklist for trial preparation.',
     expected: 'Evidentiary gaps, witness deposition availability status, replication action items.',
-    estTime: '4-6 seconds'
+    estTime: '4-6 seconds',
   },
   {
     id: 'judicialForecastReport',
     title: 'Judge Briefing',
     desc: 'Pre-empt bench questions, material facts, and prayers.',
     icon: 'Landmark',
-    purpose: 'Formulate judge briefing note addressing presiding bench observations and pre-empted inquiries.',
-    expected: 'presiding bench tendencies, factual summary, pre-empted judicial questions and answers.',
-    estTime: '6-9 seconds'
+    purpose:
+      'Formulate judge briefing note addressing presiding bench observations and pre-empted inquiries.',
+    expected:
+      'presiding bench tendencies, factual summary, pre-empted judicial questions and answers.',
+    estTime: '6-9 seconds',
   },
   {
     id: 'courtPrepReport',
     title: 'Court Prep',
     desc: 'Track filing compliance, affidavits, and witness schedules.',
     icon: 'Clock',
-    purpose: 'Build courtroom preparation docket mapping filing matrix rules and witness schedules.',
+    purpose:
+      'Build courtroom preparation docket mapping filing matrix rules and witness schedules.',
     expected: 'Order IV checklist status, exhibit compendium timeline, trial-day action schedule.',
-    estTime: '5-7 seconds'
+    estTime: '5-7 seconds',
   },
   {
     id: 'evidenceReport',
     title: 'Evidence Audit',
     desc: 'Admissibility reviews, document strength, and missing links.',
     icon: 'FileText',
-    purpose: 'Run forensic admissibility audit evaluating exhibit quality, authenticity, and compliance.',
+    purpose:
+      'Run forensic admissibility audit evaluating exhibit quality, authenticity, and compliance.',
     expected: 'Exhibit quality matrix table, Sec 65B compliance check, remediation steps.',
-    estTime: '4-5 seconds'
+    estTime: '4-5 seconds',
   },
   {
     id: 'settlementReport',
@@ -405,16 +679,17 @@ const REPORT_METADATA = [
     icon: 'DollarSign',
     purpose: 'Determine settlement advisory comparing trial exposure costs with compromise values.',
     expected: 'Mediation probability index, optimum negotiation range, trial comparison metrics.',
-    estTime: '5-6 seconds'
+    estTime: '5-6 seconds',
   },
   {
     id: 'strategyReport',
     title: 'Timeline Strategy',
     desc: 'Court stages, milestones, delay assessments, and actions.',
     icon: 'Target',
-    purpose: 'Draft chronological litigation timeline outlining stages, adjournment risk, and options.',
+    purpose:
+      'Draft chronological litigation timeline outlining stages, adjournment risk, and options.',
     expected: 'Procedural court stage durations, delay mitigation actions, backup options.',
-    estTime: '4-6 seconds'
+    estTime: '4-6 seconds',
   },
   {
     id: 'executiveSummary',
@@ -423,12 +698,12 @@ const REPORT_METADATA = [
     icon: 'Sparkles',
     purpose: 'Compile 1-page high level summary briefing case probability, risks, and next steps.',
     expected: 'Decision snapshot box, key probability drivers, final recommendation briefs.',
-    estTime: '3-4 seconds'
-  }
+    estTime: '3-4 seconds',
+  },
 ];
 
 // --- PRO LEGAL DOCUMENT PARSER & RENDERER ---
-const parseMarkdownToBlocks = (text) => {
+const parseMarkdownToBlocks = text => {
   if (!text) return [];
   const lines = text.split('\n');
   const blocks = [];
@@ -447,7 +722,13 @@ const parseMarkdownToBlocks = (text) => {
 
     if (line.startsWith('# ')) {
       if (currentBlock) blocks.push(currentBlock);
-      blocks.push({ type: 'h1', text: line.substring(2).replace(/\*\*|__/g, '').trim() });
+      blocks.push({
+        type: 'h1',
+        text: line
+          .substring(2)
+          .replace(/\*\*|__/g, '')
+          .trim(),
+      });
       currentBlock = null;
       continue;
     }
@@ -463,7 +744,13 @@ const parseMarkdownToBlocks = (text) => {
 
     if (line.startsWith('### ')) {
       if (currentBlock) blocks.push(currentBlock);
-      blocks.push({ type: 'h3', text: line.substring(4).replace(/\*\*|__/g, '').trim() });
+      blocks.push({
+        type: 'h3',
+        text: line
+          .substring(4)
+          .replace(/\*\*|__/g, '')
+          .trim(),
+      });
       currentBlock = null;
       continue;
     }
@@ -483,7 +770,8 @@ const parseMarkdownToBlocks = (text) => {
       if (line.includes('---')) {
         continue;
       }
-      const cells = line.split('|')
+      const cells = line
+        .split('|')
         .map(cell => cell.trim())
         .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
 
@@ -526,9 +814,14 @@ const parseMarkdownToBlocks = (text) => {
 
     if (block.type === 'list') {
       const prevBlock = processedBlocks[processedBlocks.length - 1];
-      const isTimelineHeading = prevBlock && prevBlock.type === 'h2' && 
-        (prevBlock.text.toUpperCase().includes('TIMELINE') || prevBlock.text.toUpperCase().includes('STAGE'));
-      const hasTimePattern = block.items.some(item => /^[0-9]+:[0-9]+\s*(AM|PM)/i.test(item) || /^Stage/i.test(item));
+      const isTimelineHeading =
+        prevBlock &&
+        prevBlock.type === 'h2' &&
+        (prevBlock.text.toUpperCase().includes('TIMELINE') ||
+          prevBlock.text.toUpperCase().includes('STAGE'));
+      const hasTimePattern = block.items.some(
+        item => /^[0-9]+:[0-9]+\s*(AM|PM)/i.test(item) || /^Stage/i.test(item)
+      );
       if (isTimelineHeading || hasTimePattern) {
         block.type = 'timeline';
       }
@@ -536,8 +829,11 @@ const parseMarkdownToBlocks = (text) => {
 
     if (block.type === 'list') {
       const prevBlock = processedBlocks[processedBlocks.length - 1];
-      const isPrecedentsHeading = prevBlock && prevBlock.type === 'h2' && 
-        (prevBlock.text.toUpperCase().includes('PRECEDENT') || prevBlock.text.toUpperCase().includes('JURISPRUDENCE'));
+      const isPrecedentsHeading =
+        prevBlock &&
+        prevBlock.type === 'h2' &&
+        (prevBlock.text.toUpperCase().includes('PRECEDENT') ||
+          prevBlock.text.toUpperCase().includes('JURISPRUDENCE'));
 
       if (isPrecedentsHeading) {
         block.type = 'precedents';
@@ -564,7 +860,11 @@ const parseMarkdownToBlocks = (text) => {
             if (parts.length > 1) {
               ratio = parts[1].trim();
             } else {
-              ratio = item.replace(/\*\*.*?\*\*/g, '').replace(/\*.*?\*/g, '').replace(/[\(\)]/g, '').trim();
+              ratio = item
+                .replace(/\*\*.*?\*\*/g, '')
+                .replace(/\*.*?\*/g, '')
+                .replace(/[\(\)]/g, '')
+                .trim();
             }
           }
 
@@ -573,7 +873,7 @@ const parseMarkdownToBlocks = (text) => {
             citation: citation || 'Citation Mapped',
             type: type || 'Supreme Court',
             ratio: ratio || 'Ratio details pending verification.',
-            relevanceScore: Math.floor(Math.random() * 15) + 82
+            relevanceScore: Math.floor(Math.random() * 15) + 82,
           };
         });
       }
@@ -581,9 +881,17 @@ const parseMarkdownToBlocks = (text) => {
 
     if (block.type === 'paragraph') {
       const textUpper = block.text.toUpperCase();
-      if (textUpper.startsWith('AI RECOMMENDATION') || textUpper.startsWith('AI OUTCOME RECOMMENDATION') || textUpper.startsWith('IMPORTANT COURT NOTES') || textUpper.startsWith('WARNING')) {
+      if (
+        textUpper.startsWith('AI RECOMMENDATION') ||
+        textUpper.startsWith('AI OUTCOME RECOMMENDATION') ||
+        textUpper.startsWith('IMPORTANT COURT NOTES') ||
+        textUpper.startsWith('WARNING')
+      ) {
         block.type = 'callout';
-        block.title = block.text.split('\n')[0].replace(/[^a-zA-Z\s]/g, '').trim();
+        block.title = block.text
+          .split('\n')[0]
+          .replace(/[^a-zA-Z\s]/g, '')
+          .trim();
         block.text = block.text.split('\n').slice(1).join('\n').trim();
       }
     }
@@ -594,26 +902,29 @@ const parseMarkdownToBlocks = (text) => {
   return processedBlocks;
 };
 
-const convertMarkdownToLegalHTML = (text) => {
+const convertMarkdownToLegalHTML = text => {
   if (!text) return '';
   const blocks = parseMarkdownToBlocks(text);
   let html = '';
 
-  const cleanMD = (txt) => txt.replace(/\*\*|__/g, '').trim();
+  const cleanMD = txt => txt.replace(/\*\*|__/g, '').trim();
 
-  const getTextWithBadgesHTML = (txt) => {
-    const regex = /(Section\s+\d+|CPC\s+Section\s+\d+\w*|Order\s+[IVXLCDM]+\s+Rule\s+\d+|Indian\s+Contract\s+Act(?:,\s+1872)?|Indian\s+Evidence\s+Act|Bharatiya\s+Sakshya\s+Adhiniyam|Bharatiya\s+Nyaya\s+Sanhita|BNS|IPC|Limitation\s+Act|CPC)/gi;
+  const getTextWithBadgesHTML = txt => {
+    const regex =
+      /(Section\s+\d+|CPC\s+Section\s+\d+\w*|Order\s+[IVXLCDM]+\s+Rule\s+\d+|Indian\s+Contract\s+Act(?:,\s+1872)?|Indian\s+Evidence\s+Act|Bharatiya\s+Sakshya\s+Adhiniyam|Bharatiya\s+Nyaya\s+Sanhita|BNS|IPC|Limitation\s+Act|CPC)/gi;
     const clean = cleanMD(txt);
     const parts = clean.split(regex);
-    return parts.map(part => {
-      if (regex.test(part)) {
-        return `<span style="display:inline-block; padding:2px 6px; background-color:#ebf8ff; color:#2b6cb0; border-radius:4px; font-size:10px; font-weight:bold; border:1px solid #bee3f8; margin:0 3px; font-family:sans-serif;">${part}</span>`;
-      }
-      return part;
-    }).join('');
+    return parts
+      .map(part => {
+        if (regex.test(part)) {
+          return `<span style="display:inline-block; padding:2px 6px; background-color:#ebf8ff; color:#2b6cb0; border-radius:4px; font-size:10px; font-weight:bold; border:1px solid #bee3f8; margin:0 3px; font-family:sans-serif;">${part}</span>`;
+        }
+        return part;
+      })
+      .join('');
   };
 
-  const getTableCellHTML = (cellText) => {
+  const getTableCellHTML = cellText => {
     const txt = cleanMD(cellText);
     const upper = txt.toUpperCase();
     if (upper === 'HIGH' || upper === 'HIGH RISK' || upper === 'CRITICAL') {
@@ -688,7 +999,9 @@ const convertMarkdownToLegalHTML = (text) => {
     } else if (block.type === 'precedents') {
       html += `<div style="margin:16px 0; font-family:sans-serif;">`;
       block.precedents.forEach(prec => {
-        const badgeColor = prec.type.includes('Supreme') ? 'background-color:#fed7d7; color:#c53030; border:1px solid #feb2b2;' : 'background-color:#ebf8ff; color:#2b6cb0; border:1px solid #bee3f8;';
+        const badgeColor = prec.type.includes('Supreme')
+          ? 'background-color:#fed7d7; color:#c53030; border:1px solid #feb2b2;'
+          : 'background-color:#ebf8ff; color:#2b6cb0; border:1px solid #bee3f8;';
         html += `<div style="padding:12px; border:1px solid #e2e8f0; border-radius:8px; background-color:#f8fafc; font-family:serif; margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <strong style="font-size:11.5px; color:#1a237e; font-family:sans-serif; text-transform:uppercase;">${prec.caseName}</strong>
@@ -707,7 +1020,11 @@ const convertMarkdownToLegalHTML = (text) => {
       const titleUpper = block.title.toUpperCase();
       let colorStyle = 'background-color:#ebf8ff; border-left:4px solid #2b6cb0; color:#2c5282;';
       let titleLabel = 'AI RECOMMENDATION';
-      if (titleUpper.includes('WARNING') || titleUpper.includes('CRITICAL') || titleUpper.includes('RISK')) {
+      if (
+        titleUpper.includes('WARNING') ||
+        titleUpper.includes('CRITICAL') ||
+        titleUpper.includes('RISK')
+      ) {
         colorStyle = 'background-color:#fff5f5; border-left:4px solid #c53030; color:#9b2c2c;';
         titleLabel = 'WARNING / ALERT';
       } else if (titleUpper.includes('SETTLEMENT')) {
@@ -748,17 +1065,18 @@ const convertMarkdownToLegalHTML = (text) => {
 
 const renderTextWithBadges = (text, isDark) => {
   if (!text) return '';
-  const regex = /(Section\s+\d+|CPC\s+Section\s+\d+\w*|Order\s+[IVXLCDM]+\s+Rule\s+\d+|Indian\s+Contract\s+Act(?:,\s+1872)?|Indian\s+Evidence\s+Act|Bharatiya\s+Sakshya\s+Adhiniyam|Bharatiya\s+Nyaya\s+Sanhita|BNS|IPC|Limitation\s+Act|CPC)/gi;
+  const regex =
+    /(Section\s+\d+|CPC\s+Section\s+\d+\w*|Order\s+[IVXLCDM]+\s+Rule\s+\d+|Indian\s+Contract\s+Act(?:,\s+1872)?|Indian\s+Evidence\s+Act|Bharatiya\s+Sakshya\s+Adhiniyam|Bharatiya\s+Nyaya\s+Sanhita|BNS|IPC|Limitation\s+Act|CPC)/gi;
   const cleanText = text.replace(/\*\*|__/g, '');
   const parts = cleanText.split(regex);
   return parts.map((part, idx) => {
     if (regex.test(part)) {
       return (
-        <span 
-          key={idx} 
+        <span
+          key={idx}
           className={`inline-block mx-0.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-            isDark 
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
+            isDark
+              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
               : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
           }`}
         >
@@ -780,7 +1098,9 @@ const renderListItem = (item, isDark) => {
         <span className="text-indigo-500 font-extrabold text-[14px] leading-none shrink-0">•</span>
         <div className="leading-relaxed">
           <span className="font-extrabold text-slate-700 dark:text-slate-200">{key}:</span>{' '}
-          <span className="text-slate-600 dark:text-slate-350">{renderTextWithBadges(value, isDark)}</span>
+          <span className="text-slate-600 dark:text-slate-350">
+            {renderTextWithBadges(value, isDark)}
+          </span>
         </div>
       </li>
     );
@@ -799,7 +1119,7 @@ const renderListItem = (item, isDark) => {
 const renderTableCell = (cellText, isDark) => {
   const text = cellText.replace(/\*\*|__/g, '').trim();
   const upper = text.toUpperCase();
-  
+
   if (upper === 'HIGH' || upper === 'HIGH RISK' || upper === 'CRITICAL') {
     return (
       <span className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded text-[9px] font-black uppercase border border-red-500/20">
@@ -835,7 +1155,7 @@ const renderTableCell = (cellText, isDark) => {
       </span>
     );
   }
-  
+
   return renderTextWithBadges(text, isDark);
 };
 
@@ -850,12 +1170,14 @@ const renderTimeline = (block, isDark) => {
 
         return (
           <div key={idx} className="relative group">
-            <div className={`absolute -left-[30px] top-1 w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center ${
-              isDark ? 'bg-[#12192D] border-indigo-500' : 'bg-white border-indigo-500'
-            }`}>
+            <div
+              className={`absolute -left-[30px] top-1 w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center ${
+                isDark ? 'bg-[#12192D] border-indigo-500' : 'bg-white border-indigo-500'
+              }`}
+            >
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
             </div>
-            
+
             <div className="min-w-0">
               <h5 className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
                 {stageName}
@@ -879,11 +1201,11 @@ const renderPrecedents = (block, isDark) => {
           ? 'bg-red-500/10 text-red-500'
           : 'bg-indigo-500/10 text-indigo-500';
         return (
-          <div 
+          <div
             key={idx}
             className={`p-4 rounded-2xl border text-left flex flex-col justify-between space-y-3 transition-all duration-300 hover:translate-y-[-2px] ${
-              isDark 
-                ? 'bg-zinc-950/40 border-white/5 hover:border-zinc-800' 
+              isDark
+                ? 'bg-zinc-950/40 border-white/5 hover:border-zinc-800'
                 : 'bg-slate-50/50 border-slate-200/60 hover:border-slate-300'
             }`}
           >
@@ -892,7 +1214,9 @@ const renderPrecedents = (block, isDark) => {
                 <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wide">
                   {prec.caseName}
                 </span>
-                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase shrink-0 ${badgeColor}`}>
+                <span
+                  className={`px-2 py-0.5 rounded text-[8px] font-black uppercase shrink-0 ${badgeColor}`}
+                >
                   {prec.type}
                 </span>
               </div>
@@ -917,12 +1241,16 @@ const renderPrecedents = (block, isDark) => {
 
 const renderCallout = (block, isDark) => {
   const titleUpper = block.title.toUpperCase();
-  let themeClass = isDark 
-    ? 'bg-indigo-950/20 border-indigo-500/30 text-indigo-200' 
+  let themeClass = isDark
+    ? 'bg-indigo-950/20 border-indigo-500/30 text-indigo-200'
     : 'bg-indigo-50 border-indigo-150 text-indigo-900';
   let badgeText = 'Recommendation';
-  
-  if (titleUpper.includes('WARNING') || titleUpper.includes('CRITICAL') || titleUpper.includes('RISK')) {
+
+  if (
+    titleUpper.includes('WARNING') ||
+    titleUpper.includes('CRITICAL') ||
+    titleUpper.includes('RISK')
+  ) {
     themeClass = isDark
       ? 'bg-red-950/20 border-red-500/30 text-red-200'
       : 'bg-red-50 border-red-150 text-red-900';
@@ -935,9 +1263,11 @@ const renderCallout = (block, isDark) => {
   }
 
   return (
-    <div className={`p-5 rounded-2xl border text-left space-y-2 my-4 shadow-sm relative overflow-hidden ${themeClass}`}>
+    <div
+      className={`p-5 rounded-2xl border text-left space-y-2 my-4 shadow-sm relative overflow-hidden ${themeClass}`}
+    >
       <div className="absolute top-0 right-0 w-24 h-24 bg-current opacity-[0.03] rounded-full translate-x-8 -translate-y-8" />
-      
+
       <div className="flex items-center gap-2">
         <Sparkles size={14} className="shrink-0" />
         <span className="text-[10px] font-black uppercase tracking-wider">
@@ -962,7 +1292,10 @@ const LegalReportViewer = ({ reportText, isDark }) => {
         switch (block.type) {
           case 'h1':
             return (
-              <div key={idx} className="border-b pb-4 mb-6 border-slate-200 dark:border-white/10 text-center">
+              <div
+                key={idx}
+                className="border-b pb-4 mb-6 border-slate-200 dark:border-white/10 text-center"
+              >
                 <h1 className="text-lg sm:text-xl font-black uppercase tracking-wide text-slate-800 dark:text-slate-100">
                   {block.text}
                 </h1>
@@ -974,7 +1307,10 @@ const LegalReportViewer = ({ reportText, isDark }) => {
 
           case 'h2':
             return (
-              <div key={idx} className="pt-4 pb-2 border-b border-dashed border-slate-200 dark:border-white/5 mt-6 mb-3">
+              <div
+                key={idx}
+                className="pt-4 pb-2 border-b border-dashed border-slate-200 dark:border-white/5 mt-6 mb-3"
+              >
                 <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-2">
                   <span className="w-1.5 h-3 bg-indigo-500 rounded-full inline-block" />
                   {block.text}
@@ -984,7 +1320,10 @@ const LegalReportViewer = ({ reportText, isDark }) => {
 
           case 'h3':
             return (
-              <h3 key={idx} className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 mt-4 mb-2">
+              <h3
+                key={idx}
+                className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 mt-4 mb-2"
+              >
                 {block.text}
               </h3>
             );
@@ -994,7 +1333,10 @@ const LegalReportViewer = ({ reportText, isDark }) => {
 
           case 'paragraph':
             return (
-              <p key={idx} className="text-xs sm:text-sm text-slate-655 dark:text-slate-350 leading-relaxed mb-4">
+              <p
+                key={idx}
+                className="text-xs sm:text-sm text-slate-655 dark:text-slate-350 leading-relaxed mb-4"
+              >
                 {renderTextWithBadges(block.text, isDark)}
               </p>
             );
@@ -1017,13 +1359,16 @@ const LegalReportViewer = ({ reportText, isDark }) => {
 
           case 'table':
             return (
-              <div key={idx} className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 my-4">
+              <div
+                key={idx}
+                className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 my-4"
+              >
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-zinc-800/40 border-b border-slate-200 dark:border-white/5">
                       {block.headers.map((header, hIdx) => (
-                        <th 
-                          key={hIdx} 
+                        <th
+                          key={hIdx}
                           className="px-4 py-3 font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[10px]"
                         >
                           {header.replace(/\*\*|__/g, '')}
@@ -1033,16 +1378,19 @@ const LegalReportViewer = ({ reportText, isDark }) => {
                   </thead>
                   <tbody>
                     {block.rows.map((row, rIdx) => (
-                      <tr 
-                        key={rIdx} 
+                      <tr
+                        key={rIdx}
                         className={`border-b last:border-0 border-slate-100 dark:border-white/5 transition-colors ${
-                          rIdx % 2 === 1 
-                            ? 'bg-slate-50/30 dark:bg-zinc-900/10' 
+                          rIdx % 2 === 1
+                            ? 'bg-slate-50/30 dark:bg-zinc-900/10'
                             : 'bg-white dark:bg-transparent'
                         } hover:bg-slate-50/50 dark:hover:bg-zinc-800/10`}
                       >
                         {row.map((cell, cIdx) => (
-                          <td key={cIdx} className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-350">
+                          <td
+                            key={cIdx}
+                            className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-350"
+                          >
                             {renderTableCell(cell, isDark)}
                           </td>
                         ))}
@@ -1077,7 +1425,7 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
 
   // Workflow Input modes: null | 'existing' | 'upload' | 'manual'
   const [inputWorkflowMode, setInputWorkflowMode] = useState(null);
-  
+
   // Existing Case Workspace States
   const [selectedCaseId, setSelectedCaseId] = useState('');
   const [isCaseLoaded, setIsCaseLoaded] = useState(false);
@@ -1144,14 +1492,14 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
   const [isEditingReport, setIsEditingReport] = useState(false);
   const [editedReportText, setEditedReportText] = useState('');
   const [reportSearchQuery, setReportSearchQuery] = useState('');
-  
+
   // Custom Upgraded Report states
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [compareVersionId, setCompareVersionId] = useState('');
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [lazyLoadingReport, setLazyLoadingReport] = useState({});
-  
+
   // Explanation Modal state
   const [explanationModal, setExplanationModal] = useState({
     isOpen: false,
@@ -1160,7 +1508,7 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     reasoning: '',
     legalBasis: '',
     dataQuality: '',
-    precedents: ''
+    precedents: '',
   });
 
   // What-If Simulator local states
@@ -1186,82 +1534,128 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
-  const reportsMetadata = useMemo(() => [
-    {
-      id: 'predictionReport',
-      title: t('litigationForecast') || 'Litigation Forecast',
-      desc: t('litigationForecastDesc') || 'Predict win rates, statutory matches, and outcome risks.',
-      icon: 'Scale',
-      purpose: t('litigationForecastPurpose') || 'Generate primary litigant forecast outlining success probability percentages, cited laws, and precedents.',
-      expected: t('litigationForecastExpected') || 'Executive summary, probability indexes, cited sections, Supreme Court case law matches.',
-      estTime: t('litigationForecastEstTime') || '5-8 seconds'
-    },
-    {
-      id: 'clientReport',
-      title: t('clientReadiness') || 'Client Readiness',
-      desc: t('clientReadinessDesc') || 'Analyze case gaps, action points, and overall trial readiness.',
-      icon: 'Users',
-      purpose: t('clientReadinessPurpose') || 'Create client readiness index and identify deficiency checklist for trial preparation.',
-      expected: t('clientReadinessExpected') || 'Evidentiary gaps, witness deposition availability status, replication action items.',
-      estTime: t('clientReadinessEstTime') || '4-6 seconds'
-    },
-    {
-      id: 'judicialForecastReport',
-      title: t('judgeBriefing') || 'Judge Briefing',
-      desc: t('judgeBriefingDesc') || 'Pre-empt bench questions, material facts, and prayers.',
-      icon: 'Landmark',
-      purpose: t('judgeBriefingPurpose') || 'Formulate judge briefing note addressing presiding bench observations and pre-empted inquiries.',
-      expected: t('judgeBriefingExpected') || 'presiding bench tendencies, factual summary, pre-empted judicial questions and answers.',
-      estTime: t('judgeBriefingEstTime') || '6-9 seconds'
-    },
-    {
-      id: 'courtPrepReport',
-      title: t('courtPrep') || 'Court Prep',
-      desc: t('courtPrepDesc') || 'Track filing compliance, affidavits, and witness schedules.',
-      icon: 'Clock',
-      purpose: t('courtPrepPurpose') || 'Build courtroom preparation docket mapping filing matrix rules and witness schedules.',
-      expected: t('courtPrepExpected') || 'Order IV checklist status, exhibit compendium timeline, trial-day action schedule.',
-      estTime: t('courtPrepEstTime') || '5-7 seconds'
-    },
-    {
-      id: 'evidenceReport',
-      title: t('evidenceAudit') || 'Evidence Audit',
-      desc: t('evidenceAuditDesc') || 'Admissibility reviews, document strength, and missing links.',
-      icon: 'FileText',
-      purpose: t('evidenceAuditPurpose') || 'Run forensic admissibility audit evaluating exhibit quality, authenticity, and compliance.',
-      expected: t('evidenceAuditExpected') || 'Exhibit quality matrix table, Sec 65B compliance check, remediation steps.',
-      estTime: t('evidenceAuditEstTime') || '4-5 seconds'
-    },
-    {
-      id: 'settlementReport',
-      title: t('settlementAdvisory') || 'Settlement Advisory',
-      desc: t('settlementAdvisoryDesc') || 'Mediation probability, negotiation brackets, and risk comparison.',
-      icon: 'DollarSign',
-      purpose: t('settlementAdvisoryPurpose') || 'Determine settlement advisory comparing trial exposure costs with compromise values.',
-      expected: t('settlementAdvisoryExpected') || 'Mediation probability index, optimum negotiation range, trial comparison metrics.',
-      estTime: t('settlementAdvisoryEstTime') || '5-6 seconds'
-    },
-    {
-      id: 'strategyReport',
-      title: t('timelineStrategy') || 'Timeline Strategy',
-      desc: t('timelineStrategyDesc') || 'Court stages, milestones, delay assessments, and actions.',
-      icon: 'Target',
-      purpose: t('timelineStrategyPurpose') || 'Draft chronological litigation timeline outlining stages, adjournment risk, and options.',
-      expected: t('timelineStrategyExpected') || 'Procedural court stage durations, delay mitigation actions, backup options.',
-      estTime: t('timelineStrategyEstTime') || '4-6 seconds'
-    },
-    {
-      id: 'executiveSummary',
-      title: t('executiveSummary') || 'Executive Summary',
-      desc: t('executiveSummaryDesc') || 'Single-page summary of prediction snapshot and recommendations.',
-      icon: 'Sparkles',
-      purpose: t('executiveSummaryPurpose') || 'Compile 1-page high level summary briefing case probability, risks, and next steps.',
-      expected: t('executiveSummaryExpected') || 'Decision snapshot box, key probability drivers, final recommendation briefs.',
-      estTime: t('executiveSummaryEstTime') || '3-4 seconds'
-    }
-  ], [t]);
+  const reportsMetadata = useMemo(
+    () => [
+      {
+        id: 'predictionReport',
+        title: t('litigationForecast') || 'Litigation Forecast',
+        desc:
+          t('litigationForecastDesc') || 'Predict win rates, statutory matches, and outcome risks.',
+        icon: 'Scale',
+        purpose:
+          t('litigationForecastPurpose') ||
+          'Generate primary litigant forecast outlining success probability percentages, cited laws, and precedents.',
+        expected:
+          t('litigationForecastExpected') ||
+          'Executive summary, probability indexes, cited sections, Supreme Court case law matches.',
+        estTime: t('litigationForecastEstTime') || '5-8 seconds',
+      },
+      {
+        id: 'clientReport',
+        title: t('clientReadiness') || 'Client Readiness',
+        desc:
+          t('clientReadinessDesc') ||
+          'Analyze case gaps, action points, and overall trial readiness.',
+        icon: 'Users',
+        purpose:
+          t('clientReadinessPurpose') ||
+          'Create client readiness index and identify deficiency checklist for trial preparation.',
+        expected:
+          t('clientReadinessExpected') ||
+          'Evidentiary gaps, witness deposition availability status, replication action items.',
+        estTime: t('clientReadinessEstTime') || '4-6 seconds',
+      },
+      {
+        id: 'judicialForecastReport',
+        title: t('judgeBriefing') || 'Judge Briefing',
+        desc: t('judgeBriefingDesc') || 'Pre-empt bench questions, material facts, and prayers.',
+        icon: 'Landmark',
+        purpose:
+          t('judgeBriefingPurpose') ||
+          'Formulate judge briefing note addressing presiding bench observations and pre-empted inquiries.',
+        expected:
+          t('judgeBriefingExpected') ||
+          'presiding bench tendencies, factual summary, pre-empted judicial questions and answers.',
+        estTime: t('judgeBriefingEstTime') || '6-9 seconds',
+      },
+      {
+        id: 'courtPrepReport',
+        title: t('courtPrep') || 'Court Prep',
+        desc: t('courtPrepDesc') || 'Track filing compliance, affidavits, and witness schedules.',
+        icon: 'Clock',
+        purpose:
+          t('courtPrepPurpose') ||
+          'Build courtroom preparation docket mapping filing matrix rules and witness schedules.',
+        expected:
+          t('courtPrepExpected') ||
+          'Order IV checklist status, exhibit compendium timeline, trial-day action schedule.',
+        estTime: t('courtPrepEstTime') || '5-7 seconds',
+      },
+      {
+        id: 'evidenceReport',
+        title: t('evidenceAudit') || 'Evidence Audit',
+        desc:
+          t('evidenceAuditDesc') || 'Admissibility reviews, document strength, and missing links.',
+        icon: 'FileText',
+        purpose:
+          t('evidenceAuditPurpose') ||
+          'Run forensic admissibility audit evaluating exhibit quality, authenticity, and compliance.',
+        expected:
+          t('evidenceAuditExpected') ||
+          'Exhibit quality matrix table, Sec 65B compliance check, remediation steps.',
+        estTime: t('evidenceAuditEstTime') || '4-5 seconds',
+      },
+      {
+        id: 'settlementReport',
+        title: t('settlementAdvisory') || 'Settlement Advisory',
+        desc:
+          t('settlementAdvisoryDesc') ||
+          'Mediation probability, negotiation brackets, and risk comparison.',
+        icon: 'DollarSign',
+        purpose:
+          t('settlementAdvisoryPurpose') ||
+          'Determine settlement advisory comparing trial exposure costs with compromise values.',
+        expected:
+          t('settlementAdvisoryExpected') ||
+          'Mediation probability index, optimum negotiation range, trial comparison metrics.',
+        estTime: t('settlementAdvisoryEstTime') || '5-6 seconds',
+      },
+      {
+        id: 'strategyReport',
+        title: t('timelineStrategy') || 'Timeline Strategy',
+        desc:
+          t('timelineStrategyDesc') || 'Court stages, milestones, delay assessments, and actions.',
+        icon: 'Target',
+        purpose:
+          t('timelineStrategyPurpose') ||
+          'Draft chronological litigation timeline outlining stages, adjournment risk, and options.',
+        expected:
+          t('timelineStrategyExpected') ||
+          'Procedural court stage durations, delay mitigation actions, backup options.',
+        estTime: t('timelineStrategyEstTime') || '4-6 seconds',
+      },
+      {
+        id: 'executiveSummary',
+        title: t('executiveSummary') || 'Executive Summary',
+        desc:
+          t('executiveSummaryDesc') ||
+          'Single-page summary of prediction snapshot and recommendations.',
+        icon: 'Sparkles',
+        purpose:
+          t('executiveSummaryPurpose') ||
+          'Compile 1-page high level summary briefing case probability, risks, and next steps.',
+        expected:
+          t('executiveSummaryExpected') ||
+          'Decision snapshot box, key probability drivers, final recommendation briefs.',
+        estTime: t('executiveSummaryEstTime') || '3-4 seconds',
+      },
+    ],
+    [t]
+  );
 
   const REPORT_METADATA = reportsMetadata;
   const getReportName = (id, fallback) => {
@@ -1270,7 +1664,6 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
   const getReportDesc = (id, fallback) => {
     return reportsMetadata.find(r => r.id === id)?.desc || fallback;
   };
-
 
   // ─── LANGUAGE TOGGLE STATE ────────────────────────────────────────
   const {
@@ -1284,26 +1677,52 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
 
   // translatedReportText state variable removed
 
-
   const deepTranslatePredictionData = useCallback(async (result, targetLang, translateFn) => {
     if (!result) return null;
 
     const EXCLUDED_KEYS = new Set([
-      'id', '_id', 'timestamp', 'successRate', 'defendantWinRate', 'litigationRisk',
-      'evidenceStrength', 'caseStrength', 'missingDocsCount', 'courtReadiness',
-      'settlementProbability', 'appealRisk', 'confidenceScore', 'estimatedDuration',
-      'expectedHearings', 'estimatedLegalCost', 'courtFees', 'advocateFees',
-      'documentationCost', 'travelCost', 'miscCost', 'totalLitigationCost',
-      'relevanceScore', 'grantRate', 'acceptanceRate', 'probability', 'recommendedValue',
-      'expectedSavings', 'riskReduction'
+      'id',
+      '_id',
+      'timestamp',
+      'successRate',
+      'defendantWinRate',
+      'litigationRisk',
+      'evidenceStrength',
+      'caseStrength',
+      'missingDocsCount',
+      'courtReadiness',
+      'settlementProbability',
+      'appealRisk',
+      'confidenceScore',
+      'estimatedDuration',
+      'expectedHearings',
+      'estimatedLegalCost',
+      'courtFees',
+      'advocateFees',
+      'documentationCost',
+      'travelCost',
+      'miscCost',
+      'totalLitigationCost',
+      'relevanceScore',
+      'grantRate',
+      'acceptanceRate',
+      'probability',
+      'recommendedValue',
+      'expectedSavings',
+      'riskReduction',
     ]);
 
-    const isBypass = (str) => {
+    const isBypass = str => {
       if (!str || typeof str !== 'string') return true;
       const trimmed = str.trim();
       if (!trimmed) return true;
       if (/^[0-9a-fA-F]{32,64}$/.test(trimmed)) return true;
-      if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(trimmed)) return true;
+      if (
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+          trimmed
+        )
+      )
+        return true;
       if (/^\d+(%|\/\d+)?$/.test(trimmed)) return true;
       if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return true;
       return false;
@@ -1363,7 +1782,9 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
         setValueAtPath(cloned, item.path, translatedSegments[idx]);
       });
     } else {
-      console.warn(`[deepTranslate] translation segment count mismatch: got ${translatedSegments.length}, expected ${translatableList.length}. Mapping sequentially.`);
+      console.warn(
+        `[deepTranslate] translation segment count mismatch: got ${translatedSegments.length}, expected ${translatableList.length}. Mapping sequentially.`
+      );
       translatableList.forEach((item, idx) => {
         const translatedVal = translatedSegments[idx] || item.original;
         setValueAtPath(cloned, item.path, translatedVal);
@@ -1384,7 +1805,7 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     const sampleText = rawPrediction.explainPrediction?.whyPredicted || '';
     const hasDevanagari = /[\u0900-\u097F]/.test(sampleText);
     const rawIsHindi = hasDevanagari;
-    const targetIsHindi = (targetLang === 'Hindi');
+    const targetIsHindi = targetLang === 'Hindi';
 
     if (rawIsHindi === targetIsHindi) {
       setActivePrediction(rawPrediction);
@@ -1392,15 +1813,17 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     }
 
     setIsPredictorTranslating(true);
-    deepTranslatePredictionData(rawPrediction, targetLang, (txt) => translatePredictorText(txt, targetLang))
-      .then((translated) => {
+    deepTranslatePredictionData(rawPrediction, targetLang, txt =>
+      translatePredictorText(txt, targetLang)
+    )
+      .then(translated => {
         if (isMountedRef.current) {
           setActivePrediction(translated);
         }
         setIsPredictorTranslating(false);
       })
-      .catch((err) => {
-        console.error("Failed to translate prediction data:", err);
+      .catch(err => {
+        console.error('Failed to translate prediction data:', err);
         if (isMountedRef.current) {
           setActivePrediction(rawPrediction);
         }
@@ -1413,9 +1836,17 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
   // Sync simulator inputs when displayPrediction changes
   useEffect(() => {
     if (displayPrediction) {
-      setSimulatedEvidence(displayPrediction.evidenceIntelligence?.missingDocuments?.map(d => d.name) || []);
+      setSimulatedEvidence(
+        displayPrediction.evidenceIntelligence?.missingDocuments?.map(d => d.name) || []
+      );
       setSimulatedWitnessReliability(true);
-      setSimulatedCourtLevel(displayPrediction.courtName?.toLowerCase().includes('high') ? 'High' : displayPrediction.courtName?.toLowerCase().includes('supreme') ? 'Supreme' : 'District');
+      setSimulatedCourtLevel(
+        displayPrediction.courtName?.toLowerCase().includes('high')
+          ? 'High'
+          : displayPrediction.courtName?.toLowerCase().includes('supreme')
+            ? 'Supreme'
+            : 'District'
+      );
       setSimulatedLimitationDelay(false);
       setSimulatedPrecedentMatch(displayPrediction.stats?.confidenceScore || 91);
     }
@@ -1439,7 +1870,7 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     // 1. Missing documents checklist (unchecking them means "uploading" them, increasing strength)
     const missingDocs = displayPrediction.evidenceIntelligence?.missingDocuments || [];
     const uploadedDocs = missingDocs.filter(d => !simulatedEvidence.includes(d.name));
-    
+
     if (uploadedDocs.length > 0) {
       uploadedDocs.forEach(doc => {
         successOffset += doc.impact || 5;
@@ -1455,14 +1886,14 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
       successOffset -= 10;
       evidenceOffset -= 5;
       confidenceOffset -= 4;
-      explanationList.push("Witness marked as Unreliable (-10% Success)");
+      explanationList.push('Witness marked as Unreliable (-10% Success)');
     }
 
     // 3. Court Level
     if (simulatedCourtLevel === 'Supreme') {
       successOffset += 4;
       readinessOffset -= 8;
-      explanationList.push("Supreme Court jurisdiction selected (High standard of proof)");
+      explanationList.push('Supreme Court jurisdiction selected (High standard of proof)');
     } else if (simulatedCourtLevel === 'High') {
       successOffset += 2;
       readinessOffset -= 4;
@@ -1472,7 +1903,7 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     if (simulatedLimitationDelay) {
       successOffset -= 15;
       confidenceOffset -= 6;
-      explanationList.push("Limitation period delay flagged (-15% Success)");
+      explanationList.push('Limitation period delay flagged (-15% Success)');
     }
 
     // 5. Precedent Match
@@ -1483,24 +1914,28 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     // 6. Judge Variable
     if (simulatedJudge === 'Sharma') {
       successOffset -= 5;
-      explanationList.push("Sharma J. presiding (conservative on civil covenants) (-5% Success)");
+      explanationList.push('Sharma J. presiding (conservative on civil covenants) (-5% Success)');
     } else if (simulatedJudge === 'Sen') {
       successOffset += 3;
-      explanationList.push("Sen J. presiding (liberal on relief claims) (+3% Success)");
+      explanationList.push('Sen J. presiding (liberal on relief claims) (+3% Success)');
     }
 
     // 7. Added/Removed Section
     if (simulatedCheatingSection) {
       successOffset -= 8;
       confidenceOffset += 4;
-      explanationList.push("Added Cheating charge Section (-8% Success due to higher criminal proof standard)");
+      explanationList.push(
+        'Added Cheating charge Section (-8% Success due to higher criminal proof standard)'
+      );
     }
 
     // 8. Contract Deed Presence
     if (!simulatedContractDeed) {
       successOffset -= 12;
       evidenceOffset -= 15;
-      explanationList.push("Excluded signed written contract deed (-12% Success, evidence strength reduced)");
+      explanationList.push(
+        'Excluded signed written contract deed (-12% Success, evidence strength reduced)'
+      );
     }
 
     const calculatedSuccess = Math.min(95, Math.max(5, baseSuccess + successOffset));
@@ -1522,9 +1957,22 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
       evidenceStrength: calculatedEvidence,
       courtReadiness: calculatedReadiness,
       litigationRisk: riskLevel,
-      explanations: explanationList.length > 0 ? explanationList : ["Simulator set to default case parameters."]
+      explanations:
+        explanationList.length > 0
+          ? explanationList
+          : ['Simulator set to default case parameters.'],
     };
-  }, [displayPrediction, simulatedEvidence, simulatedWitnessReliability, simulatedCourtLevel, simulatedLimitationDelay, simulatedPrecedentMatch, simulatedJudge, simulatedCheatingSection, simulatedContractDeed]);
+  }, [
+    displayPrediction,
+    simulatedEvidence,
+    simulatedWitnessReliability,
+    simulatedCourtLevel,
+    simulatedLimitationDelay,
+    simulatedPrecedentMatch,
+    simulatedJudge,
+    simulatedCheatingSection,
+    simulatedContractDeed,
+  ]);
 
   const compileDetailedLegalReport = useCallback((tabId, data) => {
     if (!data) return '';
@@ -1541,21 +1989,36 @@ const CasePredictor = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     const opponentDetails = data.opponentDetails || 'Opposing Party';
     const facts = data.facts || 'Dispute regarding delayed performance under agreement terms.';
     const witnessDetails = data.witnessDetails || 'Independent witness testimonies.';
-    
-    const precedentsList = (data.precedentIntelligence?.supremeCourtCases || []).concat(data.precedentIntelligence?.highCourtCases || []);
+
+    const precedentsList = (data.precedentIntelligence?.supremeCourtCases || []).concat(
+      data.precedentIntelligence?.highCourtCases || []
+    );
     const isHindi = toolkitLanguage === 'Hindi';
-    const precedentsText = precedentsList.length > 0
-      ? precedentsList.map(p => `- **${p.caseName}** (${p.citation}) - **Type:** ${p.type}\n  *Ratio:* ${p.ratio}`).join('\n')
-      : `- **ONGC v. Saw Pipes Ltd** (2003) - Binding precedent regarding liquidated damages.\n- **Maula Bux v. Union of India** (1969) - Restricting forfeiture of earnest money.`;
+    const precedentsText =
+      precedentsList.length > 0
+        ? precedentsList
+            .map(
+              p =>
+                `- **${p.caseName}** (${p.citation}) - **Type:** ${p.type}\n  *Ratio:* ${p.ratio}`
+            )
+            .join('\n')
+        : `- **ONGC v. Saw Pipes Ltd** (2003) - Binding precedent regarding liquidated damages.\n- **Maula Bux v. Union of India** (1969) - Restricting forfeiture of earnest money.`;
 
     const missingDocsList = data.evidenceIntelligence?.missingDocuments || [];
-    const missingDocsRows = missingDocsList.length > 0
-      ? missingDocsList.map(d => `| ${d.name} | ${d.priority || 'Medium'} | ${d.reason || 'Verification requirement'} | +${d.impact || 5}% |`).join('\n')
-      : `| Certified Registry Ledger Copy | High | Establishes root ownership title | +8% |\n| Section 65B Electronic Affidavit | Critical | Required for email admissibility | +12% |`;
+    const missingDocsRows =
+      missingDocsList.length > 0
+        ? missingDocsList
+            .map(
+              d =>
+                `| ${d.name} | ${d.priority || 'Medium'} | ${d.reason || 'Verification requirement'} | +${d.impact || 5}% |`
+            )
+            .join('\n')
+        : `| Certified Registry Ledger Copy | High | Establishes root ownership title | +8% |\n| Section 65B Electronic Affidavit | Critical | Required for email admissibility | +12% |`;
 
-    switch(tabId) {
+    switch (tabId) {
       case 'predictionReport':
-        return isHindi ? `# मुकदमेबाजी पूर्वानुमान रिपोर्ट और परिणाम प्रक्षेपण
+        return isHindi
+          ? `# मुकदमेबाजी पूर्वानुमान रिपोर्ट और परिणाम प्रक्षेपण
 
 ## 1. कार्यकारी परिणाम सारांश
 - **प्राथमिक मामला श्रेणी:** ${data.caseType || 'कॉर्पोरेट'}
@@ -1592,7 +2055,8 @@ ${precedentsText}
 ---
 
 ## 5. एआई परिणाम सिफारिश
-तथ्यों की समयरेखा का सख्ती से पालन करें। मुद्दों के शीघ्र निर्धारण का प्रयास करें और निचले अदालत के फैसलों की रक्षा के लिए अपीलीय कैविएट दायर करने की तैयारी करें।` : `# LITIGATION FORECAST REPORT & OUTCOME PROJECTION
+तथ्यों की समयरेखा का सख्ती से पालन करें। मुद्दों के शीघ्र निर्धारण का प्रयास करें और निचले अदालत के फैसलों की रक्षा के लिए अपीलीय कैविएट दायर करने की तैयारी करें।`
+          : `# LITIGATION FORECAST REPORT & OUTCOME PROJECTION
 
 ## 1. EXECUTIVE OUTCOME SUMMARY
 - **Primary Case Category:** ${data.caseType || 'Corporate'}
@@ -1632,7 +2096,8 @@ ${precedentsText}
 Maintain strict adherence to the facts chronology. Seek early scheduling of issues and prepare to lodge appellate caveats to protect lower-court decrees.`;
 
       case 'clientReport':
-        return isHindi ? `# ग्राहक परीक्षण तत्परता मूल्यांकन और कमी विवरण
+        return isHindi
+          ? `# ग्राहक परीक्षण तत्परता मूल्यांकन और कमी विवरण
 
 ## 1. तत्परता स्थिति स्नैपशॉट
 - **परीक्षण तत्परता स्कोर:** ${courtReadiness}% (तत्काल अपलोड की आवश्यकता है)
@@ -1659,7 +2124,8 @@ ${missingDocsRows}
 ## 4. आवश्यक वकील समयरेखा कार्रवाई
 1. **जवाब दाखिल करना:** सीमा अधिनियम बचाव के संबंध में विशिष्ट खंडन का मसौदा तैयार करें।
 2. **धारा 65बी शपथ पत्र निष्पादित करें:** अगली सुनवाई से पहले डिजिटल संचार लेखा परीक्षक द्वारा हस्ताक्षरित होना चाहिए।
-3. **बैंक बहीखाता सत्यापित करें:** बैंकर बुक साक्ष्य नियमों के तहत प्रमाणित प्रतियां प्राप्त करें।` : `# CLIENT TRIAL READINESS ASSESSMENT & DEFICIENCY BRIEF
+3. **बैंक बहीखाता सत्यापित करें:** बैंकर बुक साक्ष्य नियमों के तहत प्रमाणित प्रतियां प्राप्त करें।`
+          : `# CLIENT TRIAL READINESS ASSESSMENT & DEFICIENCY BRIEF
 
 ## 1. READINESS STATUS SNAPSHOT
 - **Trial Readiness Score:** ${courtReadiness}% (Requires immediate uploads)
@@ -1689,7 +2155,8 @@ ${missingDocsRows}
 3. **Verify Bank Ledgers:** Obtain certified copies under Banker's Book Evidence regulations.`;
 
       case 'judicialForecastReport':
-        return isHindi ? `# न्यायाधीश ब्रीफिंग नोट और सुनवाई सलाहकार
+        return isHindi
+          ? `# न्यायाधीश ब्रीफिंग नोट और सुनवाई सलाहकार
 
 ## 1. पीठासीन बेंच प्रोफ़ाइल
 - **न्यायाधीश / पीठासीन बेंच:** ${data.judgeIntelligence?.profile || 'न्यायमुर्ति सुब्रमण्यम बेंच'}
@@ -1718,7 +2185,8 @@ ${facts.substring(0, 300)}...
 ---
 
 ## 5. अंतिम प्रार्थना (अनुरोधित राहत)
-दावों की पूर्ण बहाली, वसीयतनामा और मुकदमेबाजी के खर्चों की कुल वसूली का अनुरोध करने वाली प्रार्थना दायर करें।` : `# JUDGE BRIEFING NOTE & TRIAL ADVISORY
+दावों की पूर्ण बहाली, वसीयतनामा और मुकदमेबाजी के खर्चों की कुल वसूली का अनुरोध करने वाली प्रार्थना दायर करें।`
+          : `# JUDGE BRIEFING NOTE & TRIAL ADVISORY
 
 ## 1. PRESIDING BENCH PROFILE
 - **Judge / Presiding Bench:** ${data.judgeIntelligence?.profile || 'Justice Subramanian Bench'}
@@ -1750,7 +2218,8 @@ Prepare immediate, concise oral responses for the following pre-empted judicial 
 Lodge prayer requesting full restitution of claims, standard interest charges, and total recovery of litigation expenses.`;
 
       case 'courtPrepReport':
-        return isHindi ? `# कोर्टरूम तैयारी और अनुपालन चेकलिस्ट
+        return isHindi
+          ? `# कोर्टरूम तैयारी और अनुपालन चेकलिस्ट
 
 ## 1. अनुपालन और फाइलिंग मैट्रिक्स
 | चेकलिस्ट आइटम | वैधानिक संदर्भ | कार्रवाई की स्थिति |
@@ -1771,7 +2240,8 @@ Lodge prayer requesting full restitution of claims, standard interest charges, a
 ---
 
 ## 3. प्रवेश और प्रकटीकरण चरण की कार्रवाइयां
-सीपीसी आदेश XI के तहत प्रतिद्वंद्वी से प्रवेश की मांग करें। लंबी सुनवाई सत्रों को कम करता है।` : `# COURTROOM PREPARATION & COMPLIANCE CHECKLIST
+सीपीसी आदेश XI के तहत प्रतिद्वंद्वी से प्रवेश की मांग करें। लंबी सुनवाई सत्रों को कम करता है।`
+          : `# COURTROOM PREPARATION & COMPLIANCE CHECKLIST
 
 ## 1. COMPLIANCE & FILING MATRIX
 | CHECKLIST ITEM | STATUTORY REFERENCE | ACTION STATUS |
@@ -1795,7 +2265,8 @@ Lodge prayer requesting full restitution of claims, standard interest charges, a
 Seek formal admission of undisputed documents from opponent under CPC Order XI. Reduces prolonged trial sessions.`;
 
       case 'evidenceReport':
-        return isHindi ? `# फोरेंसिक साक्ष्य लेखापरीक्षा और स्वीकार्यता विवरण
+        return isHindi
+          ? `# फोरेंसिक साक्ष्य लेखापरीक्षा और स्वीकार्यता विवरण
 
 ## 1. साक्ष्य कवरेज सारांश
 - **साक्ष्य स्वीकार्यता स्कोर:** ${evidenceStrength}%
@@ -1820,7 +2291,8 @@ Seek formal admission of undisputed documents from opponent under CPC Order XI. 
 
 ## 4. वकील के लिए उपचारात्मक निर्देश
 - सभी लेनदेन नोटिसों के लिए स्टांप प्रमाणपत्र सत्यापन प्राप्त करें।
-- द्वितीयक रेखाचित्रों को बदलने के लिए स्थानीय सर्वेक्षक सीमा लेखापरीक्षा संकलित करें।` : `# FORENSIC EVIDENCE AUDIT & ADMISSIBILITY BRIEF
+- द्वितीयक रेखाचित्रों को बदलने के लिए स्थानीय सर्वेक्षक सीमा लेखापरीक्षा संकलित करें।`
+          : `# FORENSIC EVIDENCE AUDIT & ADMISSIBILITY BRIEF
 
 ## 1. EVIDENCE COVERAGE SUMMARY
 - **Admissibility Score:** ${evidenceStrength}%
@@ -1848,7 +2320,8 @@ Electronic evidence prints (SMS logs, Email printouts, WhatsApp threads) will be
 - Compile local surveyor boundary audits to replace secondary sketches.`;
 
       case 'settlementReport':
-        return isHindi ? `# मध्यस्थता और समझौता सलाहकार विवरण
+        return isHindi
+          ? `# मध्यस्थता और समझौता सलाहकार विवरण
 
 ## 1. समझौता दृष्टिकोण
 - **मध्यस्थता सलाहकार व्यवहार्यता:** ${data.stats?.settlementProbability || 78}%
@@ -1875,7 +2348,8 @@ Electronic evidence prints (SMS logs, Email printouts, WhatsApp threads) will be
 
 ## 4. सामरिक बातचीत सिफारिशें
 - साक्ष्य शक्ति का संकेत देने के लिए जल्दी ही ठोस बैंक विवरण प्रस्तुत करें।
-- अनौपचारिक समझौता वार्ता के दौरान अदालत के बैकलॉग आंकड़ों का लाभ उठाएं।` : `# MEDIATION & SETTLEMENT ADVISORY BRIEF
+- अनौपचारिक समझौता वार्ता के दौरान अदालत के बैकलॉग आंकड़ों का लाभ उठाएं।`
+          : `# MEDIATION & SETTLEMENT ADVISORY BRIEF
 
 ## 1. SETTLEMENT OUTLOOK
 - **Mediation Advisory Viability:** ${data.stats?.settlementProbability || 78}%
@@ -1905,7 +2379,8 @@ Electronic evidence prints (SMS logs, Email printouts, WhatsApp threads) will be
 - Leverage the court backlog statistic during informal settlement talks.`;
 
       case 'strategyReport':
-        return isHindi ? `# प्रक्रियात्मक समयरेखा और मुकदमेबाजी रणनीति
+        return isHindi
+          ? `# प्रक्रियात्मक समयरेखा और मुकदमेबाजी रणनीति
 
 ## 1. अपेक्षित अदालती चरण और समयरेखा
 | प्रक्रियात्मक चरण | अवधि | मुख्य रणनीतिक कार्रवाई |
@@ -1924,7 +2399,8 @@ Electronic evidence prints (SMS logs, Email printouts, WhatsApp threads) will be
 ---
 
 ## 3. वैकल्पिक केस रणनीति
-यदि शीर्षक के दावों पर 12 महीने से अधिक समय तक विवाद रहता है, तो संपत्ति सीमा समायोजन सुरक्षित करने के लिए कोर्ट से संबद्ध मध्यस्थता पैनलों की शुरुआत करें।` : `# PROCEDURAL TIMELINE & LITIGATION STRATEGY
+यदि शीर्षक के दावों पर 12 महीने से अधिक समय तक विवाद रहता है, तो संपत्ति सीमा समायोजन सुरक्षित करने के लिए कोर्ट से संबद्ध मध्यस्थता पैनलों की शुरुआत करें।`
+          : `# PROCEDURAL TIMELINE & LITIGATION STRATEGY
 
 ## 1. EXPECTED COURT STAGES & TIMELINES
 | PROCEDURAL STAGES | DURATION | KEY STRATEGIC ACTIONS |
@@ -1946,7 +2422,8 @@ Electronic evidence prints (SMS logs, Email printouts, WhatsApp threads) will be
 If title claims are contested beyond 12 months, initiate court-annexed mediation panels to secure property boundary adjustments.`;
 
       case 'executiveSummary':
-        return isHindi ? `# कार्यकारी मुकदमेबाजी पूर्वानुमान सारांश
+        return isHindi
+          ? `# कार्यकारी मुकदमेबाजी पूर्वानुमान सारांश
 
 ## 1. निर्णय स्नैपशॉट
 - **वादी सफलता दर:** **${successRate}%**
@@ -1963,7 +2440,8 @@ If title claims are contested beyond 12 months, initiate court-annexed mediation
 ---
 
 ## 3. मुख्य रणनीति सारांश
-अदालत का अधिकार क्षेत्र स्थापित करें और तुरंत मूल पंजीकृत विलेख प्रस्तुत करें। साक्ष्य अधिनियम के मौखिक साक्ष्य नियमों का हवाला देकर प्रतिवादी के मौखिक दावों को नकारें।` : `# EXECUTIVE LITIGATION FORECAST SUMMARY
+अदालत का अधिकार क्षेत्र स्थापित करें और तुरंत मूल पंजीकृत विलेख प्रस्तुत करें। साक्ष्य अधिनियम के मौखिक साक्ष्य नियमों का हवाला देकर प्रतिवादी के मौखिक दावों को नकारें।`
+          : `# EXECUTIVE LITIGATION FORECAST SUMMARY
 
 ## 1. DECISION SNAPSHOT
 - **Plaintiff Success Rate:** **${successRate}%**
@@ -1999,7 +2477,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
   }, [editedReportText, originalReportText]);
 
   // Clean JSON block string helper
-  const cleanJsonString = (str) => {
+  const cleanJsonString = str => {
     const jsonMatch = str.match(/```json\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {
       return jsonMatch[1].trim();
@@ -2032,7 +2510,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
       setIsCaseLoaded(true);
       toast.success(`✓ Case data pre-loaded for prediction`, { icon: '⚖️', duration: 3000 });
       handlePrefillFromActiveCase(currentCase);
-      
+
       setTimeout(() => {
         const formData = buildFormDataFromCase(currentCase);
         runOutcomePrediction(formData);
@@ -2079,7 +2557,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
             });
             const payload = {
               ...targetCase,
-              predictionsHistory: merged
+              predictionsHistory: merged,
             };
             const response = await apiService.updateProject(currentCase._id, payload);
             if (onUpdateCase) onUpdateCase(response);
@@ -2093,7 +2571,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
             }
           }
         } catch (err) {
-          console.error("Error migrating prediction history", err);
+          console.error('Error migrating prediction history', err);
         }
       }
 
@@ -2104,7 +2582,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
   }, [currentCase, allProjects, activePrediction, onUpdateCase, selectedReportTab]);
 
   // Helper to build Form Data directly from Case
-  const buildFormDataFromCase = (targetCase) => {
+  const buildFormDataFromCase = targetCase => {
     if (!targetCase) return null;
     let resolvedOpponent = '';
     if (targetCase.opponentName) {
@@ -2147,7 +2625,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
       facts: targetCase.summary || targetCase.caseSummary || targetCase.description || '',
       evidenceList: evidence,
       opponentDetails: resolvedOpponent,
-      witnessDetails: witnesses
+      witnessDetails: witnesses,
     };
   };
 
@@ -2155,11 +2633,11 @@ Establish court jurisdiction and immediately present original registered deeds. 
   const handlePrefillFromActiveCase = (forceCase = null) => {
     const targetCase = forceCase || currentCase;
     if (!targetCase) {
-      toast.error("No active case selected. Please select a case from the sidebar.");
+      toast.error('No active case selected. Please select a case from the sidebar.');
       return;
     }
     const data = buildFormDataFromCase(targetCase);
-    
+
     setFacts(data.facts);
     setCourtName(data.courtName);
     setOpponentDetails(data.opponentDetails);
@@ -2168,7 +2646,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
     setWitnessDetails(data.witnessDetails);
     setIpcSections(data.ipcSections);
 
-    if (!forceCase) toast.success("Active case data successfully synchronized!");
+    if (!forceCase) toast.success('Active case data successfully synchronized!');
   };
 
   const handleBackNavigation = () => {
@@ -2212,7 +2690,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
   };
 
   // Sync predictions list to the case's database project
-  const savePredictionToHistory = async (prediction) => {
+  const savePredictionToHistory = async prediction => {
     const caseId = selectedCaseId || currentCase?._id;
     if (!caseId) {
       try {
@@ -2235,19 +2713,19 @@ Establish court jurisdiction and immediately present original registered deeds. 
 
       const payload = {
         ...targetCase,
-        predictionsHistory: updated
+        predictionsHistory: updated,
       };
       const response = await apiService.updateProject(caseId, payload);
       if (onUpdateCase) onUpdateCase(response);
       setHistoryData(updated);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to sync prediction history to the database");
+      toast.error('Failed to sync prediction history to the database');
     }
   };
 
   // Delete prediction item
-  const handleDeleteHistoryItem = async (id) => {
+  const handleDeleteHistoryItem = async id => {
     const caseId = selectedCaseId || currentCase?._id;
     if (!caseId) {
       try {
@@ -2263,7 +2741,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
       }
       return;
     }
-    if (window.confirm("Are you sure you want to permanently delete this prediction?")) {
+    if (window.confirm('Are you sure you want to permanently delete this prediction?')) {
       try {
         const targetCase = allProjects.find(p => p._id === caseId);
         if (!targetCase) return;
@@ -2272,12 +2750,12 @@ Establish court jurisdiction and immediately present original registered deeds. 
 
         const payload = {
           ...targetCase,
-          predictionsHistory: updated
+          predictionsHistory: updated,
         };
         const response = await apiService.updateProject(caseId, payload);
         if (onUpdateCase) onUpdateCase(response);
         setHistoryData(updated);
-        
+
         if (activePrediction?.id === id) {
           setActivePrediction(updated.length > 0 ? updated[0] : null);
           if (updated.length > 0) {
@@ -2286,10 +2764,10 @@ Establish court jurisdiction and immediately present original registered deeds. 
             setEditedReportText('');
           }
         }
-        toast.success("Prediction record deleted successfully");
+        toast.success('Prediction record deleted successfully');
       } catch (e) {
         console.error(e);
-        toast.error("Deletion failed");
+        toast.error('Deletion failed');
       }
     }
   };
@@ -2311,7 +2789,7 @@ Establish court jurisdiction and immediately present original registered deeds. 
           facts: facts || 'Extracted document facts.',
           evidenceList: uploadedFiles.map(f => f.name).join(', '),
           opponentDetails: opponentDetails || 'Opposing Counsel',
-          witnessDetails: witnessDetails || 'Witnesses'
+          witnessDetails: witnessDetails || 'Witnesses',
         };
       } else if (inputWorkflowMode === 'manual') {
         fData = {
@@ -2321,17 +2799,23 @@ Establish court jurisdiction and immediately present original registered deeds. 
           facts: `Case Title: ${manualTitle}. Chronology: ${manualChronology}. Claims: ${manualFacts}. Defence: ${manualExpectedDefence}. Relief: ${manualReliefSought}`,
           evidenceList: manualEvidenceDocs,
           opponentDetails: `Respondent: ${manualRespondent}`,
-          witnessDetails: manualWitnesses || 'Witnesses'
+          witnessDetails: manualWitnesses || 'Witnesses',
         };
       } else {
         fData = {
-          caseType, ipcSections, courtName, facts, evidenceList, opponentDetails, witnessDetails
+          caseType,
+          ipcSections,
+          courtName,
+          facts,
+          evidenceList,
+          opponentDetails,
+          witnessDetails,
         };
       }
     }
 
     if (!fData || !fData.facts || !fData.facts.trim()) {
-      toast.error("Please provide case facts to predict outcome");
+      toast.error('Please provide case facts to predict outcome');
       return;
     }
 
@@ -2339,7 +2823,10 @@ Establish court jurisdiction and immediately present original registered deeds. 
     setActivePrediction(null);
 
     try {
-      const targetLanguageDirective = toolkitLanguage === 'Hindi'         ? '\nCRITICAL REQUIREMENT: You MUST generate all user-facing narrative text, explanation fields, reasoning, strategy points, and reports directly in natural legal Hindi (Devanagari script) using formal Indian legal terms. DO NOT return English text for these fields. All JSON keys must remain exactly in English as specified in the schema.'         : '\nCRITICAL REQUIREMENT: You MUST generate all text and reports in formal legal English.';
+      const targetLanguageDirective =
+        toolkitLanguage === 'Hindi'
+          ? '\nCRITICAL REQUIREMENT: You MUST generate all user-facing narrative text, explanation fields, reasoning, strategy points, and reports directly in natural legal Hindi (Devanagari script) using formal Indian legal terms. DO NOT return English text for these fields. All JSON keys must remain exactly in English as specified in the schema.'
+          : '\nCRITICAL REQUIREMENT: You MUST generate all text and reports in formal legal English.';
 
       const systemPrompt = `You are the AISA AI Judicial Intelligence & Case Forecasting System.
 Analyze the provided legal case facts, evidence, witnesses, statutes, and jurisdiction.
@@ -2536,12 +3023,20 @@ CRITICAL PROMPT DIRECTIVE:
           attachments.push({
             url: `data:image/png;base64,${img.base64}`,
             name: img.name,
-            type: 'image'
+            type: 'image',
           });
         });
       }
 
-      const response = await generateChatResponse([], query, systemPrompt, attachments, toolkitLanguage || 'English', null, 'legal');
+      const response = await generateChatResponse(
+        [],
+        query,
+        systemPrompt,
+        attachments,
+        toolkitLanguage || 'English',
+        null,
+        'legal'
+      );
       const reply = response?.reply || response || '';
 
       let parsedJson = null;
@@ -2549,24 +3044,47 @@ CRITICAL PROMPT DIRECTIVE:
         const jsonStr = cleanJsonString(reply);
         parsedJson = JSON.parse(jsonStr);
       } catch (parseErr) {
-        console.warn("JSON parsing failed, trying fallback...", parseErr);
+        console.warn('JSON parsing failed, trying fallback...', parseErr);
         // Leverage rich context fallback generator
-        parsedJson = generateSmartDefaultPredictionData(fData.facts, fData.caseType, fData.courtName, fData.ipcSections, fData.opponentDetails, fData.witnessDetails);
+        parsedJson = generateSmartDefaultPredictionData(
+          fData.facts,
+          fData.caseType,
+          fData.courtName,
+          fData.ipcSections,
+          fData.opponentDetails,
+          fData.witnessDetails
+        );
       }
 
       // Safeguard: Merge backend response values with full default generator to guarantee all 20 sections are loaded
-      const defaultData = generateSmartDefaultPredictionData(fData.facts, fData.caseType, fData.courtName, fData.ipcSections, fData.opponentDetails, fData.witnessDetails);
+      const defaultData = generateSmartDefaultPredictionData(
+        fData.facts,
+        fData.caseType,
+        fData.courtName,
+        fData.ipcSections,
+        fData.opponentDetails,
+        fData.witnessDetails
+      );
       const mergedJson = {
         ...defaultData,
         ...parsedJson,
         stats: { ...defaultData.stats, ...parsedJson?.stats },
         explainPrediction: { ...defaultData.explainPrediction, ...parsedJson?.explainPrediction },
-        evidenceIntelligence: { ...defaultData.evidenceIntelligence, ...parsedJson?.evidenceIntelligence },
+        evidenceIntelligence: {
+          ...defaultData.evidenceIntelligence,
+          ...parsedJson?.evidenceIntelligence,
+        },
         winningStrategy: { ...defaultData.winningStrategy, ...parsedJson?.winningStrategy },
-        settlementIntelligence: { ...defaultData.settlementIntelligence, ...parsedJson?.settlementIntelligence },
+        settlementIntelligence: {
+          ...defaultData.settlementIntelligence,
+          ...parsedJson?.settlementIntelligence,
+        },
         judgeIntelligence: { ...defaultData.judgeIntelligence, ...parsedJson?.judgeIntelligence },
-        financialIntelligence: { ...defaultData.financialIntelligence, ...parsedJson?.financialIntelligence },
-        reports: { ...defaultData.reports, ...parsedJson?.reports }
+        financialIntelligence: {
+          ...defaultData.financialIntelligence,
+          ...parsedJson?.financialIntelligence,
+        },
+        reports: { ...defaultData.reports, ...parsedJson?.reports },
       };
 
       // Initialize report documents dynamically
@@ -2578,7 +3096,7 @@ CRITICAL PROMPT DIRECTIVE:
         evidenceReport: compileDetailedLegalReport('evidenceReport', mergedJson),
         settlementReport: compileDetailedLegalReport('settlementReport', mergedJson),
         strategyReport: compileDetailedLegalReport('strategyReport', mergedJson),
-        executiveSummary: compileDetailedLegalReport('executiveSummary', mergedJson)
+        executiveSummary: compileDetailedLegalReport('executiveSummary', mergedJson),
       };
 
       const prediction = {
@@ -2597,7 +3115,7 @@ CRITICAL PROMPT DIRECTIVE:
           manualExpectedDefence,
           manualEvidenceDocs,
           manualReliefSought,
-          manualWitnesses
+          manualWitnesses,
         },
         caseType: fData.caseType,
         ipcSections: fData.ipcSections,
@@ -2617,28 +3135,28 @@ CRITICAL PROMPT DIRECTIVE:
           courtPrepReport: false,
           evidenceReport: false,
           settlementReport: false,
-          strategyReport: false
+          strategyReport: false,
         },
         reportVersions: {
           predictionReport: [
             {
               versionId: 'v_init',
               timestamp: new Date().toLocaleString(),
-              author: "AI Core Pleading Engine",
-              content: initialReports.predictionReport
-            }
+              author: 'AI Core Pleading Engine',
+              content: initialReports.predictionReport,
+            },
           ],
           executiveSummary: [
             {
               versionId: 'v_init',
               timestamp: new Date().toLocaleString(),
-              author: "AI Core Pleading Engine",
-              content: initialReports.executiveSummary
-            }
-          ]
+              author: 'AI Core Pleading Engine',
+              content: initialReports.executiveSummary,
+            },
+          ],
         },
         reportNotes: {},
-        lockedReports: {}
+        lockedReports: {},
       };
 
       setRawPrediction(prediction);
@@ -2646,10 +3164,10 @@ CRITICAL PROMPT DIRECTIVE:
       setEditedReportText(prediction.reports.predictionReport);
       setSelectedReportTab('predictionReport');
       await savePredictionToHistory(prediction);
-      toast.success("Judicial verdict forecast completed! ⚖️");
+      toast.success('Judicial verdict forecast completed! ⚖️');
     } catch (e) {
       console.error(e);
-      toast.error("Verdict forecasting engine failed. Please verify case facts.");
+      toast.error('Verdict forecasting engine failed. Please verify case facts.');
     } finally {
       setIsGenerating(false);
     }
@@ -2662,23 +3180,25 @@ CRITICAL PROMPT DIRECTIVE:
     setCaseType(resolvedType);
     runOutcomePrediction({
       caseType: resolvedType,
-      ipcSections: presetName === 'Bail Forecast' ? 'IPC Section 420, 120B' : 'Adverse Possession Statutes',
+      ipcSections:
+        presetName === 'Bail Forecast' ? 'IPC Section 420, 120B' : 'Adverse Possession Statutes',
       courtName: 'District Sessions Court',
       facts: presetFacts,
       evidenceList: 'Affidavits, Old Deeds, Receipts',
       opponentDetails: 'Opponent State Property Board',
-      witnessDetails: 'Two neighboring land owners'
+      witnessDetails: 'Two neighboring land owners',
     });
   };
 
   // Switch between report tabs
-  const handleReportTabChange = (tabId) => {
+  const handleReportTabChange = tabId => {
     setSelectedReportTab(tabId);
     setCompareVersionId('');
-    
+
     const isGenerated = activePrediction?.generatedReports?.[tabId];
     if (isGenerated) {
-      const activeText = activePrediction?.reports?.[tabId] || compileDetailedLegalReport(tabId, activePrediction);
+      const activeText =
+        activePrediction?.reports?.[tabId] || compileDetailedLegalReport(tabId, activePrediction);
       setEditedReportText(activeText);
     } else {
       setEditedReportText('');
@@ -2690,7 +3210,7 @@ CRITICAL PROMPT DIRECTIVE:
   const handleSaveChanges = async () => {
     if (!activePrediction) return;
     if (activePrediction.lockedReports?.[selectedReportTab]) {
-      toast.error("🔒 This report is locked & approved. Unlock to save changes.");
+      toast.error('🔒 This report is locked & approved. Unlock to save changes.');
       return;
     }
     try {
@@ -2698,35 +3218,35 @@ CRITICAL PROMPT DIRECTIVE:
       const newVer = {
         versionId: Date.now().toString(),
         timestamp,
-        author: "Lead Advocate",
-        content: editedReportText
+        author: 'Lead Advocate',
+        content: editedReportText,
       };
-      
+
       const currentVersions = activePrediction.reportVersions?.[selectedReportTab] || [];
       const updatedPrediction = {
         ...activePrediction,
         reports: {
           ...activePrediction.reports,
-          [selectedReportTab]: editedReportText
+          [selectedReportTab]: editedReportText,
         },
         reportVersions: {
           ...activePrediction.reportVersions,
-          [selectedReportTab]: [newVer, ...currentVersions]
-        }
+          [selectedReportTab]: [newVer, ...currentVersions],
+        },
       };
 
       setRawPrediction(updatedPrediction);
       setActivePrediction(updatedPrediction);
       await savePredictionToHistory(updatedPrediction);
       setIsEditingReport(false);
-      toast.success("Changes saved successfully to Case Database!");
+      toast.success('Changes saved successfully to Case Database!');
     } catch (e) {
-      toast.error("Failed to save changes");
+      toast.error('Failed to save changes');
     }
   };
 
   // Approve & Lock Report toggle
-  const handleToggleLockReport = async (tabId) => {
+  const handleToggleLockReport = async tabId => {
     if (!activePrediction) return;
     const isLockedNow = !activePrediction.lockedReports?.[tabId];
     try {
@@ -2734,43 +3254,45 @@ CRITICAL PROMPT DIRECTIVE:
         ...activePrediction,
         lockedReports: {
           ...activePrediction.lockedReports,
-          [tabId]: isLockedNow
-        }
+          [tabId]: isLockedNow,
+        },
       };
       setRawPrediction(updatedPrediction);
       setActivePrediction(updatedPrediction);
       await savePredictionToHistory(updatedPrediction);
       if (isLockedNow) {
-        toast.success("🔒 Report approved and locked! No further modifications allowed.");
+        toast.success('🔒 Report approved and locked! No further modifications allowed.');
       } else {
-        toast.success("🔓 Report unlocked for editing.");
+        toast.success('🔓 Report unlocked for editing.');
       }
     } catch (e) {
-      toast.error("Failed to lock/unlock report");
+      toast.error('Failed to lock/unlock report');
     }
   };
 
   // Regenerate Report (Generate Again)
-  const handleRegenerateReport = async (tabId) => {
+  const handleRegenerateReport = async tabId => {
     if (!activePrediction) return;
     if (activePrediction.lockedReports?.[tabId]) {
-      toast.error("🔒 Report is locked and approved. Unlock to regenerate.");
+      toast.error('🔒 Report is locked and approved. Unlock to regenerate.');
       return;
     }
     setIsPredictorTranslating(true);
-    const toastId = toast.loading("Regenerating legal brief using latest case telemetry...", { duration: 3000 });
+    const toastId = toast.loading('Regenerating legal brief using latest case telemetry...', {
+      duration: 3000,
+    });
 
     try {
       // Simulate calling Gemini/AI compiler
       await new Promise(r => setTimeout(r, 1200));
-      
+
       const freshText = compileDetailedLegalReport(tabId, activePrediction);
       const timestamp = new Date().toLocaleString();
       const newVer = {
         versionId: Date.now().toString(),
         timestamp,
-        author: "AI Core Pleading Engine",
-        content: freshText
+        author: 'AI Core Pleading Engine',
+        content: freshText,
       };
 
       const currentVersions = activePrediction.reportVersions?.[tabId] || [];
@@ -2778,25 +3300,25 @@ CRITICAL PROMPT DIRECTIVE:
         ...activePrediction,
         reports: {
           ...activePrediction.reports,
-          [tabId]: freshText
+          [tabId]: freshText,
         },
         reportVersions: {
           ...activePrediction.reportVersions,
-          [tabId]: [newVer, ...currentVersions]
+          [tabId]: [newVer, ...currentVersions],
         },
         generatedReports: {
           ...activePrediction.generatedReports,
-          [tabId]: true
-        }
+          [tabId]: true,
+        },
       };
 
       setRawPrediction(updatedPrediction);
       setActivePrediction(updatedPrediction);
       await savePredictionToHistory(updatedPrediction);
       setEditedReportText(freshText);
-      toast.success("Document successfully regenerated!", { id: toastId });
+      toast.success('Document successfully regenerated!', { id: toastId });
     } catch (e) {
-      toast.error("Regeneration failed", { id: toastId });
+      toast.error('Regeneration failed', { id: toastId });
     } finally {
       setIsPredictorTranslating(false);
     }
@@ -2805,7 +3327,7 @@ CRITICAL PROMPT DIRECTIVE:
   // Export report to Markdown
   const handleDownloadMarkdown = () => {
     if (!activePrediction) return;
-    const reportTitle = REPORT_METADATA.find(m => m.id === selectedReportTab)?.title || "Report";
+    const reportTitle = REPORT_METADATA.find(m => m.id === selectedReportTab)?.title || 'Report';
     const blob = new Blob([displayReportText], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2815,25 +3337,25 @@ CRITICAL PROMPT DIRECTIVE:
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success("Markdown Document Downloaded!");
+    toast.success('Markdown Document Downloaded!');
   };
 
   const handleDownloadPdf = async () => {
     if (!activePrediction) return;
-    const reportTitle = REPORT_METADATA.find(m => m.id === selectedReportTab)?.title || "Report";
-    const toastId = toast.loading("Generating PDF Brief...");
+    const reportTitle = REPORT_METADATA.find(m => m.id === selectedReportTab)?.title || 'Report';
+    const toastId = toast.loading('Generating PDF Brief...');
     try {
       const htmlContent = convertMarkdownToLegalHTML(displayReportText);
       await exportToPDF({
         htmlContent,
         title: reportTitle,
         filename: `${reportTitle.replace(/\s+/g, '_')}_${Date.now()}`,
-        lang: outputLang
+        lang: outputLang,
       });
-      toast.success("PDF Downloaded!", { id: toastId });
+      toast.success('PDF Downloaded!', { id: toastId });
     } catch (e) {
       console.error(e);
-      toast.error("Failed to generate PDF", { id: toastId });
+      toast.error('Failed to generate PDF', { id: toastId });
     }
   };
 
@@ -2841,24 +3363,24 @@ CRITICAL PROMPT DIRECTIVE:
   const renderCardControls = (title, content, type = 'general') => {
     return (
       <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-205/20 dark:border-white/5 text-[8.5px] font-bold text-slate-400">
-        <button 
+        <button
           onClick={() => {
-            toast.success("Detailed report context expanded");
+            toast.success('Detailed report context expanded');
           }}
           className="hover:text-indigo-400 transition-colors uppercase tracking-wider"
         >
           Expand
         </button>
         <span className="text-slate-500">|</span>
-        <button 
+        <button
           onClick={() => {
             openExplanation(
-              title, 
-              "Selected Metric Forensic Analysis", 
-              content, 
-              "Indian Statutes & Governing Rules", 
-              "High Probability Precedents Mapped", 
-              "AI Neural weight indicators satisfied."
+              title,
+              'Selected Metric Forensic Analysis',
+              content,
+              'Indian Statutes & Governing Rules',
+              'High Probability Precedents Mapped',
+              'AI Neural weight indicators satisfied.'
             );
           }}
           className="hover:text-indigo-400 transition-colors uppercase tracking-wider"
@@ -2866,15 +3388,15 @@ CRITICAL PROMPT DIRECTIVE:
           Explain
         </button>
         <span className="text-slate-500">|</span>
-        <button 
-          onClick={() => toast.success("Retrieving primary sources from archives...")} 
+        <button
+          onClick={() => toast.success('Retrieving primary sources from archives...')}
           className="hover:text-indigo-400 transition-colors uppercase tracking-wider"
         >
           Sources
         </button>
         <span className="text-slate-500">|</span>
-        <button 
-          onClick={() => toast.success("Accessing statutory provisions database...")} 
+        <button
+          onClick={() => toast.success('Accessing statutory provisions database...')}
           className="hover:text-indigo-400 transition-colors uppercase tracking-wider"
         >
           Laws
@@ -2882,8 +3404,8 @@ CRITICAL PROMPT DIRECTIVE:
         {type === 'precedent' && (
           <>
             <span className="text-slate-500">|</span>
-            <button 
-              onClick={() => toast.success("Viewing binding judgements transcript...")} 
+            <button
+              onClick={() => toast.success('Viewing binding judgements transcript...')}
               className="hover:text-indigo-400 transition-colors uppercase tracking-wider"
             >
               Judgments
@@ -2891,11 +3413,11 @@ CRITICAL PROMPT DIRECTIVE:
           </>
         )}
         <span className="text-slate-550 flex-1" />
-        <button 
+        <button
           onClick={() => {
             navigator.clipboard.writeText(content);
-            toast.success("Content copied to clipboard!");
-          }} 
+            toast.success('Content copied to clipboard!');
+          }}
           className="hover:text-emerald-500 transition-colors uppercase tracking-wider"
         >
           Copy
@@ -2907,24 +3429,24 @@ CRITICAL PROMPT DIRECTIVE:
   // Export report to MS Word DOC
   const handleDownloadDocx = () => {
     if (!activePrediction) return;
-    
+
     const titles = {
-      predictionReport: "Case Prediction Report",
-      litigationStrategyReport: "Litigation Strategy Report",
-      judicialForecastReport: "Judicial Forecast Report",
-      riskAssessmentReport: "Risk Assessment Report",
-      advocateBrief: "Advocate Court Brief",
-      clientReport: "Client Litigation Brief",
-      courtPrepReport: "Courtroom Preparation Checklist",
-      evidenceReport: "Evidence Admissibility and Critique",
-      settlementReport: "Mediation and Settlement Advisory",
-      strategyReport: "Litigation Timeline Strategy",
-      executiveSummary: "Executive Litigation Forecast Summary"
+      predictionReport: 'Case Prediction Report',
+      litigationStrategyReport: 'Litigation Strategy Report',
+      judicialForecastReport: 'Judicial Forecast Report',
+      riskAssessmentReport: 'Risk Assessment Report',
+      advocateBrief: 'Advocate Court Brief',
+      clientReport: 'Client Litigation Brief',
+      courtPrepReport: 'Courtroom Preparation Checklist',
+      evidenceReport: 'Evidence Admissibility and Critique',
+      settlementReport: 'Mediation and Settlement Advisory',
+      strategyReport: 'Litigation Timeline Strategy',
+      executiveSummary: 'Executive Litigation Forecast Summary',
     };
-    
-    const reportTitle = titles[selectedReportTab] || "Case Predictor Brief";
+
+    const reportTitle = titles[selectedReportTab] || 'Case Predictor Brief';
     const reportContentHTML = convertMarkdownToLegalHTML(displayReportText);
-    
+
     const htmlContent = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
@@ -2955,13 +3477,15 @@ CRITICAL PROMPT DIRECTIVE:
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success("DOCX Brief Downloaded!");
+    toast.success('DOCX Brief Downloaded!');
   };
 
   // Export report and prediction metrics to JSON
   const handleDownloadJson = () => {
     if (!activePrediction) return;
-    const blob = new Blob([JSON.stringify(activePrediction, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(activePrediction, null, 2)], {
+      type: 'application/json',
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -2970,28 +3494,28 @@ CRITICAL PROMPT DIRECTIVE:
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success("JSON Pleading Brief Downloaded!");
+    toast.success('JSON Pleading Brief Downloaded!');
   };
 
   // Print selected report
   const handlePrint = () => {
     if (!activePrediction) return;
-    
+
     const titles = {
-      predictionReport: "Case Prediction Report",
-      litigationStrategyReport: "Litigation Strategy Report",
-      judicialForecastReport: "Judicial Forecast Report",
-      riskAssessmentReport: "Risk Assessment Report",
-      advocateBrief: "Advocate Court Brief",
-      clientReport: "Client Litigation Brief",
-      courtPrepReport: "Courtroom Preparation Checklist",
-      evidenceReport: "Evidence Admissibility and Critique",
-      settlementReport: "Mediation and Settlement Advisory",
-      strategyReport: "Litigation Timeline Strategy",
-      executiveSummary: "Executive Litigation Forecast Summary"
+      predictionReport: 'Case Prediction Report',
+      litigationStrategyReport: 'Litigation Strategy Report',
+      judicialForecastReport: 'Judicial Forecast Report',
+      riskAssessmentReport: 'Risk Assessment Report',
+      advocateBrief: 'Advocate Court Brief',
+      clientReport: 'Client Litigation Brief',
+      courtPrepReport: 'Courtroom Preparation Checklist',
+      evidenceReport: 'Evidence Admissibility and Critique',
+      settlementReport: 'Mediation and Settlement Advisory',
+      strategyReport: 'Litigation Timeline Strategy',
+      executiveSummary: 'Executive Litigation Forecast Summary',
     };
-    
-    const reportTitle = titles[selectedReportTab] || "Case Predictor Brief";
+
+    const reportTitle = titles[selectedReportTab] || 'Case Predictor Brief';
     const reportContent = displayReportText;
 
     const printWindow = window.open('', '_blank');
@@ -3028,7 +3552,7 @@ CRITICAL PROMPT DIRECTIVE:
     const reportContent = displayReportText;
     if (!reportContent) return;
     navigator.clipboard.writeText(reportContent);
-    toast.success("Report brief copied to clipboard!");
+    toast.success('Report brief copied to clipboard!');
   };
 
   // Share report via native share sheet
@@ -3036,54 +3560,59 @@ CRITICAL PROMPT DIRECTIVE:
     if (!activePrediction) return;
 
     const titles = {
-      predictionReport: "Case Prediction Report",
-      litigationStrategyReport: "Litigation Strategy Report",
-      judicialForecastReport: "Judicial Forecast Report",
-      riskAssessmentReport: "Risk Assessment Report",
-      advocateBrief: "Advocate Court Brief",
-      clientReport: "Client Litigation Brief",
-      courtPrepReport: "Courtroom Preparation Checklist",
-      evidenceReport: "Evidence Admissibility and Critique",
-      settlementReport: "Mediation and Settlement Advisory",
-      strategyReport: "Litigation Timeline Strategy",
-      executiveSummary: "Executive Litigation Forecast Summary"
+      predictionReport: 'Case Prediction Report',
+      litigationStrategyReport: 'Litigation Strategy Report',
+      judicialForecastReport: 'Judicial Forecast Report',
+      riskAssessmentReport: 'Risk Assessment Report',
+      advocateBrief: 'Advocate Court Brief',
+      clientReport: 'Client Litigation Brief',
+      courtPrepReport: 'Courtroom Preparation Checklist',
+      evidenceReport: 'Evidence Admissibility and Critique',
+      settlementReport: 'Mediation and Settlement Advisory',
+      strategyReport: 'Litigation Timeline Strategy',
+      executiveSummary: 'Executive Litigation Forecast Summary',
     };
-    
-    const reportTitle = titles[selectedReportTab] || "Case Predictor Brief";
+
+    const reportTitle = titles[selectedReportTab] || 'Case Predictor Brief';
     const reportContent = displayReportText;
 
     // Test if file sharing is supported
     const dummyFile = new File([''], 'test.txt', { type: 'text/plain' });
-    const supportsFiles = navigator.share && navigator.canShare && navigator.canShare({ files: [dummyFile] });
+    const supportsFiles =
+      navigator.share && navigator.canShare && navigator.canShare({ files: [dummyFile] });
 
     if (!supportsFiles) {
-      toast.error("Your browser does not support file sharing. Please use the Download button instead.");
+      toast.error(
+        'Your browser does not support file sharing. Please use the Download button instead.'
+      );
       return;
     }
 
     try {
-      toast.loading("Preparing PDF to share...", { id: 'sharePdf' });
-      
+      toast.loading('Preparing PDF to share...', { id: 'sharePdf' });
+
       const blob = await exportToPDF({
         text: reportContent,
         title: reportTitle,
         filename: 'Shared_Brief',
         returnBlob: true,
       });
-      
-      const file = new File([blob], `${reportTitle.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' });
-      
+
+      const file = new File([blob], `${reportTitle.replace(/\s+/g, '_')}.pdf`, {
+        type: 'application/pdf',
+      });
+
       await navigator.share({
         title: reportTitle,
         text: 'Here is the case prediction brief.',
-        files: [file]
+        files: [file],
       });
-      
-      toast.success("PDF shared successfully!", { id: 'sharePdf' });
+
+      toast.success('PDF shared successfully!', { id: 'sharePdf' });
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error(err);
-        toast.error("Failed to share PDF", { id: 'sharePdf' });
+        toast.error('Failed to share PDF', { id: 'sharePdf' });
       } else {
         toast.dismiss('sharePdf');
       }
@@ -3099,12 +3628,12 @@ CRITICAL PROMPT DIRECTIVE:
       reasoning,
       legalBasis: legalBasis || 'Standard statutory sections govern this claim.',
       dataQuality: dataQuality || 'Excellent coverage, matching historical files.',
-      precedents: precedents || 'Supreme Court of India binding directives.'
+      precedents: precedents || 'Supreme Court of India binding directives.',
     });
   };
 
   // Helper: Mini SVG sparkline drawer
-  const drawMiniSparkline = (colorClass) => {
+  const drawMiniSparkline = colorClass => {
     return (
       <svg className="w-12 h-6 overflow-visible shrink-0 opacity-70" viewBox="0 0 100 30">
         <path
@@ -3119,63 +3648,93 @@ CRITICAL PROMPT DIRECTIVE:
   };
 
   return (
-    <div className={`flex-1 flex flex-col w-full h-full min-h-0 overflow-hidden transition-colors duration-300 ${
-      isDark ? 'bg-[#0B1020] text-slate-100' : 'bg-slate-50 text-slate-800'
-    }`}>
-      
+    <div
+      className={`flex-1 flex flex-col w-full h-full min-h-0 overflow-hidden transition-colors duration-300 ${
+        isDark ? 'bg-[#0B1020] text-slate-100' : 'bg-slate-50 text-slate-800'
+      }`}
+    >
       {/* SECTION 1: Enterprise Hero Display Header */}
-      <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 gap-3 backdrop-blur-xl ${
-        isDark ? 'border-white/5 bg-[#0B1020]/90' : 'border-slate-200 bg-white/90'
-      }`}>
+      <div
+        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0 gap-3 backdrop-blur-xl ${
+          isDark ? 'border-white/5 bg-[#0B1020]/90' : 'border-slate-200 bg-white/90'
+        }`}
+      >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <button onClick={handleBackNavigation} className={`p-2 rounded-full transition-colors shrink-0 ${
-            isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
-          }`} aria-label="Back to Tools">
+          <button
+            onClick={handleBackNavigation}
+            className={`p-2 rounded-full transition-colors shrink-0 ${
+              isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
+            }`}
+            aria-label="Back to Tools"
+          >
             <ChevronLeft size={20} />
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className={`text-sm sm:text-base font-black uppercase tracking-tight ${
-                isDark ? 'text-white' : 'text-slate-900'
-              }`}>{t('casePredictorTitle') || "Case Predictor"}</h1>
-              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                isDark ? 'bg-indigo-950/50 text-indigo-400 border border-indigo-900/30' : 'bg-indigo-550/10 text-indigo-700'
-              }`}>
+              <h1
+                className={`text-sm sm:text-base font-black uppercase tracking-tight ${
+                  isDark ? 'text-white' : 'text-slate-900'
+                }`}
+              >
+                {t('casePredictorTitle') || 'Case Predictor'}
+              </h1>
+              <span
+                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                  isDark
+                    ? 'bg-indigo-950/50 text-indigo-400 border border-indigo-900/30'
+                    : 'bg-indigo-550/10 text-indigo-700'
+                }`}
+              >
                 AI Legal
               </span>
             </div>
-            <p className={`text-[9px] font-semibold mt-0.5 hidden sm:block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              {t('casePredictorSubtitle') || "AI-powered litigation outcome prediction and legal risk assessment."}
+            <p
+              className={`text-[9px] font-semibold mt-0.5 hidden sm:block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+            >
+              {t('casePredictorSubtitle') ||
+                'AI-powered litigation outcome prediction and legal risk assessment.'}
             </p>
             <div className="hidden sm:flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[9px] font-bold text-slate-400/80">
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {t('aiAnalysisReady') || "AI Analysis Ready"}
+                {t('aiAnalysisReady') || 'AI Analysis Ready'}
               </span>
               <span>•</span>
-              <span>{t('courtDatabaseConnected') || "Court Database Connected"}</span>
+              <span>{t('courtDatabaseConnected') || 'Court Database Connected'}</span>
               <span>•</span>
-              <span className="text-indigo-400">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span className="text-indigo-400">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-          <LanguageToggle lang={toolkitLanguage === 'Hindi' ? 'hi' : 'en'} onChange={(l) => setToolkitLanguage(l === 'hi' ? 'Hindi' : 'English')} />
+          <LanguageToggle
+            lang={toolkitLanguage === 'Hindi' ? 'hi' : 'en'}
+            onChange={l => setToolkitLanguage(l === 'hi' ? 'Hindi' : 'English')}
+          />
           {currentCase && (
-            <button 
+            <button
               onClick={handlePrefillFromActiveCase}
               className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all min-h-[40px] ${
-                isDark 
-                  ? 'bg-emerald-950/20 border-emerald-800/30 text-emerald-400 hover:bg-emerald-950/40' 
+                isDark
+                  ? 'bg-emerald-950/20 border-emerald-800/30 text-emerald-400 hover:bg-emerald-950/40'
                   : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
               }`}
             >
               <RefreshCw size={12} className="animate-spin-slow shrink-0" />
-              <span className="truncate max-w-[120px] sm:max-w-none">{t('syncWith') || "Sync with"} {currentCase.name}</span>
+              <span className="truncate max-w-[120px] sm:max-w-none">
+                {t('syncWith') || 'Sync with'} {currentCase.name}
+              </span>
             </button>
           )}
-          <button 
+          <button
             onClick={() => {
               if (currentCase?._id) {
                 loadPredictionHistory();
@@ -3190,39 +3749,50 @@ CRITICAL PROMPT DIRECTIVE:
                 }
               }
               setHistoryVisible(true);
-            }} 
+            }}
             className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all min-h-[40px] shrink-0 ${
-              isDark 
-                ? 'bg-indigo-950/20 border-indigo-900/30 text-indigo-400 hover:bg-indigo-950/40' 
+              isDark
+                ? 'bg-indigo-950/20 border-indigo-900/30 text-indigo-400 hover:bg-indigo-950/40'
                 : 'bg-indigo-50 border-indigo-200 text-indigo-650 hover:bg-indigo-100'
             }`}
           >
             <History size={14} />
-            <span>{t('history') || "History"} ({historyData.length})</span>
+            <span>
+              {t('history') || 'History'} ({historyData.length})
+            </span>
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 custom-scrollbar select-text">
         <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-          
           {/* Active Case Prefill Banner */}
           {prefillBanner && (
-            <div className={`flex items-center gap-3 px-4 py-3 border rounded-2xl shadow-sm ${
-              isDark 
-                ? 'bg-gradient-to-r from-emerald-950/20 to-teal-950/10 border-emerald-900/30 text-emerald-400' 
-                : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-emerald-750'
-            }`}>
+            <div
+              className={`flex items-center gap-3 px-4 py-3 border rounded-2xl shadow-sm ${
+                isDark
+                  ? 'bg-gradient-to-r from-emerald-950/20 to-teal-950/10 border-emerald-900/30 text-emerald-400'
+                  : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-emerald-750'
+              }`}
+            >
               <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={15} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-wider">Active Case Synced: {prefillBanner.caseTitle}</p>
-                <p className={`text-[10px] font-semibold mt-0.5 ${isDark ? 'text-emerald-500/60' : 'text-emerald-600/70'}`}>
-                  Facts and provision parameters loaded dynamically. Verify details below to run litigation forecasting.
+                <p className="text-[10px] font-black uppercase tracking-wider">
+                  Active Case Synced: {prefillBanner.caseTitle}
+                </p>
+                <p
+                  className={`text-[10px] font-semibold mt-0.5 ${isDark ? 'text-emerald-500/60' : 'text-emerald-600/70'}`}
+                >
+                  Facts and provision parameters loaded dynamically. Verify details below to run
+                  litigation forecasting.
                 </p>
               </div>
-              <button onClick={() => setPrefillBanner(null)} className={`p-1 rounded-full ${isDark ? 'hover:bg-emerald-900/30 text-emerald-400' : 'hover:bg-emerald-100 text-emerald-600'}`}>
+              <button
+                onClick={() => setPrefillBanner(null)}
+                className={`p-1 rounded-full ${isDark ? 'hover:bg-emerald-900/30 text-emerald-400' : 'hover:bg-emerald-100 text-emerald-600'}`}
+              >
                 <X size={13} />
               </button>
             </div>
@@ -3230,63 +3800,90 @@ CRITICAL PROMPT DIRECTIVE:
 
           {!displayPrediction && !isGenerating ? (
             <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto py-4 sm:py-8">
-              
               {/* Wizard Steps indicator */}
               <div className="max-w-4xl mx-auto mb-6 sm:mb-10 px-2">
                 <div className="flex items-center justify-center gap-x-6 sm:gap-x-16 gap-y-4 w-full flex-wrap">
-                  
                   {/* Step 1 */}
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                      activePrediction 
-                        ? 'bg-emerald-500 text-white shadow-sm' 
-                        : (!activePrediction && !isGenerating 
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/15' 
-                          : (isDark ? 'bg-zinc-800 text-slate-400 border border-zinc-700' : 'bg-slate-100 text-slate-500 border border-slate-200'))
-                    }`}>
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                        activePrediction
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : !activePrediction && !isGenerating
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/15'
+                            : isDark
+                              ? 'bg-zinc-800 text-slate-400 border border-zinc-700'
+                              : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}
+                    >
                       {activePrediction ? <Check size={14} className="stroke-[3]" /> : '1'}
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      !activePrediction && !isGenerating
-                        ? (isDark ? 'text-indigo-400 font-extrabold' : 'text-indigo-650 font-extrabold')
-                        : 'text-slate-400 dark:text-slate-500'
-                    }`}>{t('chooseSource') || "Choose Source"}</span>
+                    <span
+                      className={`text-[10px] font-black uppercase tracking-widest ${
+                        !activePrediction && !isGenerating
+                          ? isDark
+                            ? 'text-indigo-400 font-extrabold'
+                            : 'text-indigo-650 font-extrabold'
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}
+                    >
+                      {t('chooseSource') || 'Choose Source'}
+                    </span>
                   </div>
 
                   {/* Step 2 */}
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                      isGenerating 
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/15' 
-                        : (activePrediction 
-                          ? 'bg-emerald-500 text-white shadow-sm' 
-                          : (isDark ? 'bg-zinc-800 text-slate-400 border border-zinc-700' : 'bg-slate-100 text-slate-500 border border-slate-200'))
-                    }`}>
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                        isGenerating
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/15'
+                          : activePrediction
+                            ? 'bg-emerald-500 text-white shadow-sm'
+                            : isDark
+                              ? 'bg-zinc-800 text-slate-400 border border-zinc-700'
+                              : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}
+                    >
                       {activePrediction ? <Check size={14} className="stroke-[3]" /> : '2'}
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      isGenerating
-                        ? (isDark ? 'text-indigo-400 font-extrabold' : 'text-indigo-650 font-extrabold')
-                        : 'text-slate-400 dark:text-slate-500'
-                    }`}>{t('aiAnalysis') || "AI Analysis"}</span>
+                    <span
+                      className={`text-[10px] font-black uppercase tracking-widest ${
+                        isGenerating
+                          ? isDark
+                            ? 'text-indigo-400 font-extrabold'
+                            : 'text-indigo-650 font-extrabold'
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}
+                    >
+                      {t('aiAnalysis') || 'AI Analysis'}
+                    </span>
                   </div>
 
                   {/* Step 3 */}
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                      activePrediction && !isGenerating 
-                        ? 'bg-indigo-650 text-white shadow-md shadow-indigo-600/15' 
-                        : (isDark ? 'bg-zinc-800 text-slate-400 border border-zinc-700' : 'bg-slate-100 text-slate-500 border border-slate-200')
-                    }`}>
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                        activePrediction && !isGenerating
+                          ? 'bg-indigo-650 text-white shadow-md shadow-indigo-600/15'
+                          : isDark
+                            ? 'bg-zinc-800 text-slate-400 border border-zinc-700'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}
+                    >
                       3
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      activePrediction && !isGenerating
-                        ? (isDark ? 'text-indigo-400 font-extrabold' : 'text-indigo-650 font-extrabold')
-                        : 'text-slate-400 dark:text-slate-500'
-                    }`}>{t('forecastDashboard') || "Forecast Dashboard"}</span>
+                    <span
+                      className={`text-[10px] font-black uppercase tracking-widest ${
+                        activePrediction && !isGenerating
+                          ? isDark
+                            ? 'text-indigo-400 font-extrabold'
+                            : 'text-indigo-650 font-extrabold'
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}
+                    >
+                      {t('forecastDashboard') || 'Forecast Dashboard'}
+                    </span>
                   </div>
-
                 </div>
               </div>
 
@@ -3294,50 +3891,61 @@ CRITICAL PROMPT DIRECTIVE:
               {inputWorkflowMode === null ? (
                 <div className="space-y-4 sm:space-y-6">
                   <div className="text-center max-w-xl mx-auto mb-2 sm:mb-4">
-                    <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">{t('selectForecastInputSource') || "Select Forecast Input Source"}</h2>
-                    <p className="text-[10px] text-slate-450 mt-1 font-semibold">{t('selectForecastInputSourceDesc') || "Verify the source of legal directives to configure the litigation predictive engine."}</p>
+                    <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                      {t('selectForecastInputSource') || 'Select Forecast Input Source'}
+                    </h2>
+                    <p className="text-[10px] text-slate-450 mt-1 font-semibold">
+                      {t('selectForecastInputSourceDesc') ||
+                        'Verify the source of legal directives to configure the litigation predictive engine.'}
+                    </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                     {[
                       {
                         id: 'existing',
                         title: t('existingCaseWorkspaceTitle') || 'EXISTING CASE WORKSPACE',
-                        desc: t('existingCaseWorkspaceDesc') || 'Predict litigation outcome using an existing case already stored in My Cases.',
+                        desc:
+                          t('existingCaseWorkspaceDesc') ||
+                          'Predict litigation outcome using an existing case already stored in My Cases.',
                         features: [
                           t('featAutoLoadParties') || 'Auto-load parties',
                           t('featAutoLoadFacts') || 'Auto-load facts',
                           t('featAutoLoadEvidence') || 'Auto-load evidence',
                           t('featAutoLoadTimeline') || 'Auto-load timeline',
                           t('featAutoLoadPleadings') || 'Auto-load pleadings',
-                          t('featAutoLoadAIAnalysis') || 'Auto-load previous AI analysis'
+                          t('featAutoLoadAIAnalysis') || 'Auto-load previous AI analysis',
                         ],
-                        icon: <Briefcase size={22} className="text-indigo-400" />
+                        icon: <Briefcase size={22} className="text-indigo-400" />,
                       },
                       {
                         id: 'upload',
                         title: t('uploadLegalDocumentsTitle') || 'UPLOAD LEGAL DOCUMENTS',
-                        desc: t('uploadLegalDocumentsDescShort') || 'Upload petition, written statement, FIR, evidence, contracts or supporting documents.',
+                        desc:
+                          t('uploadLegalDocumentsDescShort') ||
+                          'Upload petition, written statement, FIR, evidence, contracts or supporting documents.',
                         features: [
                           t('featSupportFormats') || 'Support PDF, DOCX, Images, ZIP',
                           t('featOcrExtraction') || 'OCR timeline extraction',
                           t('featEvidenceExtraction') || 'Evidence extraction',
-                          t('featAutoFactExtraction') || 'Auto fact extraction'
+                          t('featAutoFactExtraction') || 'Auto fact extraction',
                         ],
-                        icon: <Upload size={22} className="text-sky-400" />
+                        icon: <Upload size={22} className="text-sky-400" />,
                       },
                       {
                         id: 'manual',
                         title: t('manualCaseFactsTitle') || 'MANUAL CASE FACTS',
-                        desc: t('manualCaseFactsDesc') || 'Create a prediction manually by entering facts.',
+                        desc:
+                          t('manualCaseFactsDesc') ||
+                          'Create a prediction manually by entering facts.',
                         features: [
                           t('featCaseTitleParties') || 'Case Title & Parties details',
                           t('featCourtCategory') || 'Court & Case Category selection',
                           t('featClaimsDefence') || 'Claims & Defence outlines',
-                          t('featEvidenceRelief') || 'Evidence & Relief requested summaries'
+                          t('featEvidenceRelief') || 'Evidence & Relief requested summaries',
                         ],
-                        icon: <Edit3 size={22} className="text-emerald-400" />
-                      }
+                        icon: <Edit3 size={22} className="text-emerald-400" />,
+                      },
                     ].map(opt => (
                       <div
                         key={opt.id}
@@ -3350,25 +3958,29 @@ CRITICAL PROMPT DIRECTIVE:
                           }
                         }}
                         className={`p-5 sm:p-6 border rounded-[24px] sm:rounded-[28px] cursor-pointer transition-all duration-300 flex flex-col justify-between hover:translate-y-[-4px] hover:shadow-xl ${
-                          isDark 
-                            ? 'bg-zinc-900/60 border-zinc-800 hover:border-indigo-500/50 hover:bg-zinc-900' 
+                          isDark
+                            ? 'bg-zinc-900/60 border-zinc-800 hover:border-indigo-500/50 hover:bg-zinc-900'
                             : 'bg-white border-slate-205 hover:border-indigo-400/50 hover:shadow-indigo-500/5'
                         }`}
                       >
                         <div>
                           <div className="mb-4 flex items-center justify-between">
-                            <div className="p-3 bg-indigo-500/10 rounded-2xl">
-                              {opt.icon}
-                            </div>
+                            <div className="p-3 bg-indigo-500/10 rounded-2xl">{opt.icon}</div>
                           </div>
-                          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white text-left">{opt.title}</h3>
-                          <p className="text-[10px] text-slate-400 font-bold mt-2 leading-relaxed text-left">{opt.desc}</p>
-                          
+                          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white text-left">
+                            {opt.title}
+                          </h3>
+                          <p className="text-[10px] text-slate-400 font-bold mt-2 leading-relaxed text-left">
+                            {opt.desc}
+                          </p>
+
                           <div className="mt-4 border-t border-slate-200/50 dark:border-white/5 pt-4 space-y-2 text-left">
                             {opt.features.map(f => (
                               <div key={f} className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">{f}</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                                  {f}
+                                </span>
                               </div>
                             ))}
                           </div>
@@ -3379,62 +3991,93 @@ CRITICAL PROMPT DIRECTIVE:
                 </div>
               ) : (
                 /* Step 1.2: Source Configuration Sub-workflow panels */
-                <div className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 border shadow-sm ${
-                  isDark ? 'bg-[#1A2540] border-white/5' : 'bg-white border-slate-200'
-                }`}>
-                  
+                <div
+                  className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 border shadow-sm ${
+                    isDark ? 'bg-[#1A2540] border-white/5' : 'bg-white border-slate-200'
+                  }`}
+                >
                   {/* OPTION 1: EXISTING CASE WORKSPACE PANEL */}
                   {inputWorkflowMode === 'existing' && (
                     <div className="space-y-6 text-left">
                       <div className="flex items-center justify-between border-b pb-3 border-slate-205/50 dark:border-white/5">
                         <div className="flex items-center gap-2">
                           <Briefcase size={16} className="text-indigo-400" />
-                          <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400">{t('existingCaseWorkspace') || "Source: Existing Case Workspace"}</h4>
+                          <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400">
+                            {t('existingCaseWorkspace') || 'Source: Existing Case Workspace'}
+                          </h4>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedCaseId('');
                             setIsCaseLoaded(false);
                             setInputWorkflowMode(null);
-                          }} 
+                          }}
                           className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 border rounded-xl transition-all ${
-                            isDark ? 'border-zinc-700 text-slate-350 hover:bg-zinc-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                            isDark
+                              ? 'border-zinc-700 text-slate-350 hover:bg-zinc-800'
+                              : 'border-slate-200 text-slate-600 hover:bg-slate-100'
                           }`}
                         >
-                          {t('changeSource') || "Change Source"}
+                          {t('changeSource') || 'Change Source'}
                         </button>
                       </div>
 
                       <div className="space-y-4">
                         <div className="relative space-y-2">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{t('selectCaseWorkspace') || "Select Case Workspace"}</label>
-                          <div 
+                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">
+                            {t('selectCaseWorkspace') || 'Select Case Workspace'}
+                          </label>
+                          <div
                             onClick={() => setIsCaseDropdownOpen(!isCaseDropdownOpen)}
                             className={`w-full border rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center justify-between cursor-pointer transition-all duration-200 hover:border-indigo-400 dark:hover:border-indigo-500 ${
-                              isCaseDropdownOpen 
-                                ? 'border-indigo-500 shadow-md ring-2 ring-indigo-500/10' 
-                                : (isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800')
+                              isCaseDropdownOpen
+                                ? 'border-indigo-500 shadow-md ring-2 ring-indigo-500/10'
+                                : isDark
+                                  ? 'bg-black/25 border-zinc-800 text-white'
+                                  : 'bg-slate-50 border-slate-200 text-slate-800'
                             }`}
                             style={{ minHeight: '52px' }}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <Search size={14} className={selectedCaseId ? "text-indigo-500 shrink-0" : "text-slate-450 shrink-0"} />
-                              <span className={`truncate ${selectedCaseId ? 'text-indigo-500 font-extrabold' : 'text-slate-400 font-semibold'}`}>
-                                {selectedCaseId ? (allProjects.find(p => p._id === selectedCaseId)?.name || 'Case Selected') : (t('searchExistingCases') || 'Search or Select Case Workspace...')}
+                              <Search
+                                size={14}
+                                className={
+                                  selectedCaseId
+                                    ? 'text-indigo-500 shrink-0'
+                                    : 'text-slate-450 shrink-0'
+                                }
+                              />
+                              <span
+                                className={`truncate ${selectedCaseId ? 'text-indigo-500 font-extrabold' : 'text-slate-400 font-semibold'}`}
+                              >
+                                {selectedCaseId
+                                  ? allProjects.find(p => p._id === selectedCaseId)?.name ||
+                                    'Case Selected'
+                                  : t('searchExistingCases') ||
+                                    'Search or Select Case Workspace...'}
                               </span>
                             </div>
-                            <ChevronDown size={14} className={`text-slate-455 transition-transform duration-200 shrink-0 ${isCaseDropdownOpen ? 'rotate-180 text-indigo-500' : ''}`} />
+                            <ChevronDown
+                              size={14}
+                              className={`text-slate-455 transition-transform duration-200 shrink-0 ${isCaseDropdownOpen ? 'rotate-180 text-indigo-500' : ''}`}
+                            />
                           </div>
 
                           {isCaseDropdownOpen && (
-                            <div className={`absolute left-0 right-0 mt-2 border rounded-2xl shadow-2xl z-30 overflow-hidden ${
-                              isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                            }`}>
-                              <div className={`p-2.5 border-b flex items-center gap-2 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-100 bg-slate-50'}`}>
+                            <div
+                              className={`absolute left-0 right-0 mt-2 border rounded-2xl shadow-2xl z-30 overflow-hidden ${
+                                isDark
+                                  ? 'bg-zinc-950 border-zinc-800 text-white'
+                                  : 'bg-white border-slate-200 text-slate-900'
+                              }`}
+                            >
+                              <div
+                                className={`p-2.5 border-b flex items-center gap-2 ${isDark ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-100 bg-slate-50'}`}
+                              >
                                 <Search size={12} className="text-slate-450 shrink-0" />
-                                <input 
+                                <input
                                   type="text"
-                                  placeholder={t('searchExistingCases') || "Search workspace..."}
+                                  placeholder={t('searchExistingCases') || 'Search workspace...'}
                                   value={caseSearchQuery}
                                   onChange={e => setCaseSearchQuery(e.target.value)}
                                   onClick={e => e.stopPropagation()}
@@ -3442,88 +4085,134 @@ CRITICAL PROMPT DIRECTIVE:
                                 />
                               </div>
                               <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                                {allProjects.filter(p => !caseSearchQuery || p.name?.toLowerCase().includes(caseSearchQuery.toLowerCase())).map(p => {
-                                  const selected = selectedCaseId === p._id;
-                                  return (
-                                    <div
-                                      key={p._id}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedCaseId(p._id);
-                                        setIsCaseLoaded(true);
-                                        setIsCaseDropdownOpen(false);
-                                        const data = buildFormDataFromCase(p);
-                                        setFacts(data.facts);
-                                        setCourtName(data.courtName);
-                                        setOpponentDetails(data.opponentDetails);
-                                        setCaseType(data.caseType);
-                                        setEvidenceList(data.evidenceList);
-                                        setWitnessDetails(data.witnessDetails);
-                                        setIpcSections(data.ipcSections);
-                                      }}
-                                      className={`px-4 py-3 text-xs font-semibold cursor-pointer transition-colors text-left flex items-center justify-between ${
-                                        selected 
-                                          ? 'bg-indigo-500/10 text-indigo-450 font-extrabold' 
-                                          : (isDark ? 'hover:bg-zinc-900 text-slate-300' : 'hover:bg-slate-50 text-slate-700')
-                                      }`}
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-black text-slate-700 dark:text-slate-200">{p.name}</p>
-                                        <p className="text-[10px] text-slate-400/80 truncate mt-0.5">{p.courtName || 'No Court Specified'} • {p.caseType || 'General'}</p>
+                                {allProjects
+                                  .filter(
+                                    p =>
+                                      !caseSearchQuery ||
+                                      p.name?.toLowerCase().includes(caseSearchQuery.toLowerCase())
+                                  )
+                                  .map(p => {
+                                    const selected = selectedCaseId === p._id;
+                                    return (
+                                      <div
+                                        key={p._id}
+                                        onClick={e => {
+                                          e.stopPropagation();
+                                          setSelectedCaseId(p._id);
+                                          setIsCaseLoaded(true);
+                                          setIsCaseDropdownOpen(false);
+                                          const data = buildFormDataFromCase(p);
+                                          setFacts(data.facts);
+                                          setCourtName(data.courtName);
+                                          setOpponentDetails(data.opponentDetails);
+                                          setCaseType(data.caseType);
+                                          setEvidenceList(data.evidenceList);
+                                          setWitnessDetails(data.witnessDetails);
+                                          setIpcSections(data.ipcSections);
+                                        }}
+                                        className={`px-4 py-3 text-xs font-semibold cursor-pointer transition-colors text-left flex items-center justify-between ${
+                                          selected
+                                            ? 'bg-indigo-500/10 text-indigo-450 font-extrabold'
+                                            : isDark
+                                              ? 'hover:bg-zinc-900 text-slate-300'
+                                              : 'hover:bg-slate-50 text-slate-700'
+                                        }`}
+                                      >
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate text-xs font-black text-slate-700 dark:text-slate-200">
+                                            {p.name}
+                                          </p>
+                                          <p className="text-[10px] text-slate-400/80 truncate mt-0.5">
+                                            {p.courtName || 'No Court Specified'} •{' '}
+                                            {p.caseType || 'General'}
+                                          </p>
+                                        </div>
+                                        {selected && (
+                                          <Check
+                                            size={12}
+                                            className="text-indigo-400 shrink-0 ml-2"
+                                          />
+                                        )}
                                       </div>
-                                      {selected && <Check size={12} className="text-indigo-400 shrink-0 ml-2" />}
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
                               </div>
                             </div>
                           )}
                         </div>
 
                         {/* Searchable details panel */}
-                        {isCaseLoaded && selectedCaseId && (
+                        {isCaseLoaded &&
+                          selectedCaseId &&
                           (() => {
                             const p = allProjects.find(item => item._id === selectedCaseId);
                             if (!p) return null;
                             return (
-                              <div className={`p-5 border rounded-2xl space-y-3 ${isDark ? 'bg-zinc-900/40 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                              <div
+                                className={`p-5 border rounded-2xl space-y-3 ${isDark ? 'bg-zinc-900/40 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}
+                              >
                                 <div className="flex items-center justify-between border-b pb-2.5 border-slate-205/50 dark:border-white/5">
-                                  <h5 className="text-xs font-black uppercase text-indigo-400">⋄ {t('loadedCaseWorkspaceParams') || "Loaded Case Workspace Parameters"}</h5>
+                                  <h5 className="text-xs font-black uppercase text-indigo-400">
+                                    ⋄{' '}
+                                    {t('loadedCaseWorkspaceParams') ||
+                                      'Loaded Case Workspace Parameters'}
+                                  </h5>
                                   <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-wider animate-pulse">
-                                    ✓ {t('ready') || "Prediction Ready"}
+                                    ✓ {t('ready') || 'Prediction Ready'}
                                   </span>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4">
                                   <div className="space-y-0.5">
-                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('caseName') || "Case Name"}</span>
-                                    <span className="text-xs font-extrabold text-slate-750 dark:text-slate-200 block truncate">{p.name || 'Untitled Case'}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                                      {t('caseName') || 'Case Name'}
+                                    </span>
+                                    <span className="text-xs font-extrabold text-slate-750 dark:text-slate-200 block truncate">
+                                      {p.name || 'Untitled Case'}
+                                    </span>
                                   </div>
                                   <div className="space-y-0.5">
-                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('caseType') || "Case Type"}</span>
-                                    <span className="text-xs font-extrabold text-indigo-400 block">{p.caseType || 'Civil'}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                                      {t('caseType') || 'Case Type'}
+                                    </span>
+                                    <span className="text-xs font-extrabold text-indigo-400 block">
+                                      {p.caseType || 'Civil'}
+                                    </span>
                                   </div>
                                   <div className="space-y-0.5">
-                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('courtLabel') || "Court"}</span>
-                                    <span className="text-xs font-extrabold text-slate-750 dark:text-slate-200 block truncate">{p.courtName || 'Supreme Court of India'}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                                      {t('courtLabel') || 'Court'}
+                                    </span>
+                                    <span className="text-xs font-extrabold text-slate-750 dark:text-slate-200 block truncate">
+                                      {p.courtName || 'Supreme Court of India'}
+                                    </span>
                                   </div>
                                   <div className="space-y-0.5">
-                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('status') || "Status"}</span>
-                                    <span className="text-xs font-extrabold text-emerald-500 block uppercase tracking-wider">{p.status || 'Active'}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                                      {t('status') || 'Status'}
+                                    </span>
+                                    <span className="text-xs font-extrabold text-emerald-500 block uppercase tracking-wider">
+                                      {p.status || 'Active'}
+                                    </span>
                                   </div>
                                   <div className="space-y-0.5">
-                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('lastUpdated') || "Last Updated"}</span>
-                                    <span className="text-xs font-extrabold text-slate-750 dark:text-slate-200 block truncate">{p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : 'Today'}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                                      {t('lastUpdated') || 'Last Updated'}
+                                    </span>
+                                    <span className="text-xs font-extrabold text-slate-750 dark:text-slate-200 block truncate">
+                                      {p.updatedAt
+                                        ? new Date(p.updatedAt).toLocaleDateString()
+                                        : 'Today'}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
                             );
-                          })()
-                        )}
+                          })()}
                         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
                           <UniversalMultimodalInput
                             caseId={selectedCaseId || 'global'}
                             workspaceName="CasePredictor"
-                            onContextChange={(ctx) => setMultimodalContext(ctx)}
+                            onContextChange={ctx => setMultimodalContext(ctx)}
                             theme={isDark ? 'dark' : 'light'}
                             layout="case"
                           />
@@ -3538,28 +4227,37 @@ CRITICAL PROMPT DIRECTIVE:
                       <div className="flex items-center justify-between border-b pb-3 border-slate-205/50 dark:border-white/5">
                         <div className="flex items-center gap-2">
                           <Upload size={16} className="text-indigo-400" />
-                          <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400">{t('uploadLegalDocuments') || "Source: Upload Legal Documents"}</h4>
+                          <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400">
+                            {t('uploadLegalDocuments') || 'Source: Upload Legal Documents'}
+                          </h4>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setUploadedFiles([]);
                             setInputWorkflowMode(null);
-                          }} 
+                          }}
                           className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 border rounded-xl transition-all ${
-                            isDark ? 'border-zinc-700 text-slate-350 hover:bg-zinc-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                            isDark
+                              ? 'border-zinc-700 text-slate-350 hover:bg-zinc-800'
+                              : 'border-slate-200 text-slate-600 hover:bg-slate-100'
                           }`}
                         >
-                          {t('changeSource') || "Change Source"}
+                          {t('changeSource') || 'Change Source'}
                         </button>
                       </div>
 
                       <div className="space-y-4">
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('uploadLegalPleadingDocs') || "Upload Documents & Multimodal Context"}</label>
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('uploadLegalPleadingDocs') ||
+                              'Upload Documents & Multimodal Context'}
+                          </label>
                           <UniversalMultimodalInput
                             caseId={selectedCaseId || 'global'}
                             workspaceName="CasePredictor"
-                            onContextChange={(ctx) => setMultimodalContext(ctx)}
+                            onContextChange={ctx => setMultimodalContext(ctx)}
                             theme={isDark ? 'dark' : 'light'}
                             layout="upload"
                           />
@@ -3569,28 +4267,45 @@ CRITICAL PROMPT DIRECTIVE:
                         {isOcrProcessing && (
                           <div className="p-4 bg-indigo-550/5 rounded-2xl border border-indigo-500/10 flex items-center gap-3">
                             <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
-                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400">{t('ocrAnalysisProcessing') || "Running AI OCR Document pipeline (Extracting Parties, Timeline, Facts)..."}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
+                              {t('ocrAnalysisProcessing') ||
+                                'Running AI OCR Document pipeline (Extracting Parties, Timeline, Facts)...'}
+                            </span>
                           </div>
                         )}
 
                         {/* Uploaded Files grid */}
                         {uploadedFiles.length > 0 && (
                           <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{t('uploadedDocuments') || "Uploaded Documents"} ({uploadedFiles.length})</label>
+                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">
+                              {t('uploadedDocuments') || 'Uploaded Documents'} (
+                              {uploadedFiles.length})
+                            </label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {uploadedFiles.map((file, idx) => (
-                                <div key={idx} className={`p-3 border rounded-xl flex items-center justify-between gap-3 ${
-                                  isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-slate-200'
-                                }`}>
+                                <div
+                                  key={idx}
+                                  className={`p-3 border rounded-xl flex items-center justify-between gap-3 ${
+                                    isDark
+                                      ? 'bg-zinc-900 border-zinc-800'
+                                      : 'bg-white border-slate-200'
+                                  }`}
+                                >
                                   <div className="min-w-0 flex-1 flex items-center gap-2">
                                     <FileText size={14} className="text-sky-400 shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-[10px] font-black truncate text-slate-700 dark:text-slate-200 block">{file.name}</p>
-                                      <p className="text-[8px] text-slate-400 font-bold mt-0.5">{file.size} • {file.type}</p>
+                                      <p className="text-[10px] font-black truncate text-slate-700 dark:text-slate-200 block">
+                                        {file.name}
+                                      </p>
+                                      <p className="text-[8px] text-slate-400 font-bold mt-0.5">
+                                        {file.size} • {file.type}
+                                      </p>
                                     </div>
                                   </div>
-                                  <button 
-                                    onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== idx))} 
+                                  <button
+                                    onClick={() =>
+                                      setUploadedFiles(prev => prev.filter((_, i) => i !== idx))
+                                    }
                                     className="text-red-505 p-1"
                                   >
                                     <X size={12} />
@@ -3603,12 +4318,22 @@ CRITICAL PROMPT DIRECTIVE:
 
                         {/* OCR extraction results preview */}
                         {ocrGeneratedSummary && (
-                          <div className={`p-4 border rounded-2xl space-y-2 ${isDark ? 'bg-zinc-900/40 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
+                          <div
+                            className={`p-4 border rounded-2xl space-y-2 ${isDark ? 'bg-zinc-900/40 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}
+                          >
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-black uppercase text-indigo-400">⋄ {t('autoExtractedContentProfile') || "Auto Extracted Content Profile"}</span>
-                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">✓ {t('extracted') || "Extracted"}</span>
+                              <span className="text-[9px] font-black uppercase text-indigo-400">
+                                ⋄{' '}
+                                {t('autoExtractedContentProfile') ||
+                                  'Auto Extracted Content Profile'}
+                              </span>
+                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                                ✓ {t('extracted') || 'Extracted'}
+                              </span>
                             </div>
-                            <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 font-semibold">{ocrGeneratedSummary}</p>
+                            <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 font-semibold">
+                              {ocrGeneratedSummary}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -3621,23 +4346,29 @@ CRITICAL PROMPT DIRECTIVE:
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 border-slate-205/50 dark:border-white/5 gap-2">
                         <div className="flex items-center gap-2">
                           <Edit3 size={16} className="text-indigo-400 shrink-0" />
-                          <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400">{t('manualCaseFacts') || "Source: Manual Case Facts Builder"}</h4>
+                          <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400">
+                            {t('manualCaseFacts') || 'Source: Manual Case Facts Builder'}
+                          </h4>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setInputWorkflowMode(null);
-                          }} 
+                          }}
                           className={`text-[9px] font-black uppercase tracking-wider px-3 py-1.5 border rounded-xl transition-all self-start sm:self-auto ${
-                            isDark ? 'border-zinc-700 text-slate-350 hover:bg-zinc-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                            isDark
+                              ? 'border-zinc-700 text-slate-350 hover:bg-zinc-800'
+                              : 'border-slate-200 text-slate-600 hover:bg-slate-100'
                           }`}
                         >
-                          {t('changeSource') || "Change Source"}
+                          {t('changeSource') || 'Change Source'}
                         </button>
                       </div>
 
                       {/* Manual Quick Fill Preset Banner inside panel */}
                       <div className="p-4 border rounded-2xl bg-indigo-500/5 dark:bg-zinc-900/40 border-indigo-500/10">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-indigo-400 block mb-2">⋄ {t('prefillManualTemplates') || "Pre-fill Manual Case Templates"}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-indigo-400 block mb-2">
+                          ⋄ {t('prefillManualTemplates') || 'Pre-fill Manual Case Templates'}
+                        </span>
                         <div className="flex flex-wrap gap-2">
                           {QUICK_PRESETS.map(preset => (
                             <button
@@ -3651,12 +4382,22 @@ CRITICAL PROMPT DIRECTIVE:
                                   setManualCourt('District Sessions Court');
                                   setManualType('Criminal');
                                   setManualSections('IPC Section 420, 120B');
-                                  setManualChronology('2025-05-10: Arrest, 2025-05-15: Co-accused granted bail');
-                                  setManualFacts('Anticipatory bail request under IPC Cyber Fraud provisions. Client alleges arbitrary framing and demonstrates full willingness to cooperate with the local investigative team.');
-                                  setManualExpectedDefence('State asserts risk of absconding and tampering with database records.');
-                                  setManualEvidenceDocs('Cooperative affidavits, bank records statement audits');
+                                  setManualChronology(
+                                    '2025-05-10: Arrest, 2025-05-15: Co-accused granted bail'
+                                  );
+                                  setManualFacts(
+                                    'Anticipatory bail request under IPC Cyber Fraud provisions. Client alleges arbitrary framing and demonstrates full willingness to cooperate with the local investigative team.'
+                                  );
+                                  setManualExpectedDefence(
+                                    'State asserts risk of absconding and tampering with database records.'
+                                  );
+                                  setManualEvidenceDocs(
+                                    'Cooperative affidavits, bank records statement audits'
+                                  );
                                   setManualReliefSought('Release on anticipatory bail');
-                                  setFacts('Anticipatory bail request under IPC Cyber Fraud provisions. Client alleges arbitrary framing.');
+                                  setFacts(
+                                    'Anticipatory bail request under IPC Cyber Fraud provisions. Client alleges arbitrary framing.'
+                                  );
                                   setCaseType('Criminal');
                                   setCourtName('District Sessions Court');
                                   setIpcSections('IPC Section 420, 120B');
@@ -3667,12 +4408,24 @@ CRITICAL PROMPT DIRECTIVE:
                                   setManualCourt('High Court of Delhi');
                                   setManualType('Property');
                                   setManualSections('Adverse Possession Statutes');
-                                  setManualChronology('2011-03-01: Possession assumed, 2025-04-12: Demarcation notice issued');
-                                  setManualFacts('Adverse possession claims over a boundary fence held continuously for 14 years. Plaintiff holds old physical sale deed records.');
-                                  setManualExpectedDefence('Property board claims encroachment on state reservation easement.');
-                                  setManualEvidenceDocs('Old tax invoices, fence repair receipts, local surveyor report');
-                                  setManualReliefSought('Permanent injunction restraining demolition of fence');
-                                  setFacts('Adverse possession claims over a boundary fence held continuously for 14 years.');
+                                  setManualChronology(
+                                    '2011-03-01: Possession assumed, 2025-04-12: Demarcation notice issued'
+                                  );
+                                  setManualFacts(
+                                    'Adverse possession claims over a boundary fence held continuously for 14 years. Plaintiff holds old physical sale deed records.'
+                                  );
+                                  setManualExpectedDefence(
+                                    'Property board claims encroachment on state reservation easement.'
+                                  );
+                                  setManualEvidenceDocs(
+                                    'Old tax invoices, fence repair receipts, local surveyor report'
+                                  );
+                                  setManualReliefSought(
+                                    'Permanent injunction restraining demolition of fence'
+                                  );
+                                  setFacts(
+                                    'Adverse possession claims over a boundary fence held continuously for 14 years.'
+                                  );
                                   setCaseType('Property');
                                   setCourtName('High Court of Delhi');
                                   setIpcSections('Adverse Possession Statutes');
@@ -3683,12 +4436,22 @@ CRITICAL PROMPT DIRECTIVE:
                                   setManualCourt('Commercial Courts Division');
                                   setManualType('Corporate');
                                   setManualSections('Indian Contract Act Section 73/74');
-                                  setManualChronology('2024-10-10: Agreement signed, 2025-04-12: Delayed software delivery');
-                                  setManualFacts('Plaintiff claims damages of $150,000 for delayed delivery of software code. Defendant asserts delayed payment of mandatory mobilization fee.');
-                                  setManualExpectedDefence('Defendant claims force majeure and delayed payment release by Plaintiff.');
-                                  setManualEvidenceDocs('Development service agreement, email correspondences, invoice audits');
+                                  setManualChronology(
+                                    '2024-10-10: Agreement signed, 2025-04-12: Delayed software delivery'
+                                  );
+                                  setManualFacts(
+                                    'Plaintiff claims damages of $150,000 for delayed delivery of software code. Defendant asserts delayed payment of mandatory mobilization fee.'
+                                  );
+                                  setManualExpectedDefence(
+                                    'Defendant claims force majeure and delayed payment release by Plaintiff.'
+                                  );
+                                  setManualEvidenceDocs(
+                                    'Development service agreement, email correspondences, invoice audits'
+                                  );
                                   setManualReliefSought('Recovery of damages worth $150,000');
-                                  setFacts('Plaintiff claims damages of $150,000 for delayed delivery of software code.');
+                                  setFacts(
+                                    'Plaintiff claims damages of $150,000 for delayed delivery of software code.'
+                                  );
                                   setCaseType('Corporate');
                                   setCourtName('Commercial Courts Division');
                                   setIpcSections('Indian Contract Act Section 73/74');
@@ -3696,7 +4459,9 @@ CRITICAL PROMPT DIRECTIVE:
                                 toast.success(`Case preset values prefilled!`);
                               }}
                               className={`px-3 py-1.5 text-[9px] font-black uppercase border rounded-lg transition-all ${
-                                isDark ? 'border-zinc-700 bg-zinc-800 text-slate-300 hover:bg-zinc-700' : 'border-slate-200 bg-slate-100 text-slate-650 hover:bg-slate-200'
+                                isDark
+                                  ? 'border-zinc-700 bg-zinc-800 text-slate-300 hover:bg-zinc-700'
+                                  : 'border-slate-200 bg-slate-100 text-slate-650 hover:bg-slate-200'
                               }`}
                             >
                               {preset.name}
@@ -3708,64 +4473,94 @@ CRITICAL PROMPT DIRECTIVE:
                       {/* 11 Legal Manual Input Fields */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('caseTitle') || "Case Title"} *</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. ABC Corp v. XYZ Services" 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('caseTitle') || 'Case Title'} *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. ABC Corp v. XYZ Services"
                             value={manualTitle}
                             onChange={e => setManualTitle(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-800'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('petitionerPlaintiff') || "Petitioner / Plaintiff"} *</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. ABC Corp" 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('petitionerPlaintiff') || 'Petitioner / Plaintiff'} *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. ABC Corp"
                             value={manualPetitioner}
                             onChange={e => setManualPetitioner(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-800'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('opponentRespondentDetails') || "Respondent / Defendant"} *</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. XYZ Services" 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('opponentRespondentDetails') || 'Respondent / Defendant'} *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. XYZ Services"
                             value={manualRespondent}
                             onChange={e => setManualRespondent(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-805'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-805'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('courtAndJurisdiction') || "Court & Jurisdiction"} *</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Delhi High Court" 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('courtAndJurisdiction') || 'Court & Jurisdiction'} *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Delhi High Court"
                             value={manualCourt}
                             onChange={e => setManualCourt(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-805'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-805'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('caseMatterType') || "Case Category"}</label>
-                          <select 
-                            value={manualType} 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('caseMatterType') || 'Case Category'}
+                          </label>
+                          <select
+                            value={manualType}
                             onChange={e => setManualType(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-808'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-808'
                             }`}
                           >
                             <option value="Criminal">Criminal</option>
@@ -3780,79 +4575,116 @@ CRITICAL PROMPT DIRECTIVE:
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('specificStatutorySections') || "Applicable Statutes & Sections"}</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Section 73 & 74 of Indian Contract Act" 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('specificStatutorySections') || 'Applicable Statutes & Sections'}
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Section 73 & 74 of Indian Contract Act"
                             value={manualSections}
                             onChange={e => setManualSections(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-800'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('factsChronologyTimeline') || "Facts Chronology & Timeline"}</label>
-                          <textarea 
-                            rows={2} 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('factsChronologyTimeline') || 'Facts Chronology & Timeline'}
+                          </label>
+                          <textarea
+                            rows={2}
                             placeholder="e.g. 2025-01-10: Contract Signed, 2025-04-12: Breach Occurred..."
                             value={manualChronology}
                             onChange={e => setManualChronology(e.target.value)}
                             className={`border rounded-2xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-805'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-805'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('detailedCaseClaims') || "Detailed Case Claims (Plaintiff Facts)"} *</label>
-                          <textarea 
-                            rows={3} 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('detailedCaseClaims') || 'Detailed Case Claims (Plaintiff Facts)'} *
+                          </label>
+                          <textarea
+                            rows={3}
                             placeholder="State the core claims, transaction facts, and legal arguments..."
                             value={manualFacts}
                             onChange={e => setManualFacts(e.target.value)}
                             className={`border rounded-2xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-805'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-805'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('defencePositions') || "Defence Positions (Opposing Counsel Arguments)"}</label>
-                          <textarea 
-                            rows={2} 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('defencePositions') ||
+                              'Defence Positions (Opposing Counsel Arguments)'}
+                          </label>
+                          <textarea
+                            rows={2}
                             placeholder="State the defense, exceptions, and counter assertions..."
                             value={manualExpectedDefence}
                             onChange={e => setManualExpectedDefence(e.target.value)}
                             className={`border rounded-2xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-805'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-805'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('evidenceAndDocumentsSummary') || "Evidence & Documents Summary"}</label>
-                          <textarea 
-                            rows={2} 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('evidenceAndDocumentsSummary') || 'Evidence & Documents Summary'}
+                          </label>
+                          <textarea
+                            rows={2}
                             placeholder="List exhibits, agreements, emails, and witness records..."
                             value={manualEvidenceDocs}
                             onChange={e => setManualEvidenceDocs(e.target.value)}
                             className={`border rounded-2xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-805'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-805'
                             }`}
                           />
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{t('reliefRequested') || "Relief Requested"} *</label>
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Damages of $150,000 and interest" 
+                          <label
+                            className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            {t('reliefRequested') || 'Relief Requested'} *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Damages of $150,000 and interest"
                             value={manualReliefSought}
                             onChange={e => setManualReliefSought(e.target.value)}
                             className={`border rounded-xl px-4 py-3 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-                              isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                              isDark
+                                ? 'bg-black/25 border-zinc-800 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-800'
                             }`}
                           />
                         </div>
@@ -3862,7 +4694,7 @@ CRITICAL PROMPT DIRECTIVE:
                         <UniversalMultimodalInput
                           caseId={selectedCaseId || 'global'}
                           workspaceName="CasePredictor"
-                          onContextChange={(ctx) => setMultimodalContext(ctx)}
+                          onContextChange={ctx => setMultimodalContext(ctx)}
                           theme={isDark ? 'dark' : 'light'}
                           layout="manual"
                         />
@@ -3878,13 +4710,21 @@ CRITICAL PROMPT DIRECTIVE:
                         isGenerating ||
                         (inputWorkflowMode === 'existing' && !selectedCaseId) ||
                         (inputWorkflowMode === 'upload' && !multimodalContext?.hasStagedContext) ||
-                        (inputWorkflowMode === 'manual' && (!manualTitle.trim() || !manualPetitioner.trim() || !manualRespondent.trim() || !manualFacts.trim()))
+                        (inputWorkflowMode === 'manual' &&
+                          (!manualTitle.trim() ||
+                            !manualPetitioner.trim() ||
+                            !manualRespondent.trim() ||
+                            !manualFacts.trim()))
                       }
                       className={`w-full sm:w-auto px-6 sm:px-8 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl min-h-[48px] ${
                         isGenerating ||
                         (inputWorkflowMode === 'existing' && !selectedCaseId) ||
                         (inputWorkflowMode === 'upload' && !multimodalContext?.hasStagedContext) ||
-                        (inputWorkflowMode === 'manual' && (!manualTitle.trim() || !manualPetitioner.trim() || !manualRespondent.trim() || !manualFacts.trim()))
+                        (inputWorkflowMode === 'manual' &&
+                          (!manualTitle.trim() ||
+                            !manualPetitioner.trim() ||
+                            !manualRespondent.trim() ||
+                            !manualFacts.trim()))
                           ? 'bg-slate-200 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600 cursor-not-allowed shadow-none'
                           : 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 shadow-indigo-500/20 cursor-pointer'
                       }`}
@@ -3900,14 +4740,23 @@ CRITICAL PROMPT DIRECTIVE:
 
           {/* Generator loading status */}
           {isGenerating && (
-            <div className={`rounded-3xl p-8 sm:p-16 text-center flex flex-col items-center justify-center gap-6 max-w-2xl mx-auto my-8 sm:my-12 ${
-              isDark ? 'bg-[#1A2540]/60' : 'bg-white shadow-sm border border-slate-200'
-            }`}>
+            <div
+              className={`rounded-3xl p-8 sm:p-16 text-center flex flex-col items-center justify-center gap-6 max-w-2xl mx-auto my-8 sm:my-12 ${
+                isDark ? 'bg-[#1A2540]/60' : 'bg-white shadow-sm border border-slate-200'
+              }`}
+            >
               <div className="w-14 h-14 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
               <div className="space-y-2">
-                <h4 className={`text-sm sm:text-base font-black uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('processingLegalDirectives') || "Processing Legal Directives..."}</h4>
-                <p className={`text-xs font-bold leading-relaxed max-w-md px-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {t('processingLegalDirectivesDesc') || "AISA is indexing matching High & Supreme court precedents, auditing document timelines, evaluating procedural risks, and compiling the Judicial Forecast."}
+                <h4
+                  className={`text-sm sm:text-base font-black uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}
+                >
+                  {t('processingLegalDirectives') || 'Processing Legal Directives...'}
+                </h4>
+                <p
+                  className={`text-xs font-bold leading-relaxed max-w-md px-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                >
+                  {t('processingLegalDirectivesDesc') ||
+                    'AISA is indexing matching High & Supreme court precedents, auditing document timelines, evaluating procedural risks, and compiling the Judicial Forecast.'}
                 </p>
               </div>
             </div>
@@ -3916,37 +4765,41 @@ CRITICAL PROMPT DIRECTIVE:
           {/* Active prediction dashboard */}
           {displayPrediction && !isGenerating && (
             <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto py-1 sm:py-2 animate-in fade-in duration-300">
-              
               {/* Action and Navigation Header */}
               <div className="flex justify-between items-center mb-1 sm:mb-2">
-                <button 
+                <button
                   onClick={handleResetAndConfigureNewCase}
                   className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 border rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all min-h-[40px] ${
-                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-300' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                    isDark
+                      ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-300'
+                      : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
                   }`}
                 >
                   <ChevronLeft size={14} />
-                  <span>{t('configureManualForecast') || "Configure New Case"}</span>
+                  <span>{t('configureManualForecast') || 'Configure New Case'}</span>
                 </button>
-                <div className="flex gap-2">
-                </div>
+                <div className="flex gap-2"></div>
               </div>
 
               {/* 1. EXECUTIVE FORECAST (Visible First) */}
-              <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-sm text-left ${
-                isDark ? 'bg-[#1A2540] border-white/5' : 'bg-white border-slate-200'
-              }`}>
+              <div
+                className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-sm text-left ${
+                  isDark ? 'bg-[#1A2540] border-white/5' : 'bg-white border-slate-200'
+                }`}
+              >
                 <div className="flex items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                   <h3 className="text-xs font-black uppercase tracking-wider text-indigo-400">
-                    ⋄ {t('executiveForecastingSummary') || "Executive Forecasting Summary"}
+                    ⋄ {t('executiveForecastingSummary') || 'Executive Forecasting Summary'}
                   </h3>
                   <span className="text-[9px] font-semibold text-slate-400 text-right shrink-0">
-                    {t('courtroomJurisdiction') || "Courtroom jurisdiction:"} <span className="text-indigo-400 font-extrabold">{simulatedCourtLevel} Court</span>
+                    {t('courtroomJurisdiction') || 'Courtroom jurisdiction:'}{' '}
+                    <span className="text-indigo-400 font-extrabold">
+                      {simulatedCourtLevel} Court
+                    </span>
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] md:grid-cols-6 gap-4 sm:gap-6 items-center">
-                  
                   {/* Gauge widget (Plaintiff Win Probability) */}
                   <div className="sm:col-span-1 md:col-span-2 flex flex-col items-center justify-center p-4 bg-slate-500/5 dark:bg-black/15 rounded-2xl border border-slate-250/20 dark:border-white/5 text-center">
                     <div className="relative w-32 h-32 flex items-center justify-center">
@@ -3976,7 +4829,7 @@ CRITICAL PROMPT DIRECTIVE:
                           {simulatedStats.successRate}%
                         </span>
                         <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-0.5">
-                          {t('winningProbability') || "Win Probability"}
+                          {t('winningProbability') || 'Win Probability'}
                         </span>
                       </div>
                     </div>
@@ -3986,79 +4839,132 @@ CRITICAL PROMPT DIRECTIVE:
                   <div className="sm:col-span-1 md:col-span-4 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* AI Confidence */}
                     <div className="p-4 bg-slate-500/5 rounded-2xl border border-slate-250/20 dark:border-white/5 flex flex-col justify-between text-left">
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('aiConfidence') || "AI Confidence"}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                        {t('aiConfidence') || 'AI Confidence'}
+                      </span>
                       <div className="mt-2">
-                        <span className="text-xl font-black text-indigo-400">{simulatedStats.confidenceScore}%</span>
-                        <span className="block text-[8px] text-slate-500 mt-0.5">{t('statisticalAccuracyRate') || "Statistical accuracy rate"}</span>
+                        <span className="text-xl font-black text-indigo-400">
+                          {simulatedStats.confidenceScore}%
+                        </span>
+                        <span className="block text-[8px] text-slate-500 mt-0.5">
+                          {t('statisticalAccuracyRate') || 'Statistical accuracy rate'}
+                        </span>
                       </div>
                     </div>
 
                     {/* Overall Risk */}
                     <div className="p-4 bg-slate-500/5 rounded-2xl border border-slate-250/20 dark:border-white/5 flex flex-col justify-between text-left">
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('overallRisk') || "Overall Risk"}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                        {t('overallRisk') || 'Overall Risk'}
+                      </span>
                       <div className="mt-2">
-                        <span className={`text-xl font-black uppercase ${
-                          simulatedStats.litigationRisk === 'High' ? 'text-red-500' :
-                          simulatedStats.litigationRisk === 'Moderate' ? 'text-amber-500' : 'text-emerald-500'
-                        }`}>{t(simulatedStats.litigationRisk) || simulatedStats.litigationRisk}</span>
-                        <span className="block text-[8px] text-slate-500 mt-0.5">{t('litigationLevelThreshold') || "Litigation level threshold"}</span>
+                        <span
+                          className={`text-xl font-black uppercase ${
+                            simulatedStats.litigationRisk === 'High'
+                              ? 'text-red-500'
+                              : simulatedStats.litigationRisk === 'Moderate'
+                                ? 'text-amber-500'
+                                : 'text-emerald-500'
+                          }`}
+                        >
+                          {t(simulatedStats.litigationRisk) || simulatedStats.litigationRisk}
+                        </span>
+                        <span className="block text-[8px] text-slate-500 mt-0.5">
+                          {t('litigationLevelThreshold') || 'Litigation level threshold'}
+                        </span>
                       </div>
                     </div>
 
                     {/* Recommended Strategy */}
                     <div className="p-4 bg-slate-500/5 rounded-2xl border border-slate-250/20 dark:border-white/5 flex flex-col justify-between text-left">
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('strategyTactic') || "Strategy Tactic"}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                        {t('strategyTactic') || 'Strategy Tactic'}
+                      </span>
                       <div className="mt-2">
-                        <span className="text-xs font-black text-indigo-400 uppercase">{t(displayPrediction.courtStrategy?.strategyType) || displayPrediction.courtStrategy?.strategyType || 'Balanced'} {t('strategy') || 'Strategy'}</span>
-                        <span className="block text-[8px] text-slate-500 mt-0.5">{t('emphasizeDocumentaryRecords') || "Emphasize documentary records"}</span>
+                        <span className="text-xs font-black text-indigo-400 uppercase">
+                          {t(displayPrediction.courtStrategy?.strategyType) ||
+                            displayPrediction.courtStrategy?.strategyType ||
+                            'Balanced'}{' '}
+                          {t('strategy') || 'Strategy'}
+                        </span>
+                        <span className="block text-[8px] text-slate-500 mt-0.5">
+                          {t('emphasizeDocumentaryRecords') || 'Emphasize documentary records'}
+                        </span>
                       </div>
                     </div>
 
                     {/* Settlement Probability */}
                     <div className="p-4 bg-slate-500/5 rounded-2xl border border-slate-250/20 dark:border-white/5 flex flex-col justify-between text-left">
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('settlementProbability') || "Settlement Probability"}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                        {t('settlementProbability') || 'Settlement Probability'}
+                      </span>
                       <div className="mt-2">
-                        <span className="text-xl font-black text-sky-500">{displayPrediction.stats.settlementProbability}%</span>
-                        <span className="block text-[8px] text-slate-500 mt-0.5">{t('mediationAdvisoryViability') || "Mediation advisory viability"}</span>
+                        <span className="text-xl font-black text-sky-500">
+                          {displayPrediction.stats.settlementProbability}%
+                        </span>
+                        <span className="block text-[8px] text-slate-500 mt-0.5">
+                          {t('mediationAdvisoryViability') || 'Mediation advisory viability'}
+                        </span>
                       </div>
                     </div>
 
                     {/* Estimated Litigation Cost */}
                     <div className="p-4 bg-slate-500/5 rounded-2xl border border-slate-250/20 dark:border-white/5 flex flex-col justify-between text-left">
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('litigationCost') || "Litigation Cost"}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                        {t('litigationCost') || 'Litigation Cost'}
+                      </span>
                       <div className="mt-2">
-                        <span className="text-base font-black text-yellow-500">₹{(simulatedCourtLevel === 'Supreme' ? displayPrediction.stats.estimatedLegalCost * 2 : simulatedCourtLevel === 'High' ? displayPrediction.stats.estimatedLegalCost * 1.4 : displayPrediction.stats.estimatedLegalCost).toLocaleString()}</span>
-                        <span className="block text-[8px] text-slate-500 mt-0.5">{t('estimatedBudgetDistrictFees') || "Estimated budget (district fees)"}</span>
+                        <span className="text-base font-black text-yellow-500">
+                          ₹
+                          {(simulatedCourtLevel === 'Supreme'
+                            ? displayPrediction.stats.estimatedLegalCost * 2
+                            : simulatedCourtLevel === 'High'
+                              ? displayPrediction.stats.estimatedLegalCost * 1.4
+                              : displayPrediction.stats.estimatedLegalCost
+                          ).toLocaleString()}
+                        </span>
+                        <span className="block text-[8px] text-slate-500 mt-0.5">
+                          {t('estimatedBudgetDistrictFees') || 'Estimated budget (district fees)'}
+                        </span>
                       </div>
                     </div>
 
                     {/* Timeline */}
                     <div className="p-4 bg-slate-500/5 rounded-2xl border border-slate-250/20 dark:border-white/5 flex flex-col justify-between text-left">
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t('estimatedDuration') || "Estimated Duration"}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">
+                        {t('estimatedDuration') || 'Estimated Duration'}
+                      </span>
                       <div className="mt-2">
-                        <span className="text-xs font-black text-slate-700 dark:text-slate-200">{displayPrediction.stats.estimatedDuration || "12-15 Months"}</span>
-                        <span className="block text-[8px] text-slate-500 mt-0.5">{t('expectedTrialDuration') || "Expected trial duration"}</span>
+                        <span className="text-xs font-black text-slate-700 dark:text-slate-200">
+                          {displayPrediction.stats.estimatedDuration || '12-15 Months'}
+                        </span>
+                        <span className="block text-[8px] text-slate-500 mt-0.5">
+                          {t('expectedTrialDuration') || 'Expected trial duration'}
+                        </span>
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
 
               {/* 8-Tab Container */}
-              <div className={`rounded-2xl sm:rounded-3xl border shadow-sm overflow-hidden ${
-                isDark ? 'bg-[#1A2540] border-white/5' : 'bg-white border-slate-200'
-              }`}>
+              <div
+                className={`rounded-2xl sm:rounded-3xl border shadow-sm overflow-hidden ${
+                  isDark ? 'bg-[#1A2540] border-white/5' : 'bg-white border-slate-200'
+                }`}
+              >
                 {/* Simplified navigation tabs - horizontal scroll on mobile */}
-                <div className={`flex border-b overflow-x-auto custom-scrollbar ${
-                  isDark ? 'border-white/5 bg-[#1B2644]' : 'border-slate-200 bg-slate-50/50'
-                }`}>
+                <div
+                  className={`flex border-b overflow-x-auto custom-scrollbar ${
+                    isDark ? 'border-white/5 bg-[#1B2644]' : 'border-slate-200 bg-slate-50/50'
+                  }`}
+                >
                   {[
                     { id: 'overview', label: t('overview') || 'Overview', icon: Brain },
                     { id: 'risks', label: t('risk') || 'Risk', icon: AlertTriangle },
                     { id: 'strategy', label: t('strategy') || 'Strategy', icon: Target },
                     { id: 'precedents', label: t('precedents') || 'Precedents', icon: BookOpen },
-                    { id: 'reports', label: t('reports') || 'Reports', icon: FileDown }
+                    { id: 'reports', label: t('reports') || 'Reports', icon: FileDown },
                   ].map(t => {
                     const Icon = t.icon;
                     const isSelected = activeTab === t.id;
@@ -4070,8 +4976,8 @@ CRITICAL PROMPT DIRECTIVE:
                           setIsEditingReport(false);
                         }}
                         className={`flex items-center gap-1.5 px-4 sm:px-5 py-3 sm:py-4 text-[10px] font-black uppercase tracking-wider border-b-2 transition-all shrink-0 min-h-[48px] ${
-                          isSelected 
-                            ? 'border-indigo-500 text-indigo-500 bg-white/5' 
+                          isSelected
+                            ? 'border-indigo-500 text-indigo-500 bg-white/5'
                             : 'border-transparent text-slate-450 hover:text-slate-200 hover:bg-white/5'
                         }`}
                       >
@@ -4083,47 +4989,97 @@ CRITICAL PROMPT DIRECTIVE:
                 </div>
 
                 <div className="p-4 sm:p-6">
-
                   {/* 1. OVERVIEW TAB */}
                   {activeTab === 'overview' && (
                     <div className="space-y-6 text-left">
-                      <div className={`p-5 rounded-2xl border ${
-                        isDark ? 'bg-zinc-950/20 border-white/5' : 'bg-slate-50 border-slate-200/60 shadow-inner'
-                      }`}>
-                        <span className="text-[10px] font-black uppercase text-indigo-400 tracking-wider block mb-2">⋄ {t('judicialForecastingReasoning') || "Judicial Forecasting Reasoning & Decisional Basis"}</span>
+                      <div
+                        className={`p-5 rounded-2xl border ${
+                          isDark
+                            ? 'bg-zinc-950/20 border-white/5'
+                            : 'bg-slate-50 border-slate-200/60 shadow-inner'
+                        }`}
+                      >
+                        <span className="text-[10px] font-black uppercase text-indigo-400 tracking-wider block mb-2">
+                          ⋄{' '}
+                          {t('judicialForecastingReasoning') ||
+                            'Judicial Forecasting Reasoning & Decisional Basis'}
+                        </span>
                         <p className="text-xs font-semibold leading-relaxed text-slate-350 dark:text-slate-300">
                           {displayPrediction.explainPrediction.whyPredicted}
                         </p>
                       </div>
 
                       <div className="space-y-4">
-                        <span className="text-[9px] font-black uppercase text-slate-400 block mb-1">⋄ {t('whyAiPredictedThis') || "WHY AI PREDICTED THIS (Top 5 Strongest Reasons)"}</span>
+                        <span className="text-[9px] font-black uppercase text-slate-400 block mb-1">
+                          ⋄{' '}
+                          {t('whyAiPredictedThis') ||
+                            'WHY AI PREDICTED THIS (Top 5 Strongest Reasons)'}
+                        </span>
                         <div className="grid grid-cols-1 gap-4">
-                          {(displayPrediction.explainPrediction.explainReasons || [
-                            { reason: "Strong documentary evidence", evidence: "Purchase agreement & registered notice acknowledgment card", law: "Indian Evidence Act Section 91/92", judgment: "ONGC v. Saw Pipes Ltd (2003)" },
-                            { reason: "Admissions by Respondent", evidence: "Reply notice admitted signature receipt", law: "CPC Order VIII Rule 5", judgment: "Badat & Co. v. East India Trading Co. (1964)" },
-                            { reason: "Limitation Valid", evidence: "Suit filed within 36 months of cause of action breach", law: "Limitation Act Article 55", judgment: "Maula Bux v. UOI (1969)" }
-                          ]).map((pt, i) => (
-                            <div key={i} className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
+                          {(
+                            displayPrediction.explainPrediction.explainReasons || [
+                              {
+                                reason: 'Strong documentary evidence',
+                                evidence:
+                                  'Purchase agreement & registered notice acknowledgment card',
+                                law: 'Indian Evidence Act Section 91/92',
+                                judgment: 'ONGC v. Saw Pipes Ltd (2003)',
+                              },
+                              {
+                                reason: 'Admissions by Respondent',
+                                evidence: 'Reply notice admitted signature receipt',
+                                law: 'CPC Order VIII Rule 5',
+                                judgment: 'Badat & Co. v. East India Trading Co. (1964)',
+                              },
+                              {
+                                reason: 'Limitation Valid',
+                                evidence: 'Suit filed within 36 months of cause of action breach',
+                                law: 'Limitation Act Article 55',
+                                judgment: 'Maula Bux v. UOI (1969)',
+                              },
+                            ]
+                          ).map((pt, i) => (
+                            <div
+                              key={i}
+                              className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                            >
                               <div className="flex justify-between items-center">
-                                <span className="font-black text-indigo-400 text-xs uppercase tracking-wider">{pt.reason}</span>
-                                <span className="text-[8px] font-black uppercase bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">High Confidence Match</span>
+                                <span className="font-black text-indigo-400 text-xs uppercase tracking-wider">
+                                  {pt.reason}
+                                </span>
+                                <span className="text-[8px] font-black uppercase bg-indigo-500/10 px-2 py-0.5 rounded text-indigo-400">
+                                  High Confidence Match
+                                </span>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-[10.5px] font-semibold text-slate-655 dark:text-slate-400 mt-2">
                                 <div>
-                                  <span className="text-slate-400 block text-[7.5px] uppercase font-black mb-0.5">{t('evidenceBasis') || "Evidence Basis"}</span>
+                                  <span className="text-slate-400 block text-[7.5px] uppercase font-black mb-0.5">
+                                    {t('evidenceBasis') || 'Evidence Basis'}
+                                  </span>
                                   <span>{pt.evidence}</span>
                                 </div>
                                 <div>
-                                  <span className="text-slate-400 block text-[7.5px] uppercase font-black mb-0.5">{t('statutoryLaw') || "Statutory Law"}</span>
-                                  <span className="font-extrabold text-slate-700 dark:text-slate-300">{pt.law}</span>
+                                  <span className="text-slate-400 block text-[7.5px] uppercase font-black mb-0.5">
+                                    {t('statutoryLaw') || 'Statutory Law'}
+                                  </span>
+                                  <span className="font-extrabold text-slate-700 dark:text-slate-300">
+                                    {pt.law}
+                                  </span>
                                 </div>
                                 <div>
-                                  <span className="text-slate-400 block text-[7.5px] uppercase font-black mb-0.5">{t('supportingJudgment') || "Supporting Judgment"}</span>
-                                  <span className="font-extrabold text-indigo-500">{pt.judgment}</span>
+                                  <span className="text-slate-400 block text-[7.5px] uppercase font-black mb-0.5">
+                                    {t('supportingJudgment') || 'Supporting Judgment'}
+                                  </span>
+                                  <span className="font-extrabold text-indigo-500">
+                                    {pt.judgment}
+                                  </span>
                                 </div>
                               </div>
-                              {renderCardControls(pt.reason, `Reason: ${pt.reason}. Law basis: ${pt.law}. Supporting judgement: ${pt.judgment}.`, 'precedent')}
+                              {renderCardControls(
+                                pt.reason,
+                                `Reason: ${pt.reason}. Law basis: ${pt.law}. Supporting judgement: ${pt.judgment}.`,
+                                'precedent'
+                              )}
                             </div>
                           ))}
                         </div>
@@ -4136,48 +5092,94 @@ CRITICAL PROMPT DIRECTIVE:
                     <div className="space-y-6 text-left">
                       {/* Legal Risk Matrix */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-[10px] font-semibold">
-                        {Object.entries(displayPrediction.legalRiskMatrix || {}).map(([riskType, val]) => {
-                          const color = val === 'Critical' || val === 'High' ? 'text-red-500 bg-red-500/10 border-red-500/20' : val === 'Medium' ? 'text-amber-500 bg-amber-500/10 border-amber-500/20' : 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-                          return (
-                            <div key={riskType} className={`p-4 rounded-3xl border ${color} space-y-1`}>
-                              <span className="text-slate-400 uppercase text-[8px] tracking-wider block">{t(riskType) || riskType.replace('Risk', ' Risk')}</span>
-                              <span className="text-xs font-black uppercase block">{t(val) || val} {t('severity') || "Severity"}</span>
-                            </div>
-                          );
-                        })}
+                        {Object.entries(displayPrediction.legalRiskMatrix || {}).map(
+                          ([riskType, val]) => {
+                            const color =
+                              val === 'Critical' || val === 'High'
+                                ? 'text-red-500 bg-red-500/10 border-red-500/20'
+                                : val === 'Medium'
+                                  ? 'text-amber-500 bg-amber-500/10 border-amber-500/20'
+                                  : 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+                            return (
+                              <div
+                                key={riskType}
+                                className={`p-4 rounded-3xl border ${color} space-y-1`}
+                              >
+                                <span className="text-slate-400 uppercase text-[8px] tracking-wider block">
+                                  {t(riskType) || riskType.replace('Risk', ' Risk')}
+                                </span>
+                                <span className="text-xs font-black uppercase block">
+                                  {t(val) || val} {t('severity') || 'Severity'}
+                                </span>
+                              </div>
+                            );
+                          }
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-slate-205/20 dark:border-white/5 pt-4">
                         {/* Critical Risks */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
-                          <span className="text-[9px] font-black uppercase text-red-500 block">{t('criticalRisks') || "Critical Risks"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-red-500 block">
+                            {t('criticalRisks') || 'Critical Risks'}
+                          </span>
                           <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-700 dark:text-slate-350">
-                            {(displayPrediction.riskDetection || []).filter(r => r.severity === 'High').map((r, i) => (
-                              <li key={i}><strong>{r.type}:</strong> {r.description}</li>
-                            ))}
+                            {(displayPrediction.riskDetection || [])
+                              .filter(r => r.severity === 'High')
+                              .map((r, i) => (
+                                <li key={i}>
+                                  <strong>{r.type}:</strong> {r.description}
+                                </li>
+                              ))}
                           </ul>
-                          {renderCardControls("Critical Risks", "High severity risks identified by AI analysis.")}
+                          {renderCardControls(
+                            'Critical Risks',
+                            'High severity risks identified by AI analysis.'
+                          )}
                         </div>
 
                         {/* Medium Risks */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
-                          <span className="text-[9px] font-black uppercase text-amber-500 block">{t('mediumRisks') || "Medium Risks"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-amber-500 block">
+                            {t('mediumRisks') || 'Medium Risks'}
+                          </span>
                           <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-700 dark:text-slate-350">
-                            {(displayPrediction.riskDetection || []).filter(r => r.severity === 'Medium').map((r, i) => (
-                              <li key={i}><strong>{r.type}:</strong> {r.description}</li>
-                            ))}
+                            {(displayPrediction.riskDetection || [])
+                              .filter(r => r.severity === 'Medium')
+                              .map((r, i) => (
+                                <li key={i}>
+                                  <strong>{r.type}:</strong> {r.description}
+                                </li>
+                              ))}
                           </ul>
-                          {renderCardControls("Medium Risks", "Standard severity risks identified by AI analysis.")}
+                          {renderCardControls(
+                            'Medium Risks',
+                            'Standard severity risks identified by AI analysis.'
+                          )}
                         </div>
 
                         {/* Procedural & Compliance Risks */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
-                          <span className="text-[9px] font-black uppercase text-rose-500 block">{t('proceduralVulnerabilities') || "Procedural Vulnerabilities"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-rose-500 block">
+                            {t('proceduralVulnerabilities') || 'Procedural Vulnerabilities'}
+                          </span>
                           <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-700 dark:text-slate-350">
                             <li>Registry copying backlog in local jurisdiction court.</li>
-                            <li>Stamp certificate timeline mismatch triggers Section 35 compliance checks.</li>
+                            <li>
+                              Stamp certificate timeline mismatch triggers Section 35 compliance
+                              checks.
+                            </li>
                           </ul>
-                          {renderCardControls("Procedural Vulnerabilities", "Registry copying backlog and stamp compliance checks.")}
+                          {renderCardControls(
+                            'Procedural Vulnerabilities',
+                            'Registry copying backlog and stamp compliance checks.'
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4188,57 +5190,91 @@ CRITICAL PROMPT DIRECTIVE:
                     <div className="space-y-6 text-left">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         {/* Court Strategy */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-3`}>
-                          <span className="text-[9px] font-black uppercase text-indigo-400 block">{t('courtroomSequence') || "Courtroom Tactics"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-3`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-indigo-400 block">
+                            {t('courtroomSequence') || 'Courtroom Tactics'}
+                          </span>
                           <p className="text-xs font-semibold text-slate-750 dark:text-slate-300 leading-relaxed">
                             {displayPrediction.winningStrategy?.courtroomSequence}
                           </p>
-                          {renderCardControls("Courtroom Tactics", displayPrediction.winningStrategy?.courtroomSequence)}
+                          {renderCardControls(
+                            'Courtroom Tactics',
+                            displayPrediction.winningStrategy?.courtroomSequence
+                          )}
                         </div>
 
                         {/* Settlement Advice */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-3`}>
-                          <span className="text-[9px] font-black uppercase text-sky-500 block">{t('settlementStrategy') || "Settlement Strategy"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-3`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-sky-500 block">
+                            {t('settlementStrategy') || 'Settlement Strategy'}
+                          </span>
                           <p className="text-xs font-semibold text-slate-750 dark:text-slate-300 leading-relaxed">
                             {displayPrediction.settlementIntelligence?.recommendation}
                           </p>
-                          {renderCardControls("Settlement Strategy", displayPrediction.settlementIntelligence?.recommendation)}
+                          {renderCardControls(
+                            'Settlement Strategy',
+                            displayPrediction.settlementIntelligence?.recommendation
+                          )}
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-slate-205/20 dark:border-white/5 pt-4">
                         {/* Cross Examination Focus */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
-                          <span className="text-[9px] font-black uppercase text-indigo-400 block">{t('crossExaminationFocus') || "Cross Examination Focus"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-indigo-400 block">
+                            {t('crossExaminationFocus') || 'Cross Examination Focus'}
+                          </span>
                           <ul className="space-y-2 text-xs font-semibold">
                             {(displayPrediction.crossExamination || []).map((x, i) => (
                               <li key={i} className="text-slate-700 dark:text-slate-300">
-                                <span className="text-indigo-400 font-extrabold uppercase text-[8.5px] block">{x.target}</span>
+                                <span className="text-indigo-400 font-extrabold uppercase text-[8.5px] block">
+                                  {x.target}
+                                </span>
                                 <span>{x.questions[0]}</span>
                               </li>
                             ))}
                           </ul>
-                          {renderCardControls("Cross Examination Focus", "Standard questions set mapped.")}
+                          {renderCardControls(
+                            'Cross Examination Focus',
+                            'Standard questions set mapped.'
+                          )}
                         </div>
 
                         {/* Arguments to Emphasize */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
-                          <span className="text-[9px] font-black uppercase text-emerald-500 block">{t('argumentsToEmphasize') || "Arguments to Emphasize"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-emerald-500 block">
+                            {t('argumentsToEmphasize') || 'Arguments to Emphasize'}
+                          </span>
                           <ul className="list-disc pl-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
                             <li>Continuous possessory assertions since contract execution.</li>
                             <li>Registered postal receipts as implied acknowledgement.</li>
                           </ul>
-                          {renderCardControls("Arguments to Emphasize", "Continuous possessory assertion.")}
+                          {renderCardControls(
+                            'Arguments to Emphasize',
+                            'Continuous possessory assertion.'
+                          )}
                         </div>
 
                         {/* Arguments to Avoid */}
-                        <div className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}>
-                          <span className="text-[9px] font-black uppercase text-red-500 block">{t('argumentsToAvoid') || "Arguments to Avoid"}</span>
+                        <div
+                          className={`p-5 rounded-3xl border ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-2`}
+                        >
+                          <span className="text-[9px] font-black uppercase text-red-500 block">
+                            {t('argumentsToAvoid') || 'Arguments to Avoid'}
+                          </span>
                           <ul className="list-disc pl-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
                             <li>Extending performance claims without written board records.</li>
                             <li>Oral performance waivers of delay damages.</li>
                           </ul>
-                          {renderCardControls("Arguments to Avoid", "Oral performance waivers.")}
+                          {renderCardControls('Arguments to Avoid', 'Oral performance waivers.')}
                         </div>
                       </div>
                     </div>
@@ -4249,33 +5285,65 @@ CRITICAL PROMPT DIRECTIVE:
                     <div className="space-y-6 text-left">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-3">
-                          <span className="text-slate-400 uppercase text-[8px] font-black tracking-wider block">{t('supremeCourtBindingPrecedents') || "Supreme Court Judicial Precedents"}</span>
-                          {(displayPrediction.precedentIntelligence?.supremeCourtCases || []).map((prec, i) => (
-                            <div key={i} className={`p-4 border rounded-2xl ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-1`}>
-                              <div className="flex justify-between items-center">
-                                <span className="font-extrabold text-slate-800 dark:text-slate-200">{prec.caseName}</span>
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-red-500/10 text-red-500 uppercase">{prec.type}</span>
+                          <span className="text-slate-400 uppercase text-[8px] font-black tracking-wider block">
+                            {t('supremeCourtBindingPrecedents') ||
+                              'Supreme Court Judicial Precedents'}
+                          </span>
+                          {(displayPrediction.precedentIntelligence?.supremeCourtCases || []).map(
+                            (prec, i) => (
+                              <div
+                                key={i}
+                                className={`p-4 border rounded-2xl ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-1`}
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-extrabold text-slate-800 dark:text-slate-200">
+                                    {prec.caseName}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-red-500/10 text-red-500 uppercase">
+                                    {prec.type}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-semibold">
+                                  Citation: {prec.citation}
+                                </p>
+                                <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed font-semibold">
+                                  Ratio: {prec.ratio}
+                                </p>
+                                {renderCardControls(prec.caseName, prec.ratio, 'precedent')}
                               </div>
-                              <p className="text-[10px] text-slate-400 font-semibold">Citation: {prec.citation}</p>
-                              <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed font-semibold">Ratio: {prec.ratio}</p>
-                              {renderCardControls(prec.caseName, prec.ratio, 'precedent')}
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
 
                         <div className="space-y-3">
-                          <span className="text-slate-400 uppercase text-[8px] font-black tracking-wider block">{t('highCourtPersuasivePrecedents') || "State High Court Judicial Precedents"}</span>
-                          {(displayPrediction.precedentIntelligence?.highCourtCases || []).map((prec, i) => (
-                            <div key={i} className={`p-4 border rounded-2xl ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-1`}>
-                              <div className="flex justify-between items-center">
-                                <span className="font-extrabold text-slate-800 dark:text-slate-200">{prec.caseName}</span>
-<span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-indigo-500/10 text-indigo-400 uppercase">{prec.type}</span>
+                          <span className="text-slate-400 uppercase text-[8px] font-black tracking-wider block">
+                            {t('highCourtPersuasivePrecedents') ||
+                              'State High Court Judicial Precedents'}
+                          </span>
+                          {(displayPrediction.precedentIntelligence?.highCourtCases || []).map(
+                            (prec, i) => (
+                              <div
+                                key={i}
+                                className={`p-4 border rounded-2xl ${isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200'} space-y-1`}
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-extrabold text-slate-800 dark:text-slate-200">
+                                    {prec.caseName}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-indigo-500/10 text-indigo-400 uppercase">
+                                    {prec.type}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-semibold">
+                                  Citation: {prec.citation}
+                                </p>
+                                <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed font-semibold">
+                                  Ratio: {prec.ratio}
+                                </p>
+                                {renderCardControls(prec.caseName, prec.ratio, 'precedent')}
                               </div>
-                              <p className="text-[10px] text-slate-400 font-semibold">Citation: {prec.citation}</p>
-                              <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed font-semibold">Ratio: {prec.ratio}</p>
-                              {renderCardControls(prec.caseName, prec.ratio, 'precedent')}
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
@@ -4284,14 +5352,13 @@ CRITICAL PROMPT DIRECTIVE:
                   {/* 7. REPORTS TAB */}
                   {activeTab === 'reports' && (
                     <div className="space-y-6 text-left">
-                      
                       {/* REDESIGNED COMPACT REPORT CARDS GRID */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {REPORT_METADATA.map((rep) => {
+                        {REPORT_METADATA.map(rep => {
                           const isSel = selectedReportTab === rep.id;
                           const isGenerated = activePrediction?.generatedReports?.[rep.id];
                           const isLocked = activePrediction?.lockedReports?.[rep.id];
-                          
+
                           // Dynamically lookup the icon component
                           let IconComponent = Scale;
                           if (rep.icon === 'Users') IconComponent = Users;
@@ -4317,19 +5384,29 @@ CRITICAL PROMPT DIRECTIVE:
                               }`}
                             >
                               <div className="flex items-start gap-3">
-                                <div className={`p-2.5 rounded-xl shrink-0 ${
-                                  isSel
-                                    ? 'bg-indigo-500 text-white'
-                                    : isDark ? 'bg-zinc-800 text-indigo-400' : 'bg-slate-100 text-indigo-650'
-                                }`}>
+                                <div
+                                  className={`p-2.5 rounded-xl shrink-0 ${
+                                    isSel
+                                      ? 'bg-indigo-500 text-white'
+                                      : isDark
+                                        ? 'bg-zinc-800 text-indigo-400'
+                                        : 'bg-slate-100 text-indigo-650'
+                                  }`}
+                                >
                                   <IconComponent size={16} />
                                 </div>
                                 <div className="min-w-0">
-                                  <h4 className={`text-xs font-black uppercase tracking-wider ${
-                                    isSel
-                                      ? 'text-indigo-500'
-                                      : isDark ? 'text-slate-200' : 'text-slate-800'
-                                  }`}>{getReportName(rep.id, rep.title)}</h4>
+                                  <h4
+                                    className={`text-xs font-black uppercase tracking-wider ${
+                                      isSel
+                                        ? 'text-indigo-500'
+                                        : isDark
+                                          ? 'text-slate-200'
+                                          : 'text-slate-800'
+                                    }`}
+                                  >
+                                    {getReportName(rep.id, rep.title)}
+                                  </h4>
                                   <p className="text-[10px] text-slate-450 mt-0.5 line-clamp-2 leading-relaxed font-semibold">
                                     {getReportDesc(rep.id, rep.desc)}
                                   </p>
@@ -4341,16 +5418,22 @@ CRITICAL PROMPT DIRECTIVE:
                                   {isLocked ? (
                                     <span className="flex items-center gap-0.5 text-emerald-500 font-extrabold uppercase">
                                       <Lock size={9} />
-                                      {t('locked') || "Locked"}
+                                      {t('locked') || 'Locked'}
                                     </span>
                                   ) : isGenerated ? (
-                                    <span className="text-indigo-400 font-extrabold uppercase">{t('generated') || "Generated"}</span>
+                                    <span className="text-indigo-400 font-extrabold uppercase">
+                                      {t('generated') || 'Generated'}
+                                    </span>
                                   ) : (
-                                    <span className="text-slate-400 uppercase font-semibold">{t('notGenerated') || "Not Generated"}</span>
+                                    <span className="text-slate-400 uppercase font-semibold">
+                                      {t('notGenerated') || 'Not Generated'}
+                                    </span>
                                   )}
                                 </div>
                                 <span className="text-slate-400/70">
-                                  {isGenerated ? (t('activeBrief') || 'Active Brief') : (t('needsCompile') || 'Needs Compile')}
+                                  {isGenerated
+                                    ? t('activeBrief') || 'Active Brief'
+                                    : t('needsCompile') || 'Needs Compile'}
                                 </span>
                               </div>
                             </div>
@@ -4359,43 +5442,54 @@ CRITICAL PROMPT DIRECTIVE:
                       </div>
 
                       {/* Main Report Viewport & Editor */}
-                      <div className={`rounded-3xl border overflow-hidden ${
-                        isDark ? 'bg-[#12192D] border-white/5' : 'bg-white border-slate-200 shadow-sm'
-                      }`}>
-                        
+                      <div
+                        className={`rounded-3xl border overflow-hidden ${
+                          isDark
+                            ? 'bg-[#12192D] border-white/5'
+                            : 'bg-white border-slate-200 shadow-sm'
+                        }`}
+                      >
                         {/* TOOLBAR */}
-                        <div className={`px-4 py-3 border-b flex justify-between items-center flex-wrap gap-3 ${
-                          isDark ? 'border-white/5 bg-[#1B2644]' : 'border-slate-200 bg-slate-50/50'
-                        }`}>
+                        <div
+                          className={`px-4 py-3 border-b flex justify-between items-center flex-wrap gap-3 ${
+                            isDark
+                              ? 'border-white/5 bg-[#1B2644]'
+                              : 'border-slate-200 bg-slate-50/50'
+                          }`}
+                        >
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-455">Viewer:</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-455">
+                              Viewer:
+                            </span>
                             <span className="text-[11px] font-black text-indigo-400 uppercase">
-                              {REPORT_METADATA.find(m => m.id === selectedReportTab)?.title || selectedReportTab}
+                              {REPORT_METADATA.find(m => m.id === selectedReportTab)?.title ||
+                                selectedReportTab}
                             </span>
                             {activePrediction?.lockedReports?.[selectedReportTab] && (
                               <span className="flex items-center gap-0.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full text-[8px] font-black uppercase">
-                                <Lock size={9} /> {t('approvedAndLocked') || "Approved & Locked"}
+                                <Lock size={9} /> {t('approvedAndLocked') || 'Approved & Locked'}
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center gap-2 flex-wrap">
-                            
                             {/* Edit / Save Button */}
-                            {activePrediction?.generatedReports?.[selectedReportTab] && (
-                              isEditingReport ? (
+                            {activePrediction?.generatedReports?.[selectedReportTab] &&
+                              (isEditingReport ? (
                                 <>
-                                  <button 
+                                  <button
                                     onClick={handleSaveChanges}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all min-h-[32px]"
                                   >
                                     <Check size={12} />
                                     <span>Save</span>
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={() => setIsEditingReport(false)}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[9px] font-black uppercase tracking-wider transition-all min-h-[32px] ${
-                                      isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400' : 'bg-slate-100 border-slate-205 hover:bg-slate-200 text-slate-600'
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400'
+                                        : 'bg-slate-100 border-slate-205 hover:bg-slate-200 text-slate-600'
                                     }`}
                                   >
                                     <X size={12} />
@@ -4403,10 +5497,12 @@ CRITICAL PROMPT DIRECTIVE:
                                   </button>
                                 </>
                               ) : (
-                                <button 
+                                <button
                                   onClick={() => {
                                     if (activePrediction?.lockedReports?.[selectedReportTab]) {
-                                      toast.error("🔒 Report is locked & approved. Unlock to edit.");
+                                      toast.error(
+                                        '🔒 Report is locked & approved. Unlock to edit.'
+                                      );
                                       return;
                                     }
                                     setEditedReportText(displayReportText);
@@ -4415,135 +5511,173 @@ CRITICAL PROMPT DIRECTIVE:
                                   className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[9px] font-black uppercase tracking-wider transition-all min-h-[32px] ${
                                     activePrediction?.lockedReports?.[selectedReportTab]
                                       ? 'bg-slate-200/50 dark:bg-zinc-800/30 text-slate-400 cursor-not-allowed'
-                                      : isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-300' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                                      : isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-300'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
                                   }`}
                                 >
                                   <Edit3 size={12} />
                                   <span>Edit</span>
                                 </button>
-                              )
-                            )}
+                              ))}
 
                             {/* Lock Toggle Button */}
-                            {activePrediction?.generatedReports?.[selectedReportTab] && !isEditingReport && (
-                              <button
-                                onClick={() => handleToggleLockReport(selectedReportTab)}
-                                className={`p-1.5 border rounded-lg transition-all ${
-                                  activePrediction.lockedReports?.[selectedReportTab]
-                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20'
-                                    : isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-600'
-                                }`}
-                                title={activePrediction.lockedReports?.[selectedReportTab] ? "Unlock report" : "Approve & Lock report"}
-                              >
-                                {activePrediction.lockedReports?.[selectedReportTab] ? <Lock size={13} /> : <Unlock size={13} />}
-                              </button>
-                            )}
+                            {activePrediction?.generatedReports?.[selectedReportTab] &&
+                              !isEditingReport && (
+                                <button
+                                  onClick={() => handleToggleLockReport(selectedReportTab)}
+                                  className={`p-1.5 border rounded-lg transition-all ${
+                                    activePrediction.lockedReports?.[selectedReportTab]
+                                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20'
+                                      : isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-600'
+                                  }`}
+                                  title={
+                                    activePrediction.lockedReports?.[selectedReportTab]
+                                      ? 'Unlock report'
+                                      : 'Approve & Lock report'
+                                  }
+                                >
+                                  {activePrediction.lockedReports?.[selectedReportTab] ? (
+                                    <Lock size={13} />
+                                  ) : (
+                                    <Unlock size={13} />
+                                  )}
+                                </button>
+                              )}
 
                             {/* Language Switch removed for single source of truth */}
 
                             {/* Version history drop-down */}
-                            {activePrediction?.generatedReports?.[selectedReportTab] && (activePrediction.reportVersions?.[selectedReportTab]?.length > 0) && (
-                              <div className="flex items-center gap-1">
-                                <select
-                                  value={compareVersionId}
-                                  onChange={e => {
-                                    setCompareVersionId(e.target.value);
-                                    if (e.target.value) {
-                                      setCompareModalOpen(true);
-                                    }
-                                  }}
-                                  className={`border rounded-lg px-2 py-1 text-[9px] font-bold outline-none focus:ring-1 focus:ring-indigo-550 ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 text-slate-200' : 'bg-slate-100 border-slate-200 text-slate-700'
-                                  }`}
-                                >
-                                  <option value="">History</option>
-                                  {(activePrediction.reportVersions[selectedReportTab] || []).map(v => (
-                                    <option key={v.versionId} value={v.versionId}>
-                                      {v.timestamp.split(',')[1] || v.timestamp}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            )}
+                            {activePrediction?.generatedReports?.[selectedReportTab] &&
+                              activePrediction.reportVersions?.[selectedReportTab]?.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <select
+                                    value={compareVersionId}
+                                    onChange={e => {
+                                      setCompareVersionId(e.target.value);
+                                      if (e.target.value) {
+                                        setCompareModalOpen(true);
+                                      }
+                                    }}
+                                    className={`border rounded-lg px-2 py-1 text-[9px] font-bold outline-none focus:ring-1 focus:ring-indigo-550 ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 text-slate-200'
+                                        : 'bg-slate-100 border-slate-200 text-slate-700'
+                                    }`}
+                                  >
+                                    <option value="">History</option>
+                                    {(activePrediction.reportVersions[selectedReportTab] || []).map(
+                                      v => (
+                                        <option key={v.versionId} value={v.versionId}>
+                                          {v.timestamp.split(',')[1] || v.timestamp}
+                                        </option>
+                                      )
+                                    )}
+                                  </select>
+                                </div>
+                              )}
 
                             {/* Downloads */}
-                            {activePrediction?.generatedReports?.[selectedReportTab] && !isEditingReport && (
-                              <div className="flex items-center gap-1 border-l pl-2 dark:border-white/5 border-slate-200">
-                                <button 
-                                  onClick={handleDownloadJson}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-teal-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-teal-650'
-                                  }`}
-                                  title="Download JSON"
-                                >
-                                  <Database size={13} />
-                                </button>
-                                <button 
-                                  onClick={handleDownloadDocx}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-indigo-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-indigo-655'
-                                  }`}
-                                  title="Download MS Word (DOCX)"
-                                >
-                                  <Download size={13} />
-                                </button>
-                                <button 
-                                  onClick={handleDownloadPdf}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-red-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-red-655'
-                                  }`}
-                                  title="Download PDF"
-                                >
-                                  <FileText size={13} />
-                                </button>
-                                <button 
-                                  onClick={handleDownloadMarkdown}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-amber-500' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-amber-655'
-                                  }`}
-                                  title="Download Markdown (MD)"
-                                >
-                                  <Sparkles size={13} />
-                                </button>
-                              </div>
-                            )}
+                            {activePrediction?.generatedReports?.[selectedReportTab] &&
+                              !isEditingReport && (
+                                <div className="flex items-center gap-1 border-l pl-2 dark:border-white/5 border-slate-200">
+                                  <button
+                                    onClick={handleDownloadJson}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-teal-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-teal-650'
+                                    }`}
+                                    title="Download JSON"
+                                  >
+                                    <Database size={13} />
+                                  </button>
+                                  <button
+                                    onClick={handleDownloadDocx}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-indigo-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-indigo-655'
+                                    }`}
+                                    title="Download MS Word (DOCX)"
+                                  >
+                                    <Download size={13} />
+                                  </button>
+                                  <button
+                                    onClick={handleDownloadPdf}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-red-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-red-655'
+                                    }`}
+                                    title="Download PDF"
+                                  >
+                                    <FileText size={13} />
+                                  </button>
+                                  <button
+                                    onClick={handleDownloadMarkdown}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-amber-500'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-amber-655'
+                                    }`}
+                                    title="Download Markdown (MD)"
+                                  >
+                                    <Sparkles size={13} />
+                                  </button>
+                                </div>
+                              )}
 
                             {/* Print / Copy / Share */}
-                            {activePrediction?.generatedReports?.[selectedReportTab] && !isEditingReport && (
-                              <div className="flex items-center gap-1 border-l pl-2 dark:border-white/5 border-slate-200">
-                                <button 
-                                  onClick={handlePrint}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-emerald-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-205 text-emerald-655'
-                                  }`}
-                                  title="Print Brief"
-                                >
-                                  <Printer size={13} />
-                                </button>
-                                <button 
-                                  onClick={handleCopyText}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-600'
-                                  }`}
-                                  title="Copy entire report"
-                                >
-                                  <Copy size={13} />
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    setShareLink("https:" + "//ailegal.com/share/predictor-brief/" + activePrediction.id + "-" + selectedReportTab);
-                                    setShareModalOpen(true);
-                                  }}
-                                  className={`p-1.5 border rounded-lg transition-all ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-600'
-                                  }`}
-                                  title="Share brief link"
-                                >
-                                  <Share2 size={13} />
-                                </button>
-                              </div>
-                            )}
-
+                            {activePrediction?.generatedReports?.[selectedReportTab] &&
+                              !isEditingReport && (
+                                <div className="flex items-center gap-1 border-l pl-2 dark:border-white/5 border-slate-200">
+                                  <button
+                                    onClick={handlePrint}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-emerald-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-205 text-emerald-655'
+                                    }`}
+                                    title="Print Brief"
+                                  >
+                                    <Printer size={13} />
+                                  </button>
+                                  <button
+                                    onClick={handleCopyText}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-600'
+                                    }`}
+                                    title="Copy entire report"
+                                  >
+                                    <Copy size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShareLink(
+                                        'https:' +
+                                          '//ailegal.com/share/predictor-brief/' +
+                                          activePrediction.id +
+                                          '-' +
+                                          selectedReportTab
+                                      );
+                                      setShareModalOpen(true);
+                                    }}
+                                    className={`p-1.5 border rounded-lg transition-all ${
+                                      isDark
+                                        ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-400'
+                                        : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-600'
+                                    }`}
+                                    title="Share brief link"
+                                  >
+                                    <Share2 size={13} />
+                                  </button>
+                                </div>
+                              )}
                           </div>
                         </div>
 
@@ -4553,12 +5687,15 @@ CRITICAL PROMPT DIRECTIVE:
                             <div className="py-20 flex flex-col items-center justify-center gap-4 text-center">
                               <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                               <div className="space-y-1">
-                                <h5 className="text-xs font-black uppercase tracking-wider">Compiling AI Legal Narrative...</h5>
-                                <p className="text-[10px] text-slate-455 font-semibold">Running statutory audit checks & precedents indexing</p>
+                                <h5 className="text-xs font-black uppercase tracking-wider">
+                                  Compiling AI Legal Narrative...
+                                </h5>
+                                <p className="text-[10px] text-slate-455 font-semibold">
+                                  Running statutory audit checks & precedents indexing
+                                </p>
                               </div>
                             </div>
                           ) : !activePrediction?.generatedReports?.[selectedReportTab] ? (
-                            
                             /* EMPTY STATE: GENERATE REPORT PANEL */
                             <div className="py-12 px-6 flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-4">
                               <div className="p-4 bg-indigo-500/10 rounded-full text-indigo-400">
@@ -4566,55 +5703,77 @@ CRITICAL PROMPT DIRECTIVE:
                               </div>
                               <div className="space-y-2">
                                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                                  {getReportName(selectedReportTab, selectedReportTab)} {t('pleadingPending') || "Pleading Pending"}
+                                  {getReportName(selectedReportTab, selectedReportTab)}{' '}
+                                  {t('pleadingPending') || 'Pleading Pending'}
                                 </h4>
                                 <p className="text-[10px] text-slate-550 dark:text-slate-400 font-semibold leading-relaxed">
                                   {REPORT_METADATA.find(m => m.id === selectedReportTab)?.purpose}
                                 </p>
-                                <div className={`p-3 rounded-xl border text-[9px] text-left space-y-1 ${
-                                  isDark ? 'bg-zinc-950/20 border-white/5 text-slate-400' : 'bg-slate-50 border-slate-150 text-slate-600'
-                                }`}>
-                                  <span className="block font-black uppercase text-indigo-400 tracking-wider">{t('expectedBriefContent') || "Expected Brief Content:"}</span>
-                                  <span>{REPORT_METADATA.find(m => m.id === selectedReportTab)?.expected}</span>
+                                <div
+                                  className={`p-3 rounded-xl border text-[9px] text-left space-y-1 ${
+                                    isDark
+                                      ? 'bg-zinc-950/20 border-white/5 text-slate-400'
+                                      : 'bg-slate-50 border-slate-150 text-slate-600'
+                                  }`}
+                                >
+                                  <span className="block font-black uppercase text-indigo-400 tracking-wider">
+                                    {t('expectedBriefContent') || 'Expected Brief Content:'}
+                                  </span>
+                                  <span>
+                                    {
+                                      REPORT_METADATA.find(m => m.id === selectedReportTab)
+                                        ?.expected
+                                    }
+                                  </span>
                                 </div>
                                 <span className="block text-[8px] text-slate-455 font-black uppercase pt-1">
-                                  {t('estimatedTime') || "Estimated time"}: {REPORT_METADATA.find(m => m.id === selectedReportTab)?.estTime}
+                                  {t('estimatedTime') || 'Estimated time'}:{' '}
+                                  {REPORT_METADATA.find(m => m.id === selectedReportTab)?.estTime}
                                 </span>
                               </div>
                               <button
                                 onClick={async () => {
-                                  setLazyLoadingReport(prev => ({ ...prev, [selectedReportTab]: true }));
+                                  setLazyLoadingReport(prev => ({
+                                    ...prev,
+                                    [selectedReportTab]: true,
+                                  }));
                                   await new Promise(r => setTimeout(r, 1200));
-                                  const textContent = compileDetailedLegalReport(selectedReportTab, activePrediction);
+                                  const textContent = compileDetailedLegalReport(
+                                    selectedReportTab,
+                                    activePrediction
+                                  );
                                   const timestamp = new Date().toLocaleString();
                                   const initialVer = {
                                     versionId: 'v_init',
                                     timestamp,
-                                    author: "AI Core Pleading Engine",
-                                    content: textContent
+                                    author: 'AI Core Pleading Engine',
+                                    content: textContent,
                                   };
-                                  
+
                                   const updated = {
                                     ...activePrediction,
                                     reports: {
                                       ...activePrediction.reports,
-                                      [selectedReportTab]: textContent
+                                      [selectedReportTab]: textContent,
                                     },
                                     generatedReports: {
                                       ...activePrediction.generatedReports,
-                                      [selectedReportTab]: true
+                                      [selectedReportTab]: true,
                                     },
                                     reportVersions: {
                                       ...activePrediction.reportVersions,
-                                      [selectedReportTab]: [initialVer]
-                                    }
+                                      [selectedReportTab]: [initialVer],
+                                    },
                                   };
                                   setRawPrediction(updated);
                                   setActivePrediction(updated);
                                   await savePredictionToHistory(updated);
                                   setEditedReportText(textContent);
-                                  setLazyLoadingReport(prev => ({ ...prev, [selectedReportTab]: false }));
-                                  toast.success("Brief generated successfully!");
+                                  setLazyLoadingReport(prev => ({
+                                    ...prev,
+                                    [selectedReportTab]: false,
+                                  }));
+                                  toast.success('Brief generated successfully!');
                                 }}
                                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all min-h-[40px] flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10"
                               >
@@ -4622,21 +5781,26 @@ CRITICAL PROMPT DIRECTIVE:
                                 <span>Generate Brief</span>
                               </button>
                             </div>
-
                           ) : isEditingReport ? (
                             <textarea
                               rows={15}
                               value={editedReportText}
                               onChange={e => setEditedReportText(e.target.value)}
                               className={`w-full p-4 border rounded-2xl text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-550/20 font-mono resize-none leading-relaxed ${
-                                isDark ? 'bg-black/25 border-zinc-850 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                                isDark
+                                  ? 'bg-black/25 border-zinc-850 text-white'
+                                  : 'bg-slate-50 border-slate-200 text-slate-800'
                               }`}
                             />
                           ) : (
                             <div className="space-y-4">
-                              <div className={`p-5 rounded-2xl border text-xs sm:text-sm leading-relaxed max-h-[500px] overflow-y-auto custom-scrollbar font-sans select-text text-left ${
-                                isDark ? 'bg-zinc-900/30 border-white/5 text-slate-200' : 'bg-slate-50 border-slate-100 text-slate-700 shadow-inner'
-                              }`}>
+                              <div
+                                className={`p-5 rounded-2xl border text-xs sm:text-sm leading-relaxed max-h-[500px] overflow-y-auto custom-scrollbar font-sans select-text text-left ${
+                                  isDark
+                                    ? 'bg-zinc-900/30 border-white/5 text-slate-200'
+                                    : 'bg-slate-50 border-slate-100 text-slate-700 shadow-inner'
+                                }`}
+                              >
                                 <LegalReportViewer reportText={displayReportText} isDark={isDark} />
                               </div>
 
@@ -4644,26 +5808,33 @@ CRITICAL PROMPT DIRECTIVE:
                               <div className="p-4 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 text-left">
                                 <div className="flex items-center gap-2 mb-2">
                                   <Edit3 size={12} className="text-slate-450" />
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{t('privateCaseAnnotations') || "Private Case Annotations"}</span>
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                    {t('privateCaseAnnotations') || 'Private Case Annotations'}
+                                  </span>
                                 </div>
                                 <textarea
                                   rows={2}
-                                  placeholder={t('privateCaseAnnotationsPlaceholder') || "Write private strategic annotations or attorney notes here... (Automatically saved case-by-case)"}
+                                  placeholder={
+                                    t('privateCaseAnnotationsPlaceholder') ||
+                                    'Write private strategic annotations or attorney notes here... (Automatically saved case-by-case)'
+                                  }
                                   value={activePrediction?.reportNotes?.[selectedReportTab] || ''}
-                                  onChange={async (e) => {
+                                  onChange={async e => {
                                     const noteVal = e.target.value;
                                     const updated = {
                                       ...activePrediction,
                                       reportNotes: {
                                         ...activePrediction.reportNotes,
-                                        [selectedReportTab]: noteVal
-                                      }
+                                        [selectedReportTab]: noteVal,
+                                      },
                                     };
                                     setActivePrediction(updated);
                                     await savePredictionToHistory(updated);
                                   }}
                                   className={`w-full p-3 border rounded-xl text-xs font-semibold outline-none focus:ring-1 focus:ring-indigo-500/20 leading-relaxed resize-none ${
-                                    isDark ? 'bg-black/25 border-zinc-800 text-white font-semibold' : 'bg-white border-slate-200 text-slate-805'
+                                    isDark
+                                      ? 'bg-black/25 border-zinc-800 text-white font-semibold'
+                                      : 'bg-white border-slate-200 text-slate-805'
                                   }`}
                                 />
                               </div>
@@ -4673,89 +5844,125 @@ CRITICAL PROMPT DIRECTIVE:
                                 <button
                                   onClick={() => handleRegenerateReport(selectedReportTab)}
                                   className={`px-4 py-2 border rounded-xl text-[9px] font-black uppercase tracking-wider transition-all min-h-[36px] flex items-center gap-1.5 ${
-                                    isDark ? 'border-zinc-700 text-slate-300 hover:bg-zinc-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                                    isDark
+                                      ? 'border-zinc-700 text-slate-300 hover:bg-zinc-800'
+                                      : 'border-slate-200 text-slate-600 hover:bg-slate-100'
                                   }`}
                                 >
-                                  <RefreshCw size={11} className={isPredictorTranslating ? 'animate-spin' : ''} />
-                                  <span>{t('generateAgain') || "Generate Again"}</span>
+                                  <RefreshCw
+                                    size={11}
+                                    className={isPredictorTranslating ? 'animate-spin' : ''}
+                                  />
+                                  <span>{t('generateAgain') || 'Generate Again'}</span>
                                 </button>
-                                
+
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => handleToggleLockReport(selectedReportTab)}
                                     className={`px-4 py-2 border rounded-xl text-[9px] font-black uppercase tracking-wider transition-all min-h-[36px] flex items-center gap-1.5 ${
                                       activePrediction.lockedReports?.[selectedReportTab]
                                         ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
-                                        : isDark ? 'border-zinc-700 text-slate-300 hover:bg-zinc-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                                        : isDark
+                                          ? 'border-zinc-700 text-slate-300 hover:bg-zinc-800'
+                                          : 'border-slate-200 text-slate-600 hover:bg-slate-100'
                                     }`}
                                   >
                                     {activePrediction.lockedReports?.[selectedReportTab] ? (
                                       <>
                                         <Lock size={11} />
-                                        <span>{t('unlockDocument') || "Unlock Document"}</span>
+                                        <span>{t('unlockDocument') || 'Unlock Document'}</span>
                                       </>
                                     ) : (
                                       <>
                                         <Check size={11} />
-                                        <span>{t('approveAndLockBrief') || "Approve & Lock Brief"}</span>
+                                        <span>
+                                          {t('approveAndLockBrief') || 'Approve & Lock Brief'}
+                                        </span>
                                       </>
                                     )}
                                   </button>
                                 </div>
                               </div>
-
                             </div>
                           )}
                         </div>
-
                       </div>
 
                       {/* VERSION COMPARE MODAL */}
                       {compareModalOpen && (
                         <div className="fixed inset-0 z-[120050] flex items-center justify-center p-4">
-                          <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={() => setCompareModalOpen(false)} />
-                          <div className={`relative rounded-[32px] p-6 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border text-left ${
-                            isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                          }`}>
+                          <div
+                            className="absolute inset-0 bg-black/75 backdrop-blur-md"
+                            onClick={() => setCompareModalOpen(false)}
+                          />
+                          <div
+                            className={`relative rounded-[32px] p-6 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border text-left ${
+                              isDark
+                                ? 'bg-zinc-900 border-zinc-800 text-white'
+                                : 'bg-white border-slate-200 text-slate-900'
+                            }`}
+                          >
                             <div className="flex items-center justify-between border-b pb-4 mb-4 dark:border-zinc-800 border-slate-100">
                               <h3 className="text-sm font-black uppercase tracking-wider flex items-center gap-1.5 text-indigo-400">
                                 <Scale size={16} />
-                                <span>Compare Pleading Versions ({selectedReportTab.replace(/([A-Z])/g, ' $1')})</span>
+                                <span>
+                                  Compare Pleading Versions (
+                                  {selectedReportTab.replace(/([A-Z])/g, ' $1')})
+                                </span>
                               </h3>
-                              <button onClick={() => setCompareModalOpen(false)} className={`p-1 rounded-full ${
-                                isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-550'
-                              }`}>
+                              <button
+                                onClick={() => setCompareModalOpen(false)}
+                                className={`p-1 rounded-full ${
+                                  isDark
+                                    ? 'hover:bg-zinc-800 text-slate-400'
+                                    : 'hover:bg-slate-100 text-slate-550'
+                                }`}
+                              >
                                 <X size={18} />
                               </button>
                             </div>
-                            
+
                             <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
                               {/* Left Column: Historical Version */}
                               <div className="flex flex-col h-full min-h-0">
                                 <div className="flex justify-between items-center mb-2">
-                                  <span className="text-[10px] font-black uppercase text-slate-450">Compare Base Pleading</span>
+                                  <span className="text-[10px] font-black uppercase text-slate-450">
+                                    Compare Base Pleading
+                                  </span>
                                   <select
                                     value={compareVersionId}
                                     onChange={e => setCompareVersionId(e.target.value)}
                                     className={`border rounded-xl px-2.5 py-1.5 text-[10px] font-semibold outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                      isDark ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                                      isDark
+                                        ? 'bg-zinc-950 border-zinc-800 text-white'
+                                        : 'bg-white border-slate-200 text-slate-800'
                                     }`}
                                   >
                                     <option value="">Select version to compare...</option>
-                                    {(activePrediction?.reportVersions?.[selectedReportTab] || []).map(v => (
+                                    {(
+                                      activePrediction?.reportVersions?.[selectedReportTab] || []
+                                    ).map(v => (
                                       <option key={v.versionId} value={v.versionId}>
                                         {v.timestamp} - {v.author}
                                       </option>
                                     ))}
                                   </select>
                                 </div>
-                                <div className={`flex-1 overflow-y-auto p-4 border rounded-2xl text-xs font-semibold leading-relaxed select-text ${
-                                  isDark ? 'bg-zinc-950/40 border-white/5 text-slate-400' : 'bg-slate-50 border-slate-100 text-slate-550'
-                                }`}>
+                                <div
+                                  className={`flex-1 overflow-y-auto p-4 border rounded-2xl text-xs font-semibold leading-relaxed select-text ${
+                                    isDark
+                                      ? 'bg-zinc-950/40 border-white/5 text-slate-400'
+                                      : 'bg-slate-50 border-slate-100 text-slate-550'
+                                  }`}
+                                >
                                   {compareVersionId ? (
-                                    <LegalReportViewer 
-                                      reportText={activePrediction?.reportVersions?.[selectedReportTab]?.find(v => v.versionId === compareVersionId)?.content} 
-                                      isDark={isDark} 
+                                    <LegalReportViewer
+                                      reportText={
+                                        activePrediction?.reportVersions?.[selectedReportTab]?.find(
+                                          v => v.versionId === compareVersionId
+                                        )?.content
+                                      }
+                                      isDark={isDark}
                                     />
                                   ) : (
                                     'Select a historical version to begin compare.'
@@ -4766,13 +5973,24 @@ CRITICAL PROMPT DIRECTIVE:
                               {/* Right Column: Current Version */}
                               <div className="flex flex-col h-full min-h-0">
                                 <div className="flex justify-between items-center mb-2">
-                                  <span className="text-[10px] font-black uppercase text-indigo-400">Current Active Pleading</span>
-                                  <span className="text-[9px] font-bold text-slate-400">Latest Active Draft</span>
+                                  <span className="text-[10px] font-black uppercase text-indigo-400">
+                                    Current Active Pleading
+                                  </span>
+                                  <span className="text-[9px] font-bold text-slate-400">
+                                    Latest Active Draft
+                                  </span>
                                 </div>
-                                <div className={`flex-1 overflow-y-auto p-4 border rounded-2xl text-xs font-semibold leading-relaxed select-text ${
-                                  isDark ? 'bg-zinc-950/20 border-white/5 text-slate-200' : 'bg-slate-50 border-slate-100 text-slate-705'
-                                }`}>
-                                  <LegalReportViewer reportText={displayReportText} isDark={isDark} />
+                                <div
+                                  className={`flex-1 overflow-y-auto p-4 border rounded-2xl text-xs font-semibold leading-relaxed select-text ${
+                                    isDark
+                                      ? 'bg-zinc-950/20 border-white/5 text-slate-200'
+                                      : 'bg-slate-50 border-slate-100 text-slate-705'
+                                  }`}
+                                >
+                                  <LegalReportViewer
+                                    reportText={displayReportText}
+                                    isDark={isDark}
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -4781,12 +5999,14 @@ CRITICAL PROMPT DIRECTIVE:
                               {compareVersionId && (
                                 <button
                                   onClick={() => {
-                                    const pastContent = activePrediction?.reportVersions?.[selectedReportTab]?.find(v => v.versionId === compareVersionId)?.content;
+                                    const pastContent = activePrediction?.reportVersions?.[
+                                      selectedReportTab
+                                    ]?.find(v => v.versionId === compareVersionId)?.content;
                                     if (pastContent) {
                                       setEditedReportText(pastContent);
                                       setIsEditingReport(true);
                                       setCompareModalOpen(false);
-                                      toast.success("Restored selected version to Editor!");
+                                      toast.success('Restored selected version to Editor!');
                                     }
                                   }}
                                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
@@ -4794,7 +6014,7 @@ CRITICAL PROMPT DIRECTIVE:
                                   Restore This Version
                                 </button>
                               )}
-                              <button 
+                              <button
                                 onClick={() => setCompareModalOpen(false)}
                                 className="ml-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
                               >
@@ -4808,42 +6028,59 @@ CRITICAL PROMPT DIRECTIVE:
                       {/* SECURE SHARE LINK MODAL */}
                       {shareModalOpen && (
                         <div className="fixed inset-0 z-[120050] flex items-center justify-center p-4">
-                          <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={() => setShareModalOpen(false)} />
-                          <div className={`relative rounded-[32px] p-6 max-w-md w-full flex flex-col shadow-2xl border text-left ${
-                            isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                          }`}>
+                          <div
+                            className="absolute inset-0 bg-black/75 backdrop-blur-md"
+                            onClick={() => setShareModalOpen(false)}
+                          />
+                          <div
+                            className={`relative rounded-[32px] p-6 max-w-md w-full flex flex-col shadow-2xl border text-left ${
+                              isDark
+                                ? 'bg-zinc-900 border-zinc-800 text-white'
+                                : 'bg-white border-slate-200 text-slate-900'
+                            }`}
+                          >
                             <div className="flex items-center justify-between border-b pb-4 mb-4 dark:border-zinc-800 border-slate-100">
                               <h3 className="text-sm font-black uppercase tracking-wider flex items-center gap-1.5 text-indigo-400">
                                 <Share2 size={16} />
                                 <span>Secure Legal Pleading Share</span>
                               </h3>
-                              <button onClick={() => setShareModalOpen(false)} className={`p-1 rounded-full ${
-                                isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-550'
-                              }`}>
+                              <button
+                                onClick={() => setShareModalOpen(false)}
+                                className={`p-1 rounded-full ${
+                                  isDark
+                                    ? 'hover:bg-zinc-800 text-slate-400'
+                                    : 'hover:bg-slate-100 text-slate-550'
+                                }`}
+                              >
                                 <X size={18} />
                               </button>
                             </div>
 
                             <div className="space-y-4">
                               <p className="text-xs text-slate-500 font-semibold leading-relaxed">
-                                Generate an encrypted, time-locked briefing link to securely share this forecast with other advocates or external advisors.
+                                Generate an encrypted, time-locked briefing link to securely share
+                                this forecast with other advocates or external advisors.
                               </p>
 
                               <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Secure Briefing Link</label>
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">
+                                  Secure Briefing Link
+                                </label>
                                 <div className="flex gap-2">
                                   <input
                                     type="text"
                                     readOnly
                                     value={shareLink}
                                     className={`flex-1 border rounded-xl px-3 py-2 text-xs font-semibold outline-none ${
-                                      isDark ? 'bg-black/25 border-zinc-800 text-indigo-300' : 'bg-slate-50 border-slate-200 text-indigo-700'
+                                      isDark
+                                        ? 'bg-black/25 border-zinc-800 text-indigo-300'
+                                        : 'bg-slate-50 border-slate-200 text-indigo-700'
                                     }`}
                                   />
                                   <button
                                     onClick={() => {
                                       navigator.clipboard.writeText(shareLink);
-                                      toast.success("Share link copied!");
+                                      toast.success('Share link copied!');
                                     }}
                                     className="px-4 py-2 bg-indigo-650 hover:bg-indigo-755 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
                                   >
@@ -4855,11 +6092,15 @@ CRITICAL PROMPT DIRECTIVE:
                               <div className="grid grid-cols-2 gap-2 pt-2">
                                 <button
                                   onClick={() => {
-                                    window.open(`mailto:?subject=Litigation Forecast Brief&body=Please view the secure forecast document at: ${shareLink}`);
-                                    toast.success("Email client opened!");
+                                    window.open(
+                                      `mailto:?subject=Litigation Forecast Brief&body=Please view the secure forecast document at: ${shareLink}`
+                                    );
+                                    toast.success('Email client opened!');
                                   }}
                                   className={`p-2.5 border rounded-xl text-center text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-200' : 'bg-slate-50 border-slate-205 hover:bg-slate-100 text-slate-700'
+                                    isDark
+                                      ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-200'
+                                      : 'bg-slate-50 border-slate-205 hover:bg-slate-100 text-slate-700'
                                   }`}
                                 >
                                   <FileText size={12} />
@@ -4867,10 +6108,12 @@ CRITICAL PROMPT DIRECTIVE:
                                 </button>
                                 <button
                                   onClick={() => {
-                                    toast.success("Secure backup export package generated!");
+                                    toast.success('Secure backup export package generated!');
                                   }}
                                   className={`p-2.5 border rounded-xl text-center text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
-                                    isDark ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-200' : 'bg-slate-50 border-slate-205 hover:bg-slate-100 text-slate-700'
+                                    isDark
+                                      ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-slate-200'
+                                      : 'bg-slate-50 border-slate-205 hover:bg-slate-100 text-slate-700'
                                   }`}
                                 >
                                   <Download size={12} />
@@ -4881,54 +6124,71 @@ CRITICAL PROMPT DIRECTIVE:
                           </div>
                         </div>
                       )}
-
                     </div>
                   )}
-
                 </div>
               </div>
-
             </div>
           )}
-
         </div>
       </div>
 
       {/* History modal */}
       {historyVisible && (
         <div className="fixed inset-0 z-[120000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setHistoryVisible(false)} />
-          <div className={`relative rounded-t-[32px] sm:rounded-[32px] p-5 sm:p-6 w-full max-w-lg sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] flex flex-col shadow-2xl border ${
-            isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-250 text-slate-900'
-          }`}>
-            <div className={`flex items-center justify-between border-b pb-4 mb-4 ${
-              isDark ? 'border-zinc-800' : 'border-slate-100'
-            }`}>
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            onClick={() => setHistoryVisible(false)}
+          />
+          <div
+            className={`relative rounded-t-[32px] sm:rounded-[32px] p-5 sm:p-6 w-full max-w-lg sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] flex flex-col shadow-2xl border ${
+              isDark
+                ? 'bg-zinc-900 border-zinc-800 text-white'
+                : 'bg-white border-slate-250 text-slate-900'
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between border-b pb-4 mb-4 ${
+                isDark ? 'border-zinc-800' : 'border-slate-100'
+              }`}
+            >
               <h3 className="text-sm font-black uppercase tracking-wider flex items-center gap-1.5">
                 <History size={16} />
                 <span>Forecasting Verdict Logs</span>
               </h3>
-              <button onClick={() => setHistoryVisible(false)} className={`p-1 rounded-full ${
-                isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-550'
-              }`}>
+              <button
+                onClick={() => setHistoryVisible(false)}
+                className={`p-1 rounded-full ${
+                  isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-550'
+                }`}
+              >
                 <X size={18} />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
               {historyData.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 font-semibold text-xs">No previous forecasts found in database history.</div>
+                <div className="text-center py-10 text-slate-400 font-semibold text-xs">
+                  No previous forecasts found in database history.
+                </div>
               ) : (
                 historyData.map(item => (
-                  <div key={item.id} className={`p-4 rounded-2xl flex items-center justify-between gap-4 border ${
-                    isDark ? 'bg-zinc-800/40 border-zinc-700/30' : 'bg-slate-50 border-slate-200/60'
-                  }`}>
+                  <div
+                    key={item.id}
+                    className={`p-4 rounded-2xl flex items-center justify-between gap-4 border ${
+                      isDark
+                        ? 'bg-zinc-800/40 border-zinc-700/30'
+                        : 'bg-slate-50 border-slate-200/60'
+                    }`}
+                  >
                     <div className="min-w-0 flex-1 text-left">
                       <h4 className="text-xs font-black truncate">{item.caseType} Analysis</h4>
-                      <p className="text-[10px] text-slate-450 mt-1">{item.timestamp} • Win: {item.stats.successRate}%</p>
+                      <p className="text-[10px] text-slate-450 mt-1">
+                        {item.timestamp} • Win: {item.stats.successRate}%
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => {
                           setInputWorkflowMode(item.predictionSource || 'existing');
                           if (item.uploadedFiles) setUploadedFiles(item.uploadedFiles);
@@ -4948,14 +6208,16 @@ CRITICAL PROMPT DIRECTIVE:
                           }
                           setRawPrediction(item);
                           setActivePrediction(item);
-                          setEditedReportText(item.reports?.[selectedReportTab] || item.report || '');
+                          setEditedReportText(
+                            item.reports?.[selectedReportTab] || item.report || ''
+                          );
                           setHistoryVisible(false);
                         }}
                         className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-755 text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm transition-all"
                       >
                         Load
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteHistoryItem(item.id)}
                         className={`p-2 rounded-lg text-red-500 transition-colors ${
                           isDark ? 'hover:bg-red-950/20' : 'hover:bg-red-50'
@@ -4975,59 +6237,95 @@ CRITICAL PROMPT DIRECTIVE:
       {/* SECTION 19: Unified AI Explanation Modal */}
       {explanationModal.isOpen && (
         <div className="fixed inset-0 z-[120050] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={() => setExplanationModal(prev => ({ ...prev, isOpen: false }))} />
-          <div className={`relative rounded-t-[32px] sm:rounded-[32px] p-5 sm:p-6 w-full max-w-xl sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl border text-left ${
-            isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-          }`}>
-            <div className={`flex items-center justify-between border-b pb-4 mb-4 ${
-              isDark ? 'border-zinc-800' : 'border-slate-100'
-            }`}>
+          <div
+            className="absolute inset-0 bg-black/75 backdrop-blur-md"
+            onClick={() => setExplanationModal(prev => ({ ...prev, isOpen: false }))}
+          />
+          <div
+            className={`relative rounded-t-[32px] sm:rounded-[32px] p-5 sm:p-6 w-full max-w-xl sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl border text-left ${
+              isDark
+                ? 'bg-zinc-900 border-zinc-800 text-white'
+                : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between border-b pb-4 mb-4 ${
+                isDark ? 'border-zinc-800' : 'border-slate-100'
+              }`}
+            >
               <h3 className="text-sm font-black uppercase tracking-wider flex items-center gap-1.5 text-indigo-400">
                 <Brain size={16} />
                 <span>Forensic AI Explanation Brief</span>
               </h3>
-              <button onClick={() => setExplanationModal(prev => ({ ...prev, isOpen: false }))} className={`p-1 rounded-full ${
-                isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
-              }`}>
+              <button
+                onClick={() => setExplanationModal(prev => ({ ...prev, isOpen: false }))}
+                className={`p-1 rounded-full ${
+                  isDark ? 'hover:bg-zinc-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                }`}
+              >
                 <X size={18} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar text-xs font-semibold leading-relaxed">
               <div>
-                <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">Forecast Target Parameter</span>
-                <span className="text-sm font-black text-slate-800 dark:text-slate-100">{explanationModal.title}</span>
+                <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">
+                  Forecast Target Parameter
+                </span>
+                <span className="text-sm font-black text-slate-800 dark:text-slate-100">
+                  {explanationModal.title}
+                </span>
               </div>
 
               <div>
-                <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">Calculated Value</span>
-                <span className="text-base font-black text-emerald-500">{explanationModal.metricValue}</span>
+                <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">
+                  Calculated Value
+                </span>
+                <span className="text-base font-black text-emerald-500">
+                  {explanationModal.metricValue}
+                </span>
               </div>
 
-              <div className={`p-4 rounded-2xl border ${isDark ? 'bg-black/30 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
-                <span className="block text-[8px] font-black text-indigo-400 uppercase tracking-wider mb-1">AI Reasoning Pleading</span>
+              <div
+                className={`p-4 rounded-2xl border ${isDark ? 'bg-black/30 border-white/5' : 'bg-slate-50 border-slate-200'}`}
+              >
+                <span className="block text-[8px] font-black text-indigo-400 uppercase tracking-wider mb-1">
+                  AI Reasoning Pleading
+                </span>
                 <p className="text-slate-600 dark:text-slate-350">{explanationModal.reasoning}</p>
               </div>
 
               <div>
-                <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">Statutory / Legal Basis</span>
-                <p className="text-slate-700 dark:text-slate-250 mt-1">{explanationModal.legalBasis}</p>
+                <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">
+                  Statutory / Legal Basis
+                </span>
+                <p className="text-slate-700 dark:text-slate-250 mt-1">
+                  {explanationModal.legalBasis}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 border-t border-slate-200 dark:border-white/5 pt-3">
                 <div>
-                  <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">Data Quality Metric</span>
-                  <span className="text-[11px] font-black text-emerald-500 uppercase">{explanationModal.dataQuality}</span>
+                  <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">
+                    Data Quality Metric
+                  </span>
+                  <span className="text-[11px] font-black text-emerald-500 uppercase">
+                    {explanationModal.dataQuality}
+                  </span>
                 </div>
                 <div>
-                  <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">Precedent Match Correlation</span>
-                  <span className="text-[11px] font-black text-indigo-400 uppercase">{explanationModal.precedents}</span>
+                  <span className="block text-[8px] font-black text-slate-450 uppercase tracking-wider">
+                    Precedent Match Correlation
+                  </span>
+                  <span className="text-[11px] font-black text-indigo-400 uppercase">
+                    {explanationModal.precedents}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="mt-6 pt-3 border-t border-slate-200 dark:border-white/5 text-right">
-              <button 
+              <button
                 onClick={() => setExplanationModal(prev => ({ ...prev, isOpen: false }))}
                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
               >
@@ -5037,7 +6335,6 @@ CRITICAL PROMPT DIRECTIVE:
           </div>
         </div>
       )}
-
     </div>
   );
 };

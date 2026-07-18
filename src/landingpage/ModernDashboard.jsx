@@ -57,12 +57,18 @@ const tabNavStyles = {
     WebkitTapHighlightColor: 'transparent',
     flexShrink: 0,
   }),
-  tabHover: (isDark) => ({
+  tabHover: isDark => ({
     color: isDark ? 'rgba(203,213,225,1)' : 'rgba(51,65,85,1)',
   }),
 };
 
-const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory = 'business', onCategoryChange }) => {
+const ModernDashboard = ({
+  userName,
+  onToolSelect,
+  activeToolId,
+  activeCategory = 'business',
+  onCategoryChange,
+}) => {
   const { t } = useLanguage();
   const isDark = useIsDark();
   const setActiveCategory = onCategoryChange;
@@ -74,12 +80,34 @@ const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory 
       subtitle: 'Professional enterprise AI solutions',
       icon: Briefcase,
       color: '#818cf8',
-      description: '💼 Streamline legal workflows, financial analysis, and social media orchestration with AI precision.',
+      description:
+        '💼 Streamline legal workflows, financial analysis, and social media orchestration with AI precision.',
       tools: [
-        { id: 'legal', label: t('aiLegal') || 'AI Legal', desc: 'Professional AI legal research.', icon: Scale, color: '#818cf8', premium: true },
-        { id: 'ai_cashflow', label: 'AI Cashflow™', desc: 'Live market analysis and reports.', icon: TrendingUp, color: '#10b981', premium: true },
-        { id: 'aiad_agent', label: t('aiAds') || 'AI ADS', desc: 'Social Media Orchestration.', icon: Megaphone, color: '#eab308', premium: true },
-      ]
+        {
+          id: 'legal',
+          label: t('aiLegal') || 'AI Legal',
+          desc: 'Professional AI legal research.',
+          icon: Scale,
+          color: '#818cf8',
+          premium: true,
+        },
+        {
+          id: 'ai_cashflow',
+          label: 'AI Cashflow™',
+          desc: 'Live market analysis and reports.',
+          icon: TrendingUp,
+          color: '#10b981',
+          premium: true,
+        },
+        {
+          id: 'aiad_agent',
+          label: t('aiAds') || 'AI ADS',
+          desc: 'Social Media Orchestration.',
+          icon: Megaphone,
+          color: '#eab308',
+          premium: true,
+        },
+      ],
     },
     {
       id: 'create',
@@ -87,14 +115,45 @@ const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory 
       subtitle: 'Creative AI media generation tools',
       icon: Sparkles,
       color: '#a78bfa',
-      description: '🎨 Generate stunning visuals, cinematic videos, and natural audio with state-of-the-art AI models.',
+      description:
+        '🎨 Generate stunning visuals, cinematic videos, and natural audio with state-of-the-art AI models.',
       tools: [
-        { id: 'image', label: t('generateImage') || 'Generate Image', desc: 'High-quality AI image generation.', icon: ImagePlus, color: '#a78bfa' },
-        { id: 'video', label: t('generateVideo') || 'Generate Video', desc: 'Cinematic AI video creation.', icon: Video, color: '#fb923c' },
-        { id: 'image_to_video', label: t('imageToVideo') || 'Image to Video', desc: 'Animate photos with fluid motion.', icon: PlayCircle, color: '#f97316' },
-        { id: 'edit_image', label: t('editImage') || 'Edit Image', desc: 'AI-powered magic image editor.', icon: Wand2, color: '#f43f5e' },
-        { id: 'audio', label: 'Generate Audio', desc: 'Natural text-to-speech engine.', icon: Headphones, color: '#34d399' },
-      ]
+        {
+          id: 'image',
+          label: t('generateImage') || 'Generate Image',
+          desc: 'High-quality AI image generation.',
+          icon: ImagePlus,
+          color: '#a78bfa',
+        },
+        {
+          id: 'video',
+          label: t('generateVideo') || 'Generate Video',
+          desc: 'Cinematic AI video creation.',
+          icon: Video,
+          color: '#fb923c',
+        },
+        {
+          id: 'image_to_video',
+          label: t('imageToVideo') || 'Image to Video',
+          desc: 'Animate photos with fluid motion.',
+          icon: PlayCircle,
+          color: '#f97316',
+        },
+        {
+          id: 'edit_image',
+          label: t('editImage') || 'Edit Image',
+          desc: 'AI-powered magic image editor.',
+          icon: Wand2,
+          color: '#f43f5e',
+        },
+        {
+          id: 'audio',
+          label: 'Generate Audio',
+          desc: 'Natural text-to-speech engine.',
+          icon: Headphones,
+          color: '#34d399',
+        },
+      ],
     },
     {
       id: 'intelligence',
@@ -102,14 +161,39 @@ const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory 
       subtitle: 'Research, coding, and productivity AI',
       icon: Brain,
       color: '#0ea5e9',
-      description: '🧠 Harness the power of advanced research, real-time data access, and automated coding assistants.',
+      description:
+        '🧠 Harness the power of advanced research, real-time data access, and automated coding assistants.',
       tools: [
-        { id: 'deep_search', label: t('deepSearch') || 'Deep Search', desc: 'In-depth analysis and reports.', icon: Search, color: '#0ea5e9' },
-        { id: 'web_search', label: t('realTimeSearch') || 'Real-Time Search', desc: 'Fast and accurate web search.', icon: Globe, color: '#22d3ee' },
-        { id: 'document', label: t('analyzeDocument') || 'Convert Document', desc: 'Analyze or convert documents.', icon: FileText, color: '#3b82f6' },
-        { id: 'code', label: t('codeWriter') || 'Code Writer', desc: 'Generate and debug code easily.', icon: Code, color: '#6366f1' },
-      ]
-    }
+        {
+          id: 'deep_search',
+          label: t('deepSearch') || 'Deep Search',
+          desc: 'In-depth analysis and reports.',
+          icon: Search,
+          color: '#0ea5e9',
+        },
+        {
+          id: 'web_search',
+          label: t('realTimeSearch') || 'Real-Time Search',
+          desc: 'Fast and accurate web search.',
+          icon: Globe,
+          color: '#22d3ee',
+        },
+        {
+          id: 'document',
+          label: t('analyzeDocument') || 'Convert Document',
+          desc: 'Analyze or convert documents.',
+          icon: FileText,
+          color: '#3b82f6',
+        },
+        {
+          id: 'code',
+          label: t('codeWriter') || 'Code Writer',
+          desc: 'Generate and debug code easily.',
+          icon: Code,
+          color: '#6366f1',
+        },
+      ],
+    },
   ];
 
   const currentCategoryData = categories.find(c => c.id === activeCategory);
@@ -122,19 +206,22 @@ const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory 
       {/* Background Decor Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-0 -left-4 w-72 h-72 bg-violet-500/5 dark:bg-violet-500/10 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-0 -right-4 w-72 h-72 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute bottom-0 -right-4 w-72 h-72 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[100px] animate-pulse"
+          style={{ animationDelay: '2s' }}
+        />
       </div>
       {/* Hero Section */}
       <div className="text-center px-4 pt-1">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-base sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center justify-center gap-1.5">
-            Welcome, <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400 font-black">{userName || 'User'}</span>
+            Welcome,{' '}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400 font-black">
+              {userName || 'User'}
+            </span>
             <motion.span
               animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1.2, 1] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
             >
               <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-amber-400 fill-amber-400" />
             </motion.span>
@@ -168,8 +255,6 @@ const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory 
         isDark={isDark}
       />
 
-
-
       {/* Tool Grid Area */}
       <div className="min-h-[360px] sm:min-h-[280px] w-full pt-1 sm:pt-2">
         <AnimatePresence mode="wait">
@@ -194,7 +279,7 @@ const ModernDashboard = ({ userName, onToolSelect, activeToolId, activeCategory 
                       transition={{
                         duration: 0.35,
                         delay: index * 0.05,
-                        ease: [0.23, 1, 0.32, 1]
+                        ease: [0.23, 1, 0.32, 1],
                       }}
                     >
                       <DashboardCard
@@ -250,19 +335,17 @@ const CategoryTabs = ({ categories, activeCategory, onCategoryChange, isDark }) 
 
   return (
     <div className="flex justify-center">
-      <nav
-        ref={navRef}
-        style={tabNavStyles.wrapper}
-        className="hide-scrollbar"
-      >
-        {categories.map((cat) => {
+      <nav ref={navRef} style={tabNavStyles.wrapper} className="hide-scrollbar">
+        {categories.map(cat => {
           const isActive = activeCategory === cat.id;
           const isHovered = hoveredTab === cat.id;
 
           return (
             <button
               key={cat.id}
-              ref={(el) => { tabRefs.current[cat.id] = el; }}
+              ref={el => {
+                tabRefs.current[cat.id] = el;
+              }}
               onClick={() => onCategoryChange(cat.id)}
               onMouseEnter={() => setHoveredTab(cat.id)}
               onMouseLeave={() => setHoveredTab(null)}
@@ -319,7 +402,7 @@ const DashboardCard = ({ tool, onSelect, isActive, isDark, isCentered }) => {
     >
       {/* Animated Glow on Hover */}
       <div className="absolute -inset-1 rounded-[26px] bg-gradient-to-r from-violet-500/20 to-indigo-500/20 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500" />
-      
+
       {/* Border Wrapper */}
       <div
         className={`h-full rounded-2xl sm:rounded-[24px] p-[1px] transition-all duration-500 ${isDark ? 'bg-white/10' : 'bg-slate-200/50'} group-hover:scale-[1.01]`}
@@ -364,16 +447,20 @@ const DashboardCard = ({ tool, onSelect, isActive, isDark, isCentered }) => {
               whileHover={{ rotate: 12, scale: 1.1 }}
               className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-all duration-500 bg-white/40 dark:bg-black/20 backdrop-blur-md relative"
               style={{
-                border: isDark ? '1px solid rgba(139, 92, 246, 0.2)' : '1px solid rgba(139, 92, 246, 0.1)',
+                border: isDark
+                  ? '1px solid rgba(139, 92, 246, 0.2)'
+                  : '1px solid rgba(139, 92, 246, 0.1)',
               }}
             >
               <div
                 className="absolute inset-0 rounded-xl sm:rounded-2xl opacity-20 group-hover:opacity-40 transition-opacity"
-                style={{ background: `radial-gradient(circle at center, ${tool.color}, transparent)` }}
+                style={{
+                  background: `radial-gradient(circle at center, ${tool.color}, transparent)`,
+                }}
               />
               <Icon className="w-4 h-4 sm:w-6 sm:h-6 relative z-10" style={{ color: tool.color }} />
             </motion.div>
-            
+
             <div className="flex flex-col items-center gap-0.5 min-w-0 px-1">
               <h4 className="font-extrabold text-[10px] sm:text-[13px] text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors leading-tight line-clamp-2 text-center">
                 {tool.label}

@@ -2,8 +2,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Search, Plus, Folder, FolderOpen, ChevronDown, Edit2, Trash2, Check, PlusCircle,
-  MessageSquare, Gavel, FileText, Scale, Briefcase, Square, X, User, Zap, FolderPlus
+  Search,
+  Plus,
+  Folder,
+  FolderOpen,
+  ChevronDown,
+  Edit2,
+  Trash2,
+  Check,
+  PlusCircle,
+  MessageSquare,
+  Gavel,
+  FileText,
+  Scale,
+  Briefcase,
+  Square,
+  X,
+  User,
+  Zap,
+  FolderPlus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -44,7 +61,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   const [currentSessionId, setCurrentSessionId] = useState(sessionId || 'new');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingSessionId, setEditingSessionId] = useState(null);
-  const [newTitle, setNewTitle] = useState("");
+  const [newTitle, setNewTitle] = useState('');
 
   // --- Project State ---
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -88,7 +105,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
         const data = await chatStorageService.getSessions(searchQuery ? null : currentProjectId);
         setSessions(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Failed to fetch sessions:", err);
+        console.error('Failed to fetch sessions:', err);
       }
     };
 
@@ -100,7 +117,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     }
 
     const handleMergeComplete = () => {
-      console.log("[SIDEBAR] Merge complete event received, refetching sessions...");
+      console.log('[SIDEBAR] Merge complete event received, refetching sessions...');
       fetchSessions();
     };
     window.addEventListener('chat-merge-complete', handleMergeComplete);
@@ -109,7 +126,10 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
 
   // Auto-expand projects if search matches a project name
   useEffect(() => {
-    if (searchQuery && projects.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))) {
+    if (
+      searchQuery &&
+      projects.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ) {
       setIsProjectsExpanded(true);
     }
   }, [searchQuery, projects]);
@@ -119,7 +139,12 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
     return parts.map((part, i) =>
       part.toLowerCase() === query.toLowerCase() ? (
-        <mark key={i} className="bg-primary/20 text-primary border-b border-primary/50 rounded-sm px-0.5">{part}</mark>
+        <mark
+          key={i}
+          className="bg-primary/20 text-primary border-b border-primary/50 rounded-sm px-0.5"
+        >
+          {part}
+        </mark>
       ) : (
         part
       )
@@ -136,7 +161,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     try {
       const newCase = await apiService.createProject({
         name: newProjectName.trim(),
-        isLegalCase: isLegal
+        isLegalCase: isLegal,
       });
       setProjects(prev => [newCase, ...prev]);
       setCurrentProjectId(newCase._id);
@@ -153,7 +178,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       toast.success(isLegal ? t('caseCreated') : t('projectCreated'));
       navigate('/dashboard/chat/new');
     } catch (err) {
-      console.error("Failed to create:", err);
+      console.error('Failed to create:', err);
       toast.error(isLegal ? t('failedToCreateCase') : t('failedToCreateProject'));
     }
   };
@@ -178,7 +203,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     try {
       await chatStorageService.deleteSession(chatToDelete);
       useGenerationStore.getState().clearGeneration(chatToDelete);
-      
+
       const updatedSessions = await chatStorageService.getSessions(currentProjectId);
       setSessions(updatedSessions);
       if (currentSessionId === chatToDelete) {
@@ -198,7 +223,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     e.stopPropagation();
     e.preventDefault();
     setEditingSessionId(session.sessionId);
-    setNewTitle(session.title || "New Chat");
+    setNewTitle(session.title || 'New Chat');
   };
 
   const handleRename = async (e, sessionId) => {
@@ -216,21 +241,23 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     const oldSessions = Array.isArray(sessions) ? [...sessions] : [];
     const renamedTitle = newTitle.trim();
 
-    setSessions(prev => (Array.isArray(prev) ? prev : []).map(s =>
-      s.sessionId === sessionId
-        ? { ...s, title: renamedTitle, lastModified: Date.now() }
-        : s
-    ).sort((a, b) => b.lastModified - a.lastModified));
+    setSessions(prev =>
+      (Array.isArray(prev) ? prev : [])
+        .map(s =>
+          s.sessionId === sessionId ? { ...s, title: renamedTitle, lastModified: Date.now() } : s
+        )
+        .sort((a, b) => b.lastModified - a.lastModified)
+    );
 
     try {
       const success = await chatStorageService.updateSessionTitle(sessionId, renamedTitle);
       if (success) {
         toast.success(t('chatRenamed'));
       } else {
-        throw new Error("Failed to sync rename to server");
+        throw new Error('Failed to sync rename to server');
       }
     } catch (err) {
-      console.error("Rename failed:", err);
+      console.error('Rename failed:', err);
       toast.error(t('couldNotRenameChat'));
       setSessions(oldSessions);
     } finally {
@@ -247,11 +274,11 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
 
     try {
       const updated = await apiService.renameProject(projectId, renameProjectName.trim());
-      setProjects(prev => prev.map(p => p._id === projectId ? { ...p, name: updated.name } : p));
+      setProjects(prev => prev.map(p => (p._id === projectId ? { ...p, name: updated.name } : p)));
       const isCase = projects.find(p => p._id === projectId)?.isLegalCase;
       toast.success(isCase ? t('caseRenamedSuccessfully') : t('projectRenamedSuccessfully'));
     } catch (error) {
-      console.error("Failed to rename project:", error);
+      console.error('Failed to rename project:', error);
       const isCase = projects.find(p => p._id === projectId)?.isLegalCase;
       toast.error(isCase ? t('failedToRenameCase') : t('failedToRenameProject'));
     } finally {
@@ -277,7 +304,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       }
       toast.success(isCase ? t('caseDeletedSuccessfully') : t('projectDeletedSuccessfully'));
     } catch (error) {
-      console.error("Failed to delete project:", error);
+      console.error('Failed to delete project:', error);
       toast.error(isCase ? t('failedToDeleteCase') : t('failedToDeleteProject'));
     } finally {
       setIsDeleteModalOpen(false);
@@ -285,7 +312,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     }
   };
 
-  const handleSwitchProject = (projectId) => {
+  const handleSwitchProject = projectId => {
     setCurrentProjectId(projectId);
     const p = projects.find(proj => proj._id === projectId);
     if (p?.isLegalCase) {
@@ -304,16 +331,20 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       <div className="px-5 pt-2 relative z-10">
         <div className="relative group/search">
           <div className="absolute inset-0 bg-primary/10 blur-xl opacity-0 group-focus-within/search:opacity-100 transition-opacity pointer-events-none" />
-          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-subtext/60' : 'text-slate-500'} group-focus-within/search:text-primary group-focus-within/search:scale-110 transition-all duration-300`} />
+          <Search
+            className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-subtext/60' : 'text-slate-500'} group-focus-within/search:text-primary group-focus-within/search:scale-110 transition-all duration-300`}
+          />
           <input
             type="text"
             placeholder={t('findASession')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className={`w-full backdrop-blur-3xl border focus:ring-[6px] rounded-[20px] py-3 pl-11 pr-4 text-sm outline-none transition-all font-semibold shadow-sm 
-              ${isDark
-                ? 'bg-black/40 border-white/10 focus:border-primary/50 focus:bg-black/60 focus:ring-primary/10 placeholder:text-subtext/40 text-white'
-                : 'bg-white/80 border-slate-200 focus:border-primary/40 focus:bg-white focus:ring-primary/10 placeholder:text-slate-500 text-slate-900 shadow-inner'}`}
+              ${
+                isDark
+                  ? 'bg-black/40 border-white/10 focus:border-primary/50 focus:bg-black/60 focus:ring-primary/10 placeholder:text-subtext/40 text-white'
+                  : 'bg-white/80 border-slate-200 focus:border-primary/40 focus:bg-white focus:ring-primary/10 placeholder:text-slate-500 text-slate-900 shadow-inner'
+              }`}
           />
         </div>
       </div>
@@ -324,16 +355,24 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
           onClick={handleNewChat}
           className="w-full relative overflow-hidden group p-[1px] rounded-[16px] transition-all duration-500 hover:scale-[1.03] active:scale-[0.97] bg-[#a78bfa] shadow-[0_10px_25px_rgba(167,139,250,0.25),0_0_15px_rgba(96,165,250,0.15)]"
         >
-          <div 
-            className="absolute inset-0 transition-opacity duration-500 bg-gradient-to-br from-[#a78bfa] via-[#8b5cf6] to-[#60a5fa]" 
+          <div
+            className="absolute inset-0 transition-opacity duration-500 bg-gradient-to-br from-[#a78bfa] via-[#8b5cf6] to-[#60a5fa]"
             style={{ backgroundSize: '100% 100%' }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent opacity-70 pointer-events-none" />
           <div className="relative flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-sm rounded-[15px] group-hover:bg-white/10 transition-all duration-500">
-            <Plus className="w-4 h-4 text-white group-hover:rotate-180 transition-transform duration-700" strokeWidth={3} />
-            <span className="font-black text-[13px] tracking-wide text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]">{t('newChat')}</span>
+            <Plus
+              className="w-4 h-4 text-white group-hover:rotate-180 transition-transform duration-700"
+              strokeWidth={3}
+            />
+            <span className="font-black text-[13px] tracking-wide text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]">
+              {t('newChat')}
+            </span>
           </div>
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] translate-x-[-100%] group-hover:translate-x-[100%] transform" style={{ transitionDuration: '1.2s' }} />
+          <div
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] translate-x-[-100%] group-hover:translate-x-[100%] transform"
+            style={{ transitionDuration: '1.2s' }}
+          />
         </button>
       </div>
 
@@ -345,21 +384,29 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
             className="px-5 pt-4 pb-2 flex items-center justify-between cursor-pointer group/header select-none relative z-10"
           >
             <div className="flex items-center gap-2">
-              <h3 className={`text-[12px] font-black uppercase tracking-[0.2em] group-hover/header:text-primary transition-colors 
-                ${isDark ? 'text-subtext/60' : 'text-slate-900'}`}>PROJECTS</h3>
-              <div className={`h-[1px] w-8 transition-all group-hover/header:w-12 group-hover/header:bg-primary/30 
-                ${isDark ? 'bg-subtext/20' : 'bg-slate-300'}`}></div>
+              <h3
+                className={`text-[12px] font-black uppercase tracking-[0.2em] group-hover/header:text-primary transition-colors 
+                ${isDark ? 'text-subtext/60' : 'text-slate-900'}`}
+              >
+                PROJECTS
+              </h3>
+              <div
+                className={`h-[1px] w-8 transition-all group-hover/header:w-12 group-hover/header:bg-primary/30 
+                ${isDark ? 'bg-subtext/20' : 'bg-slate-300'}`}
+              ></div>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-subtext/40 transition-transform duration-300 ${isProjectsExpanded ? '' : '-rotate-90'}`} />
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-subtext/40 transition-transform duration-300 ${isProjectsExpanded ? '' : '-rotate-90'}`}
+            />
           </div>
 
           <AnimatePresence>
             {isProjectsExpanded && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
+                animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "circOut" }}
+                transition={{ duration: 0.3, ease: 'circOut' }}
                 className="space-y-1 relative z-10"
               >
                 <button
@@ -370,54 +417,92 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                 </button>
 
                 {/* Regular Projects List */}
-                {projects.filter(p => !p.isLegalCase).map((p, idx) => (
-                  <div key={p._id} className="relative group/proj flex items-center mx-3">
-                    {editingProjectId === p._id ? (
-                      <div className="flex w-full items-center gap-2 px-3 py-1.5" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          autoFocus
-                          value={renameProjectName}
-                          onChange={e => setRenameProjectName(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') handleRenameProject(e, p._id); if (e.key === 'Escape') setEditingProjectId(null); }}
-                          className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
-                        />
-                        <button onClick={(e) => handleRenameProject(e, p._id)} className="text-primary"><Check className="w-4 h-4" /></button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleSwitchProject(p._id)}
-                          className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold' : 'text-subtext hover:bg-white/10 hover:text-maintext'}`}
+                {projects
+                  .filter(p => !p.isLegalCase)
+                  .map((p, idx) => (
+                    <div key={p._id} className="relative group/proj flex items-center mx-3">
+                      {editingProjectId === p._id ? (
+                        <div
+                          className="flex w-full items-center gap-2 px-3 py-1.5"
+                          onClick={e => e.stopPropagation()}
                         >
-                          <Folder className="w-4 h-4 shrink-0" />
-                          <span className="truncate text-[13px]">{p.name}</span>
-                        </button>
-                        <div className="absolute right-1 opacity-0 group-hover/proj:opacity-100 flex items-center gap-0.5">
-                          <button onClick={(e) => { e.stopPropagation(); setEditingProjectId(p._id); setRenameProjectName(p.name); }} className="p-1 hover:text-primary"><Edit2 className="w-3 h-3" /></button>
-                          <button onClick={(e) => handleDeleteProject(e, p._id)} className="p-1 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                          <input
+                            autoFocus
+                            value={renameProjectName}
+                            onChange={e => setRenameProjectName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleRenameProject(e, p._id);
+                              if (e.key === 'Escape') setEditingProjectId(null);
+                            }}
+                            className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
+                          />
+                          <button
+                            onClick={e => handleRenameProject(e, p._id)}
+                            className="text-primary"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
                         </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleSwitchProject(p._id)}
+                            className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold' : 'text-subtext hover:bg-white/10 hover:text-maintext'}`}
+                          >
+                            <Folder className="w-4 h-4 shrink-0" />
+                            <span className="truncate text-[13px]">{p.name}</span>
+                          </button>
+                          <div className="absolute right-1 opacity-0 group-hover/proj:opacity-100 flex items-center gap-0.5">
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                setEditingProjectId(p._id);
+                                setRenameProjectName(p.name);
+                              }}
+                              className="p-1 hover:text-primary"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={e => handleDeleteProject(e, p._id)}
+                              className="p-1 hover:text-red-500"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
 
                 {/* Cases Nested Folder */}
                 <div
-                  onClick={(e) => { e.stopPropagation(); setIsCasesExpanded(!isCasesExpanded); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setIsCasesExpanded(!isCasesExpanded);
+                  }}
                   className={`mx-3 px-3 py-2 rounded-lg flex items-center justify-between cursor-pointer transition-all ${isDark ? 'hover:bg-white/5 text-subtext/80' : 'hover:bg-slate-100 text-slate-900 border border-transparent shadow-sm'}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <FolderOpen className={`w-4 h-4 text-primary transition-transform duration-300 ${isCasesExpanded ? 'scale-110' : ''}`} />
-                    <span className={`text-[13px] font-black uppercase tracking-[0.15em] ${isDark ? 'text-subtext/90' : 'text-slate-900'}`}>CASES</span>
+                    <FolderOpen
+                      className={`w-4 h-4 text-primary transition-transform duration-300 ${isCasesExpanded ? 'scale-110' : ''}`}
+                    />
+                    <span
+                      className={`text-[13px] font-black uppercase tracking-[0.15em] ${isDark ? 'text-subtext/90' : 'text-slate-900'}`}
+                    >
+                      CASES
+                    </span>
                   </div>
-                  <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isCasesExpanded ? '' : '-rotate-90'} ${isDark ? 'text-subtext/40' : 'text-slate-400'}`} />
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform duration-300 ${isCasesExpanded ? '' : '-rotate-90'} ${isDark ? 'text-subtext/40' : 'text-slate-400'}`}
+                  />
                 </div>
 
                 <AnimatePresence>
                   {isCasesExpanded && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
+                      animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       className="pl-6 space-y-1 overflow-hidden"
                     >
@@ -434,8 +519,8 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                           <input
                             autoFocus
                             value={newProjectName}
-                            onChange={(e) => setNewProjectName(e.target.value)}
-                            onKeyDown={(e) => {
+                            onChange={e => setNewProjectName(e.target.value)}
+                            onKeyDown={e => {
                               if (e.key === 'Enter') handleCreateProject(true);
                               if (e.key === 'Escape') {
                                 setIsCreatingCase(false);
@@ -452,7 +537,12 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                       )}
 
                       {projects
-                        .filter(p => p.isLegalCase && (!searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase())))
+                        .filter(
+                          p =>
+                            p.isLegalCase &&
+                            (!searchQuery ||
+                              p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
                         .map((p, idx) => (
                           <motion.div
                             key={p._id}
@@ -462,16 +552,35 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                             className="relative group/proj flex items-center"
                           >
                             {editingProjectId === p._id ? (
-                              <div className="flex w-full items-center gap-2 px-3 py-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div
+                                className="flex w-full items-center gap-2 px-3 py-1.5"
+                                onClick={e => e.stopPropagation()}
+                              >
                                 <input
                                   autoFocus
                                   value={renameProjectName}
                                   onChange={e => setRenameProjectName(e.target.value)}
-                                  onKeyDown={e => { if (e.key === 'Enter') handleRenameProject(e, p._id); if (e.key === 'Escape') setEditingProjectId(null); }}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') handleRenameProject(e, p._id);
+                                    if (e.key === 'Escape') setEditingProjectId(null);
+                                  }}
                                   className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
                                 />
-                                <button onClick={(e) => handleRenameProject(e, p._id)} className="text-primary hover:opacity-80 shrink-0"><Check className="w-4 h-4" /></button>
-                                <button onClick={(e) => { e.stopPropagation(); setEditingProjectId(null); }} className="text-subtext hover:text-red-500 shrink-0"><X className="w-4 h-4" /></button>
+                                <button
+                                  onClick={e => handleRenameProject(e, p._id)}
+                                  className="text-primary hover:opacity-80 shrink-0"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setEditingProjectId(null);
+                                  }}
+                                  className="text-subtext hover:text-red-500 shrink-0"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
                               </div>
                             ) : (
                               <>
@@ -479,23 +588,61 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                                   onClick={() => handleSwitchProject(p._id)}
                                   className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold shadow-sm' : 'text-subtext hover:bg-white/20 dark:hover:bg-white/10 hover:text-maintext'}`}
                                 >
-                                  <Folder className={`w-4 h-4 shrink-0 transition-transform duration-300 ${currentProjectId === p._id ? 'scale-110 text-primary ring-4 ring-primary/10 rounded-full' : 'group-hover/proj:scale-110'}`} />
+                                  <Folder
+                                    className={`w-4 h-4 shrink-0 transition-transform duration-300 ${currentProjectId === p._id ? 'scale-110 text-primary ring-4 ring-primary/10 rounded-full' : 'group-hover/proj:scale-110'}`}
+                                  />
                                   <div className="flex flex-col items-start min-w-0 pr-4">
-                                    <span className="truncate font-bold text-[13px] text-left">{highlightMatch(p.name, searchQuery)}</span>
+                                    <span className="truncate font-bold text-[13px] text-left">
+                                      {highlightMatch(p.name, searchQuery)}
+                                    </span>
                                     {(() => {
-                                      const today = new Date(); today.setHours(0, 0, 0, 0);
-                                      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-                                      const hasToday = p.hearings?.some(h => new Date(h.date).toDateString() === today.toDateString() && h.status === 'Upcoming');
-                                      if (hasToday) return <span className="text-[8px] font-black uppercase text-red-500 animate-pulse">🔴 Hearing Today</span>;
-                                      const hasTomorrow = p.hearings?.some(h => new Date(h.date).toDateString() === tomorrow.toDateString() && h.status === 'Upcoming');
-                                      if (hasTomorrow) return <span className="text-[8px] font-black uppercase text-amber-500">🟠 Tomorrow</span>;
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      const tomorrow = new Date(today);
+                                      tomorrow.setDate(tomorrow.getDate() + 1);
+                                      const hasToday = p.hearings?.some(
+                                        h =>
+                                          new Date(h.date).toDateString() ===
+                                            today.toDateString() && h.status === 'Upcoming'
+                                      );
+                                      if (hasToday)
+                                        return (
+                                          <span className="text-[8px] font-black uppercase text-red-500 animate-pulse">
+                                            🔴 Hearing Today
+                                          </span>
+                                        );
+                                      const hasTomorrow = p.hearings?.some(
+                                        h =>
+                                          new Date(h.date).toDateString() ===
+                                            tomorrow.toDateString() && h.status === 'Upcoming'
+                                      );
+                                      if (hasTomorrow)
+                                        return (
+                                          <span className="text-[8px] font-black uppercase text-amber-500">
+                                            🟠 Tomorrow
+                                          </span>
+                                        );
                                       return null;
                                     })()}
                                   </div>
                                 </button>
                                 <div className="absolute right-2 opacity-0 group-hover/proj:opacity-100 flex items-center gap-1 transition-all duration-300 translate-x-2 group-hover/proj:translate-x-0">
-                                  <button onClick={(e) => { e.stopPropagation(); setEditingProjectId(p._id); setRenameProjectName(p.name); }} className="p-1.5 text-subtext hover:text-primary transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"><Edit2 className="w-3 h-3" /></button>
-                                  <button onClick={(e) => handleDeleteProject(e, p._id)} className="p-1.5 text-subtext hover:text-red-500 transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"><Trash2 className="w-3 h-3" /></button>
+                                  <button
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      setEditingProjectId(p._id);
+                                      setRenameProjectName(p.name);
+                                    }}
+                                    className="p-1.5 text-subtext hover:text-primary transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={e => handleDeleteProject(e, p._id)}
+                                    className="p-1.5 text-subtext hover:text-red-500 transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
                                 </div>
                               </>
                             )}
@@ -513,10 +660,14 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       {/* Chat Sessions List */}
       <div className="flex-1 overflow-y-auto px-5 space-y-1 relative z-10 custom-scrollbar mt-2">
         <div className="px-1 py-4 flex items-center justify-between">
-          <h3 className={`text-[12px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-subtext/40' : 'text-slate-500'}`}>
+          <h3
+            className={`text-[12px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-subtext/40' : 'text-slate-500'}`}
+          >
             {token ? t('activityLog') : 'Guest History'}
           </h3>
-          <div className={`h-[1px] flex-1 ml-4 ${isDark ? 'bg-gradient-to-r from-subtext/10 to-transparent' : 'bg-gradient-to-r from-slate-300 to-transparent'}`}></div>
+          <div
+            className={`h-[1px] flex-1 ml-4 ${isDark ? 'bg-gradient-to-r from-subtext/10 to-transparent' : 'bg-gradient-to-r from-slate-300 to-transparent'}`}
+          ></div>
         </div>
 
         {!hasHistory && !token && (
@@ -529,10 +680,12 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
         )}
 
         {!hasHistory && token && (
-          <div className="px-4 text-xs text-subtext italic">{t('noRecentChats') || 'No recent chats'}</div>
+          <div className="px-4 text-xs text-subtext italic">
+            {t('noRecentChats') || 'No recent chats'}
+          </div>
         )}
 
-        {hasHistory && (
+        {hasHistory &&
           (() => {
             const filteredSessions = sessions.filter(session =>
               session.title?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -551,23 +704,25 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                 {editingSessionId === session.sessionId ? (
                   <div
                     className="flex items-center gap-3 px-4 py-4 bg-white/5 rounded-2xl border border-primary/40 shadow-2xl mx-2"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                   >
                     <input
                       autoFocus
                       type="text"
                       value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      onBlur={(e) => handleRename(e, session.sessionId)}
-                      onKeyDown={(e) => {
+                      onChange={e => setNewTitle(e.target.value)}
+                      onBlur={e => handleRename(e, session.sessionId)}
+                      onKeyDown={e => {
                         if (e.key === 'Enter') handleRename(e, session.sessionId);
                         if (e.key === 'Escape') setEditingSessionId(null);
                       }}
                       className="bg-transparent text-[14px] font-bold text-maintext w-full outline-none"
                     />
                     <button
-                      onMouseDown={(e) => { e.preventDefault(); }}
-                      onClick={(e) => handleRename(e, session.sessionId)}
+                      onMouseDown={e => {
+                        e.preventDefault();
+                      }}
+                      onClick={e => handleRename(e, session.sessionId)}
                       className="text-primary hover:scale-125 transition-transform shrink-0"
                     >
                       <Check className="w-5 h-5" strokeWidth={3} />
@@ -575,17 +730,21 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                   </div>
                 ) : (
                   <div className="sidebar-chat-container relative">
-                    <NavLink
-                      to={`/dashboard/chat/${session.sessionId}`}
-                      onClick={onClose}
-                    >
+                    <NavLink to={`/dashboard/chat/${session.sessionId}`} onClick={onClose}>
                       {({ isActive }) => (
-                        <div className={`sidebar-chat-item group/item transition-all duration-500 mx-2 cursor-pointer
-                          ${isActive
-                            ? (isDark ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl' : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5')
-                            : (isDark ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent' : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]')
+                        <div
+                          className={`sidebar-chat-item group/item transition-all duration-500 mx-2 cursor-pointer
+                          ${
+                            isActive
+                              ? isDark
+                                ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl'
+                                : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5'
+                              : isDark
+                                ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent'
+                                : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]'
                           }
-                        `}>
+                        `}
+                        >
                           {isActive ? (
                             <motion.div
                               layoutId="activeIndicator"
@@ -598,37 +757,89 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                           )}
                           <div className="sidebar-chat-title-group text-left flex-1 min-w-0">
                             <div className="sidebar-chat-title flex items-center gap-1.5">
-                              {session.activeTool?.startsWith('legal_') ? (() => {
-                                const tool = session.activeTool.toLowerCase();
-                                if (tool.includes('precedent') || tool.includes('gavel')) return <Gavel className="w-3.5 h-3.5 text-purple-500 shrink-0" strokeWidth={2.5} />;
-                                if (tool.includes('draft') || tool.includes('agreement')) return <FileText className="w-3.5 h-3.5 text-purple-500 shrink-0" strokeWidth={2.5} />;
-                                if (tool.includes('evidence')) return <Search className="w-3.5 h-3.5 text-purple-500 shrink-0" strokeWidth={2.5} />;
-                                if (tool.includes('case')) return <Briefcase className="w-3.5 h-3.5 text-purple-500 shrink-0" strokeWidth={2.5} />;
-                                return <Scale className="w-3.5 h-3.5 text-purple-500 shrink-0" strokeWidth={2.5} />;
-                              })() : (
-                                <MessageSquare className="w-3.5 h-3.5 text-primary/50 shrink-0" strokeWidth={2} />
+                              {session.activeTool?.startsWith('legal_') ? (
+                                (() => {
+                                  const tool = session.activeTool.toLowerCase();
+                                  if (tool.includes('precedent') || tool.includes('gavel'))
+                                    return (
+                                      <Gavel
+                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                        strokeWidth={2.5}
+                                      />
+                                    );
+                                  if (tool.includes('draft') || tool.includes('agreement'))
+                                    return (
+                                      <FileText
+                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                        strokeWidth={2.5}
+                                      />
+                                    );
+                                  if (tool.includes('evidence'))
+                                    return (
+                                      <Search
+                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                        strokeWidth={2.5}
+                                      />
+                                    );
+                                  if (tool.includes('case'))
+                                    return (
+                                      <Briefcase
+                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                        strokeWidth={2.5}
+                                      />
+                                    );
+                                  return (
+                                    <Scale
+                                      className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                      strokeWidth={2.5}
+                                    />
+                                  );
+                                })()
+                              ) : (
+                                <MessageSquare
+                                  className="w-3.5 h-3.5 text-primary/50 shrink-0"
+                                  strokeWidth={2}
+                                />
                               )}
-                              
+
                               {generatingChatIds.includes(session.sessionId) && (
                                 <span
                                   title="Generating response..."
                                   className="flex items-center gap-[3px] shrink-0"
                                 >
-                                  <span className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                  <span className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '120ms' }} />
-                                  <span className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '240ms' }} />
+                                  <span
+                                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
+                                    style={{ animationDelay: '0ms' }}
+                                  />
+                                  <span
+                                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
+                                    style={{ animationDelay: '120ms' }}
+                                  />
+                                  <span
+                                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
+                                    style={{ animationDelay: '240ms' }}
+                                  />
                                 </span>
                               )}
                               <span className="truncate">
-                                {highlightMatch(session.title || "Untitled Intelligence", searchQuery)}
+                                {highlightMatch(
+                                  session.title || 'Untitled Intelligence',
+                                  searchQuery
+                                )}
                               </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-1 mt-0.5">
                               {session.activeTool?.startsWith('legal_') && (
                                 <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-purple-500/10 border border-purple-500/20">
-                                  <span className="text-[8px] font-black text-purple-500 uppercase tracking-tighter">AI LEGAL</span>
+                                  <span className="text-[8px] font-black text-purple-500 uppercase tracking-tighter">
+                                    AI LEGAL
+                                  </span>
                                   <span className="text-[8px] font-bold text-purple-400/70 truncate max-w-[80px]">
-                                    {session.activeTool.replace('legal_', '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                    {session.activeTool
+                                      .replace('legal_', '')
+                                      .split('_')
+                                      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                                      .join(' ')}
                                   </span>
                                 </div>
                               )}
@@ -637,7 +848,8 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                                 <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-primary/10 border border-primary/20">
                                   <Folder className="w-2.5 h-2.5 text-primary" />
                                   <span className="text-[9px] font-bold text-primary truncate max-w-[60px]">
-                                    {projects.find(p => p._id === session.projectId)?.name || "Personal"}
+                                    {projects.find(p => p._id === session.projectId)?.name ||
+                                      'Personal'}
                                   </span>
                                 </div>
                               )}
@@ -647,7 +859,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                           <div className="sidebar-chat-actions">
                             {generatingChatIds.includes(session.sessionId) ? (
                               <button
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                   useGenerationStore.getState().abortGeneration(session.sessionId);
@@ -659,7 +871,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                               </button>
                             ) : (
                               <button
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                   startRename(e, session);
@@ -671,7 +883,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                               </button>
                             )}
                             <button
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 handleDeleteSession(e, session.sessionId);
@@ -688,9 +900,8 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                   </div>
                 )}
               </motion.div>
-            ))
-          })()
-        )}
+            ));
+          })()}
       </div>
 
       {/* Confirmation and Share Modals */}
@@ -698,25 +909,41 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDeleteProject}
-        title={projects.find(p => p._id === projectToDelete)?.isLegalCase ? t('deleteCaseTitle') : t('deleteProjectTitle')}
-        description={projects.find(p => p._id === projectToDelete)?.isLegalCase ? t('deleteCaseDesc') : t('deleteProjectDesc')}
-        confirmText={projects.find(p => p._id === projectToDelete)?.isLegalCase ? t('deleteCaseLabel') : t('deleteProjectLabel')}
+        title={
+          projects.find(p => p._id === projectToDelete)?.isLegalCase
+            ? t('deleteCaseTitle')
+            : t('deleteProjectTitle')
+        }
+        description={
+          projects.find(p => p._id === projectToDelete)?.isLegalCase
+            ? t('deleteCaseDesc')
+            : t('deleteProjectDesc')
+        }
+        confirmText={
+          projects.find(p => p._id === projectToDelete)?.isLegalCase
+            ? t('deleteCaseLabel')
+            : t('deleteProjectLabel')
+        }
       />
 
       <DeleteConfirmModal
         isOpen={isChatDeleteModalOpen}
         onClose={() => setIsChatDeleteModalOpen(false)}
         onConfirm={confirmDeleteSession}
-        title={t('deleteChatTitle') === 'deleteChatTitle' ? "Delete Chat?" : t('deleteChatTitle')}
-        description={t('deleteChatDesc') === 'deleteChatDesc' ? `This will delete "${sessions.find(s => s.sessionId === chatToDelete)?.title || 'this chat'}". Visit settings to delete any memories saved during this chat.` : t('deleteChatDesc')}
-        confirmText={t('deleteChatLabel') === 'deleteChatLabel' ? "Delete" : t('deleteChatLabel')}
+        title={t('deleteChatTitle') === 'deleteChatTitle' ? 'Delete Chat?' : t('deleteChatTitle')}
+        description={
+          t('deleteChatDesc') === 'deleteChatDesc'
+            ? `This will delete "${sessions.find(s => s.sessionId === chatToDelete)?.title || 'this chat'}". Visit settings to delete any memories saved during this chat.`
+            : t('deleteChatDesc')
+        }
+        confirmText={t('deleteChatLabel') === 'deleteChatLabel' ? 'Delete' : t('deleteChatLabel')}
       />
 
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         shareId={currentShareId}
-        sessionTitle={sessionToShare?.title || "Shared Chat"}
+        sessionTitle={sessionToShare?.title || 'Shared Chat'}
       />
 
       <AnimatePresence>
@@ -732,7 +959,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
               className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-sm p-6"
             >
               <div className="flex items-center gap-3 mb-5">
@@ -749,8 +976,8 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                 autoFocus
                 placeholder={t('projectName')}
                 value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={e => setNewProjectName(e.target.value)}
+                onKeyDown={e => {
                   if (e.key === 'Enter') handleCreateProject(false);
                   if (e.key === 'Escape') setIsCreatingProject(false);
                 }}

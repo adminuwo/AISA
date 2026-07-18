@@ -1,23 +1,23 @@
-import axios from "axios";
-import { API } from "../types";
+import axios from 'axios';
+import { API } from '../types';
 
 const getAuthHeaders = () => {
-  const userStr = localStorage.getItem("user");
+  const userStr = localStorage.getItem('user');
   let token = null;
-  if (userStr && userStr !== "undefined" && userStr !== "null") {
+  if (userStr && userStr !== 'undefined' && userStr !== 'null') {
     try {
       const userObj = JSON.parse(userStr);
       token = userObj?.token;
     } catch (e) {}
   }
-  if (!token || token === "undefined" || token === "null") {
-    token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+  if (!token || token === 'undefined' || token === 'null') {
+    token = localStorage.getItem('auth_token') || localStorage.getItem('token');
   }
-  if (!token || token === "undefined" || token === "null") {
-    token = "";
+  if (!token || token === 'undefined' || token === 'null') {
+    token = '';
   }
   return {
-    Authorization: token ? `Bearer ${token}` : "",
+    Authorization: token ? `Bearer ${token}` : '',
   };
 };
 
@@ -38,7 +38,12 @@ export const getSubscriptionDetails = async () => {
   return response.data;
 };
 
-export const purchasePlan = async (planId, billingCycle, paymentId = null, billingDetails = null) => {
+export const purchasePlan = async (
+  planId,
+  billingCycle,
+  paymentId = null,
+  billingDetails = null
+) => {
   const response = await axios.post(
     `${API}/subscription/purchase`,
     { planId, billingCycle, paymentId, billingDetails },
@@ -47,7 +52,7 @@ export const purchasePlan = async (planId, billingCycle, paymentId = null, billi
   return response.data;
 };
 
-export const buyCredits = async (packageId) => {
+export const buyCredits = async packageId => {
   const response = await axios.post(
     `${API}/subscription/buy-credits`,
     { packageId },
@@ -56,12 +61,10 @@ export const buyCredits = async (packageId) => {
   return response.data;
 };
 
-export const createSubscriptionOrder = async (orderData) => {
-  const response = await axios.post(
-    `${API}/subscription/create-order`,
-    orderData,
-    { headers: getAuthHeaders() }
-  );
+export const createSubscriptionOrder = async orderData => {
+  const response = await axios.post(`${API}/subscription/create-order`, orderData, {
+    headers: getAuthHeaders(),
+  });
   return response.data;
 };
 
@@ -71,4 +74,3 @@ export const getCreditHistory = async () => {
   });
   return response.data;
 };
-

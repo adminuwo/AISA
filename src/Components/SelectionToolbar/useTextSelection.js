@@ -14,7 +14,7 @@ export const useTextSelection = () => {
   // Helper to restore selection highlight visually
   const restoreSelection = useCallback(() => {
     if (!savedRangeRef.current) return;
-    
+
     const sel = window.getSelection();
     if (sel.rangeCount > 0) {
       const currentRange = sel.getRangeAt(0);
@@ -22,64 +22,68 @@ export const useTextSelection = () => {
         return; // Already selected
       }
     }
-    
+
     try {
       sel.removeAllRanges();
       sel.addRange(savedRangeRef.current);
     } catch (e) {
-      console.warn("Failed to restore selection:", e);
+      console.warn('Failed to restore selection:', e);
     }
   }, []);
 
-  const processSelection = useCallback((force = false) => {
-    // If interacting with toolbar, we must preserve and restore, not reset
-    if (isInteractingWithToolbar.current && !force) {
-      restoreSelection();
-      return;
-    }
+  const processSelection = useCallback(
+    (force = false) => {
+      // If interacting with toolbar, we must preserve and restore, not reset
+      if (isInteractingWithToolbar.current && !force) {
+        restoreSelection();
+        return;
+      }
 
-    const sel = window.getSelection();
-    const text = sel.toString().trim();
+      const sel = window.getSelection();
+      const text = sel.toString().trim();
 
-    if (!text || text.length === 0) {
-      // Graceful clear: only clear if we are not interacting with the toolbar
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        if (!isInteractingWithToolbar.current && window.getSelection().toString().trim() === '') {
-          setSelection(null);
-          savedRangeRef.current = null;
-        }
-      }, 400); // Increased grace period
-      return;
-    }
+      if (!text || text.length === 0) {
+        // Graceful clear: only clear if we are not interacting with the toolbar
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          if (!isInteractingWithToolbar.current && window.getSelection().toString().trim() === '') {
+            setSelection(null);
+            savedRangeRef.current = null;
+          }
+        }, 400); // Increased grace period
+        return;
+      }
 
-    try {
-      const range = sel.getRangeAt(0);
-      const commonAncestor = range.commonAncestorContainer;
-      const element = commonAncestor.nodeType === 1 ? commonAncestor : commonAncestor.parentElement;
+      try {
+        const range = sel.getRangeAt(0);
+        const commonAncestor = range.commonAncestorContainer;
+        const element =
+          commonAncestor.nodeType === 1 ? commonAncestor : commonAncestor.parentElement;
 
-      // Restrict to chat messages
-      const messageRow = element.closest('.chatgpt-message-row');
-      if (!messageRow) return;
+        // Restrict to chat messages
+        const messageRow = element.closest('.chatgpt-message-row');
+        if (!messageRow) return;
 
-      const codeBlock = element.closest('pre') || element.closest('code');
+        const codeBlock = element.closest('pre') || element.closest('code');
 
-      // Save the range for persistence
-      savedRangeRef.current = range.cloneRange();
-      
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      
-      setSelection({
-        text,
-        range: savedRangeRef.current,
-        element: messageRow,
-        isCode: !!codeBlock,
-        id: messageRow.getAttribute('data-message-id') || messageRow.id || Date.now()
-      });
-    } catch (e) {
-      // Ignore transient errors
-    }
-  }, [restoreSelection]);
+        // Save the range for persistence
+        savedRangeRef.current = range.cloneRange();
+
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        setSelection({
+          text,
+          range: savedRangeRef.current,
+          element: messageRow,
+          isCode: !!codeBlock,
+          id: messageRow.getAttribute('data-message-id') || messageRow.id || Date.now(),
+        });
+      } catch (e) {
+        // Ignore transient errors
+      }
+    },
+    [restoreSelection]
+  );
 
   const handleSelectionChange = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -96,8 +100,8 @@ export const useTextSelection = () => {
 
   useEffect(() => {
     document.addEventListener('selectionchange', handleSelectionChange);
-    
-    const handleGlobalMouseDown = (e) => {
+
+    const handleGlobalMouseDown = e => {
       // Check if click is on toolbar
       const toolbar = e.target.closest('.selection-toolbar-container');
       if (toolbar) {
@@ -107,25 +111,27 @@ export const useTextSelection = () => {
         return;
       }
       isInteractingWithToolbar.current = false;
-      
+
       // If clicking completely outside messages, we might want to clear.
       // But we let selectionchange handle the 'empty' state.
     };
 
-    const handleGlobalMouseUp = (e) => {
+    const handleGlobalMouseUp = e => {
       // If we were interacting with toolbar, finalize and keep highlight
       if (isInteractingWithToolbar.current) {
         restoreSelection();
         // Don't set interacting to false immediately to allow click events to finish
-        setTimeout(() => { isInteractingWithToolbar.current = false; }, 200);
+        setTimeout(() => {
+          isInteractingWithToolbar.current = false;
+        }, 200);
         return;
       }
-      
+
       // Check for new selection
       setTimeout(() => processSelection(), 50);
     };
 
-    const handleGlobalTouchStart = (e) => {
+    const handleGlobalTouchStart = e => {
       const toolbar = e.target.closest('.selection-toolbar-container');
       if (toolbar) {
         isInteractingWithToolbar.current = true;
@@ -135,10 +141,12 @@ export const useTextSelection = () => {
       isInteractingWithToolbar.current = false;
     };
 
-    const handleGlobalTouchEnd = (e) => {
+    const handleGlobalTouchEnd = e => {
       if (isInteractingWithToolbar.current) {
         restoreSelection();
-        setTimeout(() => { isInteractingWithToolbar.current = false; }, 200);
+        setTimeout(() => {
+          isInteractingWithToolbar.current = false;
+        }, 200);
         return;
       }
       setTimeout(() => processSelection(), 50);
@@ -168,7 +176,7 @@ export const useTextSelection = () => {
 
   // Handle escape key
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = e => {
       if (e.key === 'Escape') {
         clearSelection();
       }

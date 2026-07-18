@@ -19,45 +19,45 @@ const INTENT_BASE = `${API}/intent`;
  * @returns {Object} Classification result with intent, tools, pipeline, frontend_mode
  */
 export const detectIntent = async (message, attachments = [], conversationHistory = []) => {
-    try {
-        const token = localStorage.getItem('token');
+  try {
+    const token = localStorage.getItem('token');
 
-        const response = await axios.post(
-            `${INTENT_BASE}/detect`,
-            {
-                message,
-                attachments: attachments.map(a => ({
-                    name: a.name || a.fileName || 'file',
-                    type: a.type || (a.mimeType?.split('/')[0]) || 'file',
-                    mimeType: a.mimeType || a.type || 'application/octet-stream',
-                    size: a.size || 0
-                })),
-                conversationHistory: conversationHistory.slice(-3).map(m => ({
-                    role: m.role,
-                    content: (m.text || m.content || '').substring(0, 120)
-                }))
-            },
-            {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-                timeout: 12000 // 12s timeout — classifier should be < 1s, but give headroom
-            }
-        );
+    const response = await axios.post(
+      `${INTENT_BASE}/detect`,
+      {
+        message,
+        attachments: attachments.map(a => ({
+          name: a.name || a.fileName || 'file',
+          type: a.type || a.mimeType?.split('/')[0] || 'file',
+          mimeType: a.mimeType || a.type || 'application/octet-stream',
+          size: a.size || 0,
+        })),
+        conversationHistory: conversationHistory.slice(-3).map(m => ({
+          role: m.role,
+          content: (m.text || m.content || '').substring(0, 120),
+        })),
+      },
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        timeout: 12000, // 12s timeout — classifier should be < 1s, but give headroom
+      }
+    );
 
-        return response.data;
-    } catch (error) {
-        console.error('[IntentService] detect error:', error?.response?.data || error.message);
-        // Return graceful fallback — normal chat
-        return {
-            success: true,
-            requiresClarification: false,
-            intent: 'normal_chat',
-            tools: ['normal_chat'],
-            frontend_mode: 'NORMAL_CHAT',
-            confidence: 0.5,
-            estimated_credits: 0,
-            fallback: true
-        };
-    }
+    return response.data;
+  } catch (error) {
+    console.error('[IntentService] detect error:', error?.response?.data || error.message);
+    // Return graceful fallback — normal chat
+    return {
+      success: true,
+      requiresClarification: false,
+      intent: 'normal_chat',
+      tools: ['normal_chat'],
+      frontend_mode: 'NORMAL_CHAT',
+      confidence: 0.5,
+      estimated_credits: 0,
+      fallback: true,
+    };
+  }
 };
 
 // ─── Execute Pipeline ──────────────────────────────────────────────────────────
@@ -73,38 +73,38 @@ export const detectIntent = async (message, attachments = [], conversationHistor
  * @returns {Object} Routing plan with primaryEndpoint, primaryMode, jobId
  */
 export const executePipeline = async (detectionResult, message, attachments = [], config = {}) => {
-    try {
-        const token = localStorage.getItem('token');
+  try {
+    const token = localStorage.getItem('token');
 
-        const response = await axios.post(
-            `${INTENT_BASE}/execute`,
-            {
-                jobId: detectionResult.jobId,
-                tools: detectionResult.tools,
-                pipeline: detectionResult.pipeline,
-                intent: detectionResult.intent,
-                frontend_mode: detectionResult.frontend_mode,
-                message,
-                attachments,
-                config
-            },
-            {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-                timeout: 8000
-            }
-        );
+    const response = await axios.post(
+      `${INTENT_BASE}/execute`,
+      {
+        jobId: detectionResult.jobId,
+        tools: detectionResult.tools,
+        pipeline: detectionResult.pipeline,
+        intent: detectionResult.intent,
+        frontend_mode: detectionResult.frontend_mode,
+        message,
+        attachments,
+        config,
+      },
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        timeout: 8000,
+      }
+    );
 
-        return response.data;
-    } catch (error) {
-        console.error('[IntentService] execute error:', error?.response?.data || error.message);
-        return {
-            success: false,
-            error: 'Pipeline execution failed',
-            fallback: true,
-            primaryEndpoint: apis.chatAgent,
-            primaryMode: 'NORMAL_CHAT'
-        };
-    }
+    return response.data;
+  } catch (error) {
+    console.error('[IntentService] execute error:', error?.response?.data || error.message);
+    return {
+      success: false,
+      error: 'Pipeline execution failed',
+      fallback: true,
+      primaryEndpoint: apis.chatAgent,
+      primaryMode: 'NORMAL_CHAT',
+    };
+  }
 };
 
 // ─── Poll Job Status ───────────────────────────────────────────────────────────
@@ -114,21 +114,18 @@ export const executePipeline = async (detectionResult, message, attachments = []
  * @param {string} jobId
  * @returns {Object} Job status object
  */
-export const pollJobStatus = async (jobId) => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(
-            `${INTENT_BASE}/job/${jobId}`,
-            {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-                timeout: 5000
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('[IntentService] pollJobStatus error:', error.message);
-        return { success: false, status: 'unknown', error: error.message };
-    }
+export const pollJobStatus = async jobId => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${INTENT_BASE}/job/${jobId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      timeout: 5000,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[IntentService] pollJobStatus error:', error.message);
+    return { success: false, status: 'unknown', error: error.message };
+  }
 };
 
 // ─── Get Tool Registry ─────────────────────────────────────────────────────────
@@ -137,13 +134,13 @@ export const pollJobStatus = async (jobId) => {
  * Can be used to render a dynamic tool selection UI.
  */
 export const fetchAvailableTools = async () => {
-    try {
-        const response = await axios.get(`${INTENT_BASE}/tools`, { timeout: 5000 });
-        return response.data.tools || [];
-    } catch (error) {
-        console.error('[IntentService] fetchAvailableTools error:', error.message);
-        return [];
-    }
+  try {
+    const response = await axios.get(`${INTENT_BASE}/tools`, { timeout: 5000 });
+    return response.data.tools || [];
+  } catch (error) {
+    console.error('[IntentService] fetchAvailableTools error:', error.message);
+    return [];
+  }
 };
 
 // ─── Map frontend_mode to active tool state ────────────────────────────────────
@@ -151,34 +148,34 @@ export const fetchAvailableTools = async () => {
  * Maps the backend frontend_mode string to the Chat.jsx tool state keys.
  * Used to auto-activate the correct magic tool card in the UI.
  */
-export const mapModeToToolState = (frontendMode) => {
-    const modeMap = {
-        'IMAGE_GEN': { activeImageGen: true },
-        'VIDEO_GEN': { activeVideoGen: true },
-        'IMAGE_TO_VIDEO': { activeVideoGen: true, videoMode: 'image_to_video' },
-        'IMAGE_EDIT': { activeMagicEdit: true },
-        'AUDIO_TALK': { activeAudioTalk: true },
-        'web_search': { webSearchMode: true },
-        'DEEP_SEARCH': { deepSearchMode: true },
-        'CODING_HELP': { activeCodeWriter: true, mode: 'CODING_HELP' },
-        'FILE_ANALYSIS': { activeFileAnalysis: true, mode: 'FILE_ANALYSIS' },
-        'FILE_CONVERSION': { activeFileAnalysis: true, mode: 'FILE_CONVERSION' },
-        'LEGAL_TOOLKIT': { activeLegalToolkit: true, mode: 'LEGAL_TOOLKIT' },
-        'NORMAL_CHAT': {}
-    };
-    return modeMap[frontendMode] || {};
+export const mapModeToToolState = frontendMode => {
+  const modeMap = {
+    IMAGE_GEN: { activeImageGen: true },
+    VIDEO_GEN: { activeVideoGen: true },
+    IMAGE_TO_VIDEO: { activeVideoGen: true, videoMode: 'image_to_video' },
+    IMAGE_EDIT: { activeMagicEdit: true },
+    AUDIO_TALK: { activeAudioTalk: true },
+    web_search: { webSearchMode: true },
+    DEEP_SEARCH: { deepSearchMode: true },
+    CODING_HELP: { activeCodeWriter: true, mode: 'CODING_HELP' },
+    FILE_ANALYSIS: { activeFileAnalysis: true, mode: 'FILE_ANALYSIS' },
+    FILE_CONVERSION: { activeFileAnalysis: true, mode: 'FILE_CONVERSION' },
+    LEGAL_TOOLKIT: { activeLegalToolkit: true, mode: 'LEGAL_TOOLKIT' },
+    NORMAL_CHAT: {},
+  };
+  return modeMap[frontendMode] || {};
 };
 
 // ─── Format confidence as readable label ───────────────────────────────────────
-export const formatConfidence = (confidence) => {
-    if (confidence >= 0.9) return 'Very confident';
-    if (confidence >= 0.75) return 'Confident';
-    if (confidence >= 0.5) return 'Somewhat sure';
-    return 'Uncertain';
+export const formatConfidence = confidence => {
+  if (confidence >= 0.9) return 'Very confident';
+  if (confidence >= 0.75) return 'Confident';
+  if (confidence >= 0.5) return 'Somewhat sure';
+  return 'Uncertain';
 };
 
 // ─── Credit display helper ─────────────────────────────────────────────────────
-export const formatCreditCost = (credits) => {
-    if (!credits || credits === 0) return 'Free';
-    return `${credits} credits`;
+export const formatCreditCost = credits => {
+  if (!credits || credits === 0) return 'Free';
+  return `${credits} credits`;
 };

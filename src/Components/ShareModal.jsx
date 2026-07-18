@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { X, Copy, Check, MessageCircle, Mail, Send, Share2, Globe, Link as LinkIcon, Loader2, SendHorizontal, MailCheck } from 'lucide-react';
+import {
+  X,
+  Copy,
+  Check,
+  MessageCircle,
+  Mail,
+  Send,
+  Share2,
+  Globe,
+  Link as LinkIcon,
+  Loader2,
+  SendHorizontal,
+  MailCheck,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { apis } from '../types';
@@ -22,28 +35,28 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSendEmail = async (e) => {
+  const handleSendEmail = async e => {
     if (e) e.preventDefault();
-    if (!targetEmail) return toast.error("Please enter an email address");
-    if (!targetEmail.includes('@')) return toast.error("Please enter a valid email");
+    if (!targetEmail) return toast.error('Please enter an email address');
+    if (!targetEmail.includes('@')) return toast.error('Please enter a valid email');
 
     setIsSendingEmail(true);
-    const t = toast.loading("Sending share link...");
+    const t = toast.loading('Sending share link...');
 
     try {
       await axios.post(apis.shareEmail(sessionId), {
         targetEmail,
         shareLink,
-        title: sessionTitle
+        title: sessionTitle,
       });
       toast.dismiss(t);
-      toast.success("Email sent successfully! ✨", { icon: '📧' });
+      toast.success('Email sent successfully! ✨', { icon: '📧' });
       setTargetEmail('');
       setIsEmailFormOpen(false);
     } catch (err) {
       toast.dismiss(t);
-      console.error("[EMAIL SHARE ERROR]", err);
-      toast.error(err.response?.data?.error || "Failed to send email. Please try again.");
+      console.error('[EMAIL SHARE ERROR]', err);
+      toast.error(err.response?.data?.error || 'Failed to send email. Please try again.');
     } finally {
       setIsSendingEmail(false);
     }
@@ -62,7 +75,7 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
       action: () => {
         const text = `Check out this chat on AISA: ${sessionTitle}\n\n${shareLink}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-      }
+      },
     },
     {
       name: 'Email',
@@ -70,7 +83,7 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
       color: 'bg-blue-500',
       action: () => {
         setIsEmailFormOpen(true);
-      }
+      },
     },
     {
       name: 'Telegram',
@@ -78,9 +91,12 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
       color: 'bg-[#0088cc]',
       action: () => {
         const text = `Check out this chat on AISA: ${sessionTitle}`;
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(text)}`, '_blank');
-      }
-    }
+        window.open(
+          `https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(text)}`,
+          '_blank'
+        );
+      },
+    },
   ];
 
   const handleModalClose = () => {
@@ -126,7 +142,9 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
                         {isEmailFormOpen ? 'Share via Email' : 'Share Chat'}
                       </Dialog.Title>
                       <p className="text-xs text-subtext font-medium">
-                        {isEmailFormOpen ? 'Send the link directly to an inbox' : 'Anyone with this link can view the chat'}
+                        {isEmailFormOpen
+                          ? 'Send the link directly to an inbox'
+                          : 'Anyone with this link can view the chat'}
                       </p>
                     </div>
                   </div>
@@ -157,10 +175,11 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
                         />
                         <button
                           onClick={handleCopy}
-                          className={`absolute right-1.5 top-1.5 bottom-1.5 px-4 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm ${copied
+                          className={`absolute right-1.5 top-1.5 bottom-1.5 px-4 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-sm ${
+                            copied
                               ? 'bg-green-500 text-white'
                               : 'bg-primary text-white hover:opacity-90 active:scale-95'
-                            }`}
+                          }`}
                         >
                           {copied ? <Check size={14} /> : <Copy size={14} />}
                           {copied ? 'Copied' : 'Copy'}
@@ -185,18 +204,23 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
                             autoFocus
                             placeholder="friend@example.com"
                             value={targetEmail}
-                            onChange={(e) => setTargetEmail(e.target.value)}
+                            onChange={e => setTargetEmail(e.target.value)}
                             className="block w-full pl-10 pr-12 py-3.5 bg-slate-50 dark:bg-black/20 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-sm text-maintext focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
                           />
                           <button
                             type="submit"
                             disabled={isSendingEmail || !targetEmail}
-                            className={`absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center ${isSendingEmail || !targetEmail
+                            className={`absolute right-1.5 top-1.5 bottom-1.5 px-3 rounded-xl font-bold transition-all flex items-center justify-center ${
+                              isSendingEmail || !targetEmail
                                 ? 'bg-slate-200 dark:bg-white/10 text-subtext cursor-not-allowed'
                                 : 'bg-primary text-white hover:opacity-90 active:scale-95 shadow-md shadow-primary/20'
-                              }`}
+                            }`}
                           >
-                            {isSendingEmail ? <Loader2 size={16} className="animate-spin text-primary" /> : <SendHorizontal size={16} />}
+                            {isSendingEmail ? (
+                              <Loader2 size={16} className="animate-spin text-primary" />
+                            ) : (
+                              <SendHorizontal size={16} />
+                            )}
                           </button>
                         </form>
                       </div>
@@ -214,13 +238,15 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
                         Or share via
                       </p>
                       <div className="flex items-center justify-center gap-6">
-                        {shareOptions.map((option) => (
+                        {shareOptions.map(option => (
                           <button
                             key={option.name}
                             onClick={option.action}
                             className="flex flex-col items-center gap-2 group"
                           >
-                            <div className={`w-12 h-12 ${option.color} rounded-2xl flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-110 group-active:scale-95 group-hover:rotate-3`}>
+                            <div
+                              className={`w-12 h-12 ${option.color} rounded-2xl flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-110 group-active:scale-95 group-hover:rotate-3`}
+                            >
                               {option.icon}
                             </div>
                             <span className="text-[10px] font-bold text-subtext uppercase tracking-wider group-hover:text-maintext transition-colors text-center">
@@ -236,7 +262,9 @@ const ShareModal = ({ isOpen, onClose, shareId, sessionTitle, sessionId }) => {
                   <div className="bg-primary/5 rounded-2xl p-4 flex items-start gap-3 border border-primary/10">
                     <Globe className="w-5 h-5 text-primary shrink-0" />
                     <p className="text-xs text-subtext leading-relaxed">
-                      All messages in this conversation up to the moment you shared it will be visible to whoever has the link. Your account information is <b>never</b> shared.
+                      All messages in this conversation up to the moment you shared it will be
+                      visible to whoever has the link. Your account information is <b>never</b>{' '}
+                      shared.
                     </p>
                   </div>
                 </div>

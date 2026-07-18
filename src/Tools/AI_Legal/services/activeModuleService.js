@@ -79,7 +79,7 @@ export const clearActiveModule = async () => {
 /**
  * Check if a specific module is currently active.
  */
-export const isModuleActive = (moduleId) => {
+export const isModuleActive = moduleId => {
   const state = getActiveModule();
   return state?.moduleId === moduleId;
 };
@@ -109,7 +109,7 @@ export const setPrefillIntent = (caseData, moduleId) => {
  *
  * @param {string} expectedModuleId - Only return if module matches
  */
-export const consumePrefillIntent = (expectedModuleId) => {
+export const consumePrefillIntent = expectedModuleId => {
   if (!inMemoryPrefillIntent) return null;
   const intent = inMemoryPrefillIntent;
   // Only valid for 60 seconds after setting (ensures it's from this navigation)
@@ -126,7 +126,7 @@ export const consumePrefillIntent = (expectedModuleId) => {
 /**
  * Peek at the prefill intent without consuming it.
  */
-export const peekPrefillIntent = (expectedModuleId) => {
+export const peekPrefillIntent = expectedModuleId => {
   if (!inMemoryPrefillIntent) return null;
   const intent = inMemoryPrefillIntent;
   if (Date.now() - intent.setAt > 60_000) {
@@ -148,70 +148,79 @@ export const peekPrefillIntent = (expectedModuleId) => {
  * @param {object} c - Case/project record from the database
  * @returns {object} Normalized prefill values
  */
-export const mapCaseToForm = (c) => {
+export const mapCaseToForm = c => {
   if (!c) return {};
 
   // Documents grouped by type
-  const docs      = c.documents || [];
-  const images    = docs.filter(d => /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(d.name || ''));
-  const audios    = docs.filter(d => /\.(mp3|wav|ogg|m4a|aac)/i.test(d.name || ''));
-  const videos    = docs.filter(d => /\.(mp4|mov|avi|mkv|webm)/i.test(d.name || ''));
-  const pdfs      = docs.filter(d => /\.pdf$/i.test(d.name || ''));
-  const contracts = docs.filter(d => /\.(docx?|pdf)$/i.test(d.name || '') && /contract|agreement|nda|deed/i.test(d.name || ''));
+  const docs = c.documents || [];
+  const images = docs.filter(d => /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(d.name || ''));
+  const audios = docs.filter(d => /\.(mp3|wav|ogg|m4a|aac)/i.test(d.name || ''));
+  const videos = docs.filter(d => /\.(mp4|mov|avi|mkv|webm)/i.test(d.name || ''));
+  const pdfs = docs.filter(d => /\.pdf$/i.test(d.name || ''));
+  const contracts = docs.filter(
+    d => /\.(docx?|pdf)$/i.test(d.name || '') && /contract|agreement|nda|deed/i.test(d.name || '')
+  );
 
   // Previous built arguments
-  const builtArgs  = c.builtArguments || [];
-  const prevArgStr = builtArgs.map((a, i) => `${i + 1}. [${a.type || 'Argument'}] ${(a.text || '').slice(0, 300)}`).join('\n\n');
+  const builtArgs = c.builtArguments || [];
+  const prevArgStr = builtArgs
+    .map((a, i) => `${i + 1}. [${a.type || 'Argument'}] ${(a.text || '').slice(0, 300)}`)
+    .join('\n\n');
 
   // Timeline facts
-  const facts      = c.facts || [];
-  const factsStr   = facts.map(f => `• ${f.event || ''} (${f.date ? new Date(f.date).toLocaleDateString('en-IN') : 'N/A'}): ${f.description || ''}`).join('\n');
+  const facts = c.facts || [];
+  const factsStr = facts
+    .map(
+      f =>
+        `• ${f.event || ''} (${f.date ? new Date(f.date).toLocaleDateString('en-IN') : 'N/A'}): ${f.description || ''}`
+    )
+    .join('\n');
 
   return {
     // ── Core identifiers ────────────────────────────────────────────
-    caseTitle:     c.title || c.name || '',
-    caseNumber:    c.caseNumber || c.caseNo || c.registrationNo || '',
-    courtName:     c.courtName || c.court || '',
-    judgeName:     c.judgeName || c.judge || '',
-    caseType:      c.caseType || '',
+    caseTitle: c.title || c.name || '',
+    caseNumber: c.caseNumber || c.caseNo || c.registrationNo || '',
+    courtName: c.courtName || c.court || '',
+    judgeName: c.judgeName || c.judge || '',
+    caseType: c.caseType || '',
 
     // ── Parties ─────────────────────────────────────────────────────
-    petitioner:    c.clientName   || c.petitioner  || c.plaintiff  || '',
-    respondent:    c.accused      || c.respondent  || c.defendant  || c.opponentName || '',
-    advocateName:  c.advocateName || c.advocate    || '',
-    advocateSide:  c.advocateSide || '',
+    petitioner: c.clientName || c.petitioner || c.plaintiff || '',
+    respondent: c.accused || c.respondent || c.defendant || c.opponentName || '',
+    advocateName: c.advocateName || c.advocate || '',
+    advocateSide: c.advocateSide || '',
 
     // ── Narrative fields ────────────────────────────────────────────
-    caseFacts:     [
-      c.description  || '',
-      c.summary      || '',
-      c.caseSummary  || '',
-      factsStr
-    ].filter(Boolean).join('\n\n') || '',
-    issues:        c.legalIssues  || c.issues      || '',
-    provisions:    c.sections     || c.legalSections || c.applicableProvisions || '',
+    caseFacts:
+      [c.description || '', c.summary || '', c.caseSummary || '', factsStr]
+        .filter(Boolean)
+        .join('\n\n') || '',
+    issues: c.legalIssues || c.issues || '',
+    provisions: c.sections || c.legalSections || c.applicableProvisions || '',
     evidenceSummary: c.evidenceSummary || docs.map(d => d.name).join(', ') || '',
-    caseLaws:      c.caseLaws     || c.precedents  || c.citations  || '',
-    previousArgs:  prevArgStr,
-    notes:         c.notes        || c.privateNotes || '',
+    caseLaws: c.caseLaws || c.precedents || c.citations || '',
+    previousArgs: prevArgStr,
+    notes: c.notes || c.privateNotes || '',
 
     // ── Documents by type ───────────────────────────────────────────
-    allDocuments:  docs,
-    imageFiles:    images,
-    audioFiles:    audios,
-    videoFiles:    videos,
-    pdfFiles:      pdfs,
+    allDocuments: docs,
+    imageFiles: images,
+    audioFiles: audios,
+    videoFiles: videos,
+    pdfFiles: pdfs,
     contractFiles: contracts,
-    hasContract:   contracts.length > 0,
+    hasContract: contracts.length > 0,
 
     // ── For Evidence Analysis ────────────────────────────────────────
     evidenceNotes: [
-      c.description  ? `Case Facts: ${c.description}` : '',
-      c.clientName   ? `Client: ${c.clientName}` : '',
-      c.accused      ? `Opponent: ${c.accused || c.opponentName || ''}` : '',
-      c.courtName    ? `Court: ${c.courtName}` : '',
-      docs.length    ? `Uploaded Evidence: ${docs.map(d => d.name).join(', ')}` : '',
-    ].filter(Boolean).join('\n'),
+      c.description ? `Case Facts: ${c.description}` : '',
+      c.clientName ? `Client: ${c.clientName}` : '',
+      c.accused ? `Opponent: ${c.accused || c.opponentName || ''}` : '',
+      c.courtName ? `Court: ${c.courtName}` : '',
+      docs.length ? `Uploaded Evidence: ${docs.map(d => d.name).join(', ')}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
 
     // ── Raw case object (for modules that need full access) ──────────
     _raw: c,
@@ -222,11 +231,11 @@ export const mapCaseToForm = (c) => {
  * Human-readable module names.
  */
 export const MODULE_NAMES = {
-  legal_argument_builder:  'Argument Builder',
-  legal_precedents:        'Legal Precedent',
-  legal_draft_maker:       'Draft Maker',
-  legal_evidence_checker:  'Evidence Analysis',
-  legal_case_predictor:    'Case Predictor',
+  legal_argument_builder: 'Argument Builder',
+  legal_precedents: 'Legal Precedent',
+  legal_draft_maker: 'Draft Maker',
+  legal_evidence_checker: 'Evidence Analysis',
+  legal_case_predictor: 'Case Predictor',
   legal_contract_analyzer: 'Contract Review',
-  legal_strategy_engine:   'Strategy Engine',
+  legal_strategy_engine: 'Strategy Engine',
 };

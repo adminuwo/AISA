@@ -15,17 +15,17 @@ export const ChatWelcome = ({
   activeCategory,
   onCategoryChange,
   activeToolId,
-  onToolSelect
+  onToolSelect,
 }) => {
-  const showWelcome = 
-    messages.length === 0 && 
-    !isSessionLoading && 
+  const showWelcome =
+    messages.length === 0 &&
+    !isSessionLoading &&
     !isHydrating &&
     !currentCase &&
     (!currentProjectId || currentProjectId === 'default' || currentProjectId === 'all') &&
-    currentMode !== 'LEGAL_TOOLKIT' && 
-    !activeLegalToolkit && 
-    !selectedLegalTool && 
+    currentMode !== 'LEGAL_TOOLKIT' &&
+    !activeLegalToolkit &&
+    !selectedLegalTool &&
     !new URLSearchParams(window.location.search).get('tool');
 
   if (!showWelcome) return null;

@@ -12,7 +12,7 @@ const LegalWorkspaceHeader = ({
   handleDeleteCase,
   handleBackToDashboard,
   selectedLegalTool,
-  activeTool
+  activeTool,
 }) => {
   const { tLegal } = useLanguage();
 
@@ -33,7 +33,10 @@ const LegalWorkspaceHeader = ({
               onClick={handleBackToDashboard}
               className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest bg-slate-100 dark:bg-[#131C31] px-3 py-1.5 sm:px-4 sm:py-2 rounded-full transition-all hover:gap-3 group border border-transparent dark:border-white/5"
             >
-              <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform sm:w-[14px]" />
+              <ArrowLeft
+                size={12}
+                className="group-hover:-translate-x-1 transition-transform sm:w-[14px]"
+              />
               {tLegal('backToCaseList')}
             </button>
           )}
@@ -52,13 +55,13 @@ const LegalWorkspaceHeader = ({
               {/* Case Identity */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                   {isRenamingCase === currentCase._id ? (
+                  {isRenamingCase === currentCase._id ? (
                     <input
                       type="text"
                       value={renameValue}
-                      onChange={(e) => setRenameValue(e.target.value)}
+                      onChange={e => setRenameValue(e.target.value)}
                       onBlur={() => handleRenameCase(currentCase._id)}
-                      onKeyDown={(e) => {
+                      onKeyDown={e => {
                         if (e.key === 'Enter') handleRenameCase(currentCase._id);
                         if (e.key === 'Escape') setIsRenamingCase(null);
                       }}
@@ -77,11 +80,13 @@ const LegalWorkspaceHeader = ({
                 <div className="flex items-center gap-x-2 sm:gap-x-4">
                   <p className="text-[8px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest flex items-center gap-1">
                     <Users size={10} className="sm:w-[14px]" strokeWidth={2.5} />
-                    <span className="truncate max-w-[50px] sm:max-w-none">{currentCase?.clientName || tLegal('privateClient')}</span>
+                    <span className="truncate max-w-[50px] sm:max-w-none">
+                      {currentCase?.clientName || tLegal('privateClient')}
+                    </span>
                   </p>
-                  
+
                   <div className="h-0.5 w-0.5 rounded-full bg-slate-300 dark:bg-zinc-700" />
-                  
+
                   <p className="text-[8px] sm:text-xs text-subtext font-bold uppercase tracking-widest flex items-center gap-1">
                     <ShieldCheck size={10} className="text-slate-400 sm:w-[14px]" />
                     <span className="hidden xxs:inline">Scoped</span>
@@ -92,42 +97,46 @@ const LegalWorkspaceHeader = ({
 
             {/* Tool Identity Row */}
             <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 sm:gap-3 shrink-0 mt-1 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-200 dark:border-white/10 sm:border-none">
-                <div className="flex flex-col items-start sm:items-end">
-                   <span className="text-[7px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 hidden sm:block">Current Tool</span>
-                   <AnimatePresence mode="wait">
-                    <motion.div
-                      key={getToolDisplayName()}
-                      initial={{ y: 5, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -5, opacity: 0 }}
-                       className="flex items-center gap-1 px-1.5 py-0.5 sm:px-4 sm:py-2 bg-slate-100 dark:bg-[#131C31] text-slate-500 dark:text-[#94A3B8] border border-slate-200 dark:border-white/5 rounded-md sm:rounded-full"
-                    >
-                      <Zap size={8} className="sm:w-[14px]" />
-                      <span className="text-[7px] sm:text-sm font-bold tracking-wide whitespace-nowrap uppercase opacity-70">{getToolDisplayName()}</span>
-                    </motion.div>
-                   </AnimatePresence>
-                </div>
-                
-                {/* Management Actions */}
-                <div className="flex items-center gap-1 sm:gap-2">
-                   <button
-                    onClick={() => {
-                      setRenameValue(currentCase.name);
-                      setIsRenamingCase(currentCase._id);
-                    }}
-                    className="p-2 sm:p-2.5 bg-white dark:bg-[#131C31] border border-slate-200 dark:border-white/5 text-slate-400 hover:text-indigo-600 rounded-lg sm:rounded-full transition-all shadow-sm group"
-                    title="Rename Case"
+              <div className="flex flex-col items-start sm:items-end">
+                <span className="text-[7px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 hidden sm:block">
+                  Current Tool
+                </span>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={getToolDisplayName()}
+                    initial={{ y: 5, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -5, opacity: 0 }}
+                    className="flex items-center gap-1 px-1.5 py-0.5 sm:px-4 sm:py-2 bg-slate-100 dark:bg-[#131C31] text-slate-500 dark:text-[#94A3B8] border border-slate-200 dark:border-white/5 rounded-md sm:rounded-full"
                   >
-                    <Edit2 size={14} className="sm:w-4 sm:h-4" />
-                  </button>
-                   <button
-                    onClick={() => handleDeleteCase(currentCase._id)}
-                    className="p-2 sm:p-2.5 bg-white dark:bg-[#131C31] border border-slate-200 dark:border-white/5 text-slate-400 hover:text-red-500 rounded-lg sm:rounded-full transition-all shadow-sm group"
-                    title="Delete Case"
-                  >
-                    <Trash2 size={14} className="sm:w-4 sm:h-4" />
-                  </button>
-                </div>
+                    <Zap size={8} className="sm:w-[14px]" />
+                    <span className="text-[7px] sm:text-sm font-bold tracking-wide whitespace-nowrap uppercase opacity-70">
+                      {getToolDisplayName()}
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Management Actions */}
+              <div className="flex items-center gap-1 sm:gap-2">
+                <button
+                  onClick={() => {
+                    setRenameValue(currentCase.name);
+                    setIsRenamingCase(currentCase._id);
+                  }}
+                  className="p-2 sm:p-2.5 bg-white dark:bg-[#131C31] border border-slate-200 dark:border-white/5 text-slate-400 hover:text-indigo-600 rounded-lg sm:rounded-full transition-all shadow-sm group"
+                  title="Rename Case"
+                >
+                  <Edit2 size={14} className="sm:w-4 sm:h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteCase(currentCase._id)}
+                  className="p-2 sm:p-2.5 bg-white dark:bg-[#131C31] border border-slate-200 dark:border-white/5 text-slate-400 hover:text-red-500 rounded-lg sm:rounded-full transition-all shadow-sm group"
+                  title="Delete Case"
+                >
+                  <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}

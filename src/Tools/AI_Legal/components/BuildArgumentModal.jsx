@@ -1,11 +1,29 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, Scale, Gavel, ChevronDown, Plus, Trash2,
-  FileText, Mic, Video, Image as ImageIcon,
-  Sparkles, Copy, Printer, Check,
-  Shield, FileDown, Save,
-  Loader2, Brain, Target, Eye, AlertCircle, CheckCircle2
+  X,
+  Scale,
+  Gavel,
+  ChevronDown,
+  Plus,
+  Trash2,
+  FileText,
+  Mic,
+  Video,
+  Image as ImageIcon,
+  Sparkles,
+  Copy,
+  Printer,
+  Check,
+  Shield,
+  FileDown,
+  Save,
+  Loader2,
+  Brain,
+  Target,
+  Eye,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { generateChatResponse } from '../../../services/geminiService';
@@ -23,23 +41,90 @@ const HINDI_LABELS = {
   'Counter Argument Analysis': 'विपक्षी तर्क विश्लेषण',
   'Generate Judge Perspective': 'न्यायाधीश परिप्रेक्ष्य',
   'Generate Winning Strategy': 'जीतने की रणनीति',
-  'Generating...': 'उत्पन्न किया जा रहा है...'
+  'Generating...': 'उत्पन्न किया जा रहा है...',
 };
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const CASE_TYPES = ['Civil', 'Criminal', 'Family', 'Consumer', 'Labour', 'Property', 'Arbitration', 'Writ', 'Appeal'];
+const CASE_TYPES = [
+  'Civil',
+  'Criminal',
+  'Family',
+  'Consumer',
+  'Labour',
+  'Property',
+  'Arbitration',
+  'Writ',
+  'Appeal',
+];
 const ADVOCATE_SIDES = ['Petitioner', 'Respondent', 'Defence', 'Prosecution'];
 const STRENGTH_LEVELS = ['Strong', 'Moderate', 'Weak'];
-const RELIEF_OPTIONS = ['Injunction', 'Compensation', 'Damages', 'Specific Performance', 'Bail', 'Acquittal', 'Custody', 'Maintenance', 'Other'];
-const PROVISIONS_QUICK = ['BNS', 'BNSS', 'Evidence Act', 'CPC', 'CrPC', 'IPC', 'Contract Act', 'Constitution of India', 'Transfer of Property Act', 'Limitation Act'];
+const RELIEF_OPTIONS = [
+  'Injunction',
+  'Compensation',
+  'Damages',
+  'Specific Performance',
+  'Bail',
+  'Acquittal',
+  'Custody',
+  'Maintenance',
+  'Other',
+];
+const PROVISIONS_QUICK = [
+  'BNS',
+  'BNSS',
+  'Evidence Act',
+  'CPC',
+  'CrPC',
+  'IPC',
+  'Contract Act',
+  'Constitution of India',
+  'Transfer of Property Act',
+  'Limitation Act',
+];
 
 const AI_ACTIONS = [
-  { id: 'written',  label: 'Generate Written Argument', icon: FileText, grad: 'from-violet-600 to-indigo-600',  desc: 'Formal court written argument' },
-  { id: 'oral',     label: 'Generate Oral Argument',    icon: Mic,      grad: 'from-indigo-600 to-blue-600',    desc: 'Court speech & presentation' },
-  { id: 'final',    label: 'Generate Final Submission', icon: Gavel,    grad: 'from-blue-600 to-cyan-600',      desc: 'Complete court submission' },
-  { id: 'counter',  label: 'Counter Argument Analysis', icon: Shield,   grad: 'from-emerald-600 to-teal-600',  desc: 'Analyze opponent arguments' },
-  { id: 'judge',    label: 'Generate Judge Perspective',icon: Eye,      grad: 'from-amber-600 to-orange-600',  desc: 'Judicial view of the case' },
-  { id: 'strategy', label: 'Generate Winning Strategy', icon: Target,   grad: 'from-rose-600 to-pink-600',     desc: 'Complete winning roadmap' },
+  {
+    id: 'written',
+    label: 'Generate Written Argument',
+    icon: FileText,
+    grad: 'from-violet-600 to-indigo-600',
+    desc: 'Formal court written argument',
+  },
+  {
+    id: 'oral',
+    label: 'Generate Oral Argument',
+    icon: Mic,
+    grad: 'from-indigo-600 to-blue-600',
+    desc: 'Court speech & presentation',
+  },
+  {
+    id: 'final',
+    label: 'Generate Final Submission',
+    icon: Gavel,
+    grad: 'from-blue-600 to-cyan-600',
+    desc: 'Complete court submission',
+  },
+  {
+    id: 'counter',
+    label: 'Counter Argument Analysis',
+    icon: Shield,
+    grad: 'from-emerald-600 to-teal-600',
+    desc: 'Analyze opponent arguments',
+  },
+  {
+    id: 'judge',
+    label: 'Generate Judge Perspective',
+    icon: Eye,
+    grad: 'from-amber-600 to-orange-600',
+    desc: 'Judicial view of the case',
+  },
+  {
+    id: 'strategy',
+    label: 'Generate Winning Strategy',
+    icon: Target,
+    grad: 'from-rose-600 to-pink-600',
+    desc: 'Complete winning roadmap',
+  },
 ];
 
 // ─── SYSTEM INSTRUCTION ──────────────────────────────────────────────────────
@@ -464,21 +549,75 @@ The document must look like it was drafted by an experienced High Court/Supreme 
 // ─── PROMPT BUILDER ──────────────────────────────────────────────────────────
 const buildPrompt = (actionId, form) => {
   const {
-    caseTitle, caseNumber, courtName, judgeName, caseType,
-    petitioner, respondent, advocateName, advocateSide,
-    caseFacts, issues, provisions, evidences, caseLaws,
-    arguments_, counters, reliefs
+    caseTitle,
+    caseNumber,
+    courtName,
+    judgeName,
+    caseType,
+    petitioner,
+    respondent,
+    advocateName,
+    advocateSide,
+    caseFacts,
+    issues,
+    provisions,
+    evidences,
+    caseLaws,
+    arguments_,
+    counters,
+    reliefs,
   } = form;
 
-  const date = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 
-  const issuesList     = issues.filter(i => i.trim()).map((v, i) => `Issue No.${i + 1}\n${v}`).join('\n\n') || '';
-  const provList       = provisions.filter(p => p.act.trim()).map(p => `${p.act}\nSection ${p.sections ? p.sections : '[Applicable Section]'}\nRelevance description...`).join('\n\n') || '';
-  const evList         = evidences.filter(e => e.title.trim()).map((e, i) => `Exhibit P-${i+1}\n${e.title}\nPurpose\n${e.description || 'Proving the transaction'}\nLegal Relevance\nDocumentary evidence on record.`).join('\n\n') || '';
-  const lawList        = caseLaws.filter(c => c.name.trim()).map((c, i) => `Case Name: ${c.name}\nCitation: ${c.citation || '[Citation]'}\nRatio Decidendi: ${c.principle || 'The court held...'}\nApplication to Present Case: The present facts are governed because...`).join('\n\n') || '';
-  const argsList       = arguments_.filter(a => a.heading.trim()).map((a, i) => `It is respectfully submitted that ${a.heading}. ${a.detail || ''}`).join('\n\n') || '';
-  const counterList    = counters.filter(c => c.opponent.trim()).map((c, i) => `Opponent Argument: ${c.opponent}\nRebuttal: It is submitted that the defence is legally unsustainable because ${c.rebuttal}`).join('\n\n') || '';
-  const reliefList     = reliefs.map((r, i) => `(${String.fromCharCode(97 + i)}) ${r}`).join('\n') || '';
+  const issuesList =
+    issues
+      .filter(i => i.trim())
+      .map((v, i) => `Issue No.${i + 1}\n${v}`)
+      .join('\n\n') || '';
+  const provList =
+    provisions
+      .filter(p => p.act.trim())
+      .map(
+        p =>
+          `${p.act}\nSection ${p.sections ? p.sections : '[Applicable Section]'}\nRelevance description...`
+      )
+      .join('\n\n') || '';
+  const evList =
+    evidences
+      .filter(e => e.title.trim())
+      .map(
+        (e, i) =>
+          `Exhibit P-${i + 1}\n${e.title}\nPurpose\n${e.description || 'Proving the transaction'}\nLegal Relevance\nDocumentary evidence on record.`
+      )
+      .join('\n\n') || '';
+  const lawList =
+    caseLaws
+      .filter(c => c.name.trim())
+      .map(
+        (c, i) =>
+          `Case Name: ${c.name}\nCitation: ${c.citation || '[Citation]'}\nRatio Decidendi: ${c.principle || 'The court held...'}\nApplication to Present Case: The present facts are governed because...`
+      )
+      .join('\n\n') || '';
+  const argsList =
+    arguments_
+      .filter(a => a.heading.trim())
+      .map((a, i) => `It is respectfully submitted that ${a.heading}. ${a.detail || ''}`)
+      .join('\n\n') || '';
+  const counterList =
+    counters
+      .filter(c => c.opponent.trim())
+      .map(
+        (c, i) =>
+          `Opponent Argument: ${c.opponent}\nRebuttal: It is submitted that the defence is legally unsustainable because ${c.rebuttal}`
+      )
+      .join('\n\n') || '';
+  const reliefList =
+    reliefs.map((r, i) => `(${String.fromCharCode(97 + i)}) ${r}`).join('\n') || '';
 
   const ctx = `
 CASE INFORMATION
@@ -641,23 +780,30 @@ XII. PRAYER`,
 5. CASE LAW CITATION TACTICS
 6. INTERIM AND PROCEDURAL STRATEGIC OPTIONS
 7. RISK MITIGATION ROADMAP
-8. SETTLEMENT COMPROMISE EVALUATION`
+8. SETTLEMENT COMPROMISE EVALUATION`,
   };
 
   return `MODE: ${actionId.toUpperCase()}\n\n${instructions[actionId]}\n\n${ctx}`;
 };
 
 // ─── SHARED STYLES ───────────────────────────────────────────────────────────
-const inputCls = 'w-full bg-white dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-white outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all placeholder-slate-300 dark:placeholder-zinc-600';
-const inputSmCls = 'bg-white dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-800 dark:text-white outline-none focus:border-violet-500 transition-all placeholder-slate-300 dark:placeholder-zinc-600';
+const inputCls =
+  'w-full bg-white dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-white outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all placeholder-slate-300 dark:placeholder-zinc-600';
+const inputSmCls =
+  'bg-white dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-800 dark:text-white outline-none focus:border-violet-500 transition-all placeholder-slate-300 dark:placeholder-zinc-600';
 
 // ─── SECTION HEADER ──────────────────────────────────────────────────────────
 const SectionHdr = ({ title, open, onToggle }) => (
-  <button type="button" onClick={onToggle}
+  <button
+    type="button"
+    onClick={onToggle}
     className="w-full flex items-center justify-between py-3.5 px-5 bg-slate-50/50 dark:bg-zinc-900/20 group hover:bg-slate-100/30 transition-colors"
   >
     <div className="flex items-center gap-2">
-      <ChevronDown size={14} className={`text-slate-400 group-hover:text-violet-600 transition-transform duration-200 shrink-0 ${open ? '' : '-rotate-90'}`} />
+      <ChevronDown
+        size={14}
+        className={`text-slate-400 group-hover:text-violet-600 transition-transform duration-200 shrink-0 ${open ? '' : '-rotate-90'}`}
+      />
       <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{title}</span>
     </div>
   </button>
@@ -678,19 +824,20 @@ const RenderedOutput = ({ text }) => {
     }
 
     // Detect if line matches a major heading (e.g. 1. INTRODUCTION, I. SYNOPSIS)
-    const isHeading = /^\d+\.\s+[A-Z\s]+$/.test(cleanLine) || /^[IVXLCDM]+\.\s+[A-Z\s]+$/.test(cleanLine);
+    const isHeading =
+      /^\d+\.\s+[A-Z\s]+$/.test(cleanLine) || /^[IVXLCDM]+\.\s+[A-Z\s]+$/.test(cleanLine);
 
     if (isHeading) {
       return (
-        <p 
-          key={i} 
+        <p
+          key={i}
           className="font-bold text-black uppercase"
-          style={{ 
-            fontSize: '13pt', 
-            marginTop: '18px', 
+          style={{
+            fontSize: '13pt',
+            marginTop: '18px',
             marginBottom: '10px',
             pageBreakAfter: 'avoid',
-            breakAfter: 'avoid'
+            breakAfter: 'avoid',
           }}
         >
           {cleanLine}
@@ -699,15 +846,23 @@ const RenderedOutput = ({ text }) => {
     }
 
     // Body paragraphs have 8px margin-bottom, 0.3in text-indent for paragraphs, except headings and signatures
-    const isSignatureDetail = cleanLine.includes("Counsel for") || cleanLine.includes("Enrollment No") || cleanLine.includes("Place:") || cleanLine.includes("Date:");
-    const hasIndent = !isSignatureDetail && cleanLine.length > 50 && !cleanLine.startsWith("Exhibit") && !cleanLine.startsWith("Case Name");
+    const isSignatureDetail =
+      cleanLine.includes('Counsel for') ||
+      cleanLine.includes('Enrollment No') ||
+      cleanLine.includes('Place:') ||
+      cleanLine.includes('Date:');
+    const hasIndent =
+      !isSignatureDetail &&
+      cleanLine.length > 50 &&
+      !cleanLine.startsWith('Exhibit') &&
+      !cleanLine.startsWith('Case Name');
 
     return (
-      <p 
-        key={i} 
-        style={{ 
+      <p
+        key={i}
+        style={{
           marginBottom: '8px',
-          textIndent: hasIndent ? '0.3in' : '0'
+          textIndent: hasIndent ? '0.3in' : '0',
         }}
       >
         {cleanLine}
@@ -715,17 +870,19 @@ const RenderedOutput = ({ text }) => {
     );
   };
 
-  const sigIndex = lines.findIndex(l => l.includes("Respectfully Submitted,") || l.includes("Respectfully submitted,"));
+  const sigIndex = lines.findIndex(
+    l => l.includes('Respectfully Submitted,') || l.includes('Respectfully submitted,')
+  );
 
   return (
-    <div 
+    <div
       className="bg-white text-black border border-slate-300 dark:border-zinc-800 shadow-md select-text"
       style={{
         fontFamily: "'Times New Roman', Times, serif",
         fontSize: '11pt',
         lineHeight: '1.45',
         textAlign: 'justify',
-        padding: '40px'
+        padding: '40px',
       }}
     >
       {sigIndex === -1 ? (
@@ -743,7 +900,7 @@ const RenderedOutput = ({ text }) => {
 };
 
 // ─── VALIDATION ──────────────────────────────────────────────────────────────
-const validate = (form) => {
+const validate = form => {
   const errors = [];
   if (!form.caseTitle.trim()) errors.push('Case Title is required');
   if (!form.caseFacts.trim()) errors.push('Case Facts are required');
@@ -753,7 +910,7 @@ const validate = (form) => {
 };
 
 // ─── STORAGE KEY ─────────────────────────────────────────────────────────────
-const STORAGE_KEY = (caseId) => `@aisa_build_arg_${caseId || 'default'}`;
+const STORAGE_KEY = caseId => `@aisa_build_arg_${caseId || 'default'}`;
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
@@ -776,36 +933,40 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
     const saved = loadSaved();
     if (saved) return saved;
     return {
-      caseTitle:    currentCase?.name || '',
-      caseNumber:   '',
-      courtName:    currentCase?.courtName || currentCase?.court || '',
-      judgeName:    '',
-      caseType:     currentCase?.caseType || '',
-      petitioner:   currentCase?.clientName || currentCase?.petitioner || '',
-      respondent:   currentCase?.accused || currentCase?.respondent || '',
+      caseTitle: currentCase?.name || '',
+      caseNumber: '',
+      courtName: currentCase?.courtName || currentCase?.court || '',
+      judgeName: '',
+      caseType: currentCase?.caseType || '',
+      petitioner: currentCase?.clientName || currentCase?.petitioner || '',
+      respondent: currentCase?.accused || currentCase?.respondent || '',
       advocateName: '',
       advocateSide: '',
-      caseFacts:    currentCase?.description || currentCase?.caseSummary || currentCase?.caseFacts || '',
-      issues:       [''],
-      provisions:   [{ act: '', sections: '' }],
-      evidences:    [{ title: '', description: '', files: [] }],
-      caseLaws:     [{ name: '', citation: '', principle: '' }],
-      arguments_:   [{ heading: '', detail: '', evidence: '', provision: '', judgment: '', strength: 'Strong' }],
-      counters:     [{ opponent: '', rebuttal: '' }],
-      reliefs:      [],
+      caseFacts:
+        currentCase?.description || currentCase?.caseSummary || currentCase?.caseFacts || '',
+      issues: [''],
+      provisions: [{ act: '', sections: '' }],
+      evidences: [{ title: '', description: '', files: [] }],
+      caseLaws: [{ name: '', citation: '', principle: '' }],
+      arguments_: [
+        { heading: '', detail: '', evidence: '', provision: '', judgment: '', strength: 'Strong' },
+      ],
+      counters: [{ opponent: '', rebuttal: '' }],
+      reliefs: [],
     };
   }, [currentCase, loadSaved]);
 
   const [form, setFormRaw] = useState(defaultForm);
-  const setForm = (updater) => setFormRaw(prev => {
-    const next = typeof updater === 'function' ? updater(prev) : updater;
-    return next;
-  });
+  const setForm = updater =>
+    setFormRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      return next;
+    });
 
   // Debounced auto-save form changes to currentCase.argumentBuilderForm in DB
   useEffect(() => {
     if (!currentCase || !currentCase._id) return;
-    
+
     const handler = setTimeout(async () => {
       try {
         if (JSON.stringify(currentCase.argumentBuilderForm) === JSON.stringify(form)) {
@@ -813,15 +974,15 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
         }
         const payload = {
           ...currentCase,
-          argumentBuilderForm: form
+          argumentBuilderForm: form,
         };
         const response = await apiService.updateProject(currentCase._id, payload);
         if (onUpdateCase) onUpdateCase(response);
-        
+
         // Remove legacy local storage key once saved to DB
         localStorage.removeItem(STORAGE_KEY(caseId));
       } catch (err) {
-        console.error("Failed to auto-save argument builder form to DB", err);
+        console.error('Failed to auto-save argument builder form to DB', err);
       }
     }, 1000);
 
@@ -855,46 +1016,74 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
         }
       };
 
-      tryFill('caseTitle',    mapped.caseTitle);
-      tryFill('caseNumber',   mapped.caseNumber);
-      tryFill('courtName',    mapped.courtName);
-      tryFill('judgeName',    mapped.judgeName);
-      tryFill('caseType',     mapped.caseType);
-      tryFill('petitioner',   mapped.petitioner);
-      tryFill('respondent',   mapped.respondent);
+      tryFill('caseTitle', mapped.caseTitle);
+      tryFill('caseNumber', mapped.caseNumber);
+      tryFill('courtName', mapped.courtName);
+      tryFill('judgeName', mapped.judgeName);
+      tryFill('caseType', mapped.caseType);
+      tryFill('petitioner', mapped.petitioner);
+      tryFill('respondent', mapped.respondent);
       tryFill('advocateName', mapped.advocateName);
       tryFill('advocateSide', mapped.advocateSide);
-      tryFill('caseFacts',    mapped.caseFacts);
+      tryFill('caseFacts', mapped.caseFacts);
 
       // issues array
       if (mapped.issues) {
-        const issueLines = String(mapped.issues).split(/[\n,;]/).map(s => s.trim()).filter(Boolean);
-        if (issueLines.length) { merged.issues = [...issueLines, '']; filled.add('issues'); }
+        const issueLines = String(mapped.issues)
+          .split(/[\n,;]/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        if (issueLines.length) {
+          merged.issues = [...issueLines, ''];
+          filled.add('issues');
+        }
       }
       // provisions array
       if (mapped.provisions) {
-        const provLines = String(mapped.provisions).split(/[\n,;]/).map(s => s.trim()).filter(Boolean);
-        if (provLines.length) { merged.provisions = provLines.map(p => ({ act: p, sections: '' })); filled.add('provisions'); }
+        const provLines = String(mapped.provisions)
+          .split(/[\n,;]/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        if (provLines.length) {
+          merged.provisions = provLines.map(p => ({ act: p, sections: '' }));
+          filled.add('provisions');
+        }
       }
       // evidence from uploaded docs
       if (mapped.allDocuments?.length) {
         merged.evidences = mapped.allDocuments.map(d => ({
           title: d.name || 'Document',
           description: `Uploaded evidence: ${d.type || 'file'} - ${d.uploadDate || ''}`,
-          files: []
+          files: [],
         }));
         filled.add('evidences');
       }
       // case laws
       if (mapped.caseLaws) {
-        const lawLines = String(mapped.caseLaws).split(/[\n;]/).map(s => s.trim()).filter(Boolean);
-        if (lawLines.length) { merged.caseLaws = lawLines.map(l => ({ name: l, citation: '', principle: '' })); filled.add('caseLaws'); }
+        const lawLines = String(mapped.caseLaws)
+          .split(/[\n;]/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        if (lawLines.length) {
+          merged.caseLaws = lawLines.map(l => ({ name: l, citation: '', principle: '' }));
+          filled.add('caseLaws');
+        }
       }
       // previous arguments
       if (mapped.previousArgs) {
-        const prevArgLines = String(mapped.previousArgs).split(/\n\n/).map(s => s.trim()).filter(Boolean);
+        const prevArgLines = String(mapped.previousArgs)
+          .split(/\n\n/)
+          .map(s => s.trim())
+          .filter(Boolean);
         if (prevArgLines.length) {
-          merged.arguments_ = prevArgLines.map(a => ({ heading: a.slice(0, 80), detail: a, evidence: '', provision: '', judgment: '', strength: 'Strong' }));
+          merged.arguments_ = prevArgLines.map(a => ({
+            heading: a.slice(0, 80),
+            detail: a,
+            evidence: '',
+            provision: '',
+            judgment: '',
+            strength: 'Strong',
+          }));
           filled.add('arguments_');
         }
       }
@@ -902,7 +1091,10 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
       setFormRaw(merged);
       setPrefillFields(filled);
       if (filled.size > 0) {
-        setPrefillBanner({ count: filled.size, caseTitle: mapped.caseTitle || intent.caseData?.name || 'Active Case' });
+        setPrefillBanner({
+          count: filled.size,
+          caseTitle: mapped.caseTitle || intent.caseData?.name || 'Active Case',
+        });
         // Expand sections that have prefilled data
         setSec(p => ({
           ...p,
@@ -915,10 +1107,19 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
           s7: filled.has('caseLaws'),
           s8: filled.has('arguments_'),
         }));
-        if (filled.has('issues') || filled.has('provisions') || filled.has('evidences') || filled.has('caseLaws') || filled.has('arguments_')) {
+        if (
+          filled.has('issues') ||
+          filled.has('provisions') ||
+          filled.has('evidences') ||
+          filled.has('caseLaws') ||
+          filled.has('arguments_')
+        ) {
           setShowAdvanced(true);
         }
-        toast.success(`✓ ${filled.size} fields auto-filled from case data`, { icon: '💼', duration: 3500 });
+        toast.success(`✓ ${filled.size} fields auto-filled from case data`, {
+          icon: '💼',
+          duration: 3500,
+        });
       }
     } else {
       setFormRaw(base);
@@ -931,7 +1132,18 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
   const upd = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
   // sections open/close
-  const [sec, setSec] = useState({ s1:true,s2:true,s3:true,s4:false,s5:false,s6:false,s7:false,s8:false,s9:false,s10:false });
+  const [sec, setSec] = useState({
+    s1: true,
+    s2: true,
+    s3: true,
+    s4: false,
+    s5: false,
+    s6: false,
+    s7: false,
+    s8: false,
+    s9: false,
+    s10: false,
+  });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const tog = k => setSec(p => ({ ...p, [k]: !p[k] }));
 
@@ -948,7 +1160,9 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   // ─── LANGUAGE TOGGLE STATE ────────────────────────────────────────
@@ -975,13 +1189,15 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
       return;
     }
     setIsOutputTranslating(true);
-    translateOutputText(output).then((translated) => {
-      if (isMountedRef.current) setTranslatedOutput(translated);
-      setIsOutputTranslating(false);
-    }).catch(() => {
-      if (isMountedRef.current) setTranslatedOutput('');
-      setIsOutputTranslating(false);
-    });
+    translateOutputText(output)
+      .then(translated => {
+        if (isMountedRef.current) setTranslatedOutput(translated);
+        setIsOutputTranslating(false);
+      })
+      .catch(() => {
+        if (isMountedRef.current) setTranslatedOutput('');
+        setIsOutputTranslating(false);
+      });
   }, [output, outputLang, getOutputDisplayText, translateOutputText, setIsOutputTranslating]);
 
   // Reset output language when output changes
@@ -998,12 +1214,13 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
   }, [outputLang, translatedOutput, output]);
 
   // ── AI GENERATE ────────────────────────────────────────────────────────────
-  const handleGenerate = async (actionId) => {
+  const handleGenerate = async actionId => {
     const errors = validate(form);
     if (errors.length) {
       errors.forEach(e => toast.error(e, { duration: 3000 }));
       // Auto-expand sections that have errors
-      if (!form.caseTitle.trim() || !form.caseType || !form.courtName) setSec(p => ({ ...p, s1: true }));
+      if (!form.caseTitle.trim() || !form.caseType || !form.courtName)
+        setSec(p => ({ ...p, s1: true }));
       if (!form.petitioner.trim() || !form.respondent.trim()) setSec(p => ({ ...p, s2: true }));
       if (!form.caseFacts.trim()) setSec(p => ({ ...p, s3: true }));
       return;
@@ -1017,19 +1234,22 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
     setShowOutput(true);
 
     // Scroll output into view on mobile
-    setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    setTimeout(
+      () => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      100
+    );
 
     try {
       const prompt = buildPrompt(actionId, form);
       const response = await generateChatResponse(
-        [],           // history
-        prompt,       // message
+        [], // history
+        prompt, // message
         LEGAL_SYSTEM, // system instruction
-        [],           // attachments
-        'English',    // language
-        null,         // abortSignal
-        'legal',      // mode
-        null,         // sessionId
+        [], // attachments
+        'English', // language
+        null, // abortSignal
+        'legal', // mode
+        null, // sessionId
         caseId || null // projectId
       );
 
@@ -1070,66 +1290,96 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
   // ── EXPORT PDF ──────────────────────────────────────────────────────────────
   // ── EXPORT PDF ──────────────────────────────────────────────────────────────
   const handlePDF = async () => {
-    if (!displayOutput) { toast.error('Generate an argument first.'); return; }
+    if (!displayOutput) {
+      toast.error('Generate an argument first.');
+      return;
+    }
     const isHi = outputLang === 'hi';
-    const cleanOutputLabel = isHi ? (HINDI_LABELS[outputLabel] || outputLabel) : outputLabel;
+    const cleanOutputLabel = isHi ? HINDI_LABELS[outputLabel] || outputLabel : outputLabel;
     const toastId = toast.loading(isHi ? 'PDF तैयार किया जा रहा है...' : 'Generating PDF...');
     try {
       const el = document.getElementById('argument-rendered-output');
-      const cleanText = displayOutput.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\*\*/g, '');
+      const cleanText = displayOutput
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\*\*/g, '');
       await exportToPDF({
         element: el,
         text: cleanText,
-        title: isHi ? 'AISA™ एआई कानूनी — कोर्ट आर्गुमेंट दस्तावेज़' : 'AISA™ AI Legal — Court Argument Document',
+        title: isHi
+          ? 'AISA™ एआई कानूनी — कोर्ट आर्गुमेंट दस्तावेज़'
+          : 'AISA™ AI Legal — Court Argument Document',
         filename: `AISA_${cleanOutputLabel.replace(/\s+/g, '_')}_${(form.caseTitle || 'Case').replace(/\s+/g, '_')}`,
         lang: outputLang,
         meta: {
           [isHi ? 'मामला' : 'Case']: form.caseTitle || 'N/A',
           [isHi ? 'न्यायालय' : 'Court']: form.courtName || 'N/A',
-          [isHi ? 'पक्षकार' : 'Parties']: `${form.petitioner || ''} ${isHi ? 'बनाम' : 'vs'} ${form.respondent || ''}`,
+          [isHi ? 'पक्षकार' : 'Parties']:
+            `${form.petitioner || ''} ${isHi ? 'बनाम' : 'vs'} ${form.respondent || ''}`,
           [isHi ? 'उत्पन्न तिथि' : 'Generated']: new Date().toLocaleString(),
         },
       });
-      toast.success(isHi ? 'PDF सफलतापूर्वक निर्यात किया गया!' : 'PDF exported successfully!', { id: toastId });
+      toast.success(isHi ? 'PDF सफलतापूर्वक निर्यात किया गया!' : 'PDF exported successfully!', {
+        id: toastId,
+      });
     } catch (e) {
       console.error(e);
-      toast.error(isHi ? 'PDF निर्यात विफल' : 'PDF export failed. Try copy instead.', { id: toastId });
+      toast.error(isHi ? 'PDF निर्यात विफल' : 'PDF export failed. Try copy instead.', {
+        id: toastId,
+      });
     }
   };
 
   // ── EXPORT DOCX ─────────────────────────────────────────────────────────────
   const handleDocx = () => {
-    if (!displayOutput) { toast.error('Generate an argument first.'); return; }
+    if (!displayOutput) {
+      toast.error('Generate an argument first.');
+      return;
+    }
     const isHi = outputLang === 'hi';
-    const cleanOutputLabel = isHi ? (HINDI_LABELS[outputLabel] || outputLabel) : outputLabel;
-    
+    const cleanOutputLabel = isHi ? HINDI_LABELS[outputLabel] || outputLabel : outputLabel;
+
     const header = isHi
       ? `AISA एआई कानूनी — कोर्ट आर्गुमेंट दस्तावेज़\n${'='.repeat(60)}\nमामला: ${form.caseTitle || 'N/A'}\nमामला संख्या: ${form.caseNumber || 'N/A'} | न्यायालय: ${form.courtName || 'N/A'}\nउत्पन्न तिथि: ${new Date().toLocaleString('hi-IN')}\n${'='.repeat(60)}\n\n`
       : `AISA AI LEGAL — COURT ARGUMENT DOCUMENT\n${'='.repeat(60)}\nCase: ${form.caseTitle || 'N/A'}\nCase No: ${form.caseNumber || 'N/A'} | Court: ${form.courtName || 'N/A'}\nGenerated: ${new Date().toLocaleString('en-IN')}\n${'='.repeat(60)}\n\n`;
-      
-    const cleanText = displayOutput.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\*\*/g, '');
+
+    const cleanText = displayOutput
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\*\*/g, '');
     const blob = new Blob([header + cleanText], { type: 'application/msword;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `AISA_${cleanOutputLabel.replace(/\s+/g, '_')}_${(form.caseTitle || 'Case').replace(/\s+/g, '_')}_${Date.now()}.doc`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success('DOCX downloaded!');
   };
 
   // ── PRINT ────────────────────────────────────────────────────────────────────
   const handlePrint = () => {
-    if (!displayOutput) { toast.error('Generate an argument first.'); return; }
+    if (!displayOutput) {
+      toast.error('Generate an argument first.');
+      return;
+    }
     const win = window.open('', '_blank');
-    if (!win) { toast.error('Allow popups to print.'); return; }
-    
+    if (!win) {
+      toast.error('Allow popups to print.');
+      return;
+    }
+
     const isHi = outputLang === 'hi';
-    const cleanOutputLabel = isHi ? (HINDI_LABELS[outputLabel] || outputLabel) : outputLabel;
-    const titleText = isHi ? "कोर्ट आर्गुमेंट दस्तावेज़" : "COURT ARGUMENT DOCUMENT";
-    const caseText = isHi ? "मामला" : "Case";
-    const caseNoText = isHi ? "संख्या" : "No.";
-    const dateText = isHi ? "दिनांक" : "Date";
-    const dateStr = isHi ? new Date().toLocaleDateString('hi-IN') : new Date().toLocaleDateString('en-IN');
+    const cleanOutputLabel = isHi ? HINDI_LABELS[outputLabel] || outputLabel : outputLabel;
+    const titleText = isHi ? 'कोर्ट आर्गुमेंट दस्तावेज़' : 'COURT ARGUMENT DOCUMENT';
+    const caseText = isHi ? 'मामला' : 'Case';
+    const caseNoText = isHi ? 'संख्या' : 'No.';
+    const dateText = isHi ? 'दिनांक' : 'Date';
+    const dateStr = isHi
+      ? new Date().toLocaleDateString('hi-IN')
+      : new Date().toLocaleDateString('en-IN');
 
     const clean = displayOutput
       .replace(/\\n/g, '\n')
@@ -1139,18 +1389,22 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
       .replace(/#{1,3}\s*/g, '');
 
     const lines = clean.split('\n');
-    const contentHTML = lines.map(line => {
-      const trimmed = line.trim();
-      if (!trimmed) return '<div style="height: 6pt;"></div>';
-      
-      const isHeading = /^\d+\.\s+[A-Z\s]+$/.test(trimmed) || /^[IVXLCDM]+\.\s+[A-Z\s]+$/.test(trimmed);
-      if (isHeading) {
-        return `<p class="heading-13pt">${trimmed}</p>`;
-      }
-      return `<p>${trimmed}</p>`;
-    }).join('\n');
+    const contentHTML = lines
+      .map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return '<div style="height: 6pt;"></div>';
 
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>${cleanOutputLabel} — ${form.caseTitle}</title>
+        const isHeading =
+          /^\d+\.\s+[A-Z\s]+$/.test(trimmed) || /^[IVXLCDM]+\.\s+[A-Z\s]+$/.test(trimmed);
+        if (isHeading) {
+          return `<p class="heading-13pt">${trimmed}</p>`;
+        }
+        return `<p>${trimmed}</p>`;
+      })
+      .join('\n');
+
+    win.document
+      .write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>${cleanOutputLabel} — ${form.caseTitle}</title>
 <style>
   @page { margin: 1in; }
   body { 
@@ -1177,18 +1431,31 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
 
   // ── COPY ─────────────────────────────────────────────────────────────────────
   const handleCopy = () => {
-    if (!displayOutput) { toast.error('Generate an argument first.'); return; }
-    const cleanText = displayOutput.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\*\*/g, '');
+    if (!displayOutput) {
+      toast.error('Generate an argument first.');
+      return;
+    }
+    const cleanText = displayOutput
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\*\*/g, '');
     navigator.clipboard.writeText(cleanText).then(() => {
-      setCopied(true); setTimeout(() => setCopied(false), 2000);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
       toast.success('Copied to clipboard!');
     });
   };
 
   // ── SAVE TO CASE ─────────────────────────────────────────────────────────────
   const handleSaveToCase = async () => {
-    if (!displayOutput) { toast.error('Generate an argument first.'); return; }
-    if (!caseId) { toast.error('No active case. Please open a case first.'); return; }
+    if (!displayOutput) {
+      toast.error('Generate an argument first.');
+      return;
+    }
+    if (!caseId) {
+      toast.error('No active case. Please open a case first.');
+      return;
+    }
 
     setSaving(true);
     const tid = toast.loading('Saving to case...');
@@ -1219,7 +1486,9 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
         const proj = await apiService.getProject(caseId);
         existing = proj?.builtArguments || proj?.arguments_built || [];
         if (!Array.isArray(existing)) existing = [];
-      } catch { existing = []; }
+      } catch {
+        existing = [];
+      }
 
       const updated = await apiService.updateProject(caseId, {
         builtArguments: [...existing, entry],
@@ -1237,21 +1506,23 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
   };
 
   // ── QUICK PROVISION CHIP ──────────────────────────────────────────────────
-  const addQuickProvision = (act) => {
+  const addQuickProvision = act => {
     // Find empty slot or add new
     const emptyIdx = form.provisions.findIndex(p => !p.act.trim());
     if (emptyIdx >= 0) {
-      const next = form.provisions.map((p, i) => i === emptyIdx ? { ...p, act } : p);
+      const next = form.provisions.map((p, i) => (i === emptyIdx ? { ...p, act } : p));
       upd('provisions', next);
     } else {
       upd('provisions', [...form.provisions, { act, sections: '' }]);
     }
   };
 
-  const strengthColor = (s) =>
-    s === 'Strong'   ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800' :
-    s === 'Moderate' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800' :
-                       'text-red-500 bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800';
+  const strengthColor = s =>
+    s === 'Strong'
+      ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
+      : s === 'Moderate'
+        ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800'
+        : 'text-red-500 bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800';
 
   if (!isOpen) return null;
 
@@ -1268,7 +1539,9 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-stretch justify-center sm:items-center sm:p-3 lg:p-4"
           onClick={e => e.target === e.currentTarget && onClose()}
         >
@@ -1289,7 +1562,9 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                   <h2 className="text-base font-black text-white leading-none">Argument Builder</h2>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[9px] text-emerald-300 font-black uppercase tracking-widest">AI ACTIVE</span>
+                    <span className="text-[9px] text-emerald-300 font-black uppercase tracking-widest">
+                      AI ACTIVE
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1300,8 +1575,10 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                     Case Linked
                   </div>
                 )}
-                <button onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
                   <X size={16} />
                 </button>
               </div>
@@ -1332,10 +1609,10 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
 
             {/* ── BODY ─────────────────────────────────────────────── */}
             <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
- 
               {/* ── LEFT: FORM ───────────────────────────────────────────────── */}
-              <div className={`flex-1 overflow-y-auto custom-scrollbar transition-all duration-300 divide-y divide-slate-100 dark:divide-white/5 ${showOutput ? 'lg:max-w-[58%] border-r border-slate-200 dark:border-white/5' : 'max-w-4xl mx-auto w-full'}`}>
- 
+              <div
+                className={`flex-1 overflow-y-auto custom-scrollbar transition-all duration-300 divide-y divide-slate-100 dark:divide-white/5 ${showOutput ? 'lg:max-w-[58%] border-r border-slate-200 dark:border-white/5' : 'max-w-4xl mx-auto w-full'}`}
+              >
                 {/* Case Information */}
                 <div>
                   <SectionHdr title="Case Information" open={sec.s1} onToggle={() => tog('s1')} />
@@ -1346,22 +1623,35 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                           Case Title <span className="text-red-500">*</span>
                           <AutoFilledBadge field="caseTitle" />
                         </label>
-                        <input className={`${inputCls} ${prefillFields.has('caseTitle') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`} value={f.caseTitle} onChange={e => upd('caseTitle', e.target.value)} placeholder="e.g. XYZ vs ABC" />
+                        <input
+                          className={`${inputCls} ${prefillFields.has('caseTitle') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
+                          value={f.caseTitle}
+                          onChange={e => upd('caseTitle', e.target.value)}
+                          placeholder="e.g. XYZ vs ABC"
+                        />
                       </div>
                       <div className="flex flex-col gap-1.5 col-span-2">
                         <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           Case Type
                           <AutoFilledBadge field="caseType" />
                         </label>
-                        <select className={`${inputCls} ${prefillFields.has('caseType') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`} value={f.caseType} onChange={e => upd('caseType', e.target.value)}>
+                        <select
+                          className={`${inputCls} ${prefillFields.has('caseType') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
+                          value={f.caseType}
+                          onChange={e => upd('caseType', e.target.value)}
+                        >
                           <option value="">Select type...</option>
-                          {CASE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                          {CASE_TYPES.map(t => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
                   )}
                 </div>
- 
+
                 {/* Parties */}
                 <div>
                   <SectionHdr title="Parties" open={sec.s2} onToggle={() => tog('s2')} />
@@ -1372,19 +1662,29 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                           Petitioner <span className="text-red-500">*</span>
                           <AutoFilledBadge field="petitioner" />
                         </label>
-                        <input className={`${inputCls} ${prefillFields.has('petitioner') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`} value={f.petitioner} onChange={e => upd('petitioner', e.target.value)} placeholder="Full legal name" />
+                        <input
+                          className={`${inputCls} ${prefillFields.has('petitioner') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
+                          value={f.petitioner}
+                          onChange={e => upd('petitioner', e.target.value)}
+                          placeholder="Full legal name"
+                        />
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           Respondent <span className="text-red-500">*</span>
                           <AutoFilledBadge field="respondent" />
                         </label>
-                        <input className={`${inputCls} ${prefillFields.has('respondent') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`} value={f.respondent} onChange={e => upd('respondent', e.target.value)} placeholder="Full legal name" />
+                        <input
+                          className={`${inputCls} ${prefillFields.has('respondent') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
+                          value={f.respondent}
+                          onChange={e => upd('respondent', e.target.value)}
+                          placeholder="Full legal name"
+                        />
                       </div>
                     </div>
                   )}
                 </div>
- 
+
                 {/* Case Facts */}
                 <div>
                   <SectionHdr title="Facts" open={sec.s3} onToggle={() => tog('s3')} />
@@ -1394,17 +1694,24 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                         Facts of the Case <span className="text-red-500">*</span>
                         <AutoFilledBadge field="caseFacts" />
                       </label>
-                      <textarea rows={6} value={f.caseFacts} onChange={e => upd('caseFacts', e.target.value)}
+                      <textarea
+                        rows={6}
+                        value={f.caseFacts}
+                        onChange={e => upd('caseFacts', e.target.value)}
                         placeholder="Enter complete facts of the case including dates, events, parties' actions, prior proceedings, previous orders, and all relevant background information..."
                         className={`${inputCls} resize-y min-h-[100px] leading-relaxed ${prefillFields.has('caseFacts') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
                       />
                     </div>
                   )}
                 </div>
- 
+
                 {/* Advanced Options Accordion */}
                 <div className="border-t border-slate-100 dark:border-white/5">
-                  <SectionHdr title="Advanced Options" open={showAdvanced} onToggle={() => setShowAdvanced(!showAdvanced)} />
+                  <SectionHdr
+                    title="Advanced Options"
+                    open={showAdvanced}
+                    onToggle={() => setShowAdvanced(!showAdvanced)}
+                  />
                   {showAdvanced && (
                     <div className="divide-y divide-slate-100 dark:divide-white/5">
                       {/* Sub-section: Technical details */}
@@ -1414,46 +1721,80 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                             Case Number
                             <AutoFilledBadge field="caseNumber" />
                           </label>
-                          <input className={`${inputCls} ${prefillFields.has('caseNumber') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`} value={f.caseNumber} onChange={e => upd('caseNumber', e.target.value)} placeholder="CS(OS) 123/2024" />
+                          <input
+                            className={`${inputCls} ${prefillFields.has('caseNumber') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
+                            value={f.caseNumber}
+                            onChange={e => upd('caseNumber', e.target.value)}
+                            placeholder="CS(OS) 123/2024"
+                          />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                             Court Name
                             <AutoFilledBadge field="courtName" />
                           </label>
-                          <input className={`${inputCls} ${prefillFields.has('courtName') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`} value={f.courtName} onChange={e => upd('courtName', e.target.value)} placeholder="e.g. Delhi High Court" />
+                          <input
+                            className={`${inputCls} ${prefillFields.has('courtName') ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
+                            value={f.courtName}
+                            onChange={e => upd('courtName', e.target.value)}
+                            placeholder="e.g. Delhi High Court"
+                          />
                         </div>
                       </div>
- 
+
                       {/* Issues */}
                       <div className="p-4 space-y-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">Issues for Determination</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
+                          Issues for Determination
+                        </span>
                         {f.issues.map((issue, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <input value={issue} onChange={e => upd('issues', f.issues.map((x, idx) => idx === i ? e.target.value : x))}
+                            <input
+                              value={issue}
+                              onChange={e =>
+                                upd(
+                                  'issues',
+                                  f.issues.map((x, idx) => (idx === i ? e.target.value : x))
+                                )
+                              }
                               placeholder="e.g. Whether the contract dated ___ is legally valid?"
-                              className={`${inputSmCls} flex-1 w-full`} />
+                              className={`${inputSmCls} flex-1 w-full`}
+                            />
                             {f.issues.length > 1 && (
-                              <button onClick={() => upd('issues', f.issues.filter((_, idx) => idx !== i))}
-                                className="p-1.5 text-red-400 hover:text-red-600 rounded-lg shrink-0">
+                              <button
+                                onClick={() =>
+                                  upd(
+                                    'issues',
+                                    f.issues.filter((_, idx) => idx !== i)
+                                  )
+                                }
+                                className="p-1.5 text-red-400 hover:text-red-600 rounded-lg shrink-0"
+                              >
                                 <Trash2 size={13} />
                               </button>
                             )}
                           </div>
                         ))}
-                        <button onClick={() => upd('issues', [...f.issues, ''])}
-                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700">
+                        <button
+                          onClick={() => upd('issues', [...f.issues, ''])}
+                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700"
+                        >
                           <Plus size={13} /> Add Issue
                         </button>
                       </div>
- 
+
                       {/* Provisions */}
                       <div className="p-4 space-y-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">Legal Provisions</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
+                          Legal Provisions
+                        </span>
                         <div className="flex flex-wrap gap-1.5 pb-2">
                           {PROVISIONS_QUICK.map(act => (
-                            <button key={act} onClick={() => addQuickProvision(act)}
-                              className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition-colors">
+                            <button
+                              key={act}
+                              onClick={() => addQuickProvision(act)}
+                              className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition-colors"
+                            >
                               + {act}
                             </button>
                           ))}
@@ -1461,69 +1802,182 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                         {f.provisions.map((prov, i) => (
                           <div key={i} className="flex gap-2 items-center">
                             <div className="flex-1 grid grid-cols-2 gap-2">
-                              <input value={prov.act} onChange={e => upd('provisions', f.provisions.map((x, idx) => idx === i ? { ...x, act: e.target.value } : x))}
-                                placeholder="Act / Statute" className={`${inputSmCls} w-full`} />
-                              <input value={prov.sections} onChange={e => upd('provisions', f.provisions.map((x, idx) => idx === i ? { ...x, sections: e.target.value } : x))}
-                                placeholder="Section(s)" className={`${inputSmCls} w-full`} />
+                              <input
+                                value={prov.act}
+                                onChange={e =>
+                                  upd(
+                                    'provisions',
+                                    f.provisions.map((x, idx) =>
+                                      idx === i ? { ...x, act: e.target.value } : x
+                                    )
+                                  )
+                                }
+                                placeholder="Act / Statute"
+                                className={`${inputSmCls} w-full`}
+                              />
+                              <input
+                                value={prov.sections}
+                                onChange={e =>
+                                  upd(
+                                    'provisions',
+                                    f.provisions.map((x, idx) =>
+                                      idx === i ? { ...x, sections: e.target.value } : x
+                                    )
+                                  )
+                                }
+                                placeholder="Section(s)"
+                                className={`${inputSmCls} w-full`}
+                              />
                             </div>
                             {f.provisions.length > 1 && (
-                              <button onClick={() => upd('provisions', f.provisions.filter((_, idx) => idx !== i))}
-                                className="p-1.5 text-red-400 hover:text-red-600 rounded-lg shrink-0">
+                              <button
+                                onClick={() =>
+                                  upd(
+                                    'provisions',
+                                    f.provisions.filter((_, idx) => idx !== i)
+                                  )
+                                }
+                                className="p-1.5 text-red-400 hover:text-red-600 rounded-lg shrink-0"
+                              >
                                 <Trash2 size={13} />
                               </button>
                             )}
                           </div>
                         ))}
-                        <button onClick={() => upd('provisions', [...f.provisions, { act: '', sections: '' }])}
-                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700">
+                        <button
+                          onClick={() =>
+                            upd('provisions', [...f.provisions, { act: '', sections: '' }])
+                          }
+                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700"
+                        >
                           <Plus size={13} /> Add Provision
                         </button>
                       </div>
- 
+
                       {/* Evidence */}
                       <div className="p-4 space-y-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">Evidence & Documents</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
+                          Evidence & Documents
+                        </span>
                         {f.evidences.map((ev, i) => (
-                          <div key={i} className="border border-slate-200 dark:border-zinc-700 rounded-2xl p-3 space-y-2">
+                          <div
+                            key={i}
+                            className="border border-slate-200 dark:border-zinc-700 rounded-2xl p-3 space-y-2"
+                          >
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold text-slate-400">Evidence {i + 1}</span>
+                              <span className="text-[9px] font-bold text-slate-400">
+                                Evidence {i + 1}
+                              </span>
                               {f.evidences.length > 1 && (
-                                <button onClick={() => upd('evidences', f.evidences.filter((_, idx) => idx !== i))}
-                                  className="p-1 text-red-400 hover:text-red-600"><Trash2 size={12} /></button>
+                                <button
+                                  onClick={() =>
+                                    upd(
+                                      'evidences',
+                                      f.evidences.filter((_, idx) => idx !== i)
+                                    )
+                                  }
+                                  className="p-1 text-red-400 hover:text-red-600"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
                               )}
                             </div>
-                            <input value={ev.title} onChange={e => upd('evidences', f.evidences.map((x, idx) => idx === i ? { ...x, title: e.target.value } : x))}
-                              placeholder="Evidence Title" className={`${inputSmCls} w-full`} />
-                            <textarea rows={2} value={ev.description} onChange={e => upd('evidences', f.evidences.map((x, idx) => idx === i ? { ...x, description: e.target.value } : x))}
-                              placeholder="Description..." className={`${inputCls} resize-none`} />
+                            <input
+                              value={ev.title}
+                              onChange={e =>
+                                upd(
+                                  'evidences',
+                                  f.evidences.map((x, idx) =>
+                                    idx === i ? { ...x, title: e.target.value } : x
+                                  )
+                                )
+                              }
+                              placeholder="Evidence Title"
+                              className={`${inputSmCls} w-full`}
+                            />
+                            <textarea
+                              rows={2}
+                              value={ev.description}
+                              onChange={e =>
+                                upd(
+                                  'evidences',
+                                  f.evidences.map((x, idx) =>
+                                    idx === i ? { ...x, description: e.target.value } : x
+                                  )
+                                )
+                              }
+                              placeholder="Description..."
+                              className={`${inputCls} resize-none`}
+                            />
                           </div>
                         ))}
-                        <button onClick={() => upd('evidences', [...f.evidences, { title: '', description: '', files: [] }])}
-                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700">
+                        <button
+                          onClick={() =>
+                            upd('evidences', [
+                              ...f.evidences,
+                              { title: '', description: '', files: [] },
+                            ])
+                          }
+                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700"
+                        >
                           <Plus size={13} /> Add Evidence
                         </button>
                       </div>
- 
+
                       {/* Case Laws */}
                       <div className="p-4 space-y-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">Case Laws / Precedents</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 block mb-1">
+                          Case Laws / Precedents
+                        </span>
                         {f.caseLaws.map((cl, i) => (
-                          <div key={i} className="border border-slate-200 dark:border-zinc-700 rounded-2xl p-3 space-y-2">
-                            <input value={cl.name} onChange={e => upd('caseLaws', f.caseLaws.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
-                              placeholder="Case Name" className={`${inputSmCls} w-full`} />
-                            <input value={cl.citation} onChange={e => upd('caseLaws', f.caseLaws.map((x, idx) => idx === i ? { ...x, citation: e.target.value } : x))}
-                              placeholder="Citation" className={`${inputSmCls} w-full`} />
+                          <div
+                            key={i}
+                            className="border border-slate-200 dark:border-zinc-700 rounded-2xl p-3 space-y-2"
+                          >
+                            <input
+                              value={cl.name}
+                              onChange={e =>
+                                upd(
+                                  'caseLaws',
+                                  f.caseLaws.map((x, idx) =>
+                                    idx === i ? { ...x, name: e.target.value } : x
+                                  )
+                                )
+                              }
+                              placeholder="Case Name"
+                              className={`${inputSmCls} w-full`}
+                            />
+                            <input
+                              value={cl.citation}
+                              onChange={e =>
+                                upd(
+                                  'caseLaws',
+                                  f.caseLaws.map((x, idx) =>
+                                    idx === i ? { ...x, citation: e.target.value } : x
+                                  )
+                                )
+                              }
+                              placeholder="Citation"
+                              className={`${inputSmCls} w-full`}
+                            />
                           </div>
                         ))}
-                        <button onClick={() => upd('caseLaws', [...f.caseLaws, { name: '', citation: '', principle: '' }])}
-                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700">
+                        <button
+                          onClick={() =>
+                            upd('caseLaws', [
+                              ...f.caseLaws,
+                              { name: '', citation: '', principle: '' },
+                            ])
+                          }
+                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 hover:text-violet-700"
+                        >
                           <Plus size={13} /> Add Precedent
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
- 
+
                 {/* Build Argument Primary Action */}
                 <div className="p-5 flex justify-end shrink-0">
                   <button
@@ -1545,23 +1999,30 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                   </button>
                 </div>
               </div>
- 
+
               {/* ── RIGHT: AI OUTPUT ────────────────────────────────── */}
               {showOutput && (
-                <div ref={outputRef} className="lg:w-[42%] flex flex-col border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/5 bg-slate-50/80 dark:bg-[#060d1a]">
+                <div
+                  ref={outputRef}
+                  className="lg:w-[42%] flex flex-col border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/5 bg-slate-50/80 dark:bg-[#060d1a]"
+                >
                   <div className="flex-1 flex flex-col min-h-0">
                     {/* Output Header */}
                     <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-white/5 shrink-0 bg-white/50 dark:bg-black/20">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${generating ? 'bg-violet-500 animate-pulse' : 'bg-emerald-500'}`} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate">{outputLabel}</span>
+                        <div
+                          className={`w-2 h-2 rounded-full shrink-0 ${generating ? 'bg-violet-500 animate-pulse' : 'bg-emerald-500'}`}
+                        />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate">
+                          {outputLabel}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         {!generating && output && (
                           <>
                             <select
                               value=""
-                              onChange={(e) => {
+                              onChange={e => {
                                 if (e.target.value) {
                                   handleGenerate(e.target.value);
                                 }
@@ -1570,7 +2031,9 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                             >
                               <option value="">Regenerate as...</option>
                               {AI_ACTIONS.map(act => (
-                                <option key={act.id} value={act.id}>{act.label}</option>
+                                <option key={act.id} value={act.id}>
+                                  {act.label}
+                                </option>
                               ))}
                             </select>
                             <LanguageToggle
@@ -1580,13 +2043,18 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                             />
                           </>
                         )}
-                        <button onClick={() => { setShowOutput(false); setOutput(''); }}
-                          className="p-1 text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-2">
+                        <button
+                          onClick={() => {
+                            setShowOutput(false);
+                            setOutput('');
+                          }}
+                          className="p-1 text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-2"
+                        >
                           <X size={13} />
                         </button>
                       </div>
                     </div>
- 
+
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 min-h-0 font-sans">
                       {generating ? (
@@ -1598,13 +2066,23 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-violet-500/30 to-indigo-600/30 animate-ping" />
                           </div>
                           <div className="text-center space-y-1">
-                            <p className="text-sm font-black text-slate-700 dark:text-slate-200">{outputLabel}</p>
-                            <p className="text-xs text-slate-400">AI is analyzing your case data...</p>
-                            <p className="text-[9px] text-slate-300 dark:text-slate-600">This may take 15–30 seconds</p>
+                            <p className="text-sm font-black text-slate-700 dark:text-slate-200">
+                              {outputLabel}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              AI is analyzing your case data...
+                            </p>
+                            <p className="text-[9px] text-slate-300 dark:text-slate-600">
+                              This may take 15–30 seconds
+                            </p>
                           </div>
                           <div className="flex gap-1.5">
-                            {[0,1,2,3,4].map(i => (
-                              <div key={i} className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 100}ms` }} />
+                            {[0, 1, 2, 3, 4].map(i => (
+                              <div
+                                key={i}
+                                className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce"
+                                style={{ animationDelay: `${i * 100}ms` }}
+                              />
                             ))}
                           </div>
                         </div>
@@ -1614,42 +2092,68 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
                         </div>
                       ) : null}
                     </div>
- 
+
                     {/* Export Bar */}
                     {!generating && output && (
                       <div className="px-3 py-3 border-t border-slate-200 dark:border-white/5 shrink-0 bg-white/50 dark:bg-black/10">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Export & Save</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                          Export & Save
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
-                          <button onClick={handleCopy}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 hover:border-violet-400'}`}>
+                          <button
+                            onClick={handleCopy}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 hover:border-violet-400'}`}
+                          >
                             {copied ? <Check size={11} /> : <Copy size={11} />}
                             <span>{copied ? 'Copied!' : 'Copy'}</span>
                           </button>
-                          <button onClick={handlePDF}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-red-600 hover:border-red-400 transition-all">
-                            <FileText size={11} /><span>PDF</span>
+                          <button
+                            onClick={handlePDF}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-red-600 hover:border-red-400 transition-all"
+                          >
+                            <FileText size={11} />
+                            <span>PDF</span>
                           </button>
-                          <button onClick={handleDocx}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-blue-600 hover:border-blue-400 transition-all">
-                            <FileDown size={11} /><span>DOCX</span>
+                          <button
+                            onClick={handleDocx}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-blue-600 hover:border-blue-400 transition-all"
+                          >
+                            <FileDown size={11} />
+                            <span>DOCX</span>
                           </button>
-                          <button onClick={handlePrint}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 hover:border-violet-400 transition-all">
-                            <Printer size={11} /><span>Print</span>
+                          <button
+                            onClick={handlePrint}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 hover:border-violet-400 transition-all"
+                          >
+                            <Printer size={11} />
+                            <span>Print</span>
                           </button>
-                          <button onClick={handleSaveToCase} disabled={saving || !caseId}
+                          <button
+                            onClick={handleSaveToCase}
+                            disabled={saving || !caseId}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                               !caseId
                                 ? 'bg-slate-100 dark:bg-zinc-800 text-slate-400 border border-slate-200 dark:border-zinc-700 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 shadow-sm shadow-violet-500/20 disabled:opacity-50'
                             }`}
-                            title={!caseId ? 'Open a case to enable Save to Case' : 'Save to current case in database'}>
-                            {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+                            title={
+                              !caseId
+                                ? 'Open a case to enable Save to Case'
+                                : 'Save to current case in database'
+                            }
+                          >
+                            {saving ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <Save size={11} />
+                            )}
                             <span>{saving ? 'Saving...' : 'Save to Case'}</span>
                           </button>
                         </div>
                         {!caseId && (
-                          <p className="text-[9px] text-slate-400 mt-1.5">Open a case from the dashboard to enable database save.</p>
+                          <p className="text-[9px] text-slate-400 mt-1.5">
+                            Open a case from the dashboard to enable database save.
+                          </p>
                         )}
                       </div>
                     )}
@@ -1663,5 +2167,5 @@ const BuildArgumentModal = ({ isOpen, onClose, currentCase, onUpdateCase }) => {
     </AnimatePresence>
   );
 };
- 
+
 export default BuildArgumentModal;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const AisaTypingIndicator = ({ visible = true, message = "AISA™ is thinking" }) => {
+const AisaTypingIndicator = ({ visible = true, message = 'AISA™ is thinking' }) => {
   if (!visible) return null;
 
   return (
@@ -15,13 +15,21 @@ const AisaTypingIndicator = ({ visible = true, message = "AISA™ is thinking" }
         {message}
       </span>
       <div className="flex gap-1 ml-1">
-        <div className="w-1 h-1 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-        <div className="w-1 h-1 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-        <div className="w-1 h-1 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+        <div
+          className="w-1 h-1 rounded-full bg-primary/40 animate-bounce"
+          style={{ animationDelay: '0ms' }}
+        />
+        <div
+          className="w-1 h-1 rounded-full bg-primary/40 animate-bounce"
+          style={{ animationDelay: '150ms' }}
+        />
+        <div
+          className="w-1 h-1 rounded-full bg-primary/40 animate-bounce"
+          style={{ animationDelay: '300ms' }}
+        />
       </div>
     </motion.div>
   );
 };
 
 export default AisaTypingIndicator;
-

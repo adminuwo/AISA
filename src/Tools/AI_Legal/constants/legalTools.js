@@ -1,8 +1,29 @@
-import { 
-  FileText, Shield, FileCheck, Scale, Binary, 
-  Mail, PenTool, AlertTriangle, Edit3, Brain, 
-  Library, Clock, CheckCircle, ArrowLeftRight, Lock, Sparkles,
-  MessageCircle, ArrowRight, X, ChevronDown, Zap, Maximize2, Minimize2, Gavel, Briefcase 
+import {
+  FileText,
+  Shield,
+  FileCheck,
+  Scale,
+  Binary,
+  Mail,
+  PenTool,
+  AlertTriangle,
+  Edit3,
+  Brain,
+  Library,
+  Clock,
+  CheckCircle,
+  ArrowLeftRight,
+  Lock,
+  Sparkles,
+  MessageCircle,
+  ArrowRight,
+  X,
+  ChevronDown,
+  Zap,
+  Maximize2,
+  Minimize2,
+  Gavel,
+  Briefcase,
 } from 'lucide-react';
 import LegalLogo from '../components/LegalLogo';
 
@@ -17,8 +38,8 @@ export const PREMIUM_TOOLS = [
       'Select or create a legal case folder.',
       'Input client details and case summary.',
       'Chat with AI assistant focused strictly on case context.',
-      'Access specialized case tools (Drafting, Analysis, etc.)'
-    ]
+      'Access specialized case tools (Drafting, Analysis, etc.)',
+    ],
   },
   {
     id: 'legal_draft_maker',
@@ -29,8 +50,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Describe the document you need (FIR, Notice, Agreement, etc.).',
       'Provide key names, dates, and factual background.',
-      'AI generates a litigation-ready professional draft.'
-    ]
+      'AI generates a litigation-ready professional draft.',
+    ],
   },
   {
     id: 'legal_contract_analyzer',
@@ -41,8 +62,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Upload or paste your contract/agreement text.',
       'AI scans for hidden risks, liabilities, and unfair clauses.',
-      'Get professional rewrites to protect your interests.'
-    ]
+      'Get professional rewrites to protect your interests.',
+    ],
   },
   {
     id: 'legal_case_predictor',
@@ -53,8 +74,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Input case facts, evidence, and legal claims.',
       'AI evaluates scenarios against legal precedents.',
-      'Receive success probability and predicted judicial verdict.'
-    ]
+      'Receive success probability and predicted judicial verdict.',
+    ],
   },
   {
     id: 'legal_strategy_engine',
@@ -65,8 +86,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Brief the AI on your current legal dispute.',
       'AI simulates opponent moves and creates counter-strategies.',
-      'Get aggressive, balanced, and safe tactical options.'
-    ]
+      'Get aggressive, balanced, and safe tactical options.',
+    ],
   },
   {
     id: 'legal_evidence_checker',
@@ -77,8 +98,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Submit a list or description of your evidence.',
       'AI checks admissibility under Section 65B and other laws.',
-      'AI identifies gaps and suggests ways to strengthen proof.'
-    ]
+      'AI identifies gaps and suggests ways to strengthen proof.',
+    ],
   },
   {
     id: 'legal_research_assistant',
@@ -89,8 +110,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Ask any complex legal query or situational question.',
       'AI searches relevant statutes (IPC, BNS) and case laws.',
-      'Receive citations and strategic summaries for court use.'
-    ]
+      'Receive citations and strategic summaries for court use.',
+    ],
   },
   {
     id: 'legal_argument_builder',
@@ -101,8 +122,8 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Provide brief facts and the core dispute.',
       'AI structures primary arguments and secondary rebuttals.',
-      'AI generates targeted cross-examination questions.'
-    ]
+      'AI generates targeted cross-examination questions.',
+    ],
   },
   {
     id: 'legal_general_chat',
@@ -113,7 +134,7 @@ export const PREMIUM_TOOLS = [
     workflow: [
       'Ask any general legal question.',
       'Get professional guidance and simple explanations.',
-      'Engage in AI-assisted legal discussion.'
-    ]
-  }
+      'Engage in AI-assisted legal discussion.',
+    ],
+  },
 ];

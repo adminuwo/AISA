@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const filePath = 'c:/Users/USER/Desktop/aisa/AISA_New/src/Tools/AI_Legal/components/CasePredictor.jsx';
+const filePath =
+  'c:/Users/USER/Desktop/aisa/AISA_New/src/Tools/AI_Legal/components/CasePredictor.jsx';
 let content = fs.readFileSync(filePath, 'utf8');
 
 // Normalize line endings to LF

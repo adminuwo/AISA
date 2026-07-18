@@ -14,12 +14,7 @@ const SocialAgentPage = () => {
     navigate('/dashboard/chat', { replace: true });
   };
 
-  return (
-    <AiSocialMediaDashboard
-      isOpen={true}
-      onClose={handleClose}
-    />
-  );
+  return <AiSocialMediaDashboard isOpen={true} onClose={handleClose} />;
 };
 
 export default SocialAgentPage;

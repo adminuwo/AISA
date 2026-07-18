@@ -1,7 +1,7 @@
 // Message Type (JSDoc for IntelliSense)
 export const MessageRole = {
-  USER: "user",
-  MODEL: "model",
+  USER: 'user',
+  MODEL: 'model',
 };
 
 /**
@@ -42,25 +42,28 @@ export const MessageRole = {
 
 // AppRoute Enum
 export const AppRoute = {
-  LANDING: "/",
-  LOGIN: "/login",
-  SIGNUP: "/signup",
-  E_Verification: "/verification",
-  DASHBOARD: "/dashboard",
-  SETTINGS: "/dashboard/settings",
-  PROFILE: "/dashboard/profile",
-  FORGOT_PASSWORD: "/forgot-password",
-  RESET_PASSWORD: "/reset-password/:token",
-  PRIVACY_POLICY: "/privacy-policy",
-  TERMS_OF_SERVICE: "/terms",
-  COOKIE_POLICY: "/cookie-policy",
-  ADMIN_DASHBOARD: "/dashboard/admin",
+  LANDING: '/',
+  LOGIN: '/login',
+  SIGNUP: '/signup',
+  E_Verification: '/verification',
+  DASHBOARD: '/dashboard',
+  SETTINGS: '/dashboard/settings',
+  PROFILE: '/dashboard/profile',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password/:token',
+  PRIVACY_POLICY: '/privacy-policy',
+  TERMS_OF_SERVICE: '/terms',
+  COOKIE_POLICY: '/cookie-policy',
+  ADMIN_DASHBOARD: '/dashboard/admin',
 };
 
 // API Base URL - reads from VITE_AISA_BACKEND_API env variable (set in .env), falls back to production
-const API = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://127.0.0.1:8080/api";
+const API =
+  window._env_?.VITE_AISA_BACKEND_API ||
+  import.meta.env.VITE_AISA_BACKEND_API ||
+  'http://127.0.0.1:8080/api';
 
-console.log("API", API);
+console.log('API', API);
 
 const apis = {
   resetPassword: `${API}/auth/reset-password-otp`,
@@ -71,7 +74,7 @@ const apis = {
   agents: `${API}/agents`,
   buyAgent: `${API}/agents/buy`,
   chatAgent: `${API}/chat`,
-  shareEmail: (sessionId) => `${API}/chat/${sessionId}/share/email`,
+  shareEmail: sessionId => `${API}/chat/${sessionId}/share/email`,
   support: `${API}/support`,
   resetPasswordEmail: `${API}/auth/reset-password-email`,
   feedback: `${API}/feedback`,
@@ -105,8 +108,8 @@ const apis = {
     knowledge: `${API}/aibase/knowledge`,
     documents: `${API}/aibase/knowledge/documents`,
     upload: `${API}/aibase/knowledge/upload`,
-    download: (id) => `${API}/aibase/knowledge/download/${id}`,
-    delete: (id) => `${API}/aibase/knowledge/${id}`,
+    download: id => `${API}/aibase/knowledge/download/${id}`,
+    delete: id => `${API}/aibase/knowledge/${id}`,
   },
   uploadAvatar: `${API}/user/avatar`,
   removeAvatar: `${API}/user/avatar`,

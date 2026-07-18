@@ -1,16 +1,15 @@
-import { StrictMode, useEffect } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import './dashboard-dark.css'
+import { StrictMode, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import './dashboard-dark.css';
 // import './dashboard-dark.css'
-import App from './App.jsx'
+import App from './App.jsx';
 import { ToastProvider } from './Components/Toast/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PersonalizationProvider } from './context/PersonalizationContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter, useLocation } from 'react-router-dom';
-
 
 import ErrorBoundary from './Components/ErrorBoundary';
 import { initIncidentReporter } from './services/incidentReporter';
@@ -22,10 +21,11 @@ try {
   console.error('[Telemetry failed to start]', e);
 }
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
-  || import.meta.env.AISA_GOOGLE_CLIENT_ID
-  || (typeof window !== 'undefined' && window._env_?.AISA_GOOGLE_CLIENT_ID)
-  || 'dummy_client_id_to_prevent_crash';
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  import.meta.env.AISA_GOOGLE_CLIENT_ID ||
+  (typeof window !== 'undefined' && window._env_?.AISA_GOOGLE_CLIENT_ID) ||
+  'dummy_client_id_to_prevent_crash';
 
 // ─── Visual Viewport Manager ───
 // Definitive fix for Android Chrome mobile keyboard push-up.
@@ -47,7 +47,8 @@ const VisualViewportManager = () => {
       if (!shouldLock || isSetup) return;
       isSetup = true;
       document.documentElement.style.cssText += ';height:100%;overflow:hidden;';
-      document.body.style.cssText += ';position:fixed;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;';
+      document.body.style.cssText +=
+        ';position:fixed;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;';
       // Prevent window scroll restore attempts
       if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     };
@@ -83,7 +84,10 @@ const VisualViewportManager = () => {
       root.style.setProperty('--real-vw', `${vw}px`);
       root.style.setProperty('--dvh', `${vh * 0.01}px`);
       root.style.setProperty('--keyboard-height', `${keyboardH}px`);
-      root.style.setProperty('--keyboard-safe-bottom', `${Math.max(keyboardH, parseInt(getComputedStyle(root).getPropertyValue('--safe-area-bottom') || '0'))}px`);
+      root.style.setProperty(
+        '--keyboard-safe-bottom',
+        `${Math.max(keyboardH, parseInt(getComputedStyle(root).getPropertyValue('--safe-area-bottom') || '0'))}px`
+      );
 
       // Directly patch #aisa-app-root — height = visual viewport height
       const appRoot = document.getElementById('aisa-app-root');
@@ -104,7 +108,7 @@ const VisualViewportManager = () => {
 
     // ── Step 4: On input focus, guard scroll + update after keyboard settles ──
     let focusTimer = null;
-    const onFocusIn = (e) => {
+    const onFocusIn = e => {
       const tag = e.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.contentEditable === 'true') {
         preventWindowScroll();
@@ -205,7 +209,5 @@ const AppTree = (
 // causing severe full-screen flicker on scroll. Glassmorphism is now always GPU-rendered.
 
 createRoot(document.getElementById('root')).render(
-  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-    {AppTree}
-  </GoogleOAuthProvider>
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{AppTree}</GoogleOAuthProvider>
 );

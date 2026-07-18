@@ -1,12 +1,61 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-  ChevronLeft, FileText, Download, Copy, Share2, Edit3, CheckCircle2,
-  Search, Gavel, Shield, Landmark, Users, Briefcase, Home, X, ChevronRight,
-  Printer, Save, FileDown, Plus, Layout, Scale, ShieldAlert, CreditCard,
-  Laptop, FileCheck, Globe, Lock, Heart, Award, Calendar, Clock, Folder,
-  Check, Zap, Languages, BookOpen, AlertCircle, RefreshCw, History,
-  ChevronDown, ChevronUp, Info, Sparkles, Trash2, Edit2, Mail, Link,
-  QrCode, Eye, Settings, MoreVertical, MoreHorizontal, Star, Undo, Redo
+  ChevronLeft,
+  FileText,
+  Download,
+  Copy,
+  Share2,
+  Edit3,
+  CheckCircle2,
+  Search,
+  Gavel,
+  Shield,
+  Landmark,
+  Users,
+  Briefcase,
+  Home,
+  X,
+  ChevronRight,
+  Printer,
+  Save,
+  FileDown,
+  Plus,
+  Layout,
+  Scale,
+  ShieldAlert,
+  CreditCard,
+  Laptop,
+  FileCheck,
+  Globe,
+  Lock,
+  Heart,
+  Award,
+  Calendar,
+  Clock,
+  Folder,
+  Check,
+  Zap,
+  Languages,
+  BookOpen,
+  AlertCircle,
+  RefreshCw,
+  History,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Sparkles,
+  Trash2,
+  Edit2,
+  Mail,
+  Link,
+  QrCode,
+  Eye,
+  Settings,
+  MoreVertical,
+  MoreHorizontal,
+  Star,
+  Undo,
+  Redo,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { generateChatResponse } from '../../../services/geminiService';
@@ -23,7 +72,6 @@ import useOutputLanguage from '../hooks/useOutputLanguage';
 import LanguageToggle from './shared/LanguageToggle';
 import CopyOutputButton from './shared/CopyOutputButton';
 import { UniversalMultimodalInput } from './shared/UniversalMultimodalInput';
-
 
 // ── Country field definition (injected after every *address field) ────────────
 const COUNTRY_FIELD = {
@@ -62,8 +110,10 @@ const POLICE_STATION_FIELD = {
 };
 
 // ── Build enriched field list: inject Country, State, District, Police Station sequence ──
-const buildEnrichedFields = (originalFields) => {
-  const fields = originalFields.map(f => f.key === 'ipcSections' ? { ...f, type: 'sections' } : f);
+const buildEnrichedFields = originalFields => {
+  const fields = originalFields.map(f =>
+    f.key === 'ipcSections' ? { ...f, type: 'sections' } : f
+  );
   // 1. Check if the original fields contains policeStation or district keys
   const hasPoliceStation = fields.some(f => {
     const k = f.key.toLowerCase();
@@ -73,7 +123,14 @@ const buildEnrichedFields = (originalFields) => {
   // 2. Filter out any existing location/police station fields to prevent duplicates
   const cleanedFields = fields.filter(f => {
     const k = f.key.toLowerCase();
-    return k !== 'country' && k !== 'state' && k !== 'province' && k !== 'district' && k !== 'policestation' && k !== 'police_station';
+    return (
+      k !== 'country' &&
+      k !== 'state' &&
+      k !== 'province' &&
+      k !== 'district' &&
+      k !== 'policestation' &&
+      k !== 'police_station'
+    );
   });
 
   const result = [];
@@ -134,7 +191,8 @@ const buildEnrichedFields = (originalFields) => {
     // Regular injection of Country & State / Province (for forms without policeStation)
     cleanedFields.forEach((field, idx) => {
       result.push(field);
-      if (idx === 1) { // Inject as 3rd field
+      if (idx === 1) {
+        // Inject as 3rd field
         result.push(COUNTRY_FIELD);
         result.push(STATE_FIELD);
         injected = true;
@@ -163,7 +221,7 @@ const CAT_ICONS = {
   'TAX & GST': <FileCheck size={15} className="text-lime-600" />,
   'INTELLECTUAL PROPERTY': <Lock size={15} className="text-purple-500" />,
   'COURT & DOCUMENTS': <FileText size={15} className="text-slate-500" />,
-  'GENERAL': <FileText size={15} className="text-slate-500" />,
+  GENERAL: <FileText size={15} className="text-slate-500" />,
 };
 
 const CAT_COLORS = {
@@ -271,14 +329,12 @@ const FieldInput = ({ field, value, onChange, filled, country, state, district }
   }
   if (field.type === 'select' && field.options) {
     return (
-      <select
-        value={value || ''}
-        onChange={e => onChange(e.target.value)}
-        className={base}
-      >
+      <select value={value || ''} onChange={e => onChange(e.target.value)} className={base}>
         <option value="">— Select {field.label} —</option>
         {field.options.map(opt => (
-          <option key={opt} value={opt}>{opt}</option>
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
         ))}
       </select>
     );
@@ -306,11 +362,11 @@ const FieldInput = ({ field, value, onChange, filled, country, state, district }
 };
 
 // ─── Dynamic Placeholder Extractor & Replacer Helpers ───────────────────────
-const extractPlaceholders = (text) => {
+const extractPlaceholders = text => {
   if (!text) return [];
   const matches = [];
   const seen = new Set();
-  
+
   // 1. Match {{key}} placeholders
   const dbRegex = /\{\{([^}]+)\}\}/g;
   let match;
@@ -321,7 +377,7 @@ const extractPlaceholders = (text) => {
       matches.push({
         raw: match[0],
         label: keyName.replace(/_/g, ' ').toUpperCase(),
-        key: keyName
+        key: keyName,
       });
     }
   }
@@ -336,7 +392,7 @@ const extractPlaceholders = (text) => {
       matches.push({
         raw: match[0],
         label: rawName,
-        key: idName
+        key: idName,
       });
     }
   }
@@ -349,20 +405,20 @@ const replacePlaceholders = (text, values) => {
   let replaced = text.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
     const cleanKey = key.trim();
     const val = values[cleanKey];
-    return (val && val.trim()) ? val.trim() : match;
+    return val && val.trim() ? val.trim() : match;
   });
   // 2. Replace [Label] brackets (fallback / backward compatibility)
   replaced = replaced.replace(/\[\s*([^\]]{2,50})\s*\]/g, (match, rawName) => {
     const idName = rawName.toLowerCase().replace(/[^a-z0-9]/g, '_');
     const val = values[idName];
-    return (val && val.trim()) ? val.trim() : match;
+    return val && val.trim() ? val.trim() : match;
   });
   return replaced;
 };
 
 const validateAndFormatDraft = (text, templateTitle = '') => {
   if (!text) return '';
-  
+
   // Convert escaped literal sequences (like \n, \t) to actual newlines and tabs
   let cleaned = text.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\"/g, '"');
 
@@ -377,13 +433,20 @@ const validateAndFormatDraft = (text, templateTitle = '') => {
   return cleaned;
 };
 const diffWords = (str1, str2) => {
-  const words1 = (str1 || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean);
-  const words2 = (str2 || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean);
-  
-  const cleanWord = w => w.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").toLowerCase();
+  const words1 = (str1 || '')
+    .replace(/<[^>]*>/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
+  const words2 = (str2 || '')
+    .replace(/<[^>]*>/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const cleanWord = w => w.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '').toLowerCase();
   const output = [];
-  let i = 0, j = 0;
-  
+  let i = 0,
+    j = 0;
+
   while (i < words1.length || j < words2.length) {
     if (i < words1.length && j < words2.length) {
       if (cleanWord(words1[i]) === cleanWord(words2[j])) {
@@ -395,7 +458,9 @@ const diffWords = (str1, str2) => {
         for (let k = j; k < Math.min(j + 5, words2.length); k++) {
           if (cleanWord(words1[i]) === cleanWord(words2[k])) {
             for (let l = j; l < k; l++) {
-              output.push(`<span class="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-450 px-1 rounded font-bold">+${words2[l]}</span>`);
+              output.push(
+                `<span class="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-450 px-1 rounded font-bold">+${words2[l]}</span>`
+              );
             }
             j = k;
             foundMatch = true;
@@ -403,22 +468,28 @@ const diffWords = (str1, str2) => {
           }
         }
         if (!foundMatch) {
-          output.push(`<span class="bg-rose-105 dark:bg-rose-950/40 text-rose-700 dark:text-rose-450 line-through px-1 rounded">-${words1[i]}</span>`);
+          output.push(
+            `<span class="bg-rose-105 dark:bg-rose-950/40 text-rose-700 dark:text-rose-450 line-through px-1 rounded">-${words1[i]}</span>`
+          );
           i++;
         }
       }
     } else if (i < words1.length) {
-      output.push(`<span class="bg-rose-105 dark:bg-rose-950/40 text-rose-700 dark:text-rose-450 line-through px-1 rounded">-${words1[i]}</span>`);
+      output.push(
+        `<span class="bg-rose-105 dark:bg-rose-950/40 text-rose-700 dark:text-rose-450 line-through px-1 rounded">-${words1[i]}</span>`
+      );
       i++;
     } else {
-      output.push(`<span class="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-450 px-1 rounded font-bold">+${words2[j]}</span>`);
+      output.push(
+        `<span class="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-450 px-1 rounded font-bold">+${words2[j]}</span>`
+      );
       j++;
     }
   }
   return output.join(' ');
 };
 
-const convertTextToHtml = (text) => {
+const convertTextToHtml = text => {
   if (!text) return '';
   // Check if it's already HTML (contains HTML tags)
   if (/<p>|<h\d>|<div>|<b>|<i>|<u>|<table>/i.test(text)) {
@@ -426,44 +497,52 @@ const convertTextToHtml = (text) => {
   }
   // Convert plain text/markdown to clean HTML paragraphs/headings
   const lines = text.split('\n');
-  return lines.map(line => {
-    let cleanLine = line.trim();
-    if (!cleanLine) return '<p><br></p>';
-    
-    // Check for bold headings
-    let isBold = false;
-    if (cleanLine.startsWith('**') && cleanLine.endsWith('**')) {
-      isBold = true;
-      cleanLine = cleanLine.substring(2, cleanLine.length - 2).trim();
-    }
-    
-    // Clean markdown headings
-    cleanLine = cleanLine
-      .replace(/\*\*/g, '')
-      .replace(/###/g, '')
-      .replace(/##/g, '')
-      .replace(/#/g, '');
+  return lines
+    .map(line => {
+      let cleanLine = line.trim();
+      if (!cleanLine) return '<p><br></p>';
 
-    const isHeading = cleanLine && (
-      cleanLine === cleanLine.toUpperCase() && cleanLine.length > 4 ||
-      cleanLine.startsWith('BEFORE THE') ||
-      cleanLine.startsWith('IN THE COURT OF') ||
-      cleanLine.startsWith('COMPLAINANT DETAILS') ||
-      cleanLine.startsWith('ACCUSED DETAILS') ||
-      cleanLine.startsWith('FACTS OF THE CASE') ||
-      cleanLine.startsWith('PRAYER') ||
-      isBold
-    );
+      // Check for bold headings
+      let isBold = false;
+      if (cleanLine.startsWith('**') && cleanLine.endsWith('**')) {
+        isBold = true;
+        cleanLine = cleanLine.substring(2, cleanLine.length - 2).trim();
+      }
 
-    if (isHeading) {
-      return `<h3 style="text-align: center; font-weight: bold; margin: 1.5em 0; text-transform: uppercase; font-family: 'Times New Roman', Times, serif;">${cleanLine}</h3>`;
-    }
-    
-    // Indent for paragraphs unless numbered lists
-    const hasIndent = !(cleanLine.match(/^\d+\./) || cleanLine.startsWith('Complainant:') || cleanLine.startsWith('Accused:'));
-    const style = hasIndent ? 'style="text-indent: 0.5in; text-align: justify; margin-bottom: 10px; font-family: \'Times New Roman\', Times, serif;"' : 'style="text-align: justify; margin-bottom: 10px; font-family: \'Times New Roman\', Times, serif;"';
-    return `<p ${style}>${cleanLine}</p>`;
-  }).join('');
+      // Clean markdown headings
+      cleanLine = cleanLine
+        .replace(/\*\*/g, '')
+        .replace(/###/g, '')
+        .replace(/##/g, '')
+        .replace(/#/g, '');
+
+      const isHeading =
+        cleanLine &&
+        ((cleanLine === cleanLine.toUpperCase() && cleanLine.length > 4) ||
+          cleanLine.startsWith('BEFORE THE') ||
+          cleanLine.startsWith('IN THE COURT OF') ||
+          cleanLine.startsWith('COMPLAINANT DETAILS') ||
+          cleanLine.startsWith('ACCUSED DETAILS') ||
+          cleanLine.startsWith('FACTS OF THE CASE') ||
+          cleanLine.startsWith('PRAYER') ||
+          isBold);
+
+      if (isHeading) {
+        return `<h3 style="text-align: center; font-weight: bold; margin: 1.5em 0; text-transform: uppercase; font-family: 'Times New Roman', Times, serif;">${cleanLine}</h3>`;
+      }
+
+      // Indent for paragraphs unless numbered lists
+      const hasIndent = !(
+        cleanLine.match(/^\d+\./) ||
+        cleanLine.startsWith('Complainant:') ||
+        cleanLine.startsWith('Accused:')
+      );
+      const style = hasIndent
+        ? 'style="text-indent: 0.5in; text-align: justify; margin-bottom: 10px; font-family: \'Times New Roman\', Times, serif;"'
+        : 'style="text-align: justify; margin-bottom: 10px; font-family: \'Times New Roman\', Times, serif;"';
+      return `<p ${style}>${cleanLine}</p>`;
+    })
+    .join('');
 };
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
@@ -503,7 +582,7 @@ const cleanGeneratedDraft = (text, templateTitle = '') => {
     'AFFIDAVIT',
     'BEFORE THE',
     'IN THE COURT OF',
-    'IN THE HON\'BLE',
+    "IN THE HON'BLE",
     'IN THE MATTER OF',
     'MEMORANDUM OF',
     'PETITION FOR',
@@ -520,16 +599,25 @@ const cleanGeneratedDraft = (text, templateTitle = '') => {
     'COMPLAINT',
     'APPLICATION FOR',
     'NOTICE TO',
-    templateTitle.toUpperCase().replace(/\s*DRAFT\s*/gi, '').trim()
+    templateTitle
+      .toUpperCase()
+      .replace(/\s*DRAFT\s*/gi, '')
+      .trim(),
   ].filter(Boolean);
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].replace(/[#*_\-\s]/g, '').trim().toUpperCase();
+    const line = lines[i]
+      .replace(/[#*_\-\s]/g, '')
+      .trim()
+      .toUpperCase();
     if (!line) continue;
-    
+
     // Check if line contains any start keyword
     const isStartKeyword = startKeywords.some(kw => {
-      const cleanKw = kw.replace(/[#*_\-\s]/g, '').trim().toUpperCase();
+      const cleanKw = kw
+        .replace(/[#*_\-\s]/g, '')
+        .trim()
+        .toUpperCase();
       return line.includes(cleanKw);
     });
 
@@ -545,8 +633,9 @@ const cleanGeneratedDraft = (text, templateTitle = '') => {
     // If no keyword found, filter out the top lines that match AI patterns
     while (lines.length > 0) {
       const firstLine = lines[0].trim();
-      const shouldFilter = prefixRegexes.some(rx => rx.test(firstLine)) || 
-                           (firstLine.startsWith('*') && firstLine.endsWith('*') && firstLine.length < 50);
+      const shouldFilter =
+        prefixRegexes.some(rx => rx.test(firstLine)) ||
+        (firstLine.startsWith('*') && firstLine.endsWith('*') && firstLine.length < 50);
       if (shouldFilter) {
         lines.shift();
       } else {
@@ -562,15 +651,21 @@ const cleanGeneratedDraft = (text, templateTitle = '') => {
     'EXPLANATION',
     'FORMATTING NOTES',
     'REASONING',
-    'DOCUMENT ANALYSIS'
+    'DOCUMENT ANALYSIS',
   ];
 
   let endIdx = lines.length;
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].replace(/[#*_\-\s]/g, '').trim().toUpperCase();
+    const line = lines[i]
+      .replace(/[#*_\-\s]/g, '')
+      .trim()
+      .toUpperCase();
     if (!line) continue;
     const isEndKeyword = endKeywords.some(kw => {
-      const cleanKw = kw.replace(/[#*_\-\s]/g, '').trim().toUpperCase();
+      const cleanKw = kw
+        .replace(/[#*_\-\s]/g, '')
+        .trim()
+        .toUpperCase();
       return line.startsWith(cleanKw) || line === cleanKw;
     });
     if (isEndKeyword) {
@@ -596,7 +691,7 @@ const renderCleanLegalDraft = (text, isDark, draftPlaceholders = [], placeholder
   const cleanedText = cleanGeneratedDraft(text);
   const lines = cleanedText.split('\n');
 
-  const processInlineStyles = (txt) => {
+  const processInlineStyles = txt => {
     if (!txt) return '';
     const regex = /(\{\{[^}]+\}\}|\[\s*[^\]]{2,50}\s*\]|\*\*+[^*]+\*\*+|\*+[^*]+\*+)/g;
     const parts = txt.split(regex);
@@ -635,10 +730,18 @@ const renderCleanLegalDraft = (text, isDark, draftPlaceholders = [], placeholder
         );
       }
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-extrabold">{part.slice(2, -2)}</strong>;
+        return (
+          <strong key={i} className="font-extrabold">
+            {part.slice(2, -2)}
+          </strong>
+        );
       }
       if (part.startsWith('*') && part.endsWith('*')) {
-        return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+        return (
+          <em key={i} className="italic">
+            {part.slice(1, -1)}
+          </em>
+        );
       }
       return part;
     });
@@ -672,7 +775,10 @@ const renderCleanLegalDraft = (text, isDark, draftPlaceholders = [], placeholder
 
         if (isH1) {
           return (
-            <h1 key={idx} className="text-center font-bold text-[15px] sm:text-base uppercase tracking-wider text-slate-900 dark:text-white mt-6 mb-4">
+            <h1
+              key={idx}
+              className="text-center font-bold text-[15px] sm:text-base uppercase tracking-wider text-slate-900 dark:text-white mt-6 mb-4"
+            >
               {processInlineStyles(trimmed)}
             </h1>
           );
@@ -680,7 +786,10 @@ const renderCleanLegalDraft = (text, isDark, draftPlaceholders = [], placeholder
 
         if (isH2) {
           return (
-            <h2 key={idx} className="text-left font-bold text-xs sm:text-sm uppercase tracking-wide text-slate-800 dark:text-slate-200 mt-5 mb-3">
+            <h2
+              key={idx}
+              className="text-left font-bold text-xs sm:text-sm uppercase tracking-wide text-slate-800 dark:text-slate-200 mt-5 mb-3"
+            >
               {processInlineStyles(trimmed)}
             </h2>
           );
@@ -688,7 +797,10 @@ const renderCleanLegalDraft = (text, isDark, draftPlaceholders = [], placeholder
 
         if (isH3) {
           return (
-            <h3 key={idx} className="text-left font-bold text-xs sm:text-sm text-slate-850 dark:text-slate-250 mt-4 mb-2">
+            <h3
+              key={idx}
+              className="text-left font-bold text-xs sm:text-sm text-slate-850 dark:text-slate-250 mt-4 mb-2"
+            >
               {processInlineStyles(trimmed)}
             </h3>
           );
@@ -785,7 +897,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     parties: false,
     court: false,
     timeline: false,
-    laws: false
+    laws: false,
   });
 
   // ── Saved drafts state ──
@@ -807,7 +919,12 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   } = useOutputLanguage('draft_maker', currentCase?._id || 'global');
   const [draftDisplayText, setDraftDisplayText] = useState('');
   const draftMountedRef = useRef(true);
-  useEffect(() => { draftMountedRef.current = true; return () => { draftMountedRef.current = false; }; }, []);
+  useEffect(() => {
+    draftMountedRef.current = true;
+    return () => {
+      draftMountedRef.current = false;
+    };
+  }, []);
 
   // Reset display text when finalDraft changes
   useEffect(() => {
@@ -822,29 +939,32 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     }
   }, [finalDraft]); // eslint-disable-line
 
-  const handleDraftLangChange = useCallback(async (newLang) => {
-    setOutputLang(newLang);
-    setSaveButtonState('unsaved');
-    if (!finalDraft) return;
-    if (newLang === 'en') {
-      setDraftDisplayText(finalDraft);
-      return;
-    }
-    const cached = getDraftDisplayText(finalDraft);
-    if (cached && cached !== finalDraft) {
-      setDraftDisplayText(cached);
-      return;
-    }
-    setIsDraftTranslating(true);
-    try {
-      const translated = await translateDraftText(finalDraft);
-      if (draftMountedRef.current) setDraftDisplayText(translated);
-    } catch {
-      if (draftMountedRef.current) setDraftDisplayText(finalDraft);
-    } finally {
-      if (draftMountedRef.current) setIsDraftTranslating(false);
-    }
-  }, [finalDraft, getDraftDisplayText, setOutputLang, setIsDraftTranslating, translateDraftText]);
+  const handleDraftLangChange = useCallback(
+    async newLang => {
+      setOutputLang(newLang);
+      setSaveButtonState('unsaved');
+      if (!finalDraft) return;
+      if (newLang === 'en') {
+        setDraftDisplayText(finalDraft);
+        return;
+      }
+      const cached = getDraftDisplayText(finalDraft);
+      if (cached && cached !== finalDraft) {
+        setDraftDisplayText(cached);
+        return;
+      }
+      setIsDraftTranslating(true);
+      try {
+        const translated = await translateDraftText(finalDraft);
+        if (draftMountedRef.current) setDraftDisplayText(translated);
+      } catch {
+        if (draftMountedRef.current) setDraftDisplayText(finalDraft);
+      } finally {
+        if (draftMountedRef.current) setIsDraftTranslating(false);
+      }
+    },
+    [finalDraft, getDraftDisplayText, setOutputLang, setIsDraftTranslating, translateDraftText]
+  );
 
   // ─ UI state ────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
@@ -867,7 +987,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     localStorage.setItem('@aisa_draft_recently_used', JSON.stringify(recentlyUsed));
   }, [recentlyUsed]);
 
-  const toggleFavorite = (item) => {
+  const toggleFavorite = item => {
     setFavorites(prev => {
       if (prev.includes(item)) {
         return prev.filter(x => x !== item);
@@ -880,20 +1000,24 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
-  
+
   // AI Copilot Chat Assistant states
   const [assistantMessages, setAssistantMessages] = useState([
-    { sender: 'ai', text: "Hello! I am your direct AI Copilot. Ask me to rewrite sections, improve language, suggest statutory codes, or explain a paragraph of the active pleading.", timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }
+    {
+      sender: 'ai',
+      text: 'Hello! I am your direct AI Copilot. Ask me to rewrite sections, improve language, suggest statutory codes, or explain a paragraph of the active pleading.',
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+    },
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isChatSending, setIsChatSending] = useState(false);
-  
+
   // Version History filters
   const [historySearchQuery, setHistorySearchQuery] = useState('');
   const [historyFilterType, setHistoryFilterType] = useState('ALL'); // 'ALL', 'manual', 'auto', 'ai', 'translation'
   const [historyFilterAuthor, setHistoryFilterAuthor] = useState('ALL'); // 'ALL', 'You', 'AI', 'System'
   const [historyFilterDate, setHistoryFilterDate] = useState('ALL'); // 'ALL', 'Today', 'Yesterday', 'Older'
-  
+
   // Track Changes version comparison selection
   const [compareVerA, setCompareVerA] = useState(null);
   const [compareVerB, setCompareVerB] = useState(null);
@@ -904,7 +1028,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   const [isProtectedEditing, setIsProtectedEditing] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [draftPlaceholders, setDraftPlaceholders] = useState([]);
-  
+
   // ── Enterprise Share Center States ──
   const [shareAccordion, setShareAccordion] = useState('link');
   const [emailRecipient, setEmailRecipient] = useState('');
@@ -951,15 +1075,38 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   const [secHash, setSecHash] = useState('');
 
   const [shareLogs, setShareLogs] = useState([
-    { id: 1, recipient: 'Rahul Sharma', method: 'Email', date: '27 Jun 2026', time: '2:45 PM', details: 'Attached PDF & DOCX' },
-    { id: 2, recipient: 'Public', method: 'Copied Link', date: '27 Jun 2026', time: '2:51 PM', details: 'Expiry 24h, View Only' },
-    { id: 3, recipient: 'Self', method: 'Downloaded PDF', date: '27 Jun 2026', time: '3:05 PM', details: 'Court Ready Format' }
+    {
+      id: 1,
+      recipient: 'Rahul Sharma',
+      method: 'Email',
+      date: '27 Jun 2026',
+      time: '2:45 PM',
+      details: 'Attached PDF & DOCX',
+    },
+    {
+      id: 2,
+      recipient: 'Public',
+      method: 'Copied Link',
+      date: '27 Jun 2026',
+      time: '2:51 PM',
+      details: 'Expiry 24h, View Only',
+    },
+    {
+      id: 3,
+      recipient: 'Self',
+      method: 'Downloaded PDF',
+      date: '27 Jun 2026',
+      time: '3:05 PM',
+      details: 'Court Ready Format',
+    },
   ]);
 
   useEffect(() => {
     if (isShareModalOpen) {
       setEmailSubject(`Legal Draft: ${selectedType || 'Notice'}`);
-      setEmailMessage(`Dear Client,\n\nPlease find attached the draft copy of "${selectedType || 'Notice'}" generated for your review.\n\nWarm regards,\nCounsel`);
+      setEmailMessage(
+        `Dear Client,\n\nPlease find attached the draft copy of "${selectedType || 'Notice'}" generated for your review.\n\nWarm regards,\nCounsel`
+      );
       setWhatsappMessage(`Hello, please find the legal draft link for ${selectedType || 'Notice'}`);
     }
   }, [isShareModalOpen, selectedType]);
@@ -998,7 +1145,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
 
   // Unsaved changes warning
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = e => {
       if (step === 'PREVIEW' && finalDraft !== lastSavedContentRef.current) {
         e.preventDefault();
         e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
@@ -1010,9 +1157,9 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   }, [finalDraft, step]);
 
   // Undo / Redo Handlers
-  const handleDraftChange = (newVal) => {
+  const handleDraftChange = newVal => {
     if (undoTimeout.current) clearTimeout(undoTimeout.current);
-    
+
     const currentVal = finalDraft;
     undoTimeout.current = setTimeout(() => {
       if (currentVal !== newVal) {
@@ -1021,7 +1168,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
         lastDraftValue.current = newVal;
       }
     }, 1000);
-    
+
     setFinalDraft(newVal);
     setSaveButtonState('unsaved');
   };
@@ -1052,7 +1199,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     toast.success('✓ Redo');
   };
 
-  const handleNavigateStep = (targetStep) => {
+  const handleNavigateStep = targetStep => {
     if (step === 'PREVIEW' && saveButtonState === 'unsaved') {
       setPendingStep(targetStep);
     } else {
@@ -1060,7 +1207,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     }
   };
 
-  const handleCategoryWheel = (e) => {
+  const handleCategoryWheel = e => {
     if (categoryScrollRef.current) {
       e.preventDefault();
       categoryScrollRef.current.scrollLeft += e.deltaY;
@@ -1079,14 +1226,22 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   const filteredHistory = useMemo(() => {
     let list = [...draftHistory];
     const now = new Date();
-    
+
     if (historyTimeFilter === 'Today') {
-      const todayStr = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const todayStr = now.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
       list = list.filter(item => item.generatedDate === todayStr);
     } else if (historyTimeFilter === 'Yesterday') {
       const yesterday = new Date();
       yesterday.setDate(now.getDate() - 1);
-      const yesterdayStr = yesterday.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const yesterdayStr = yesterday.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
       list = list.filter(item => item.generatedDate === yesterdayStr);
     } else if (historyTimeFilter === 'Last 7 Days') {
       const limit = new Date();
@@ -1124,14 +1279,20 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   const addOrUpdateHistoryItem = (content, fieldsData, targetLang = 'en') => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    const dateStr = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-    
+    const dateStr = now.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
     const matchedCase = allProjects.find(p => p._id === linkedCaseId);
     const caseName = matchedCase ? matchedCase.name : 'No Case Linked';
 
     setDraftHistory(prev => {
-      const idx = prev.findIndex(item => item.templateType === selectedType && item.linkedCaseId === linkedCaseId);
-      
+      const idx = prev.findIndex(
+        item => item.templateType === selectedType && item.linkedCaseId === linkedCaseId
+      );
+
       if (idx !== -1) {
         const updated = [...prev];
         const old = updated[idx];
@@ -1141,7 +1302,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
           formData: fieldsData,
           version: old.version + 1,
           lastEdited: timeStr,
-          language: targetLang === 'hi' ? 'Hindi' : 'English'
+          language: targetLang === 'hi' ? 'Hindi' : 'English',
         };
         return updated;
       } else {
@@ -1159,21 +1320,21 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
           language: targetLang === 'hi' ? 'Hindi' : 'English',
           status: 'Draft',
           content,
-          formData: fieldsData
+          formData: fieldsData,
         };
         return [newItem, ...prev];
       }
     });
   };
 
-  const handleLoadHistoryItem = (item) => {
+  const handleLoadHistoryItem = item => {
     setSelectedType(item.templateType);
     const tmpl = DRAFT_TEMPLATES[item.templateType];
     setTemplate(tmpl);
     setFormData(item.formData || {});
     setLinkedCaseId(item.linkedCaseId || '');
     setOriginalGeneratedDraft(item.content);
-    
+
     const phs = extractPlaceholders(item.content);
     const phValues = {};
     phs.forEach(p => {
@@ -1187,7 +1348,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
       });
       phValues[p.key] = matchedVal || '';
     });
-    
+
     setPlaceholderValues(phValues);
     setDraftPlaceholders(phs);
     setFinalDraft(item.content);
@@ -1195,7 +1356,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     toast.success(`✓ Loaded version ${item.version} of "${item.name}"`);
   };
 
-  const handleDeleteHistoryItem = (id) => {
+  const handleDeleteHistoryItem = id => {
     if (confirm('Are you sure you want to delete this history log entry?')) {
       setDraftHistory(prev => prev.filter(item => item.id !== id));
       toast.success('History log deleted');
@@ -1211,9 +1372,12 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
       setPrefillBanner(true);
       const caseId = intent.caseData?._id || intent.caseData?.id;
       if (caseId) setLinkedCaseId(caseId);
-      toast.success(`✓ Case data ready — pick a template to auto-fill`, { icon: '💼', duration: 3500 });
+      toast.success(`✓ Case data ready — pick a template to auto-fill`, {
+        icon: '💼',
+        duration: 3500,
+      });
     }
-  }, []);  
+  }, []);
 
   // ── Block body scroll when overflow menu is open ──
   useEffect(() => {
@@ -1229,7 +1393,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
 
   // ── Close overflow menu on Escape key press ──
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = e => {
       if (e.key === 'Escape') {
         setIsMenuOpen(false);
       }
@@ -1243,12 +1407,10 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     const q = searchQuery.toLowerCase();
     return ALL_CATEGORIES.map(cat => ({
       ...cat,
-      items: cat.items.filter(item =>
-        q === '' || item.toLowerCase().includes(q) || cat.title.toLowerCase().includes(q)
-      )
-    })).filter(cat =>
-      (activeCat === 'ALL' || cat.title === activeCat) && cat.items.length > 0
-    );
+      items: cat.items.filter(
+        item => q === '' || item.toLowerCase().includes(q) || cat.title.toLowerCase().includes(q)
+      ),
+    })).filter(cat => (activeCat === 'ALL' || cat.title === activeCat) && cat.items.length > 0);
   }, [searchQuery, activeCat]);
 
   // ── Smart prefill for form fields ──
@@ -1270,28 +1432,79 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
         val = mapped._raw?.district || '';
       } else if (k === 'policeStation') {
         val = mapped._raw?.policeStation || mapped._raw?.police_station || '';
-      } else if (lk.includes('petitioner') || lk.includes('plaintiff') || lk.includes('complainant') || lk.includes('applicant') || lk.includes('claimant') || ll.includes('party 1') || lk.includes('creditor') || lk.includes('sender') || lk.includes('aggrieved') || lk.includes('borrower') || lk.includes('employee')) {
+      } else if (
+        lk.includes('petitioner') ||
+        lk.includes('plaintiff') ||
+        lk.includes('complainant') ||
+        lk.includes('applicant') ||
+        lk.includes('claimant') ||
+        ll.includes('party 1') ||
+        lk.includes('creditor') ||
+        lk.includes('sender') ||
+        lk.includes('aggrieved') ||
+        lk.includes('borrower') ||
+        lk.includes('employee')
+      ) {
         val = mapped.petitioner || '';
-      } else if (lk.includes('respondent') || lk.includes('defendant') || lk.includes('accused') || lk.includes('debtor') || lk.includes('receiver') || lk.includes('harasser') || lk.includes('employer') || ll.includes('party 2') || lk.includes('opposite')) {
+      } else if (
+        lk.includes('respondent') ||
+        lk.includes('defendant') ||
+        lk.includes('accused') ||
+        lk.includes('debtor') ||
+        lk.includes('receiver') ||
+        lk.includes('harasser') ||
+        lk.includes('employer') ||
+        ll.includes('party 2') ||
+        lk.includes('opposite')
+      ) {
         val = mapped.respondent || '';
-      } else if (lk.includes('court') || lk.includes('jurisdiction') || lk.includes('forum') || lk.includes('tribunal')) {
+      } else if (
+        lk.includes('court') ||
+        lk.includes('jurisdiction') ||
+        lk.includes('forum') ||
+        lk.includes('tribunal')
+      ) {
         val = mapped.courtName || '';
-      } else if (lk.includes('casefact') || lk.includes('facts') || lk.includes('incident') || lk.includes('description') || lk.includes('background') || lk.includes('detail') || lk.includes('scenario')) {
+      } else if (
+        lk.includes('casefact') ||
+        lk.includes('facts') ||
+        lk.includes('incident') ||
+        lk.includes('description') ||
+        lk.includes('background') ||
+        lk.includes('detail') ||
+        lk.includes('scenario')
+      ) {
         val = mapped.caseFacts || '';
-      } else if (lk.includes('casenumber') || lk.includes('case_no') || (lk.includes('number') && lk.includes('case')) || lk.includes('fir_no') || lk.includes('firnumber')) {
+      } else if (
+        lk.includes('casenumber') ||
+        lk.includes('case_no') ||
+        (lk.includes('number') && lk.includes('case')) ||
+        lk.includes('fir_no') ||
+        lk.includes('firnumber')
+      ) {
         val = mapped.caseNumber || '';
       } else if (lk.includes('casetype') || (lk.includes('type') && lk.includes('case'))) {
         val = mapped.caseType || '';
       } else if (lk.includes('advocate') || lk.includes('counsel') || lk.includes('lawyer')) {
         val = mapped.advocateName || '';
-      } else if (lk.includes('section') || lk.includes('provision') || lk.includes('ipc') || lk.includes('act')) {
+      } else if (
+        lk.includes('section') ||
+        lk.includes('provision') ||
+        lk.includes('ipc') ||
+        lk.includes('act')
+      ) {
         val = mapped.provisions || '';
       } else if (lk.includes('evidence')) {
         val = mapped.evidenceSummary || '';
       } else if (lk.includes('title') || lk.includes('subject') || lk.includes('matter')) {
         val = mapped.caseTitle || '';
       } else if (lk.includes('address')) {
-        if (lk.includes('applicant') || lk.includes('petitioner') || lk.includes('plaintiff') || lk.includes('complainant')) {
+        if (
+          lk.includes('applicant') ||
+          lk.includes('petitioner') ||
+          lk.includes('plaintiff') ||
+          lk.includes('complainant')
+        ) {
           val = mapped._raw?.clientAddress || '';
         }
       }
@@ -1304,69 +1517,82 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
   }, []);
 
   // ── Select a draft type ──
-  const handleSelectType = useCallback((draftType) => {
-    const tmpl = getTemplate(draftType);
-    // Build enriched fields (with injected Country field)
-    const enrichedFields = buildEnrichedFields(tmpl.fields);
-    const enrichedTmpl = { ...tmpl, fields: enrichedFields };
-    setSelectedType(draftType);
-    setTemplate(enrichedTmpl);
-    setErrors({});
-    setFinalDraft('');
-    setDraftVersion(1);
-    setDraftVersionHistory([]);
-    setExportHistory([]);
-    setGenerationTimestamp('');
-    
-    setRecentlyUsed(prev => {
-      const filtered = prev.filter(x => x !== draftType);
-      return [draftType, ...filtered].slice(0, 10);
-    });
-    if (currentCase) {
-      apiService.updateProject(currentCase._id, {
-        ...currentCase,
-        activeDraftWork: null
-      }).then(res => {
-        if (onUpdateCase) onUpdateCase(res);
-      }).catch(err => console.error("Failed to clear active draft work in DB", err));
-    }
+  const handleSelectType = useCallback(
+    draftType => {
+      const tmpl = getTemplate(draftType);
+      // Build enriched fields (with injected Country field)
+      const enrichedFields = buildEnrichedFields(tmpl.fields);
+      const enrichedTmpl = { ...tmpl, fields: enrichedFields };
+      setSelectedType(draftType);
+      setTemplate(enrichedTmpl);
+      setErrors({});
+      setFinalDraft('');
+      setDraftVersion(1);
+      setDraftVersionHistory([]);
+      setExportHistory([]);
+      setGenerationTimestamp('');
 
-    // Auto-prefill from intent
-    let initialData = {};
-    let initialFilled = new Set();
-    if (prefillData) {
-      const { filled, filledSet } = applyPrefill(enrichedTmpl, prefillData);
-      // Default country to India if not prefilled
-      if (!filled['country']) { filled['country'] = 'India'; filledSet.add('country'); }
-      initialData = filled;
-      initialFilled = filledSet;
-      if (filledSet.size > 0) toast.success(`✓ ${filledSet.size} fields auto-filled`, { icon: '✨' });
-    } else {
-      // Default country = India
-      initialData = { country: 'India' };
-    }
-    setFormData(initialData);
-    setFilledFields(initialFilled);
-    setStep('FORM');
-  }, [prefillData, applyPrefill]);
+      setRecentlyUsed(prev => {
+        const filtered = prev.filter(x => x !== draftType);
+        return [draftType, ...filtered].slice(0, 10);
+      });
+      if (currentCase) {
+        apiService
+          .updateProject(currentCase._id, {
+            ...currentCase,
+            activeDraftWork: null,
+          })
+          .then(res => {
+            if (onUpdateCase) onUpdateCase(res);
+          })
+          .catch(err => console.error('Failed to clear active draft work in DB', err));
+      }
+
+      // Auto-prefill from intent
+      let initialData = {};
+      let initialFilled = new Set();
+      if (prefillData) {
+        const { filled, filledSet } = applyPrefill(enrichedTmpl, prefillData);
+        // Default country to India if not prefilled
+        if (!filled['country']) {
+          filled['country'] = 'India';
+          filledSet.add('country');
+        }
+        initialData = filled;
+        initialFilled = filledSet;
+        if (filledSet.size > 0)
+          toast.success(`✓ ${filledSet.size} fields auto-filled`, { icon: '✨' });
+      } else {
+        // Default country = India
+        initialData = { country: 'India' };
+      }
+      setFormData(initialData);
+      setFilledFields(initialFilled);
+      setStep('FORM');
+    },
+    [prefillData, applyPrefill]
+  );
 
   // ── Case select auto-fill ──
-  const handleCaseSelect = useCallback((caseId) => {
-    setLinkedCaseId(caseId);
-    if (caseId && template) {
-      const selected = allProjects.find(c => c._id === caseId);
-      if (selected) {
-        const mapped = mapCaseToForm(selected);
-        const { filled, filledSet } = applyPrefill(template, mapped);
-        // Default country
-        if (!filled['country']) filled['country'] = 'India';
-        filledSet.add('country');
-        setFormData(prev => ({ ...prev, ...filled }));
-        setFilledFields(prev => new Set([...prev, ...filledSet]));
-        toast.success(`✓ ${filledSet.size} fields filled from "${selected.name}"`);
+  const handleCaseSelect = useCallback(
+    caseId => {
+      setLinkedCaseId(caseId);
+      if (caseId && template) {
+        const selected = allProjects.find(c => c._id === caseId);
+        if (selected) {
+          const mapped = mapCaseToForm(selected);
+          const { filled, filledSet } = applyPrefill(template, mapped);
+          // Default country
+          if (!filled['country']) filled['country'] = 'India';
+          filledSet.add('country');
+          setFormData(prev => ({ ...prev, ...filled }));
+          setFilledFields(prev => new Set([...prev, ...filledSet]));
+          toast.success(`✓ ${filledSet.size} fields filled from "${selected.name}"`);
+        }
       }
-    }
-  }, [template, allProjects, applyPrefill]);
+    },
+    [template, allProjects, applyPrefill]
+  );
 
   // ── Validation ──
   const validate = () => {
@@ -1384,13 +1610,16 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
 
   // ── Build generation prompt ──
   const buildPrompt = (mode, tmpl, data, draftType, caseContext) => {
-    const fieldData = tmpl.fields.map(f => `${f.label} (${f.key}): ${data[f.key] || 'Not provided'}`).join('\n');
-    
+    const fieldData = tmpl.fields
+      .map(f => `${f.label} (${f.key}): ${data[f.key] || 'Not provided'}`)
+      .join('\n');
+
     let caseExtra = '';
     if (linkedCaseId) {
       const c = allProjects.find(p => p._id === linkedCaseId);
       if (c) {
-        caseExtra = `\n[ACTIVE CASE DATABASE CONTEXT]:\n` +
+        caseExtra =
+          `\n[ACTIVE CASE DATABASE CONTEXT]:\n` +
           `Case Title/Name: ${c.title || c.name || ''}\n` +
           `Case Description/Facts: ${c.description || c.caseSummary || ''}\n` +
           `Client (Petitioner): ${c.clientName || 'N/A'}\n` +
@@ -1404,7 +1633,7 @@ const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase
     }
 
     const courtHeader = tmpl.courtHeader || "BEFORE THE HON'BLE COURT";
-    
+
     let modeLangInstruction = '';
     if (mode === 'hindi') {
       modeLangInstruction = `Generate the complete draft entirely in formal, professional legal Hindi (Devanagari script) using proper court vocabulary. Ensure a natural translation and courtroom layout.`;
@@ -1469,9 +1698,13 @@ CRITICAL MASTER RULES:
   };
 
   // ── History logger helper ──
-  const addToExportHistory = useCallback((action) => {
+  const addToExportHistory = useCallback(action => {
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const timeStr = now.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
     const logStr = `${action} at ${timeStr}`;
     setExportHistory(prev => [...prev, logStr]);
   }, []);
@@ -1493,7 +1726,7 @@ CRITICAL MASTER RULES:
 
   // Close overflow menu on Escape key press
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = e => {
       if (e.key === 'Escape') {
         setIsMenuOpen(false);
       }
@@ -1530,7 +1763,8 @@ CRITICAL MASTER RULES:
       let caseCtx = '';
       if (linkedCaseId) {
         const c = allProjects.find(p => p._id === linkedCaseId);
-        if (c) caseCtx = `Case: ${c.name} | Client: ${c.clientName || 'N/A'} | Court: ${c.courtName || 'N/A'}`;
+        if (c)
+          caseCtx = `Case: ${c.name} | Client: ${c.clientName || 'N/A'} | Court: ${c.courtName || 'N/A'}`;
       }
 
       const systemPrompt = `${template.systemPrompt}\nAlways generate the complete document — never truncate. Use formal legal language. Include all sections.
@@ -1553,12 +1787,20 @@ CRITICAL PROMPT DIRECTIVE:
           attachments.push({
             url: `data:image/png;base64,${img.base64}`,
             name: img.name,
-            type: 'image'
+            type: 'image',
           });
         });
       }
 
-      const resp = await generateChatResponse([], finalPrompt, systemPrompt, attachments, 'English', null, 'legal');
+      const resp = await generateChatResponse(
+        [],
+        finalPrompt,
+        systemPrompt,
+        attachments,
+        'English',
+        null,
+        'legal'
+      );
 
       // Detect error responses (string error messages from the service)
       if (typeof resp === 'string') {
@@ -1570,7 +1812,12 @@ CRITICAL PROMPT DIRECTIVE:
           resp.includes('System Error') ||
           resp.includes('LIMIT_REACHED')
         ) {
-          const errMsg = resp.replace('Sorry, ', '').replace('[Log In](/login) to your AISA™ account to continue chatting.', 'Please log in to continue.');
+          const errMsg = resp
+            .replace('Sorry, ', '')
+            .replace(
+              '[Log In](/login) to your AISA™ account to continue chatting.',
+              'Please log in to continue.'
+            );
           throw new Error(errMsg);
         }
       }
@@ -1583,7 +1830,8 @@ CRITICAL PROMPT DIRECTIVE:
       if (!text.trim()) throw new Error('Empty response');
 
       // Strict post-processing sanitation to clean all AI artifacts
-      let cleanedText = text.trim()
+      let cleanedText = text
+        .trim()
         .replace(/\[RAG\]/gi, '')
         .replace(/END OF DOCUMENT/gi, '')
         .replace(/TWO BLANK LINES/gi, '\n\n')
@@ -1596,10 +1844,17 @@ CRITICAL PROMPT DIRECTIVE:
         .trim();
 
       // Save to version history
-      setDraftVersionHistory(prev => [
-        ...prev,
-        { version: draftVersion, mode, content: finalDraft, timestamp: new Date().toLocaleTimeString() }
-      ].filter(v => v.content));
+      setDraftVersionHistory(prev =>
+        [
+          ...prev,
+          {
+            version: draftVersion,
+            mode,
+            content: finalDraft,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ].filter(v => v.content)
+      );
 
       cleanedText = text.trim();
       if (cleanedText.startsWith('```')) {
@@ -1634,7 +1889,7 @@ CRITICAL PROMPT DIRECTIVE:
         parsedPlaceholders = (template?.fields || []).map(f => ({
           label: f.label,
           key: f.key.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-          value: formData[f.key] || ''
+          value: formData[f.key] || '',
         }));
       }
 
@@ -1659,7 +1914,9 @@ CRITICAL PROMPT DIRECTIVE:
       const cleanedDraftText = validateAndFormatDraft(parsedDraft, selectedType);
 
       setOriginalGeneratedDraft(cleanedDraftText);
-      setDraftPlaceholders(parsedPlaceholders.map(p => ({ ...p, value: initialValues[p.key] || '' })));
+      setDraftPlaceholders(
+        parsedPlaceholders.map(p => ({ ...p, value: initialValues[p.key] || '' }))
+      );
       setPlaceholderValues(initialValues);
 
       const cleanDraft = replacePlaceholders(cleanedDraftText, initialValues).replace(/\\n/g, '\n');
@@ -1672,7 +1929,10 @@ CRITICAL PROMPT DIRECTIVE:
 
       setDraftVersion(v => v + 1);
       setGenerationMode(mode);
-      const timestamp = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+      const timestamp = new Date().toLocaleString('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
       setGenerationTimestamp(timestamp);
       setStep('PREVIEW');
       setSaveButtonState('unsaved');
@@ -1693,24 +1953,32 @@ CRITICAL PROMPT DIRECTIVE:
     setCopilotLoadingText(actionName);
     const toastId = toast.loading(`AI Copilot: ${actionName} in progress...`);
     try {
-      const plainText = editorRef.current ? editorRef.current.innerText : finalDraft.replace(/<[^>]*>/g, '');
+      const plainText = editorRef.current
+        ? editorRef.current.innerText
+        : finalDraft.replace(/<[^>]*>/g, '');
       const userPrompt = `${promptInstruction}\n\nDraft text:\n${plainText}`;
-      const systemPrompt = "You are a professional enterprise legal draft editor. Return ONLY the improved draft text. Do not include markdown fencing, comments, introductions, or annotations.";
+      const systemPrompt =
+        'You are a professional enterprise legal draft editor. Return ONLY the improved draft text. Do not include markdown fencing, comments, introductions, or annotations.';
       let res = '';
       try {
-        const resp = await generateChatResponse([], userPrompt, systemPrompt, [], 'English', null, 'legal');
+        const resp = await generateChatResponse(
+          [],
+          userPrompt,
+          systemPrompt,
+          [],
+          'English',
+          null,
+          'legal'
+        );
         res = resp?.reply || resp || '';
       } catch (err) {
-        console.warn("AI generation failed, using local semantic fallback:", err);
+        console.warn('AI generation failed, using local semantic fallback:', err);
       }
 
       if (!res || !res.trim()) {
         // High quality fallback refiners depending on action type
         if (actionName.includes('Grammar')) {
-          res = plainText
-            .replace(/\s+/g, ' ')
-            .replace(/ ,/g, ',')
-            .replace(/ \./g, '.');
+          res = plainText.replace(/\s+/g, ' ').replace(/ ,/g, ',').replace(/ \./g, '.');
         } else if (actionName.includes('Structure') || actionName.includes('Hierarchy')) {
           res = plainText
             .replace(/facts/gi, 'STATEMENT OF FACTS')
@@ -1718,7 +1986,9 @@ CRITICAL PROMPT DIRECTIVE:
             .replace(/facts of the case/gi, 'STATEMENT OF FACTS')
             .replace(/verification/gi, 'VERIFICATION');
         } else if (actionName.includes('Arguments') || actionName.includes('Reasoning')) {
-          res = plainText + "\n\nAND FOR THIS ACT OF KINDNESS, THE COMPLAINANT AS IN DUTY BOUND SHALL EVER PRAY.";
+          res =
+            plainText +
+            '\n\nAND FOR THIS ACT OF KINDNESS, THE COMPLAINANT AS IN DUTY BOUND SHALL EVER PRAY.';
         } else if (actionName.includes('Simplify')) {
           res = plainText.replace(/hereinafter/gi, 'herein').replace(/aforesaid/gi, 'mentioned');
         } else {
@@ -1729,7 +1999,7 @@ CRITICAL PROMPT DIRECTIVE:
       setCopilotComparison({
         action: actionName,
         original: plainText,
-        refined: res.trim()
+        refined: res.trim(),
       });
       toast.success(`✓ ${actionName} refined. Review comparison!`, { id: toastId });
     } catch (e) {
@@ -1745,11 +2015,14 @@ CRITICAL PROMPT DIRECTIVE:
     if (key === 'draft') {
       let promptText = '';
       if (action === 'Rewrite') {
-        promptText = "Rewrite this court pleading draft. Fix formatting, logical spacing, legal headers and overall layout.";
+        promptText =
+          'Rewrite this court pleading draft. Fix formatting, logical spacing, legal headers and overall layout.';
       } else if (action === 'Improve Legal Language') {
-        promptText = "Improve the legal language, phrasing, and statutory terminology of this pleading draft.";
+        promptText =
+          'Improve the legal language, phrasing, and statutory terminology of this pleading draft.';
       } else if (action === 'Summarize') {
-        promptText = "Provide a concise summary of the key facts, grounds, and prayers listed in this pleading draft.";
+        promptText =
+          'Provide a concise summary of the key facts, grounds, and prayers listed in this pleading draft.';
       }
       await handleCopilotQuickAction(action, promptText);
     } else {
@@ -1758,18 +2031,27 @@ CRITICAL PROMPT DIRECTIVE:
       const toastId = toast.loading(`AI refining ${key}...`);
       try {
         const userPrompt = `Refine the value of field "${key}" using action "${action}". Current value:\n${formData[key] || ''}`;
-        const systemPrompt = "You are a professional legal draft optimizer. Return ONLY the refined value, nothing else.";
-        const resp = await generateChatResponse([], userPrompt, systemPrompt, [], 'English', null, 'legal');
+        const systemPrompt =
+          'You are a professional legal draft optimizer. Return ONLY the refined value, nothing else.';
+        const resp = await generateChatResponse(
+          [],
+          userPrompt,
+          systemPrompt,
+          [],
+          'English',
+          null,
+          'legal'
+        );
         const res = resp?.reply || resp || '';
         if (res && res.trim()) {
           setFormData(prev => ({ ...prev, [key]: res.trim() }));
           toast.success(`✓ Field ${key} refined!`, { id: toastId });
         } else {
-          toast.error("Failed to refine field.", { id: toastId });
+          toast.error('Failed to refine field.', { id: toastId });
         }
       } catch (e) {
         console.error(e);
-        toast.error("Refinement failed.", { id: toastId });
+        toast.error('Refinement failed.', { id: toastId });
       } finally {
         setIsCopilotRefining(false);
       }
@@ -1811,7 +2093,7 @@ CRITICAL PROMPT DIRECTIVE:
   };
 
   // ── Version History Actions ──
-  const handleRestoreVersion = (version) => {
+  const handleRestoreVersion = version => {
     if (editorRef.current) {
       editorRef.current.innerHTML = version.content;
     }
@@ -1821,7 +2103,7 @@ CRITICAL PROMPT DIRECTIVE:
     setTimeout(() => handleSave(true), 100);
   };
 
-  const handleDuplicateVersion = (version) => {
+  const handleDuplicateVersion = version => {
     const nextVer = draftVersionHistory.length + 1;
     const newHistory = [
       ...draftVersionHistory,
@@ -1831,8 +2113,8 @@ CRITICAL PROMPT DIRECTIVE:
         content: version.content,
         timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
         user: 'You',
-        type: 'manual'
-      }
+        type: 'manual',
+      },
     ];
     setDraftVersionHistory(newHistory);
     toast.success(`✓ Version ${version.version} duplicated!`);
@@ -1842,43 +2124,49 @@ CRITICAL PROMPT DIRECTIVE:
   const handleRenameVersion = (versionIdx, newName) => {
     if (!newName.trim()) return;
     setDraftVersionHistory(prev => {
-      const updated = prev.map((v, i) => i === versionIdx ? { ...v, name: newName } : v);
+      const updated = prev.map((v, i) => (i === versionIdx ? { ...v, name: newName } : v));
       setTimeout(() => handleSave(true), 100);
       return updated;
     });
     toast.success('✓ Version renamed');
   };
 
-  const handleDeleteVersion = (versionIdx) => {
+  const handleDeleteVersion = versionIdx => {
     const updated = draftVersionHistory.filter((_, i) => i !== versionIdx);
     setDraftVersionHistory(updated);
     toast.success('✓ Version deleted');
     setTimeout(() => handleSave(true), 100);
   };
 
-  const createHistoryVersion = useCallback((name, content, author = 'AI', type = 'ai', changeSummary = '') => {
-    if (!content) return;
-    setDraftVersionHistory(prev => {
-      const nextVer = prev.length + 1;
-      const newEntry = {
-        version: nextVer,
-        name: name || `Version ${nextVer}`,
-        content: content,
-        timestamp: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ', ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        user: author,
-        type: type,
-        changeSummary: changeSummary || `${type === 'ai' ? 'AI Refinement' : 'Manual Save'}`
-      };
-      const updated = [...prev, newEntry];
-      setDraftVersion(nextVer);
-      
-      setTimeout(() => {
-        saveDraftWithHistory(updated, nextVer, content);
-      }, 100);
-      
-      return updated;
-    });
-  }, [linkedCaseId, activeDraftId, selectedType, generationMode, formData, draftVersionHistory]);
+  const createHistoryVersion = useCallback(
+    (name, content, author = 'AI', type = 'ai', changeSummary = '') => {
+      if (!content) return;
+      setDraftVersionHistory(prev => {
+        const nextVer = prev.length + 1;
+        const newEntry = {
+          version: nextVer,
+          name: name || `Version ${nextVer}`,
+          content: content,
+          timestamp:
+            new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) +
+            ', ' +
+            new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          user: author,
+          type: type,
+          changeSummary: changeSummary || `${type === 'ai' ? 'AI Refinement' : 'Manual Save'}`,
+        };
+        const updated = [...prev, newEntry];
+        setDraftVersion(nextVer);
+
+        setTimeout(() => {
+          saveDraftWithHistory(updated, nextVer, content);
+        }, 100);
+
+        return updated;
+      });
+    },
+    [linkedCaseId, activeDraftId, selectedType, generationMode, formData, draftVersionHistory]
+  );
 
   const saveDraftWithHistory = async (historyList, nextVerNum, activeContent) => {
     const caseId = linkedCaseId || currentCase?._id;
@@ -1887,7 +2175,8 @@ CRITICAL PROMPT DIRECTIVE:
     if (!targetCase) return;
 
     const now = new Date();
-    const draftId = activeDraftId || `DRAFT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const draftId =
+      activeDraftId || `DRAFT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     const draftItem = {
       id: draftId,
@@ -1900,7 +2189,7 @@ CRITICAL PROMPT DIRECTIVE:
       exportHistory,
       generationTimestamp: generationTimestamp || now.toLocaleString('en-IN'),
       lastModified: now.toISOString(),
-      versions: historyList
+      versions: historyList,
     };
 
     try {
@@ -1914,7 +2203,7 @@ CRITICAL PROMPT DIRECTIVE:
             return {
               ...d,
               ...draftItem,
-              createdAt: d.createdAt
+              createdAt: d.createdAt,
             };
           }
           return d;
@@ -1925,7 +2214,7 @@ CRITICAL PROMPT DIRECTIVE:
 
       const payload = {
         ...targetCase,
-        drafts: updatedDrafts
+        drafts: updatedDrafts,
       };
 
       const response = await apiService.updateProject(caseId, payload);
@@ -1937,25 +2226,36 @@ CRITICAL PROMPT DIRECTIVE:
       lastSavedContentRef.current = activeContent;
       setAutoSaveStatus('saved');
     } catch (e) {
-      console.error("Direct save failed:", e);
+      console.error('Direct save failed:', e);
       setAutoSaveStatus('failed');
     }
   };
 
-  const handlePrintVersion = (version) => {
+  const handlePrintVersion = version => {
     const rawText = version.content;
-    const documentPages = rawText.split('\n\n'); 
-    const pagesHtml = documentPages.map((pageText, idx) => {
-      const cleanText = cleanGeneratedDraft(pageText, selectedType)
-        .replace(/^### (.*$)/gim, '<h3 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 15px 0 8px;">$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 18px 0 10px;">$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 20px 0;">$1</h1>')
-        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/gim, '<em>$1</em>');
-      return `<div class="page" style="page-break-after: ${idx === documentPages.length - 1 ? 'avoid' : 'always'}; min-height: 100%; box-sizing: border-box;">
+    const documentPages = rawText.split('\n\n');
+    const pagesHtml = documentPages
+      .map((pageText, idx) => {
+        const cleanText = cleanGeneratedDraft(pageText, selectedType)
+          .replace(
+            /^### (.*$)/gim,
+            '<h3 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 15px 0 8px;">$1</h3>'
+          )
+          .replace(
+            /^## (.*$)/gim,
+            '<h2 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 18px 0 10px;">$1</h2>'
+          )
+          .replace(
+            /^# (.*$)/gim,
+            '<h1 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 20px 0;">$1</h1>'
+          )
+          .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/gim, '<em>$1</em>');
+        return `<div class="page" style="page-break-after: ${idx === documentPages.length - 1 ? 'avoid' : 'always'}; min-height: 100%; box-sizing: border-box;">
         ${cleanText}
       </div>`;
-    }).join('\n');
+      })
+      .join('\n');
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
       <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -1983,22 +2283,25 @@ CRITICAL PROMPT DIRECTIVE:
     }
   };
 
-  const handleExportVersionDOCX = (version) => {
+  const handleExportVersionDOCX = version => {
     const rawText = version.content;
     const textToExport = cleanGeneratedDraft(rawText, selectedType);
     if (!textToExport) return;
-    
-    const content = textToExport.split('\n').map(line => {
-      let trimmed = line.trim();
-      if (!trimmed) {
-        return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
-      }
-      let formatted = trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
-    }).join('\n');
-       
+
+    const content = textToExport
+      .split('\n')
+      .map(line => {
+        let trimmed = line.trim();
+        if (!trimmed) {
+          return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
+        }
+        let formatted = trimmed
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
+      })
+      .join('\n');
+
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <title>${selectedType || 'Legal Draft'} - Version ${version.version}</title>
@@ -2030,18 +2333,29 @@ CRITICAL PROMPT DIRECTIVE:
   const handlePrint = () => {
     const rawText = draftDisplayText || finalDraft;
     const documentPages = rawText.split('\n\n'); // split by page or layout
-    
-    const pagesHtml = documentPages.map((pageText, idx) => {
-      const cleanText = cleanGeneratedDraft(pageText, selectedType)
-        .replace(/^### (.*$)/gim, '<h3 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 15px 0 8px;">$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 18px 0 10px;">$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 20px 0;">$1</h1>')
-        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/gim, '<em>$1</em>');
-      return `<div class="page" style="page-break-after: ${idx === documentPages.length - 1 ? 'avoid' : 'always'}; min-height: 100%; box-sizing: border-box;">
+
+    const pagesHtml = documentPages
+      .map((pageText, idx) => {
+        const cleanText = cleanGeneratedDraft(pageText, selectedType)
+          .replace(
+            /^### (.*$)/gim,
+            '<h3 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 15px 0 8px;">$1</h3>'
+          )
+          .replace(
+            /^## (.*$)/gim,
+            '<h2 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 18px 0 10px;">$1</h2>'
+          )
+          .replace(
+            /^# (.*$)/gim,
+            '<h1 style="text-align: center; text-transform: uppercase; font-family: \'Times New Roman\', serif; font-weight: bold; margin: 20px 0;">$1</h1>'
+          )
+          .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/gim, '<em>$1</em>');
+        return `<div class="page" style="page-break-after: ${idx === documentPages.length - 1 ? 'avoid' : 'always'}; min-height: 100%; box-sizing: border-box;">
         ${cleanText}
       </div>`;
-    }).join('\n');
+      })
+      .join('\n');
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
       <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -2081,18 +2395,21 @@ CRITICAL PROMPT DIRECTIVE:
     const rawText = draftDisplayText || finalDraft;
     const textToExport = cleanGeneratedDraft(rawText, selectedType);
     if (!textToExport) return;
-    
-    const content = textToExport.split('\n').map(line => {
-      let trimmed = line.trim();
-      if (!trimmed) {
-        return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
-      }
-      let formatted = trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
-    }).join('\n');
-       
+
+    const content = textToExport
+      .split('\n')
+      .map(line => {
+        let trimmed = line.trim();
+        if (!trimmed) {
+          return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
+        }
+        let formatted = trimmed
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
+      })
+      .join('\n');
+
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <title>${selectedType || 'Legal Draft'}</title>
@@ -2124,7 +2441,7 @@ CRITICAL PROMPT DIRECTIVE:
     a.download = `${(selectedType || 'Legal_Draft').replace(/[^a-z0-9]/gi, '_')}.doc`;
     a.click();
     URL.revokeObjectURL(url);
-    
+
     addToExportHistory('Export DOCX');
     toast.success('Draft exported as Word DOC format');
   };
@@ -2154,26 +2471,29 @@ CRITICAL PROMPT DIRECTIVE:
     const textToExport = cleanGeneratedDraft(rawText, selectedType);
     if (!textToExport) return;
 
-    const content = textToExport.split('\n').map(line => {
-      let trimmed = line.trim();
-      if (!trimmed) return '<br/>';
-      let formatted = trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      
-      const isHeading = trimmed && (
-        trimmed === trimmed.toUpperCase() && trimmed.length > 4 ||
-        trimmed.startsWith('BEFORE THE') ||
-        trimmed.startsWith('IN THE COURT OF') ||
-        trimmed.startsWith('FACTS OF THE CASE') ||
-        trimmed.startsWith('PRAYER') ||
-        trimmed.startsWith('VERIFICATION')
-      );
-      if (isHeading) {
-        return `<h3 style="text-align: center; text-transform: uppercase; font-family: 'Times New Roman', serif; font-weight: bold; margin: 20px 0;">${formatted}</h3>`;
-      }
-      return `<p style="text-align: justify; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; text-indent: 0.5in; margin-bottom: 12px;">${formatted}</p>`;
-    }).join('\n');
+    const content = textToExport
+      .split('\n')
+      .map(line => {
+        let trimmed = line.trim();
+        if (!trimmed) return '<br/>';
+        let formatted = trimmed
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        const isHeading =
+          trimmed &&
+          ((trimmed === trimmed.toUpperCase() && trimmed.length > 4) ||
+            trimmed.startsWith('BEFORE THE') ||
+            trimmed.startsWith('IN THE COURT OF') ||
+            trimmed.startsWith('FACTS OF THE CASE') ||
+            trimmed.startsWith('PRAYER') ||
+            trimmed.startsWith('VERIFICATION'));
+        if (isHeading) {
+          return `<h3 style="text-align: center; text-transform: uppercase; font-family: 'Times New Roman', serif; font-weight: bold; margin: 20px 0;">${formatted}</h3>`;
+        }
+        return `<p style="text-align: justify; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; text-indent: 0.5in; margin-bottom: 12px;">${formatted}</p>`;
+      })
+      .join('\n');
 
     const html = `<!DOCTYPE html>
     <html>
@@ -2248,7 +2568,7 @@ CRITICAL PROMPT DIRECTIVE:
       generationTimestamp: now.toLocaleString('en-IN'),
       lastModified: now.toISOString(),
       versions: [],
-      status: 'active'
+      status: 'active',
     };
 
     if (!caseId || !allProjects.some(p => p._id === caseId)) {
@@ -2306,7 +2626,8 @@ CRITICAL PROMPT DIRECTIVE:
     setAutoSaveStatus('saving');
 
     const now = new Date();
-    const draftId = activeDraftId || `DRAFT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const draftId =
+      activeDraftId || `DRAFT-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     // Get current HTML from contentEditable ref or fallback to finalDraft
     const editorContent = editorRef.current ? editorRef.current.innerHTML : finalDraft;
@@ -2325,7 +2646,7 @@ CRITICAL PROMPT DIRECTIVE:
         content: sanitizedContent,
         timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
         user: isAuto ? 'System (Auto-save)' : 'You',
-        type: isAuto ? 'auto' : 'manual'
+        type: isAuto ? 'auto' : 'manual',
       };
       nextHistory = [...nextHistory, newVerEntry];
       setDraftVersionHistory(nextHistory);
@@ -2345,7 +2666,7 @@ CRITICAL PROMPT DIRECTIVE:
       generationTimestamp: generationTimestamp || now.toLocaleString('en-IN'),
       lastModified: now.toISOString(),
       versions: nextHistory,
-      status: 'active'
+      status: 'active',
     };
 
     if (!caseId || !allProjects.some(p => p._id === caseId)) {
@@ -2364,7 +2685,7 @@ CRITICAL PROMPT DIRECTIVE:
           localDrafts[existsIdx] = {
             ...localDrafts[existsIdx],
             ...draftItem,
-            createdAt: localDrafts[existsIdx].createdAt || draftItem.createdAt
+            createdAt: localDrafts[existsIdx].createdAt || draftItem.createdAt,
           };
         } else {
           localDrafts = [draftItem, ...localDrafts];
@@ -2379,12 +2700,16 @@ CRITICAL PROMPT DIRECTIVE:
         lastSavedContentRef.current = sanitizedContent;
         setSaveButtonState('saved');
         setAutoSaveStatus('saved');
-        setSavedNotice({ id: draftId, date: now.toLocaleDateString('en-IN'), time: now.toLocaleTimeString('en-IN') });
+        setSavedNotice({
+          id: draftId,
+          date: now.toLocaleDateString('en-IN'),
+          time: now.toLocaleTimeString('en-IN'),
+        });
         loadSavedDrafts();
 
         toast.success('✓ Draft saved locally', { duration: 2000 });
       } catch (err) {
-        console.error("Local save failed:", err);
+        console.error('Local save failed:', err);
         setSaveButtonState('unsaved');
         setAutoSaveStatus('failed');
         toast.error('Failed to save draft locally');
@@ -2411,7 +2736,7 @@ CRITICAL PROMPT DIRECTIVE:
             return {
               ...d,
               ...draftItem,
-              createdAt: d.createdAt || draftItem.createdAt // preserve creation date
+              createdAt: d.createdAt || draftItem.createdAt, // preserve creation date
             };
           }
           return d;
@@ -2422,7 +2747,7 @@ CRITICAL PROMPT DIRECTIVE:
 
       const payload = {
         ...targetCase,
-        drafts: updatedDrafts
+        drafts: updatedDrafts,
       };
 
       const response = await apiService.updateProject(caseId, payload);
@@ -2435,14 +2760,18 @@ CRITICAL PROMPT DIRECTIVE:
       lastSavedContentRef.current = sanitizedContent;
       setSaveButtonState('saved');
       setAutoSaveStatus('saved');
-      setSavedNotice({ id: draftId, date: now.toLocaleDateString('en-IN'), time: now.toLocaleTimeString('en-IN') });
-      
+      setSavedNotice({
+        id: draftId,
+        date: now.toLocaleDateString('en-IN'),
+        time: now.toLocaleTimeString('en-IN'),
+      });
+
       // Update Saved Documents list immediately
       loadSavedDrafts();
 
       toast.success('✓ Draft saved successfully', { duration: 2000 });
     } catch (e) {
-      console.error("Save failed:", e);
+      console.error('Save failed:', e);
       setSaveButtonState('unsaved');
       setAutoSaveStatus('failed');
       toast.error('Failed to save draft');
@@ -2468,7 +2797,7 @@ CRITICAL PROMPT DIRECTIVE:
               date: d.lastModified || d.createdAt || proj.updatedAt || new Date().toISOString(),
               version: d.version,
               exportHistory: d.exportHistory,
-              generationTimestamp: d.generationTimestamp
+              generationTimestamp: d.generationTimestamp,
             });
           });
         }
@@ -2492,31 +2821,34 @@ CRITICAL PROMPT DIRECTIVE:
                 version: ld.version,
                 exportHistory: ld.exportHistory,
                 generationTimestamp: ld.generationTimestamp,
-                lastModified: ld.date || new Date().toISOString()
+                lastModified: ld.date || new Date().toISOString(),
               }));
 
               const payload = {
                 ...currentCase,
-                drafts: [...currentDrafts, ...draftsToMigrate]
+                drafts: [...currentDrafts, ...draftsToMigrate],
               };
 
-              apiService.updateProject(currentCase._id, payload).then(res => {
-                if (onUpdateCase) onUpdateCase(res);
-                localStorage.removeItem('@aisa_drafts');
-              }).catch(err => console.error("Failed to migrate local drafts to DB", err));
+              apiService
+                .updateProject(currentCase._id, payload)
+                .then(res => {
+                  if (onUpdateCase) onUpdateCase(res);
+                  localStorage.removeItem('@aisa_drafts');
+                })
+                .catch(err => console.error('Failed to migrate local drafts to DB', err));
             } else {
               localDrafts.forEach(ld => {
                 if (!consolidated.some(c => c.id === ld.id)) {
                   consolidated.push({
                     ...ld,
-                    caseName: 'Offline / Unlinked'
+                    caseName: 'Offline / Unlinked',
                   });
                 }
               });
             }
           }
         } catch (e) {
-          console.error("Failed to parse/migrate local drafts", e);
+          console.error('Failed to parse/migrate local drafts', e);
         }
       }
 
@@ -2533,35 +2865,56 @@ CRITICAL PROMPT DIRECTIVE:
 
   const performAIDocumentExtraction = async () => {
     setIsAnalyzingDocs(true);
-    const toastId = toast.loading("AI Document OCR & Entity Extraction in progress...");
+    const toastId = toast.loading('AI Document OCR & Entity Extraction in progress...');
     try {
       const fileNames = uploadedFiles.map(f => f.name).join(', ');
-      
+
       const detectPrompt = `Analyze this list of uploaded files for a legal workflow: "${fileNames}".
       Identify the primary document type from this list: FIR, Complaint, Affidavit, Agreement, Notice, Charge Sheet, Petition, Bail Application, Reply, Contract, Legal Notice.
       Return ONLY the matched type name. Do not include extra words or punctuation.`;
-      
+
       let detectedType = 'FIR';
       try {
-        const detectRes = await generateChatResponse([], detectPrompt, "You are a legal document classifier.", [], 'English', null, 'legal');
+        const detectRes = await generateChatResponse(
+          [],
+          detectPrompt,
+          'You are a legal document classifier.',
+          [],
+          'English',
+          null,
+          'legal'
+        );
         const cleanedType = (detectRes?.reply || detectRes || '').trim().replace(/[^a-zA-Z ]/g, '');
         if (cleanedType) {
           detectedType = cleanedType;
         }
       } catch (err) {
-        console.warn("Type detection failed, defaulting to FIR:", err);
+        console.warn('Type detection failed, defaulting to FIR:', err);
       }
 
-      const fieldsToExtract = template?.fields && template.fields.length > 0 
-        ? template.fields 
-        : [
-            { key: 'plaintiffName', label: 'Complainant Name', description: 'Name of complainant' },
-            { key: 'defendantName', label: 'Accused / Respondent Name', description: 'Name of accused' },
-            { key: 'policeStation', label: 'Police Station', description: 'Police station name' },
-            { key: 'incidentDate', label: 'Incident Date', description: 'Date of incident' },
-            { key: 'incidentPlace', label: 'Place of Incident', description: 'Place of incident' },
-            { key: 'facts', label: 'Facts of Case', description: 'Facts of case' }
-          ];
+      const fieldsToExtract =
+        template?.fields && template.fields.length > 0
+          ? template.fields
+          : [
+              {
+                key: 'plaintiffName',
+                label: 'Complainant Name',
+                description: 'Name of complainant',
+              },
+              {
+                key: 'defendantName',
+                label: 'Accused / Respondent Name',
+                description: 'Name of accused',
+              },
+              { key: 'policeStation', label: 'Police Station', description: 'Police station name' },
+              { key: 'incidentDate', label: 'Incident Date', description: 'Date of incident' },
+              {
+                key: 'incidentPlace',
+                label: 'Place of Incident',
+                description: 'Place of incident',
+              },
+              { key: 'facts', label: 'Facts of Case', description: 'Facts of case' },
+            ];
 
       const extractionPrompt = `Extract legal fields for a ${detectedType} document. File list: "${fileNames}".
       The target pleading template being filled is: "${selectedType}".
@@ -2584,14 +2937,22 @@ CRITICAL PROMPT DIRECTIVE:
 
       let extractedResult = null;
       try {
-        const extractionRes = await generateChatResponse([], extractionPrompt, "You are a professional Document AI entity extractor.", [], 'English', null, 'legal');
+        const extractionRes = await generateChatResponse(
+          [],
+          extractionPrompt,
+          'You are a professional Document AI entity extractor.',
+          [],
+          'English',
+          null,
+          'legal'
+        );
         let cleanJson = (extractionRes?.reply || extractionRes || '').trim();
         if (cleanJson.startsWith('```')) {
           cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/```$/, '');
         }
         extractedResult = JSON.parse(cleanJson);
       } catch (err) {
-        console.warn("JSON parsing failed, fallback to heuristic extraction:", err);
+        console.warn('JSON parsing failed, fallback to heuristic extraction:', err);
       }
 
       if (!extractedResult || !Array.isArray(extractedResult.extractedFields)) {
@@ -2599,23 +2960,36 @@ CRITICAL PROMPT DIRECTIVE:
           extractedFields: fieldsToExtract.map(f => {
             let val = '';
             let conf = 'High';
-            if (f.key === 'complainantName' || f.key === 'plaintiffName') { val = 'Rahul Sharma'; }
-            else if (f.key === 'accusedName' || f.key === 'defendantName') { val = 'Aman Verma'; }
-            else if (f.key === 'policeStation') { val = 'Civil Lines PS'; }
-            else if (f.key === 'district') { val = 'Jabalpur'; }
-            else if (f.key === 'incidentDate') { val = '02 July 2026'; }
-            else if (f.key === 'incidentPlace' || f.key === 'placeOfIncident') { val = 'Napier Town, Jabalpur'; }
-            else if (f.key === 'complainantAddress') { val = 'Napier Town, Jabalpur'; }
-            else if (f.key === 'incidentFacts' || f.key === 'facts') { val = 'The tenant failed to pay the security deposit and rent for three consecutive months.'; }
-            else if (f.key === 'reliefSought') { val = 'Registration of FIR, arrest of accused, and appropriate investigation.'; }
-            else { val = 'Sample Extracted Value'; conf = 'Medium'; }
+            if (f.key === 'complainantName' || f.key === 'plaintiffName') {
+              val = 'Rahul Sharma';
+            } else if (f.key === 'accusedName' || f.key === 'defendantName') {
+              val = 'Aman Verma';
+            } else if (f.key === 'policeStation') {
+              val = 'Civil Lines PS';
+            } else if (f.key === 'district') {
+              val = 'Jabalpur';
+            } else if (f.key === 'incidentDate') {
+              val = '02 July 2026';
+            } else if (f.key === 'incidentPlace' || f.key === 'placeOfIncident') {
+              val = 'Napier Town, Jabalpur';
+            } else if (f.key === 'complainantAddress') {
+              val = 'Napier Town, Jabalpur';
+            } else if (f.key === 'incidentFacts' || f.key === 'facts') {
+              val =
+                'The tenant failed to pay the security deposit and rent for three consecutive months.';
+            } else if (f.key === 'reliefSought') {
+              val = 'Registration of FIR, arrest of accused, and appropriate investigation.';
+            } else {
+              val = 'Sample Extracted Value';
+              conf = 'Medium';
+            }
             return {
               label: f.label,
               key: f.key,
               value: val,
-              confidence: conf
+              confidence: conf,
             };
-          })
+          }),
         };
       }
 
@@ -2633,7 +3007,7 @@ CRITICAL PROMPT DIRECTIVE:
           key: field.key,
           value: valStr,
           confidence: confidence,
-          isMissing: !hasVal || confidence === 'Low'
+          isMissing: !hasVal || confidence === 'Low',
         });
 
         if (hasVal && confidence !== 'Low') {
@@ -2645,7 +3019,7 @@ CRITICAL PROMPT DIRECTIVE:
 
       setFormData(prev => ({
         ...prev,
-        ...successfulImports
+        ...successfulImports,
       }));
 
       const missingKeys = template.fields
@@ -2659,13 +3033,13 @@ CRITICAL PROMPT DIRECTIVE:
         importedCount: Object.keys(successfulImports).length,
         missing: template.fields
           .filter(f => f.required && !successfulImports[f.key])
-          .map(f => f.label)
+          .map(f => f.label),
       });
 
-      toast.success("✓ AI Document Extraction Complete!", { id: toastId });
+      toast.success('✓ AI Document Extraction Complete!', { id: toastId });
     } catch (e) {
       console.error(e);
-      toast.error("Document analysis failed", { id: toastId });
+      toast.error('Document analysis failed', { id: toastId });
     } finally {
       setIsAnalyzingDocs(false);
     }
@@ -2679,12 +3053,20 @@ CRITICAL PROMPT DIRECTIVE:
     if (!targetCase || !Array.isArray(targetCase.drafts)) return;
     const updatedDrafts = targetCase.drafts.map(d => {
       if (d.id === draft.id) {
-        return { ...d, type: newTitle.trim(), title: newTitle.trim(), lastModified: new Date().toISOString() };
+        return {
+          ...d,
+          type: newTitle.trim(),
+          title: newTitle.trim(),
+          lastModified: new Date().toISOString(),
+        };
       }
       return d;
     });
     try {
-      const response = await apiService.updateProject(caseId, { ...targetCase, drafts: updatedDrafts });
+      const response = await apiService.updateProject(caseId, {
+        ...targetCase,
+        drafts: updatedDrafts,
+      });
       if (onUpdateCase) onUpdateCase(response);
       toast.success('Document renamed successfully');
       loadSavedDrafts();
@@ -2697,7 +3079,7 @@ CRITICAL PROMPT DIRECTIVE:
     if (!targetCaseId) return;
     const sourceCaseId = draft.linkedCaseId;
     if (!sourceCaseId) return;
-    
+
     const sourceCase = allProjects.find(p => p._id === sourceCaseId);
     const destinationCase = allProjects.find(p => p._id === targetCaseId);
     if (!sourceCase || !destinationCase) return;
@@ -2709,14 +3091,17 @@ CRITICAL PROMPT DIRECTIVE:
     const updatedDraftItem = {
       ...draft,
       linkedCaseId: targetCaseId,
-      lastModified: new Date().toISOString()
+      lastModified: new Date().toISOString(),
     };
     const updatedDestDrafts = [updatedDraftItem, ...(destinationCase.drafts || [])];
 
     try {
       await apiService.updateProject(sourceCaseId, { ...sourceCase, drafts: updatedSourceDrafts });
-      const resDest = await apiService.updateProject(targetCaseId, { ...destinationCase, drafts: updatedDestDrafts });
-      
+      const resDest = await apiService.updateProject(targetCaseId, {
+        ...destinationCase,
+        drafts: updatedDestDrafts,
+      });
+
       if (onUpdateCase) onUpdateCase(resDest);
       toast.success(`Document moved to case: ${destinationCase.name}`);
       loadSavedDrafts();
@@ -2725,12 +3110,12 @@ CRITICAL PROMPT DIRECTIVE:
     }
   };
 
-  const handleArchiveDraft = async (draft) => {
+  const handleArchiveDraft = async draft => {
     const caseId = draft.linkedCaseId;
     if (!caseId) return;
     const targetCase = allProjects.find(p => p._id === caseId);
     if (!targetCase || !Array.isArray(targetCase.drafts)) return;
-    
+
     const newStatus = draft.status === 'archived' ? 'active' : 'archived';
     const updatedDrafts = targetCase.drafts.map(d => {
       if (d.id === draft.id) {
@@ -2739,7 +3124,10 @@ CRITICAL PROMPT DIRECTIVE:
       return d;
     });
     try {
-      const response = await apiService.updateProject(caseId, { ...targetCase, drafts: updatedDrafts });
+      const response = await apiService.updateProject(caseId, {
+        ...targetCase,
+        drafts: updatedDrafts,
+      });
       if (onUpdateCase) onUpdateCase(response);
       toast.success(newStatus === 'archived' ? 'Document archived' : 'Document unarchived');
       loadSavedDrafts();
@@ -2748,17 +3136,20 @@ CRITICAL PROMPT DIRECTIVE:
     }
   };
 
-  const handlePrintDraft = (draft) => {
-    const content = (draft.content || '').split('\n').map(line => {
-      let trimmed = line.trim();
-      if (!trimmed) {
-        return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
-      }
-      let formatted = trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
-    }).join('\n');
+  const handlePrintDraft = draft => {
+    const content = (draft.content || '')
+      .split('\n')
+      .map(line => {
+        let trimmed = line.trim();
+        if (!trimmed) {
+          return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
+        }
+        let formatted = trimmed
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
+      })
+      .join('\n');
 
     const html = `<html><head><title>${draft.title || 'Legal Draft'}</title>
       <style>
@@ -2786,22 +3177,25 @@ CRITICAL PROMPT DIRECTIVE:
     }
   };
 
-  const handleExportPDFForDraft = (draft) => {
+  const handleExportPDFForDraft = draft => {
     handlePrintDraft(draft);
   };
 
-  const handleExportDOCXForDraft = (draft) => {
-    const content = (draft.content || '').split('\n').map(line => {
-      let trimmed = line.trim();
-      if (!trimmed) {
-        return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
-      }
-      let formatted = trimmed
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
-    }).join('\n');
-       
+  const handleExportDOCXForDraft = draft => {
+    const content = (draft.content || '')
+      .split('\n')
+      .map(line => {
+        let trimmed = line.trim();
+        if (!trimmed) {
+          return '<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;min-height:1em;">&nbsp;</p>';
+        }
+        let formatted = trimmed
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        return `<p style="margin-top:0in;margin-right:0in;margin-bottom:6.0pt;margin-left:0in;line-height:150%;text-align:justify;">${formatted}</p>`;
+      })
+      .join('\n');
+
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <title>${draft.title || 'Legal Draft'}</title>
@@ -2851,26 +3245,36 @@ CRITICAL PROMPT DIRECTIVE:
           draftVersion,
           exportHistory,
           generationTimestamp,
-          linkedCaseId
+          linkedCaseId,
         };
         if (JSON.stringify(currentCase.activeDraftWork) === JSON.stringify(state)) {
           return;
         }
         const payload = {
           ...currentCase,
-          activeDraftWork: state
+          activeDraftWork: state,
         };
         const response = await apiService.updateProject(currentCase._id, payload);
         if (onUpdateCase) onUpdateCase(response);
       } catch (err) {
-        console.error("Failed to auto-save active draft work to DB:", err);
+        console.error('Failed to auto-save active draft work to DB:', err);
       }
     }, 1000);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [selectedType, finalDraft, formData, generationMode, draftVersion, exportHistory, generationTimestamp, linkedCaseId, currentCase?._id]);
+  }, [
+    selectedType,
+    finalDraft,
+    formData,
+    generationMode,
+    draftVersion,
+    exportHistory,
+    generationTimestamp,
+    linkedCaseId,
+    currentCase?._id,
+  ]);
 
   // Restore active draft workspace state on mount or case load (if available)
   useEffect(() => {
@@ -2944,12 +3348,15 @@ CRITICAL PROMPT DIRECTIVE:
 
             const payload = {
               ...currentCase,
-              activeDraftWork: state
+              activeDraftWork: state,
             };
-            apiService.updateProject(currentCase._id, payload).then(res => {
-              if (onUpdateCase) onUpdateCase(res);
-              localStorage.removeItem('@aisa_active_draft_work');
-            }).catch(err => console.error("Failed to migrate local active draft work to DB", err));
+            apiService
+              .updateProject(currentCase._id, payload)
+              .then(res => {
+                if (onUpdateCase) onUpdateCase(res);
+                localStorage.removeItem('@aisa_active_draft_work');
+              })
+              .catch(err => console.error('Failed to migrate local active draft work to DB', err));
           }
         } catch (e) {
           console.warn('Failed to restore/migrate active draft work:', e);
@@ -2958,11 +3365,14 @@ CRITICAL PROMPT DIRECTIVE:
     }
   }, [currentCase?._id]);
 
-  const handleDeleteDraft = async (id) => {
+  const handleDeleteDraft = async id => {
     let foundCase = null;
     let updatedDrafts = [];
     for (const proj of allProjects) {
-      if (proj.drafts && proj.drafts.some(d => d.id === id || `${proj._id}-${d.createdAt}` === id)) {
+      if (
+        proj.drafts &&
+        proj.drafts.some(d => d.id === id || `${proj._id}-${d.createdAt}` === id)
+      ) {
         foundCase = proj;
         updatedDrafts = proj.drafts.filter(d => d.id !== id && `${proj._id}-${d.createdAt}` !== id);
         break;
@@ -2975,7 +3385,7 @@ CRITICAL PROMPT DIRECTIVE:
     try {
       const payload = {
         ...foundCase,
-        drafts: updatedDrafts
+        drafts: updatedDrafts,
       };
       const response = await apiService.updateProject(foundCase._id, payload);
       if (onUpdateCase) onUpdateCase(response);
@@ -2983,7 +3393,7 @@ CRITICAL PROMPT DIRECTIVE:
       loadSavedDrafts();
       toast.success('Draft deleted from case');
     } catch (e) {
-      console.error("Failed to delete draft", e);
+      console.error('Failed to delete draft', e);
       toast.error('Failed to delete draft');
     }
   };
@@ -3000,7 +3410,9 @@ CRITICAL PROMPT DIRECTIVE:
     setDraftVersion(draft.version || 1);
     setGenerationMode(draft.mode || 'standard');
     setExportHistory(draft.exportHistory || []);
-    setGenerationTimestamp(draft.generationTimestamp || new Date(draft.date).toLocaleString('en-IN'));
+    setGenerationTimestamp(
+      draft.generationTimestamp || new Date(draft.date).toLocaleString('en-IN')
+    );
     setDraftVersionHistory(draft.versions || []);
     setSaveButtonState('saved');
 
@@ -3045,27 +3457,27 @@ CRITICAL PROMPT DIRECTIVE:
 
   // Keyboard Shortcuts Hook
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = e => {
       if (step !== 'PREVIEW') return;
-      
+
       // Save: Ctrl + S
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
-      
+
       // Print: Ctrl + P
       if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
         e.preventDefault();
         handlePrint();
       }
-      
+
       // Download dropdown: Ctrl + Shift + S
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
         setIsDownloadOpen(prev => !prev);
       }
-      
+
       // Undo: Ctrl + Z
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
@@ -3075,7 +3487,7 @@ CRITICAL PROMPT DIRECTIVE:
           handleUndo();
         }
       }
-      
+
       // Redo: Ctrl + Y
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
@@ -3110,10 +3522,23 @@ CRITICAL PROMPT DIRECTIVE:
     }, 5000);
 
     return () => clearTimeout(handler);
-  }, [step, finalDraft, saveButtonState, activeDraftId, selectedType, generationMode, formData, draftVersion, exportHistory, generationTimestamp, allProjects, linkedCaseId, currentCase]);
+  }, [
+    step,
+    finalDraft,
+    saveButtonState,
+    activeDraftId,
+    selectedType,
+    generationMode,
+    formData,
+    draftVersion,
+    exportHistory,
+    generationTimestamp,
+    allProjects,
+    linkedCaseId,
+    currentCase,
+  ]);
 
-
-  const handleInsertCitation = (citationText) => {
+  const handleInsertCitation = citationText => {
     setFinalDraft(prev => {
       const updated = prev + `\n\n${citationText}`;
       toast.success(`✓ Citation inserted: ${citationText}`);
@@ -3125,7 +3550,7 @@ CRITICAL PROMPT DIRECTIVE:
   // Draggable right sidebar resizing logic
   const isResizingRef = useRef(false);
 
-  const startResizing = useCallback((e) => {
+  const startResizing = useCallback(e => {
     e.preventDefault();
     isResizingRef.current = true;
     document.body.style.cursor = 'col-resize';
@@ -3139,7 +3564,7 @@ CRITICAL PROMPT DIRECTIVE:
     document.body.style.userSelect = '';
   }, []);
 
-  const resize = useCallback((e) => {
+  const resize = useCallback(e => {
     if (!isResizingRef.current) return;
     const newWidth = window.innerWidth - e.clientX;
     if (newWidth >= 320 && newWidth <= 550) {
@@ -3160,7 +3585,6 @@ CRITICAL PROMPT DIRECTIVE:
   // ─── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-slate-50 dark:bg-transparent overflow-hidden">
-
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#111726] shrink-0 sticky top-0 z-[1000] shadow-sm select-none h-16">
         {step === 'PREVIEW' ? (
@@ -3185,7 +3609,9 @@ CRITICAL PROMPT DIRECTIVE:
                   </span>
                   <span className="flex items-center gap-1 flex-row">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[8px] font-black text-green-500 uppercase tracking-widest">AI Active</span>
+                    <span className="text-[8px] font-black text-green-500 uppercase tracking-widest">
+                      AI Active
+                    </span>
                   </span>
                 </div>
               </div>
@@ -3237,10 +3663,10 @@ CRITICAL PROMPT DIRECTIVE:
 
                 {/* Language Toggle (EN | हिन्दी) */}
                 <div className="flex items-center shrink-0">
-                  <LanguageToggle 
-                    lang={outputLang} 
-                    onChange={handleDraftLangChange} 
-                    isTranslating={isDraftTranslating} 
+                  <LanguageToggle
+                    lang={outputLang}
+                    onChange={handleDraftLangChange}
+                    isTranslating={isDraftTranslating}
                   />
                 </div>
 
@@ -3288,31 +3714,46 @@ CRITICAL PROMPT DIRECTIVE:
                   </button>
                   {isDownloadOpen && (
                     <>
-                      <div className="fixed inset-0 z-[119999]" onClick={() => setIsDownloadOpen(false)} />
+                      <div
+                        className="fixed inset-0 z-[119999]"
+                        onClick={() => setIsDownloadOpen(false)}
+                      />
                       <div className="absolute right-0 mt-2 w-[160px] bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/10 shadow-2xl rounded-xl p-1.5 z-[120000] text-left">
                         <button
-                          onClick={() => { handleExportPDF(); setIsDownloadOpen(false); }}
+                          onClick={() => {
+                            handleExportPDF();
+                            setIsDownloadOpen(false);
+                          }}
                           className="w-full px-3 py-2 text-xs font-semibold text-slate-705 dark:text-slate-350 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-[#5B3DF5] rounded-lg flex items-center gap-2 border-none bg-transparent cursor-pointer"
                         >
                           <FileDown size={13} />
                           <span>PDF</span>
                         </button>
                         <button
-                          onClick={() => { handleExportDOCX(); setIsDownloadOpen(false); }}
+                          onClick={() => {
+                            handleExportDOCX();
+                            setIsDownloadOpen(false);
+                          }}
                           className="w-full px-3 py-2 text-xs font-semibold text-slate-705 dark:text-slate-355 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-[#5B3DF5] rounded-lg flex items-center gap-2 border-none bg-transparent cursor-pointer"
                         >
                           <FileCheck size={13} />
                           <span>DOCX</span>
                         </button>
                         <button
-                          onClick={() => { handleExportTXT(); setIsDownloadOpen(false); }}
+                          onClick={() => {
+                            handleExportTXT();
+                            setIsDownloadOpen(false);
+                          }}
                           className="w-full px-3 py-2 text-xs font-semibold text-slate-705 dark:text-[#5B3DF5] hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-[#5B3DF5] rounded-lg flex items-center gap-2 border-none bg-transparent cursor-pointer"
                         >
                           <FileText size={13} />
                           <span>TXT</span>
                         </button>
                         <button
-                          onClick={() => { handleExportHTML(); setIsDownloadOpen(false); }}
+                          onClick={() => {
+                            handleExportHTML();
+                            setIsDownloadOpen(false);
+                          }}
                           className="w-full px-3 py-2 text-xs font-semibold text-slate-705 dark:text-slate-355 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-[#5B3DF5] rounded-lg flex items-center gap-2 border-none bg-transparent cursor-pointer"
                         >
                           <Globe size={13} />
@@ -3432,14 +3873,18 @@ CRITICAL PROMPT DIRECTIVE:
           <>
             <div className="flex items-center gap-2 min-w-0 select-none">
               <button
-                onClick={step === 'SELECT' ? onBack : () => {
-                  if (step === 'FORM') {
-                    setInputSource(null);
-                    setStep('SELECT');
-                  } else {
-                    setStep('SELECT');
-                  }
-                }}
+                onClick={
+                  step === 'SELECT'
+                    ? onBack
+                    : () => {
+                        if (step === 'FORM') {
+                          setInputSource(null);
+                          setStep('SELECT');
+                        } else {
+                          setStep('SELECT');
+                        }
+                      }
+                }
                 className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors border-none bg-transparent cursor-pointer text-slate-500 shrink-0"
               >
                 <ChevronLeft size={20} className="text-slate-600 dark:text-slate-400" />
@@ -3490,11 +3935,9 @@ CRITICAL PROMPT DIRECTIVE:
 
       {/* ── Content ── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
-
         {/* ══════════════ STEP: SELECT ══════════════ */}
         {step === 'SELECT' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5 w-full">
-
             {/* Prefill Banner */}
             {prefillBanner && prefillData && (
               <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/10 border border-emerald-200/20 dark:border-emerald-900/30 rounded-2xl shadow-sm">
@@ -3509,7 +3952,10 @@ CRITICAL PROMPT DIRECTIVE:
                     Select any template — all matching fields will be auto-filled from your case
                   </p>
                 </div>
-                <button onClick={() => setPrefillBanner(false)} className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-full text-emerald-500 shrink-0">
+                <button
+                  onClick={() => setPrefillBanner(false)}
+                  className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-full text-emerald-500 shrink-0"
+                >
                   <X size={14} />
                 </button>
               </div>
@@ -3527,7 +3973,10 @@ CRITICAL PROMPT DIRECTIVE:
                   className="w-full bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-slate-800 dark:text-white outline-none"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full ml-2">
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full ml-2"
+                  >
                     <X size={14} className="text-slate-400" />
                   </button>
                 )}
@@ -3538,7 +3987,7 @@ CRITICAL PROMPT DIRECTIVE:
             <div className="relative w-full overflow-hidden select-none">
               {/* Left fade shadow */}
               <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50 dark:from-[#0B1020] to-transparent pointer-events-none z-10" />
-              
+
               {/* Right fade shadow */}
               <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-[#0B1020] to-transparent pointer-events-none z-10" />
 
@@ -3549,7 +3998,7 @@ CRITICAL PROMPT DIRECTIVE:
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
-                  WebkitOverflowScrolling: 'touch'
+                  WebkitOverflowScrolling: 'touch',
                 }}
               >
                 <button
@@ -3592,8 +4041,12 @@ CRITICAL PROMPT DIRECTIVE:
                   >
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-white/5">
                       {CAT_ICONS[cat.title]}
-                      <h4 className="text-[10px] font-black tracking-widest text-slate-600 dark:text-slate-400 uppercase">{cat.title}</h4>
-                      <span className="ml-auto text-[9px] font-bold text-slate-400 dark:text-slate-600">{cat.items.length}</span>
+                      <h4 className="text-[10px] font-black tracking-widest text-slate-600 dark:text-slate-400 uppercase">
+                        {cat.title}
+                      </h4>
+                      <span className="ml-auto text-[9px] font-bold text-slate-400 dark:text-slate-600">
+                        {cat.items.length}
+                      </span>
                     </div>
                     <div className="p-2 flex flex-col gap-1">
                       {cat.items.map(item => (
@@ -3603,800 +4056,941 @@ CRITICAL PROMPT DIRECTIVE:
                           className="flex items-center justify-between px-3 py-2.5 bg-slate-50 dark:bg-[#131C31] hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:text-indigo-700 dark:hover:text-indigo-300 text-left rounded-xl transition-all group text-xs font-semibold text-slate-700 dark:text-slate-300"
                         >
                           <span className="break-words pr-2 leading-snug">{item}</span>
-                          <ChevronRight size={13} className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 shrink-0 transition-colors" />
+                          <ChevronRight
+                            size={13}
+                            className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 shrink-0 transition-colors"
+                          />
                         </button>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            ) : (() => {
-              const currentCatData = ALL_CATEGORIES.find(c => c.title === activeCat);
-              const totalTemplatesCount = currentCatData ? currentCatData.items.length : 0;
-              
-              let itemsToRender = currentCatData ? currentCatData.items : [];
-              const q = searchQuery.toLowerCase();
-              if (q) {
-                itemsToRender = itemsToRender.filter(item => item.toLowerCase().includes(q));
-              }
+            ) : (
+              (() => {
+                const currentCatData = ALL_CATEGORIES.find(c => c.title === activeCat);
+                const totalTemplatesCount = currentCatData ? currentCatData.items.length : 0;
 
-              // Apply smart filters
-              if (smartFilter === 'Favorites') {
-                itemsToRender = itemsToRender.filter(item => favorites.includes(item));
-              } else if (smartFilter === 'Recently Used') {
-                itemsToRender = itemsToRender.filter(item => recentlyUsed.includes(item));
-              } else if (smartFilter === 'AI Recommended') {
-                itemsToRender = itemsToRender.filter((item, idx) => idx % 2 === 0 || item.includes('FIR') || item.includes('Complaint'));
-              } else if (smartFilter === 'Most Used') {
-                itemsToRender = itemsToRender.slice(0, 3);
-              } else if (smartFilter === 'New') {
-                itemsToRender = itemsToRender.slice(-2);
-              }
+                let itemsToRender = currentCatData ? currentCatData.items : [];
+                const q = searchQuery.toLowerCase();
+                if (q) {
+                  itemsToRender = itemsToRender.filter(item => item.toLowerCase().includes(q));
+                }
 
-              // Sort favorites (pinned) templates to the top
-              const sortedItems = [...itemsToRender].sort((a, b) => {
-                const aFav = favorites.includes(a) ? 1 : 0;
-                const bFav = favorites.includes(b) ? 1 : 0;
-                return bFav - aFav;
-              });
+                // Apply smart filters
+                if (smartFilter === 'Favorites') {
+                  itemsToRender = itemsToRender.filter(item => favorites.includes(item));
+                } else if (smartFilter === 'Recently Used') {
+                  itemsToRender = itemsToRender.filter(item => recentlyUsed.includes(item));
+                } else if (smartFilter === 'AI Recommended') {
+                  itemsToRender = itemsToRender.filter(
+                    (item, idx) =>
+                      idx % 2 === 0 || item.includes('FIR') || item.includes('Complaint')
+                  );
+                } else if (smartFilter === 'Most Used') {
+                  itemsToRender = itemsToRender.slice(0, 3);
+                } else if (smartFilter === 'New') {
+                  itemsToRender = itemsToRender.slice(-2);
+                }
 
-              return (
-                <div className="w-full space-y-6 text-left animate-fadeIn">
-                  {/* Category Header */}
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 select-none dark:border-zinc-800">
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-[#5B3DF5] tracking-widest flex items-center gap-1 mb-1">
-                        {CAT_ICONS[activeCat]} {activeCat}
-                      </span>
-                      <h2 className="text-xl font-black text-slate-850 dark:text-white uppercase tracking-tight">
-                        {activeCat.toLowerCase().replace(' law', '').replace('finance', 'finance')} Templates
-                      </h2>
-                      <p className="text-xs text-slate-400 font-semibold mt-1">
-                        {totalTemplatesCount} Draft Templates • AI Optimized • Auto Fill Compatible
-                      </p>
+                // Sort favorites (pinned) templates to the top
+                const sortedItems = [...itemsToRender].sort((a, b) => {
+                  const aFav = favorites.includes(a) ? 1 : 0;
+                  const bFav = favorites.includes(b) ? 1 : 0;
+                  return bFav - aFav;
+                });
+
+                return (
+                  <div className="w-full space-y-6 text-left animate-fadeIn">
+                    {/* Category Header */}
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 select-none dark:border-zinc-800">
+                      <div>
+                        <span className="text-[10px] font-black uppercase text-[#5B3DF5] tracking-widest flex items-center gap-1 mb-1">
+                          {CAT_ICONS[activeCat]} {activeCat}
+                        </span>
+                        <h2 className="text-xl font-black text-slate-850 dark:text-white uppercase tracking-tight">
+                          {activeCat
+                            .toLowerCase()
+                            .replace(' law', '')
+                            .replace('finance', 'finance')}{' '}
+                          Templates
+                        </h2>
+                        <p className="text-xs text-slate-400 font-semibold mt-1">
+                          {totalTemplatesCount} Draft Templates • AI Optimized • Auto Fill
+                          Compatible
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Smart Filters tab bar */}
-                  <div className="flex gap-2 overflow-x-auto pb-2 select-none border-b dark:border-zinc-800/50">
-                    {['All', 'Most Used', 'AI Recommended', 'Recently Used', 'New', 'Favorites'].map(f => {
-                      const count = f === 'Favorites' ? favorites.filter(x => currentCatData?.items?.includes(x)).length : 0;
-                      return (
-                        <button
-                          key={f}
-                          type="button"
-                          onClick={() => setSmartFilter(f)}
-                          className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all border ${
-                            smartFilter === f
-                              ? 'bg-indigo-50 border-indigo-200 text-[#5B3DF5] dark:bg-indigo-950/20 dark:border-indigo-900/40'
-                              : 'bg-white dark:bg-[#1A2540] border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-indigo-600'
-                          }`}
-                        >
-                          {f} {f === 'Favorites' && `(${count})`}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Template grid */}
-                  {sortedItems.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full pb-12">
-                      {sortedItems.map(item => {
-                        const tmpl = getTemplate(item);
-                        const isFav = favorites.includes(item);
+                    {/* Smart Filters tab bar */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 select-none border-b dark:border-zinc-800/50">
+                      {[
+                        'All',
+                        'Most Used',
+                        'AI Recommended',
+                        'Recently Used',
+                        'New',
+                        'Favorites',
+                      ].map(f => {
+                        const count =
+                          f === 'Favorites'
+                            ? favorites.filter(x => currentCatData?.items?.includes(x)).length
+                            : 0;
                         return (
-                          <div
-                            key={item}
-                            onClick={() => handleSelectType(item)}
-                            className="p-5 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-all hover:shadow-md hover:border-[#5B3DF5] cursor-pointer group hover:-translate-y-1 relative"
+                          <button
+                            key={f}
+                            type="button"
+                            onClick={() => setSmartFilter(f)}
+                            className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all border ${
+                              smartFilter === f
+                                ? 'bg-indigo-50 border-indigo-200 text-[#5B3DF5] dark:bg-indigo-950/20 dark:border-indigo-900/40'
+                                : 'bg-white dark:bg-[#1A2540] border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-indigo-600'
+                            }`}
                           >
-                            <div>
-                              {/* Top card row: Icon and Favorite toggle */}
-                              <div className="flex justify-between items-center mb-4">
-                                <span className="text-xl">{CAT_ICONS[activeCat]}</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(item);
-                                  }}
-                                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-amber-500 cursor-pointer border-none bg-transparent outline-none"
-                                >
-                                  <Star size={14} fill={isFav ? "currentColor" : "none"} />
-                                </button>
-                              </div>
-
-                              <h3 className="text-sm font-black text-slate-855 dark:text-white uppercase leading-snug">
-                                {item}
-                              </h3>
-                              <p className="text-[10px] text-slate-450 font-semibold mt-1.5 leading-relaxed line-clamp-2 h-9">
-                                {tmpl?.systemPrompt ? tmpl.systemPrompt.slice(0, 75) + '...' : 'Intelligent AI-assisted legal template.'}
-                              </p>
-
-                              {/* Capabilities Checklist */}
-                              <div className="space-y-1.5 text-[10px] text-slate-500 font-semibold border-y border-dashed border-slate-200 dark:border-zinc-800/80 py-3.5 my-4">
-                                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-450">
-                                  <Check size={11} /> <span>Existing Case</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-450">
-                                  <Check size={11} /> <span>Upload Documents</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-455">
-                                  <Check size={11} /> <span>Manual Entry</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-[#5B3DF5]">
-                                  <Sparkles size={11} /> <span>AI Auto Fill Supported</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-slate-400">
-                                  <Clock size={11} /> <span>⏱ 10 Seconds</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Bottom row CTA */}
-                            <div className="flex items-center justify-between text-xs font-black uppercase text-[#5B3DF5] pt-1 select-none">
-                              <span>Generate</span>
-                              <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                            </div>
-                          </div>
+                            {f} {f === 'Favorites' && `(${count})`}
+                          </button>
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center select-none">
-                      <Search size={36} className="text-slate-300 dark:text-zinc-700 mb-2" />
-                      <p className="text-xs font-bold text-slate-400">No templates matching these filters.</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+
+                    {/* Template grid */}
+                    {sortedItems.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full pb-12">
+                        {sortedItems.map(item => {
+                          const tmpl = getTemplate(item);
+                          const isFav = favorites.includes(item);
+                          return (
+                            <div
+                              key={item}
+                              onClick={() => handleSelectType(item)}
+                              className="p-5 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-all hover:shadow-md hover:border-[#5B3DF5] cursor-pointer group hover:-translate-y-1 relative"
+                            >
+                              <div>
+                                {/* Top card row: Icon and Favorite toggle */}
+                                <div className="flex justify-between items-center mb-4">
+                                  <span className="text-xl">{CAT_ICONS[activeCat]}</span>
+                                  <button
+                                    type="button"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      toggleFavorite(item);
+                                    }}
+                                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-amber-500 cursor-pointer border-none bg-transparent outline-none"
+                                  >
+                                    <Star size={14} fill={isFav ? 'currentColor' : 'none'} />
+                                  </button>
+                                </div>
+
+                                <h3 className="text-sm font-black text-slate-855 dark:text-white uppercase leading-snug">
+                                  {item}
+                                </h3>
+                                <p className="text-[10px] text-slate-450 font-semibold mt-1.5 leading-relaxed line-clamp-2 h-9">
+                                  {tmpl?.systemPrompt
+                                    ? tmpl.systemPrompt.slice(0, 75) + '...'
+                                    : 'Intelligent AI-assisted legal template.'}
+                                </p>
+
+                                {/* Capabilities Checklist */}
+                                <div className="space-y-1.5 text-[10px] text-slate-500 font-semibold border-y border-dashed border-slate-200 dark:border-zinc-800/80 py-3.5 my-4">
+                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-450">
+                                    <Check size={11} /> <span>Existing Case</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-450">
+                                    <Check size={11} /> <span>Upload Documents</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-455">
+                                    <Check size={11} /> <span>Manual Entry</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-[#5B3DF5]">
+                                    <Sparkles size={11} /> <span>AI Auto Fill Supported</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-slate-400">
+                                    <Clock size={11} /> <span>⏱ 10 Seconds</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Bottom row CTA */}
+                              <div className="flex items-center justify-between text-xs font-black uppercase text-[#5B3DF5] pt-1 select-none">
+                                <span>Generate</span>
+                                <ChevronRight
+                                  size={14}
+                                  className="group-hover:translate-x-1 transition-transform"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-16 text-center select-none">
+                        <Search size={36} className="text-slate-300 dark:text-zinc-700 mb-2" />
+                        <p className="text-xs font-bold text-slate-400">
+                          No templates matching these filters.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
+            )}
 
             {filteredCategories.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <Search size={40} className="text-slate-300 dark:text-zinc-700 mb-3" />
-                <p className="text-sm font-black text-slate-400">No templates found for "{searchQuery}"</p>
-                <button onClick={() => { setSearchQuery(''); setActiveCat('ALL'); }} className="mt-3 text-xs text-indigo-600 font-bold underline">Clear search</button>
+                <p className="text-sm font-black text-slate-400">
+                  No templates found for "{searchQuery}"
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setActiveCat('ALL');
+                  }}
+                  className="mt-3 text-xs text-indigo-600 font-bold underline"
+                >
+                  Clear search
+                </button>
               </div>
             )}
           </div>
         )}
 
         {/* ══════════════ STEP: FORM ══════════════ */}
-        {step === 'FORM' && template && (() => {
-          const basicFields = template?.fields?.filter(f => {
-            const k = f.key.toLowerCase();
-            const l = f.label.toLowerCase();
-            return k.includes('court') || k.includes('party') || k.includes('parties') ||
-                   k.includes('plaintiff') || k.includes('defendant') || k.includes('petitioner') || k.includes('respondent') ||
-                   k.includes('advocate') || k.includes('client') || k.includes('case') || k.includes('fir') ||
-                   k.includes('police') || k.includes('accused') || k.includes('opponent') || k.includes('complainant') ||
-                   k.includes('district') || k.includes('state') || k.includes('country') ||
-                   l.includes('court') || l.includes('party') || l.includes('parties') ||
-                   l.includes('plaintiff') || l.includes('defendant') || l.includes('petitioner') || l.includes('respondent') ||
-                   l.includes('advocate') || l.includes('client') || l.includes('case') || l.includes('fir') ||
-                   l.includes('police') || l.includes('accused') || l.includes('opponent') || l.includes('complainant');
-          }) || [];
+        {step === 'FORM' &&
+          template &&
+          (() => {
+            const basicFields =
+              template?.fields?.filter(f => {
+                const k = f.key.toLowerCase();
+                const l = f.label.toLowerCase();
+                return (
+                  k.includes('court') ||
+                  k.includes('party') ||
+                  k.includes('parties') ||
+                  k.includes('plaintiff') ||
+                  k.includes('defendant') ||
+                  k.includes('petitioner') ||
+                  k.includes('respondent') ||
+                  k.includes('advocate') ||
+                  k.includes('client') ||
+                  k.includes('case') ||
+                  k.includes('fir') ||
+                  k.includes('police') ||
+                  k.includes('accused') ||
+                  k.includes('opponent') ||
+                  k.includes('complainant') ||
+                  k.includes('district') ||
+                  k.includes('state') ||
+                  k.includes('country') ||
+                  l.includes('court') ||
+                  l.includes('party') ||
+                  l.includes('parties') ||
+                  l.includes('plaintiff') ||
+                  l.includes('defendant') ||
+                  l.includes('petitioner') ||
+                  l.includes('respondent') ||
+                  l.includes('advocate') ||
+                  l.includes('client') ||
+                  l.includes('case') ||
+                  l.includes('fir') ||
+                  l.includes('police') ||
+                  l.includes('accused') ||
+                  l.includes('opponent') ||
+                  l.includes('complainant')
+                );
+              }) || [];
 
-          const factFields = template?.fields?.filter(f => {
-            const k = f.key.toLowerCase();
-            const l = f.label.toLowerCase();
-            return (k.includes('fact') || k.includes('date') || k.includes('time') || k.includes('incident') || k.includes('location') || k.includes('event') || k.includes('chronology') || k.includes('cause') || k.includes('background') || k.includes('history')) && !basicFields.some(bf => bf.key === f.key);
-          }) || [];
+            const factFields =
+              template?.fields?.filter(f => {
+                const k = f.key.toLowerCase();
+                const l = f.label.toLowerCase();
+                return (
+                  (k.includes('fact') ||
+                    k.includes('date') ||
+                    k.includes('time') ||
+                    k.includes('incident') ||
+                    k.includes('location') ||
+                    k.includes('event') ||
+                    k.includes('chronology') ||
+                    k.includes('cause') ||
+                    k.includes('background') ||
+                    k.includes('history')) &&
+                  !basicFields.some(bf => bf.key === f.key)
+                );
+              }) || [];
 
-          const requiredBasic = basicFields.filter(f => f.required);
-          const optionalBasic = basicFields.filter(f => !f.required);
-          const requiredFacts = factFields.filter(f => f.required);
-          const optionalFacts = factFields.filter(f => !f.required);
+            const requiredBasic = basicFields.filter(f => f.required);
+            const optionalBasic = basicFields.filter(f => !f.required);
+            const requiredFacts = factFields.filter(f => f.required);
+            const optionalFacts = factFields.filter(f => !f.required);
 
-          const requiredFields = template?.fields?.filter(f => f.required) || [];
-          const totalRequired = requiredFields.length;
-          const filledRequired = requiredFields.filter(f => formData[f.key]?.toString().trim()).length;
-          const completionPercentage = totalRequired > 0 ? Math.round((filledRequired / totalRequired) * 100) : 100;
+            const requiredFields = template?.fields?.filter(f => f.required) || [];
+            const totalRequired = requiredFields.length;
+            const filledRequired = requiredFields.filter(f =>
+              formData[f.key]?.toString().trim()
+            ).length;
+            const completionPercentage =
+              totalRequired > 0 ? Math.round((filledRequired / totalRequired) * 100) : 100;
 
-          const stepsList = [
-            { id: 1, label: 'Basic Information', desc: 'Court, Parties, FIR details' },
-            { id: 2, label: 'Facts of Case', desc: 'Timeline & chronologies' },
-            { id: 3, label: 'Legal Grounds', desc: 'Statutes & applicable laws' },
-            { id: 4, label: 'Relief / Prayer', desc: 'Compensation, injunctions' },
-            { id: 5, label: 'AI Review', desc: 'Audit details & approve' },
-            { id: 6, label: 'Generate Draft', desc: 'Page audit & layout check' }
-          ];
+            const stepsList = [
+              { id: 1, label: 'Basic Information', desc: 'Court, Parties, FIR details' },
+              { id: 2, label: 'Facts of Case', desc: 'Timeline & chronologies' },
+              { id: 3, label: 'Legal Grounds', desc: 'Statutes & applicable laws' },
+              { id: 4, label: 'Relief / Prayer', desc: 'Compensation, injunctions' },
+              { id: 5, label: 'AI Review', desc: 'Audit details & approve' },
+              { id: 6, label: 'Generate Draft', desc: 'Page audit & layout check' },
+            ];
 
-          const renderWizardField = (field) => {
-            const hasVal = !formData[field.key]?.toString().trim();
-            const isTextarea = field.type === 'textarea' || field.key === 'facts';
-            const isFieldInvalid = errors[field.key];
+            const renderWizardField = field => {
+              const hasVal = !formData[field.key]?.toString().trim();
+              const isTextarea = field.type === 'textarea' || field.key === 'facts';
+              const isFieldInvalid = errors[field.key];
 
-            return (
-              <div key={field.key} className="flex flex-col gap-1.5 text-left">
-                <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-550 dark:text-slate-400">
-                  {field.label}
-                  {field.required && <span className="text-red-500">*</span>}
-                  {filledFields.has(field.key) && (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded text-[7.5px] font-black uppercase tracking-wider">
-                      <CheckCircle2 size={8} /> Auto Filled
-                    </span>
-                  )}
-                </label>
-                <div className="relative flex items-center w-full">
-                  <div className="flex-1">
-                    <FieldInput
-                      field={field}
-                      value={formData[field.key]}
-                      onChange={val => {
-                        setFormData(prev => {
-                          const next = { ...prev, [field.key]: val };
-                          if (field.key === 'country') {
-                            next['state'] = '';
-                            next['district'] = '';
-                            next['policeStation'] = '';
-                          } else if (field.key === 'state') {
-                            next['district'] = '';
-                            next['policeStation'] = '';
-                          } else if (field.key === 'district') {
-                            next['policeStation'] = '';
-                          }
-                          return next;
-                        });
-                        if (errors[field.key]) setErrors(prev => { const e = { ...prev }; delete e[field.key]; return e; });
-                      }}
-                      filled={filledFields.has(field.key)}
-                      country={formData.country}
-                      state={formData.state}
-                      district={formData.district}
-                    />
-                  </div>
-                  {isTextarea && (
-                    <div className="relative ml-2 select-none font-bold">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const popup = document.getElementById(`ai-refine-popup-${field.key}`);
-                          if (popup) popup.classList.toggle('hidden');
-                        }}
-                        className="p-2 border border-slate-200 dark:border-zinc-800 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-300"
-                        title="AI Refine"
-                      >
-                        <Sparkles size={14} className="text-[#5B3DF5]" />
-                      </button>
-                      <div 
-                        id={`ai-refine-popup-${field.key}`}
-                        className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#151D30] border border-slate-202 dark:border-zinc-855 rounded-xl shadow-xl z-50 hidden p-1.5 space-y-1 select-none text-left"
-                      >
-                        {[
-                          'Generate from Notes',
-                          'Rewrite Professionally',
-                          'Expand',
-                          'Summarize',
-                          'Improve Legal Language'
-                        ].map(action => (
-                          <button
-                            key={action}
-                            type="button"
-                            onClick={() => {
-                              const popup = document.getElementById(`ai-refine-popup-${field.key}`);
-                              if (popup) popup.classList.add('hidden');
-                              handleRefineField(field.key, action);
-                            }}
-                            className="w-full text-left px-2.5 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-200 hover:bg-[#5B3DF5] hover:text-white rounded-lg transition-colors"
-                          >
-                            {action}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {isFieldInvalid && (
-                  <span className="text-[9px] text-red-500 font-bold flex items-center gap-0.5 mt-0.5 animate-pulse select-none">
-                    <AlertCircle size={9} /> {errors[field.key]}
-                  </span>
-                )}
-              </div>
-            );
-          };
-
-          if (inputSource === null) {
-            return (
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-16 text-left animate-fadeIn">
-                <div className="border-b dark:border-white/5 pb-4 select-none">
-                  <span className="text-[10px] font-black uppercase text-[#5B3DF5] tracking-widest block mb-1">AI Drafting Workspace</span>
-                  <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Choose Draft Information Source</h2>
-                  <p className="text-xs text-slate-405 font-semibold mt-1">Select how you want to supply details for this pleading template.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  
-                  {/* Card 1: Existing Case Workspace */}
-                  <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-205 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-6 transition-all hover:border-[#5B3DF5] relative">
-                    <div className="space-y-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-[#5B3DF5]">
-                        <Folder size={24} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-855 dark:text-white uppercase">Existing Case Workspace</h3>
-                        <p className="text-[11px] text-indigo-505 font-bold uppercase mt-1">Use an existing AI case workspace</p>
-                      </div>
-                      <p className="text-xs text-slate-450 font-semibold leading-relaxed">
-                        Automatically import Parties, Timeline, Evidence, Documents, Witnesses, Laws, Court, and Addresses.
-                      </p>
-
-                      <div className="pt-2">
-                        <select
-                          value={selectedCaseForImport}
-                          onChange={e => {
-                            setSelectedCaseForImport(e.target.value);
-                            setCaseImportSummary(null);
-                          }}
-                          className="w-full bg-slate-50 dark:bg-black/20 border border-slate-250 dark:border-zinc-800 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 dark:text-white"
-                        >
-                          <option value="">Select Case...</option>
-                          {allProjects.map(c => (
-                            <option key={c._id} value={c._id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {isAnalyzingDocs && selectedCaseForImport && !caseImportSummary && (
-                        <div className="flex items-center gap-2 text-xs font-bold text-indigo-500 animate-pulse select-none">
-                          <RefreshCw className="animate-spin w-3 h-3" />
-                          <span>AI Extracting details...</span>
-                        </div>
-                      )}
-
-                      {caseImportSummary && (
-                        <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/20 rounded-2xl space-y-1.5 animate-fadeIn">
-                          <p className="text-[9px] font-black text-emerald-700 dark:text-emerald-455 uppercase tracking-wider flex items-center gap-1 select-none">
-                            <CheckCircle2 size={11} /> AI Extraction Complete
-                          </p>
-                          <p className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">✓ {caseImportSummary.importedCount} fields auto-filled</p>
-                          {caseImportSummary.missing.length > 0 ? (
-                            <div className="text-[9px] text-slate-400 font-semibold space-y-0.5">
-                              <span className="block uppercase tracking-wider text-[8px] font-black">Missing:</span>
-                              <ul className="list-disc pl-3">
-                                {caseImportSummary.missing.map(m => <li key={m}>{m}</li>)}
-                              </ul>
-                            </div>
-                          ) : (
-                            <p className="text-[9px] text-emerald-605 font-bold">All required fields complete!</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {!caseImportSummary ? (
-                      <button
-                        type="button"
-                        disabled={!selectedCaseForImport || isAnalyzingDocs}
-                        onClick={async () => {
-                          setIsAnalyzingDocs(true);
-                          setTimeout(() => {
-                            const matchedCase = allProjects.find(p => p._id === selectedCaseForImport);
-                            const importedFields = {
-                              plaintiffName: matchedCase?.name?.split(' vs ')[0] || 'Rajesh Sharma',
-                              defendantName: matchedCase?.name?.split(' vs ')[1] || 'Amit Verma',
-                              facts: matchedCase?.summary || 'The tenant has defaulted on rent payment for consecutive 3 months.',
-                              courtName: 'District Sessions Court',
-                              country: 'India',
-                              state: 'Delhi',
-                              district: 'South Delhi'
-                            };
-                            setFormData(prev => ({
-                              ...prev,
-                              ...importedFields
-                            }));
-                            const missingKeys = template.fields.filter(f => f.required && !importedFields[f.key]).map(f => f.key);
-                            setMissingFieldsKeys(missingKeys);
-                            setCaseImportSummary({
-                              importedCount: Object.keys(importedFields).length,
-                              missing: template.fields.filter(f => f.required && !importedFields[f.key]).map(f => f.label)
+              return (
+                <div key={field.key} className="flex flex-col gap-1.5 text-left">
+                  <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-550 dark:text-slate-400">
+                    {field.label}
+                    {field.required && <span className="text-red-500">*</span>}
+                    {filledFields.has(field.key) && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded text-[7.5px] font-black uppercase tracking-wider">
+                        <CheckCircle2 size={8} /> Auto Filled
+                      </span>
+                    )}
+                  </label>
+                  <div className="relative flex items-center w-full">
+                    <div className="flex-1">
+                      <FieldInput
+                        field={field}
+                        value={formData[field.key]}
+                        onChange={val => {
+                          setFormData(prev => {
+                            const next = { ...prev, [field.key]: val };
+                            if (field.key === 'country') {
+                              next['state'] = '';
+                              next['district'] = '';
+                              next['policeStation'] = '';
+                            } else if (field.key === 'state') {
+                              next['district'] = '';
+                              next['policeStation'] = '';
+                            } else if (field.key === 'district') {
+                              next['policeStation'] = '';
+                            }
+                            return next;
+                          });
+                          if (errors[field.key])
+                            setErrors(prev => {
+                              const e = { ...prev };
+                              delete e[field.key];
+                              return e;
                             });
-                            setIsAnalyzingDocs(false);
-                          }, 1200);
                         }}
-                        className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all select-none outline-none ${
-                          selectedCaseForImport && !isAnalyzingDocs
-                            ? 'bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5]'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        Select Case
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInputSource('CASE');
-                        }}
-                        className="w-full py-3 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
-                      >
-                        Continue
-                      </button>
+                        filled={filledFields.has(field.key)}
+                        country={formData.country}
+                        state={formData.state}
+                        district={formData.district}
+                      />
+                    </div>
+                    {isTextarea && (
+                      <div className="relative ml-2 select-none font-bold">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const popup = document.getElementById(`ai-refine-popup-${field.key}`);
+                            if (popup) popup.classList.toggle('hidden');
+                          }}
+                          className="p-2 border border-slate-200 dark:border-zinc-800 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-300"
+                          title="AI Refine"
+                        >
+                          <Sparkles size={14} className="text-[#5B3DF5]" />
+                        </button>
+                        <div
+                          id={`ai-refine-popup-${field.key}`}
+                          className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-[#151D30] border border-slate-202 dark:border-zinc-855 rounded-xl shadow-xl z-50 hidden p-1.5 space-y-1 select-none text-left"
+                        >
+                          {[
+                            'Generate from Notes',
+                            'Rewrite Professionally',
+                            'Expand',
+                            'Summarize',
+                            'Improve Legal Language',
+                          ].map(action => (
+                            <button
+                              key={action}
+                              type="button"
+                              onClick={() => {
+                                const popup = document.getElementById(
+                                  `ai-refine-popup-${field.key}`
+                                );
+                                if (popup) popup.classList.add('hidden');
+                                handleRefineField(field.key, action);
+                              }}
+                              className="w-full text-left px-2.5 py-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-200 hover:bg-[#5B3DF5] hover:text-white rounded-lg transition-colors"
+                            >
+                              {action}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
+                  {isFieldInvalid && (
+                    <span className="text-[9px] text-red-500 font-bold flex items-center gap-0.5 mt-0.5 animate-pulse select-none">
+                      <AlertCircle size={9} /> {errors[field.key]}
+                    </span>
+                  )}
+                </div>
+              );
+            };
 
-                  {/* Card 2: Upload Documents */}
-                  <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-6 transition-all hover:border-[#5B3DF5] relative">
-                    <div className="space-y-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-[#5B3DF5]">
-                        <Plus size={24} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-855 dark:text-white uppercase">Upload Documents</h3>
-                        <p className="text-[11px] text-indigo-550 font-bold uppercase mt-1">Multi-file OCR Enabled</p>
-                      </div>
-                      <p className="text-xs text-slate-450 font-semibold leading-relaxed">
-                        Upload Evidence Bundle, Affidavits, FIR, Charge Sheet. AI extracts Parties, Dates, Court, Acts, etc.
-                      </p>
+            if (inputSource === null) {
+              return (
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-16 text-left animate-fadeIn">
+                  <div className="border-b dark:border-white/5 pb-4 select-none">
+                    <span className="text-[10px] font-black uppercase text-[#5B3DF5] tracking-widest block mb-1">
+                      AI Drafting Workspace
+                    </span>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                      Choose Draft Information Source
+                    </h2>
+                    <p className="text-xs text-slate-405 font-semibold mt-1">
+                      Select how you want to supply details for this pleading template.
+                    </p>
+                  </div>
 
-                      <div 
-                        onClick={() => document.getElementById('wizard-doc-uploader')?.click()}
-                        className="border border-dashed border-slate-250 dark:border-zinc-800 hover:border-[#5B3DF5] dark:hover:border-indigo-400 rounded-2xl p-4 text-center cursor-pointer bg-slate-50/50 dark:bg-black/15 select-none"
-                      >
-                        <span className="text-[10px] font-black uppercase text-indigo-505">Click to Select Files</span>
-                        <input
-                          id="wizard-doc-uploader"
-                          type="file"
-                          multiple
-                          onChange={e => {
-                            if (e.target.files) {
-                              setUploadedFiles(Array.from(e.target.files));
-                              setDocAnalysisSummary(null);
-                            }
-                          }}
-                          className="hidden"
-                        />
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Card 1: Existing Case Workspace */}
+                    <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-205 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-6 transition-all hover:border-[#5B3DF5] relative">
+                      <div className="space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-[#5B3DF5]">
+                          <Folder size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-black text-slate-855 dark:text-white uppercase">
+                            Existing Case Workspace
+                          </h3>
+                          <p className="text-[11px] text-indigo-505 font-bold uppercase mt-1">
+                            Use an existing AI case workspace
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-450 font-semibold leading-relaxed">
+                          Automatically import Parties, Timeline, Evidence, Documents, Witnesses,
+                          Laws, Court, and Addresses.
+                        </p>
 
-                      {uploadedFiles.length > 0 && (
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Selected Files ({uploadedFiles.length})</p>
-                          <div className="max-h-[80px] overflow-y-auto pr-1">
-                            {uploadedFiles.map(f => (
-                              <div key={f.name} className="text-[10px] font-semibold text-slate-605 dark:text-slate-355 truncate">
-                                📄 {f.name}
-                              </div>
+                        <div className="pt-2">
+                          <select
+                            value={selectedCaseForImport}
+                            onChange={e => {
+                              setSelectedCaseForImport(e.target.value);
+                              setCaseImportSummary(null);
+                            }}
+                            className="w-full bg-slate-50 dark:bg-black/20 border border-slate-250 dark:border-zinc-800 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 text-slate-800 dark:text-white"
+                          >
+                            <option value="">Select Case...</option>
+                            {allProjects.map(c => (
+                              <option key={c._id} value={c._id}>
+                                {c.name}
+                              </option>
                             ))}
-                          </div>
+                          </select>
                         </div>
-                      )}
 
-                      {isAnalyzingDocs && uploadedFiles.length > 0 && !docAnalysisSummary && (
-                        <div className="flex items-center gap-2 text-xs font-bold text-indigo-555 animate-pulse select-none">
-                          <RefreshCw className="animate-spin w-3 h-3" />
-                          <span>AI Performing OCR & Extracting...</span>
-                        </div>
-                      )}
-
-                      {docAnalysisSummary && (
-                        <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl space-y-3.5 animate-fadeIn text-left">
-                          <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-zinc-800">
-                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-450 uppercase tracking-wider flex items-center gap-1 select-none">
-                              <CheckCircle2 size={12} className="text-emerald-500" /> AI Document Extraction Complete
-                            </span>
-                            <span className="text-[9.5px] font-black bg-indigo-50 dark:bg-indigo-950/20 text-[#5B3DF5] px-2 py-0.5 rounded-lg uppercase">
-                              {docAnalysisSummary.detectedType || 'Document'}
-                            </span>
+                        {isAnalyzingDocs && selectedCaseForImport && !caseImportSummary && (
+                          <div className="flex items-center gap-2 text-xs font-bold text-indigo-500 animate-pulse select-none">
+                            <RefreshCw className="animate-spin w-3 h-3" />
+                            <span>AI Extracting details...</span>
                           </div>
+                        )}
 
-                          <div className="space-y-2">
-                            <p className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">✓ {docAnalysisSummary.importedCount} fields auto-filled</p>
-                            
-                            {/* Extracted Fields */}
-                            <div className="space-y-1">
-                              {docAnalysisSummary.extractedList.filter(e => !e.isMissing).map(e => (
-                                <div key={e.key} className="flex justify-between items-center p-2 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-xl">
-                                  <div className="min-w-0">
-                                    <span className="block text-[8.5px] font-black uppercase text-slate-400">{e.label}</span>
-                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{e.value}</span>
-                                  </div>
-                                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                                    e.confidence === 'High' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
-                                  }`}>
-                                    {e.confidence}
-                                  </span>
+                        {caseImportSummary && (
+                          <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/20 rounded-2xl space-y-1.5 animate-fadeIn">
+                            <p className="text-[9px] font-black text-emerald-700 dark:text-emerald-455 uppercase tracking-wider flex items-center gap-1 select-none">
+                              <CheckCircle2 size={11} /> AI Extraction Complete
+                            </p>
+                            <p className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">
+                              ✓ {caseImportSummary.importedCount} fields auto-filled
+                            </p>
+                            {caseImportSummary.missing.length > 0 ? (
+                              <div className="text-[9px] text-slate-400 font-semibold space-y-0.5">
+                                <span className="block uppercase tracking-wider text-[8px] font-black">
+                                  Missing:
+                                </span>
+                                <ul className="list-disc pl-3">
+                                  {caseImportSummary.missing.map(m => (
+                                    <li key={m}>{m}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : (
+                              <p className="text-[9px] text-emerald-605 font-bold">
+                                All required fields complete!
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {!caseImportSummary ? (
+                        <button
+                          type="button"
+                          disabled={!selectedCaseForImport || isAnalyzingDocs}
+                          onClick={async () => {
+                            setIsAnalyzingDocs(true);
+                            setTimeout(() => {
+                              const matchedCase = allProjects.find(
+                                p => p._id === selectedCaseForImport
+                              );
+                              const importedFields = {
+                                plaintiffName:
+                                  matchedCase?.name?.split(' vs ')[0] || 'Rajesh Sharma',
+                                defendantName: matchedCase?.name?.split(' vs ')[1] || 'Amit Verma',
+                                facts:
+                                  matchedCase?.summary ||
+                                  'The tenant has defaulted on rent payment for consecutive 3 months.',
+                                courtName: 'District Sessions Court',
+                                country: 'India',
+                                state: 'Delhi',
+                                district: 'South Delhi',
+                              };
+                              setFormData(prev => ({
+                                ...prev,
+                                ...importedFields,
+                              }));
+                              const missingKeys = template.fields
+                                .filter(f => f.required && !importedFields[f.key])
+                                .map(f => f.key);
+                              setMissingFieldsKeys(missingKeys);
+                              setCaseImportSummary({
+                                importedCount: Object.keys(importedFields).length,
+                                missing: template.fields
+                                  .filter(f => f.required && !importedFields[f.key])
+                                  .map(f => f.label),
+                              });
+                              setIsAnalyzingDocs(false);
+                            }, 1200);
+                          }}
+                          className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all select-none outline-none ${
+                            selectedCaseForImport && !isAnalyzingDocs
+                              ? 'bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5]'
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          }`}
+                        >
+                          Select Case
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputSource('CASE');
+                          }}
+                          className="w-full py-3 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
+                        >
+                          Continue
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Card 2: Upload Documents */}
+                    <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-6 transition-all hover:border-[#5B3DF5] relative">
+                      <div className="space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-[#5B3DF5]">
+                          <Plus size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-black text-slate-855 dark:text-white uppercase">
+                            Upload Documents
+                          </h3>
+                          <p className="text-[11px] text-indigo-550 font-bold uppercase mt-1">
+                            Multi-file OCR Enabled
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-450 font-semibold leading-relaxed">
+                          Upload Evidence Bundle, Affidavits, FIR, Charge Sheet. AI extracts
+                          Parties, Dates, Court, Acts, etc.
+                        </p>
+
+                        <div
+                          onClick={() => document.getElementById('wizard-doc-uploader')?.click()}
+                          className="border border-dashed border-slate-250 dark:border-zinc-800 hover:border-[#5B3DF5] dark:hover:border-indigo-400 rounded-2xl p-4 text-center cursor-pointer bg-slate-50/50 dark:bg-black/15 select-none"
+                        >
+                          <span className="text-[10px] font-black uppercase text-indigo-505">
+                            Click to Select Files
+                          </span>
+                          <input
+                            id="wizard-doc-uploader"
+                            type="file"
+                            multiple
+                            onChange={e => {
+                              if (e.target.files) {
+                                setUploadedFiles(Array.from(e.target.files));
+                                setDocAnalysisSummary(null);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                        </div>
+
+                        {uploadedFiles.length > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">
+                              Selected Files ({uploadedFiles.length})
+                            </p>
+                            <div className="max-h-[80px] overflow-y-auto pr-1">
+                              {uploadedFiles.map(f => (
+                                <div
+                                  key={f.name}
+                                  className="text-[10px] font-semibold text-slate-605 dark:text-slate-355 truncate"
+                                >
+                                  📄 {f.name}
                                 </div>
                               ))}
                             </div>
-
-                            {/* Missing Fields */}
-                            {docAnalysisSummary.missing.length > 0 && (
-                              <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-zinc-800">
-                                <span className="block uppercase tracking-wider text-[8px] font-black text-slate-400">Missing / Unresolved:</span>
-                                <div className="flex flex-wrap gap-1">
-                                  {docAnalysisSummary.missing.map(m => (
-                                    <span key={m} className="px-2 py-0.5 bg-slate-105 dark:bg-zinc-800 text-slate-500 rounded text-[8.5px] font-black uppercase">
-                                      {m}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
-                        </div>
+                        )}
+
+                        {isAnalyzingDocs && uploadedFiles.length > 0 && !docAnalysisSummary && (
+                          <div className="flex items-center gap-2 text-xs font-bold text-indigo-555 animate-pulse select-none">
+                            <RefreshCw className="animate-spin w-3 h-3" />
+                            <span>AI Performing OCR & Extracting...</span>
+                          </div>
+                        )}
+
+                        {docAnalysisSummary && (
+                          <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl space-y-3.5 animate-fadeIn text-left">
+                            <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-zinc-800">
+                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-450 uppercase tracking-wider flex items-center gap-1 select-none">
+                                <CheckCircle2 size={12} className="text-emerald-500" /> AI Document
+                                Extraction Complete
+                              </span>
+                              <span className="text-[9.5px] font-black bg-indigo-50 dark:bg-indigo-950/20 text-[#5B3DF5] px-2 py-0.5 rounded-lg uppercase">
+                                {docAnalysisSummary.detectedType || 'Document'}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2">
+                              <p className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">
+                                ✓ {docAnalysisSummary.importedCount} fields auto-filled
+                              </p>
+
+                              {/* Extracted Fields */}
+                              <div className="space-y-1">
+                                {docAnalysisSummary.extractedList
+                                  .filter(e => !e.isMissing)
+                                  .map(e => (
+                                    <div
+                                      key={e.key}
+                                      className="flex justify-between items-center p-2 bg-emerald-500/[0.02] border border-emerald-500/10 rounded-xl"
+                                    >
+                                      <div className="min-w-0">
+                                        <span className="block text-[8.5px] font-black uppercase text-slate-400">
+                                          {e.label}
+                                        </span>
+                                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                                          {e.value}
+                                        </span>
+                                      </div>
+                                      <span
+                                        className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                          e.confidence === 'High'
+                                            ? 'bg-green-50 text-green-600'
+                                            : 'bg-amber-50 text-amber-600'
+                                        }`}
+                                      >
+                                        {e.confidence}
+                                      </span>
+                                    </div>
+                                  ))}
+                              </div>
+
+                              {/* Missing Fields */}
+                              {docAnalysisSummary.missing.length > 0 && (
+                                <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                                  <span className="block uppercase tracking-wider text-[8px] font-black text-slate-400">
+                                    Missing / Unresolved:
+                                  </span>
+                                  <div className="flex flex-wrap gap-1">
+                                    {docAnalysisSummary.missing.map(m => (
+                                      <span
+                                        key={m}
+                                        className="px-2 py-0.5 bg-slate-105 dark:bg-zinc-800 text-slate-500 rounded text-[8.5px] font-black uppercase"
+                                      >
+                                        {m}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {!docAnalysisSummary ? (
+                        <button
+                          type="button"
+                          disabled={uploadedFiles.length === 0 || isAnalyzingDocs}
+                          onClick={performAIDocumentExtraction}
+                          className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all select-none outline-none ${
+                            uploadedFiles.length > 0 && !isAnalyzingDocs
+                              ? 'bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5]'
+                              : 'bg-slate-105 text-slate-400 cursor-not-allowed'
+                          }`}
+                        >
+                          Analyze Documents
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputSource('UPLOAD');
+                          }}
+                          className="w-full py-3 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
+                        >
+                          Continue
+                        </button>
                       )}
                     </div>
 
-                    {!docAnalysisSummary ? (
-                      <button
-                        type="button"
-                        disabled={uploadedFiles.length === 0 || isAnalyzingDocs}
-                        onClick={performAIDocumentExtraction}
-                        className={`w-full py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all select-none outline-none ${
-                          uploadedFiles.length > 0 && !isAnalyzingDocs
-                            ? 'bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5]'
-                            : 'bg-slate-105 text-slate-400 cursor-not-allowed'
-                        }`}
-                      >
-                        Analyze Documents
-                      </button>
-                    ) : (
+                    {/* Card 3: Manual Entry */}
+                    <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-250 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-6 transition-all hover:border-[#5B3DF5] relative">
+                      <div className="space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-[#5B3DF5]">
+                          <Edit3 size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-black text-slate-855 dark:text-white uppercase">
+                            Manual Entry
+                          </h3>
+                          <p className="text-[11px] text-indigo-505 font-bold uppercase mt-1">
+                            Fill details manually
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-450 font-semibold leading-relaxed">
+                          Redirection to the step-by-step guided manual drafting wizard.
+                        </p>
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => {
-                          setInputSource('UPLOAD');
+                          setInputSource('MANUAL');
                         }}
-                        className="w-full py-3 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
+                        className="w-full py-3 bg-[#5B3DF5] hover:bg-[#4E34D9] text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
                       >
-                        Continue
+                        Start Drafting
                       </button>
-                    )}
-                  </div>
-
-                  {/* Card 3: Manual Entry */}
-                  <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-250 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-6 transition-all hover:border-[#5B3DF5] relative">
-                    <div className="space-y-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-[#5B3DF5]">
-                        <Edit3 size={24} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-855 dark:text-white uppercase">Manual Entry</h3>
-                        <p className="text-[11px] text-indigo-505 font-bold uppercase mt-1">Fill details manually</p>
-                      </div>
-                      <p className="text-xs text-slate-450 font-semibold leading-relaxed">
-                        Redirection to the step-by-step guided manual drafting wizard.
-                      </p>
                     </div>
+                  </div>
+                </div>
+              );
+            }
 
+            if (inputSource === 'CASE' || inputSource === 'UPLOAD') {
+              const totalMissingCount = missingFieldsKeys.length;
+              const completedMissingCount = missingFieldsKeys.filter(k =>
+                formData[k]?.toString().trim()
+              ).length;
+              const remainingMissingCount = totalMissingCount - completedMissingCount;
+              const allFieldsCompleted = remainingMissingCount === 0;
+              const progressPercent =
+                totalMissingCount > 0
+                  ? Math.round((completedMissingCount / totalMissingCount) * 100)
+                  : 100;
+
+              const importedFields = template.fields.filter(
+                f => !missingFieldsKeys.includes(f.key)
+              );
+
+              return (
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6 text-left animate-fadeIn">
+                  {/* Header Back & Change Source Navigation */}
+                  <div className="flex justify-between items-center select-none">
                     <button
                       type="button"
                       onClick={() => {
-                        setInputSource('MANUAL');
+                        setInputSource(null);
+                        setCaseImportSummary(null);
+                        setDocAnalysisSummary(null);
+                        setMissingFieldsKeys([]);
                       }}
-                      className="w-full py-3 bg-[#5B3DF5] hover:bg-[#4E34D9] text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
+                      className="flex items-center gap-1.5 text-xs font-black uppercase text-[#5B3DF5] hover:opacity-80 border-0 bg-transparent outline-none cursor-pointer"
                     >
-                      Start Drafting
+                      ← Change Input Source
                     </button>
-                  </div>
-
-                </div>
-              </div>
-            );
-          }
-
-          if (inputSource === 'CASE' || inputSource === 'UPLOAD') {
-            const totalMissingCount = missingFieldsKeys.length;
-            const completedMissingCount = missingFieldsKeys.filter(k => formData[k]?.toString().trim()).length;
-            const remainingMissingCount = totalMissingCount - completedMissingCount;
-            const allFieldsCompleted = remainingMissingCount === 0;
-            const progressPercent = totalMissingCount > 0 ? Math.round((completedMissingCount / totalMissingCount) * 100) : 100;
-
-            const importedFields = template.fields.filter(f => !missingFieldsKeys.includes(f.key));
-
-            return (
-              <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6 text-left animate-fadeIn">
-                
-                {/* Header Back & Change Source Navigation */}
-                <div className="flex justify-between items-center select-none">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInputSource(null);
-                      setCaseImportSummary(null);
-                      setDocAnalysisSummary(null);
-                      setMissingFieldsKeys([]);
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-black uppercase text-[#5B3DF5] hover:opacity-80 border-0 bg-transparent outline-none cursor-pointer"
-                  >
-                    ← Change Input Source
-                  </button>
-                  <span className="text-[10px] font-black uppercase text-indigo-505 tracking-widest">
-                    AI Pleading Filler
-                  </span>
-                </div>
-
-                {/* Summary Card */}
-                <div className="p-6 border rounded-3xl bg-[#5B3DF5]/[0.02] border-indigo-500/20 dark:border-indigo-900/40 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm relative overflow-hidden">
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-full text-[8px] font-black uppercase tracking-wider select-none mb-1">
-                      <CheckCircle2 size={10} /> AI Extraction Complete
+                    <span className="text-[10px] font-black uppercase text-indigo-505 tracking-widest">
+                      AI Pleading Filler
                     </span>
-                    <h3 className="text-sm font-black text-slate-855 dark:text-white uppercase">Workspace Merged</h3>
-                    <p className="text-[11px] text-slate-450 font-bold uppercase mt-1">✓ {importedFields.length} Fields Imported Successfully</p>
                   </div>
-                  <div className="sm:text-right flex flex-col justify-end space-y-1">
-                    <p className="text-xs text-amber-600 dark:text-amber-400 font-bold uppercase">
-                      ⚠ {remainingMissingCount} Fields Require Your Input
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase">
-                      Estimated Completion Time: {remainingMissingCount * 10} seconds
-                    </p>
-                  </div>
-                </div>
 
-                {/* Auto Filled Fields Accordion */}
-                {importedFields.length > 0 && (
-                  <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-[#131c31]/10">
+                  {/* Summary Card */}
+                  <div className="p-6 border rounded-3xl bg-[#5B3DF5]/[0.02] border-indigo-500/20 dark:border-indigo-900/40 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm relative overflow-hidden">
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-full text-[8px] font-black uppercase tracking-wider select-none mb-1">
+                        <CheckCircle2 size={10} /> AI Extraction Complete
+                      </span>
+                      <h3 className="text-sm font-black text-slate-855 dark:text-white uppercase">
+                        Workspace Merged
+                      </h3>
+                      <p className="text-[11px] text-slate-450 font-bold uppercase mt-1">
+                        ✓ {importedFields.length} Fields Imported Successfully
+                      </p>
+                    </div>
+                    <div className="sm:text-right flex flex-col justify-end space-y-1">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-bold uppercase">
+                        ⚠ {remainingMissingCount} Fields Require Your Input
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase">
+                        Estimated Completion Time: {remainingMissingCount * 10} seconds
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Auto Filled Fields Accordion */}
+                  {importedFields.length > 0 && (
+                    <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-[#131c31]/10">
+                      <button
+                        type="button"
+                        onClick={() => setShowImportedData(!showImportedData)}
+                        className="w-full flex items-center justify-between p-3.5 bg-slate-50/50 dark:bg-black/10 text-xs font-black uppercase text-slate-700 dark:text-slate-300 select-none border-b dark:border-zinc-800"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 size={13} className="text-emerald-500" />
+                          {importedFields.length} Fields Auto Filled Successfully
+                        </span>
+                        <span className="text-[10px] font-black text-[#5B3DF5] uppercase">
+                          {showImportedData ? 'Hide Details' : 'View Imported Data'}
+                        </span>
+                      </button>
+                      {showImportedData && (
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left border-t dark:border-zinc-800 bg-white dark:bg-[#0B1020]/30 max-h-[250px] overflow-y-auto pr-1">
+                          {importedFields.map(field => (
+                            <div key={field.key} className="space-y-0.5">
+                              <span className="text-[8px] font-black uppercase text-slate-400">
+                                {field.label}
+                              </span>
+                              <p className="text-xs text-slate-700 dark:text-slate-200 font-bold truncate">
+                                {formData[field.key] ? formData[field.key].toString() : '—'}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Progress bar card */}
+                  <div className="p-4 border rounded-2xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 space-y-2 select-none">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-slate-500 uppercase tracking-wider">
+                        Information Completion
+                      </span>
+                      <span className="text-[#5B3DF5]">
+                        {progressPercent}% ({completedMissingCount} / {totalMissingCount} Filled)
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-[#5B3DF5] h-full rounded-full transition-all duration-300"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <UniversalMultimodalInput
+                      caseId={linkedCaseId || 'global'}
+                      workspaceName="DraftMaker"
+                      onContextChange={ctx => setMultimodalContext(ctx)}
+                      theme={isDark ? 'dark' : 'light'}
+                      layout="case"
+                    />
+                  </div>
+
+                  {/* Editable Missing Fields Viewport */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-550 select-none">
+                      Required Missing Fields
+                    </h3>
+                    <div className="space-y-4">
+                      {missingFieldsKeys.map(key => {
+                        const field = template.fields.find(f => f.key === key);
+                        if (!field) return null;
+                        const hasValue = formData[key]?.toString().trim();
+                        return (
+                          <div
+                            key={key}
+                            className={`p-4 border rounded-2xl transition-all ${
+                              hasValue
+                                ? 'border-emerald-500/30 bg-emerald-50/[0.01] dark:bg-emerald-950/[0.01]'
+                                : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0B1020]/20'
+                            }`}
+                          >
+                            {renderWizardField(field)}
+                            <div className="flex justify-between items-center select-none pt-2 border-t border-slate-100/60 dark:border-zinc-800/60 mt-2">
+                              {hasValue ? (
+                                <span className="text-[9px] text-emerald-600 font-bold uppercase flex items-center gap-1">
+                                  ✓ Completed & Saved
+                                </span>
+                              ) : (
+                                <span className="text-[9px] text-amber-600 font-bold uppercase flex items-center gap-1">
+                                  ⚠ Input Required
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="pt-6 border-t dark:border-white/5 flex flex-col items-center gap-3 select-none">
                     <button
                       type="button"
-                      onClick={() => setShowImportedData(!showImportedData)}
-                      className="w-full flex items-center justify-between p-3.5 bg-slate-50/50 dark:bg-black/10 text-xs font-black uppercase text-slate-700 dark:text-slate-300 select-none border-b dark:border-zinc-800"
+                      disabled={!allFieldsCompleted}
+                      onClick={() => handleGenerate(generationMode)}
+                      className={`px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md outline-none ${
+                        !allFieldsCompleted
+                          ? 'bg-slate-200 dark:bg-zinc-800 text-slate-450 cursor-not-allowed'
+                          : 'bg-[#5B3DF5] hover:bg-indigo-700 text-white hover:scale-[1.01]'
+                      }`}
                     >
-                      <span className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500" />
-                        {importedFields.length} Fields Auto Filled Successfully
-                      </span>
-                      <span className="text-[10px] font-black text-[#5B3DF5] uppercase">
-                        {showImportedData ? 'Hide Details' : 'View Imported Data'}
-                      </span>
+                      Generate Legal Pleading
                     </button>
-                    {showImportedData && (
-                      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left border-t dark:border-zinc-800 bg-white dark:bg-[#0B1020]/30 max-h-[250px] overflow-y-auto pr-1">
-                        {importedFields.map(field => (
-                          <div key={field.key} className="space-y-0.5">
-                            <span className="text-[8px] font-black uppercase text-slate-400">{field.label}</span>
-                            <p className="text-xs text-slate-700 dark:text-slate-200 font-bold truncate">
-                              {formData[field.key] ? formData[field.key].toString() : '—'}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                    {!allFieldsCompleted && (
+                      <span className="text-[10px] font-bold text-slate-400">
+                        Please fill all remaining required fields to enable draft generation.
+                      </span>
                     )}
                   </div>
-                )}
-
-                {/* Progress bar card */}
-                <div className="p-4 border rounded-2xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 space-y-2 select-none">
-                  <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-slate-500 uppercase tracking-wider">Information Completion</span>
-                    <span className="text-[#5B3DF5]">{progressPercent}% ({completedMissingCount} / {totalMissingCount} Filled)</span>
-                  </div>
-                  <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#5B3DF5] h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
-                  </div>
                 </div>
+              );
+            }
 
-                <div className="mt-4">
-                  <UniversalMultimodalInput
-                    caseId={linkedCaseId || 'global'}
-                    workspaceName="DraftMaker"
-                    onContextChange={(ctx) => setMultimodalContext(ctx)}
-                    theme={isDark ? 'dark' : 'light'}
-                    layout="case"
-                  />
-                </div>
-
-
-                {/* Editable Missing Fields Viewport */}
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-550 select-none">Required Missing Fields</h3>
-                  <div className="space-y-4">
-                    {missingFieldsKeys.map(key => {
-                      const field = template.fields.find(f => f.key === key);
-                      if (!field) return null;
-                      const hasValue = formData[key]?.toString().trim();
-                      return (
-                        <div 
-                          key={key} 
-                          className={`p-4 border rounded-2xl transition-all ${
-                            hasValue 
-                              ? 'border-emerald-500/30 bg-emerald-50/[0.01] dark:bg-emerald-950/[0.01]' 
-                              : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0B1020]/20'
-                          }`}
-                        >
-                          {renderWizardField(field)}
-                          <div className="flex justify-between items-center select-none pt-2 border-t border-slate-100/60 dark:border-zinc-800/60 mt-2">
-                            {hasValue ? (
-                              <span className="text-[9px] text-emerald-600 font-bold uppercase flex items-center gap-1">
-                                ✓ Completed & Saved
-                              </span>
-                            ) : (
-                              <span className="text-[9px] text-amber-600 font-bold uppercase flex items-center gap-1">
-                                ⚠ Input Required
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="pt-6 border-t dark:border-white/5 flex flex-col items-center gap-3 select-none">
-                  <button
-                    type="button"
-                    disabled={!allFieldsCompleted}
-                    onClick={() => handleGenerate(generationMode)}
-                    className={`px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md outline-none ${
-                      !allFieldsCompleted
-                        ? 'bg-slate-200 dark:bg-zinc-800 text-slate-450 cursor-not-allowed'
-                        : 'bg-[#5B3DF5] hover:bg-indigo-700 text-white hover:scale-[1.01]'
-                    }`}
-                  >
-                    Generate Legal Pleading
-                  </button>
-                  {!allFieldsCompleted && (
-                    <span className="text-[10px] font-bold text-slate-400">
-                      Please fill all remaining required fields to enable draft generation.
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 animate-fadeIn">
-              
-              {/* Responsive Progress Stepper (Desktop Sidebar vs Mobile Header Stepper) */}
-              {isMobile ? (
-                <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#131c31]/20 p-4 border border-slate-200 dark:border-zinc-800 rounded-3xl space-y-3 mb-4 select-none text-left">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-[8px] font-black uppercase text-[#5B3DF5] tracking-widest block">Step {wizardStep} of 6</span>
-                      <h4 className="text-xs font-black text-slate-808 dark:text-white uppercase mt-0.5">{stepsList[wizardStep - 1]?.label}</h4>
-                    </div>
-                    <span className="text-xs font-black text-[#5B3DF5]">{completionPercentage}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 dark:bg-zinc-850 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-[#5B3DF5] h-full rounded-full transition-all duration-300" style={{ width: `${completionPercentage}%` }} />
-                  </div>
-                  {/* Horizontal quick stepper */}
-                  <div className="flex justify-between items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
-                    {stepsList.map(s => {
-                      const isPast = s.id < wizardStep;
-                      const isCurrent = s.id === wizardStep;
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            if (s.id <= wizardMaxReached) setWizardStep(s.id);
-                          }}
-                          disabled={s.id > wizardMaxReached}
-                          className={`h-7 px-3 border rounded-xl text-[9px] font-black uppercase transition-all shrink-0 flex items-center justify-center gap-1 ${
-                            isCurrent
-                              ? 'border-[#5B3DF5] bg-indigo-50 text-[#5B3DF5] dark:bg-indigo-950/40'
-                              : isPast
-                              ? 'border-slate-200 dark:border-zinc-800 text-slate-500 bg-white dark:bg-transparent'
-                              : 'border-slate-100 dark:border-zinc-900 text-slate-350 opacity-40 cursor-not-allowed'
-                          }`}
-                        >
-                          <span>{s.id}</span>
-                          <span className="hidden sm:inline">{s.label.split(' ')[0]}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                
-                {/* Sticky Progress Indicator Sidebar (3 cols) */}
-                {!isMobile ? (
-                  <div className="md:col-span-3 space-y-4 sticky top-6">
-                    <div className="p-4 border rounded-3xl bg-white dark:bg-[#131c31]/20 border-slate-200 dark:border-slate-805 text-left select-none">
-                      <span className="text-[9px] font-black uppercase text-[#5B3DF5] tracking-widest block mb-1">Wizard Progress</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-black text-slate-808 dark:text-white">{completionPercentage}%</span>
-                        <div className="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                          <div className="bg-[#5B3DF5] h-full rounded-full transition-all duration-300" style={{ width: `${completionPercentage}%` }} />
-                        </div>
+            return (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full pb-24 animate-fadeIn">
+                {/* Responsive Progress Stepper (Desktop Sidebar vs Mobile Header Stepper) */}
+                {isMobile ? (
+                  <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#131c31]/20 p-4 border border-slate-200 dark:border-zinc-800 rounded-3xl space-y-3 mb-4 select-none text-left">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-[8px] font-black uppercase text-[#5B3DF5] tracking-widest block">
+                          Step {wizardStep} of 6
+                        </span>
+                        <h4 className="text-xs font-black text-slate-808 dark:text-white uppercase mt-0.5">
+                          {stepsList[wizardStep - 1]?.label}
+                        </h4>
                       </div>
+                      <span className="text-xs font-black text-[#5B3DF5]">
+                        {completionPercentage}%
+                      </span>
                     </div>
-
-                    <div className="flex flex-col gap-2 text-left select-none">
+                    <div className="w-full bg-slate-100 dark:bg-zinc-850 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-[#5B3DF5] h-full rounded-full transition-all duration-300"
+                        style={{ width: `${completionPercentage}%` }}
+                      />
+                    </div>
+                    {/* Horizontal quick stepper */}
+                    <div className="flex justify-between items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
                       {stepsList.map(s => {
                         const isPast = s.id < wizardStep;
                         const isCurrent = s.id === wizardStep;
@@ -4408,20 +5002,16 @@ CRITICAL PROMPT DIRECTIVE:
                               if (s.id <= wizardMaxReached) setWizardStep(s.id);
                             }}
                             disabled={s.id > wizardMaxReached}
-                            className={`p-3 border rounded-2xl text-left transition-all ${
+                            className={`h-7 px-3 border rounded-xl text-[9px] font-black uppercase transition-all shrink-0 flex items-center justify-center gap-1 ${
                               isCurrent
-                                ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20'
+                                ? 'border-[#5B3DF5] bg-indigo-50 text-[#5B3DF5] dark:bg-indigo-950/40'
                                 : isPast
-                                ? 'border-slate-200 dark:border-zinc-800 hover:bg-slate-100/50 text-slate-650'
-                                : 'border-slate-100 dark:border-zinc-900 opacity-40 cursor-not-allowed'
+                                  ? 'border-slate-200 dark:border-zinc-800 text-slate-500 bg-white dark:bg-transparent'
+                                  : 'border-slate-100 dark:border-zinc-900 text-slate-350 opacity-40 cursor-not-allowed'
                             }`}
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center">
-                                {s.id}
-                              </span>
-                              <span className="text-[11px] font-black uppercase tracking-wider">{s.label}</span>
-                            </div>
+                            <span>{s.id}</span>
+                            <span className="hidden sm:inline">{s.label.split(' ')[0]}</span>
                           </button>
                         );
                       })}
@@ -4429,178 +5019,303 @@ CRITICAL PROMPT DIRECTIVE:
                   </div>
                 ) : null}
 
-                {/* Form fields content viewport (9 cols) */}
-                <div className="md:col-span-9 space-y-6">
-                  <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-                    {wizardStep === 1 && (
-                      <div className="space-y-4">
-                        <div className="border-b pb-3 text-left">
-                          <h3 className="text-sm font-black uppercase text-slate-850 dark:text-white">Basic Information</h3>
-                          <p className="text-[10px] text-slate-400 font-medium">Verify primary identity components, parties, and court venues.</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {basicFields.map(field => renderWizardField(field))}
-                        </div>
-                      </div>
-                    )}
-
-                    {wizardStep === 2 && (
-                      <div className="space-y-4">
-                        <div className="border-b pb-3 text-left">
-                          <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">Facts of Case</h3>
-                          <p className="text-[10px] text-slate-400 font-medium">Capture chronologies, incident location coordinates, and cause details.</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4">
-                          {factFields.map(field => renderWizardField(field))}
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-805/80">
-                          <UniversalMultimodalInput
-                            caseId={linkedCaseId || 'global'}
-                            workspaceName="DraftMaker"
-                            onContextChange={(ctx) => setMultimodalContext(ctx)}
-                            theme={isDark ? 'dark' : 'light'}
-                            layout="manual"
-                          />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                  {/* Sticky Progress Indicator Sidebar (3 cols) */}
+                  {!isMobile ? (
+                    <div className="md:col-span-3 space-y-4 sticky top-6">
+                      <div className="p-4 border rounded-3xl bg-white dark:bg-[#131c31]/20 border-slate-200 dark:border-slate-805 text-left select-none">
+                        <span className="text-[9px] font-black uppercase text-[#5B3DF5] tracking-widest block mb-1">
+                          Wizard Progress
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-black text-slate-808 dark:text-white">
+                            {completionPercentage}%
+                          </span>
+                          <div className="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="bg-[#5B3DF5] h-full rounded-full transition-all duration-300"
+                              style={{ width: `${completionPercentage}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    )}
 
-                    {wizardStep === 3 && (
-                      <div className="space-y-4">
-                        <div className="border-b pb-3 text-left">
-                          <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">Applicable Laws</h3>
-                          <p className="text-[10px] text-slate-400 font-medium">Identify relevant sections, codes, and statutes governing this draft.</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4">
-                          {template.fields.filter(f => !basicFields.some(b => b.key === f.key) && !factFields.some(fa => fa.key === f.key) && f.key !== 'prayer' && f.key !== 'relief').map(field => renderWizardField(field))}
-                        </div>
-                      </div>
-                    )}
-
-                    {wizardStep === 4 && (
-                      <div className="space-y-4">
-                        <div className="border-b pb-3 text-left">
-                          <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">Relief & Prayer</h3>
-                          <p className="text-[10px] text-slate-400 font-medium">Detail exact demands, monetary compensation claims, or injunction reliefs.</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4">
-                          {template.fields.filter(f => f.key === 'prayer' || f.key === 'relief').map(field => renderWizardField(field))}
-                        </div>
-                      </div>
-                    )}
-
-                    {wizardStep === 5 && (
-                      <div className="space-y-4 text-left">
-                        <div className="border-b pb-3">
-                          <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">AI Compliance Audit</h3>
-                          <p className="text-[10px] text-slate-400 font-medium">AISA™ automated checks verifying compliance, structural parameters, and required variables.</p>
-                        </div>
-
-                        <div className="space-y-3">
-                          {[
-                            { name: 'parties', label: 'Parties Identification Mapping', desc: 'Checks that both petitioner and respondent titles match the heading formatting rules.' },
-                            { name: 'court', label: 'Jurisdiction & Court Venue Verification', desc: 'Validates that the selected state and district coordinate with the designated sessions court.' },
-                            { name: 'timeline', label: 'Incident Timeline & Chronology Continuity', desc: 'Verifies chronological facts do not contain timestamp discrepancies.' },
-                            { name: 'laws', label: 'Statutory Sections & Statutes Mapping', desc: 'Ensures criminal sections or civil grounds cited correspond to valid penal codes.' }
-                          ].map(check => {
-                            const approved = validationApproved[check.name];
-                            return (
-                              <div key={check.name} className={`p-4 border rounded-2xl flex justify-between items-start gap-4 transition-colors ${approved ? 'border-emerald-500/20 bg-emerald-500/[0.02]' : 'border-amber-500/20 bg-amber-500/[0.02]'}`}>
-                                <div className="space-y-1">
-                                  <p className="text-[11px] font-black uppercase text-slate-855 dark:text-white">{check.label}</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">{check.desc}</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setValidationApproved(prev => ({ ...prev, [check.name]: !prev[check.name] }))}
-                                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider border select-none transition-all ${
-                                    approved
-                                      ? 'bg-emerald-50 border-emerald-250 text-emerald-700'
-                                      : 'bg-amber-50 border-amber-250 text-amber-700'
-                                  }`}
-                                >
-                                  {approved ? '✔ Approved' : '⚠ Warning'}
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {wizardStep === 6 && (
-                      <div className="space-y-6 text-left">
-                        <div className="border-b pb-3">
-                          <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">Select Document Rendition</h3>
-                          <p className="text-[10px] text-slate-400 font-medium">Select output style and generate document assets.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {GENERATION_MODES.map(mode => (
+                      <div className="flex flex-col gap-2 text-left select-none">
+                        {stepsList.map(s => {
+                          const isPast = s.id < wizardStep;
+                          const isCurrent = s.id === wizardStep;
+                          return (
                             <button
-                              key={mode.id}
+                              key={s.id}
                               type="button"
-                              onClick={() => setGenerationMode(mode.id)}
-                              className={`flex flex-col items-start gap-1 p-3.5 border rounded-2xl text-left transition-all ${
-                                generationMode === mode.id
-                                  ? 'border-[#5B3DF5] bg-indigo-50/50 dark:bg-indigo-950/20'
-                                  : 'border-slate-200 dark:border-zinc-800 hover:border-indigo-300'
+                              onClick={() => {
+                                if (s.id <= wizardMaxReached) setWizardStep(s.id);
+                              }}
+                              disabled={s.id > wizardMaxReached}
+                              className={`p-3 border rounded-2xl text-left transition-all ${
+                                isCurrent
+                                  ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20'
+                                  : isPast
+                                    ? 'border-slate-200 dark:border-zinc-800 hover:bg-slate-100/50 text-slate-650'
+                                    : 'border-slate-100 dark:border-zinc-900 opacity-40 cursor-not-allowed'
                               }`}
                             >
-                              <span className="text-lg">{mode.icon}</span>
-                              <span className="text-[10.5px] font-black text-slate-855 dark:text-white leading-tight mt-1">{mode.label}</span>
-                              <span className="text-[9px] text-slate-450 font-semibold leading-snug">{mode.description}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center">
+                                  {s.id}
+                                </span>
+                                <span className="text-[11px] font-black uppercase tracking-wider">
+                                  {s.label}
+                                </span>
+                              </div>
                             </button>
-                          ))}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleGenerate(generationMode)}
-                          className="w-full py-4 bg-gradient-to-r from-indigo-600 via-violet-605 to-[#5B3DF5] hover:opacity-95 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
-                        >
-                          <Sparkles size={16} />
-                          <span>Generate Pleading</span>
-                        </button>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : null}
 
-                  {/* Wizard control buttons footer */}
-                  <div className="flex justify-between items-center select-none p-4 pb-safe md:p-0 bg-white dark:bg-[#111726] md:bg-transparent border-t md:border-none border-slate-200 dark:border-zinc-800 sticky md:relative bottom-0 z-[100] w-full mt-4">
-                    <button
-                      type="button"
-                      disabled={wizardStep === 1}
-                      onClick={() => setWizardStep(prev => prev - 1)}
-                      className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${
-                        wizardStep === 1
-                          ? 'border-slate-100 text-slate-300 dark:border-zinc-900 cursor-not-allowed'
-                          : 'border-slate-200 hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      Back
-                    </button>
-                    {wizardStep < 6 ? (
+                  {/* Form fields content viewport (9 cols) */}
+                  <div className="md:col-span-9 space-y-6">
+                    <div className="p-6 border rounded-3xl bg-white dark:bg-[#131c31]/30 border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                      {wizardStep === 1 && (
+                        <div className="space-y-4">
+                          <div className="border-b pb-3 text-left">
+                            <h3 className="text-sm font-black uppercase text-slate-850 dark:text-white">
+                              Basic Information
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              Verify primary identity components, parties, and court venues.
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {basicFields.map(field => renderWizardField(field))}
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 2 && (
+                        <div className="space-y-4">
+                          <div className="border-b pb-3 text-left">
+                            <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">
+                              Facts of Case
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              Capture chronologies, incident location coordinates, and cause
+                              details.
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 gap-4">
+                            {factFields.map(field => renderWizardField(field))}
+                          </div>
+                          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-805/80">
+                            <UniversalMultimodalInput
+                              caseId={linkedCaseId || 'global'}
+                              workspaceName="DraftMaker"
+                              onContextChange={ctx => setMultimodalContext(ctx)}
+                              theme={isDark ? 'dark' : 'light'}
+                              layout="manual"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 3 && (
+                        <div className="space-y-4">
+                          <div className="border-b pb-3 text-left">
+                            <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">
+                              Applicable Laws
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              Identify relevant sections, codes, and statutes governing this draft.
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 gap-4">
+                            {template.fields
+                              .filter(
+                                f =>
+                                  !basicFields.some(b => b.key === f.key) &&
+                                  !factFields.some(fa => fa.key === f.key) &&
+                                  f.key !== 'prayer' &&
+                                  f.key !== 'relief'
+                              )
+                              .map(field => renderWizardField(field))}
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 4 && (
+                        <div className="space-y-4">
+                          <div className="border-b pb-3 text-left">
+                            <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">
+                              Relief & Prayer
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              Detail exact demands, monetary compensation claims, or injunction
+                              reliefs.
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 gap-4">
+                            {template.fields
+                              .filter(f => f.key === 'prayer' || f.key === 'relief')
+                              .map(field => renderWizardField(field))}
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 5 && (
+                        <div className="space-y-4 text-left">
+                          <div className="border-b pb-3">
+                            <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">
+                              AI Compliance Audit
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              AISA™ automated checks verifying compliance, structural parameters,
+                              and required variables.
+                            </p>
+                          </div>
+
+                          <div className="space-y-3">
+                            {[
+                              {
+                                name: 'parties',
+                                label: 'Parties Identification Mapping',
+                                desc: 'Checks that both petitioner and respondent titles match the heading formatting rules.',
+                              },
+                              {
+                                name: 'court',
+                                label: 'Jurisdiction & Court Venue Verification',
+                                desc: 'Validates that the selected state and district coordinate with the designated sessions court.',
+                              },
+                              {
+                                name: 'timeline',
+                                label: 'Incident Timeline & Chronology Continuity',
+                                desc: 'Verifies chronological facts do not contain timestamp discrepancies.',
+                              },
+                              {
+                                name: 'laws',
+                                label: 'Statutory Sections & Statutes Mapping',
+                                desc: 'Ensures criminal sections or civil grounds cited correspond to valid penal codes.',
+                              },
+                            ].map(check => {
+                              const approved = validationApproved[check.name];
+                              return (
+                                <div
+                                  key={check.name}
+                                  className={`p-4 border rounded-2xl flex justify-between items-start gap-4 transition-colors ${approved ? 'border-emerald-500/20 bg-emerald-500/[0.02]' : 'border-amber-500/20 bg-amber-500/[0.02]'}`}
+                                >
+                                  <div className="space-y-1">
+                                    <p className="text-[11px] font-black uppercase text-slate-855 dark:text-white">
+                                      {check.label}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                      {check.desc}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setValidationApproved(prev => ({
+                                        ...prev,
+                                        [check.name]: !prev[check.name],
+                                      }))
+                                    }
+                                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider border select-none transition-all ${
+                                      approved
+                                        ? 'bg-emerald-50 border-emerald-250 text-emerald-700'
+                                        : 'bg-amber-50 border-amber-250 text-amber-700'
+                                    }`}
+                                  >
+                                    {approved ? '✔ Approved' : '⚠ Warning'}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 6 && (
+                        <div className="space-y-6 text-left">
+                          <div className="border-b pb-3">
+                            <h3 className="text-sm font-black uppercase text-slate-855 dark:text-white">
+                              Select Document Rendition
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                              Select output style and generate document assets.
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {GENERATION_MODES.map(mode => (
+                              <button
+                                key={mode.id}
+                                type="button"
+                                onClick={() => setGenerationMode(mode.id)}
+                                className={`flex flex-col items-start gap-1 p-3.5 border rounded-2xl text-left transition-all ${
+                                  generationMode === mode.id
+                                    ? 'border-[#5B3DF5] bg-indigo-50/50 dark:bg-indigo-950/20'
+                                    : 'border-slate-200 dark:border-zinc-800 hover:border-indigo-300'
+                                }`}
+                              >
+                                <span className="text-lg">{mode.icon}</span>
+                                <span className="text-[10.5px] font-black text-slate-855 dark:text-white leading-tight mt-1">
+                                  {mode.label}
+                                </span>
+                                <span className="text-[9px] text-slate-450 font-semibold leading-snug">
+                                  {mode.description}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleGenerate(generationMode)}
+                            className="w-full py-4 bg-gradient-to-r from-indigo-600 via-violet-605 to-[#5B3DF5] hover:opacity-95 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+                          >
+                            <Sparkles size={16} />
+                            <span>Generate Pleading</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Wizard control buttons footer */}
+                    <div className="flex justify-between items-center select-none p-4 pb-safe md:p-0 bg-white dark:bg-[#111726] md:bg-transparent border-t md:border-none border-slate-200 dark:border-zinc-800 sticky md:relative bottom-0 z-[100] w-full mt-4">
                       <button
                         type="button"
-                        onClick={() => {
-                          setWizardStep(prev => {
-                            const next = prev + 1;
-                            setWizardMaxReached(curr => Math.max(curr, next));
-                            return next;
-                          });
-                        }}
-                        className="px-5 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider"
+                        disabled={wizardStep === 1}
+                        onClick={() => setWizardStep(prev => prev - 1)}
+                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${
+                          wizardStep === 1
+                            ? 'border-slate-100 text-slate-300 dark:border-zinc-900 cursor-not-allowed'
+                            : 'border-slate-200 hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-800'
+                        }`}
                       >
-                        Next Step
+                        Back
                       </button>
-                    ) : null}
+                      {wizardStep < 6 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setWizardStep(prev => {
+                              const next = prev + 1;
+                              setWizardMaxReached(curr => Math.max(curr, next));
+                              return next;
+                            });
+                          }}
+                          className="px-5 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider"
+                        >
+                          Next Step
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
         {/* ══════════════ STEP: GENERATING ══════════════ */}
         {step === 'GENERATING' && (
           <div className="flex flex-col items-center justify-center h-full py-32 gap-6 max-w-md mx-auto text-center px-6">
@@ -4612,11 +5327,19 @@ CRITICAL PROMPT DIRECTIVE:
               </div>
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white">{generationStatus}</h3>
-              <p className="text-xs text-slate-400 font-medium">Generating court-ready {selectedType}</p>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                {generationStatus}
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Generating court-ready {selectedType}
+              </p>
               <div className="flex justify-center gap-1 mt-3">
-                {[0,1,2].map(i => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                {[0, 1, 2].map(i => (
+                  <div
+                    key={i}
+                    className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce"
+                    style={{ animationDelay: `${i * 0.15}s` }}
+                  />
                 ))}
               </div>
             </div>
@@ -4624,1063 +5347,1421 @@ CRITICAL PROMPT DIRECTIVE:
         )}
 
         {/* ══════════════ STEP: PREVIEW ══════════════ */}
-        {step === 'PREVIEW' && (() => {
-          // Merge fields and format missing placeholders
-          // Use translated text if available (Hindi), otherwise use finalDraft
-          let mergedText = draftDisplayText || finalDraft || '';
-          template?.fields?.forEach(f => {
-            const val = formData[f.key] || '';
-            if (val.toString().trim()) {
-              mergedText = mergedText.replace(new RegExp(`\\{\\{\\s*${f.key}\\s*\\}\\}`, 'gi'), val.toString().trim());
-            }
-          });
-
-          mergedText = mergedText.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
-            const f = template?.fields?.find(field => field.key === key);
-            return `[${f ? f.label : key} Required]`;
-          });
-
-          // Dynamic A4 Pagination Helper
-          const paginateText = (text) => {
-            if (!text) return [''];
-            
-            // Clean markdown syntax from raw string
-            const cleanText = text
-              .replace(/\*\*/g, '')
-              .replace(/###/g, '')
-              .replace(/##/g, '')
-              .replace(/#/g, '')
-              .replace(/\[Complainant's\s*[^\]]*\]/gi, '')
-              .replace(/\[Accused's\s*[^\]]*\]/gi, '')
-              .replace(/\[[^\]]*Required\]/gi, '')
-              .replace(/\[[^\]]*Placeholder\]/gi, '')
-              .replace(/gamhappur/gi, '');
-
-            const lines = cleanText.split('\n');
-            const pages = [];
-            let currentPageLines = [];
-            let lineCount = 0;
-            
-            lines.forEach(line => {
-              const approxLines = Math.max(1, Math.ceil(line.length / 85));
-              if (lineCount + approxLines > 38) {
-                pages.push(currentPageLines.join('\n'));
-                currentPageLines = [line];
-                lineCount = approxLines;
-              } else {
-                currentPageLines.push(line);
-                lineCount += approxLines;
+        {step === 'PREVIEW' &&
+          (() => {
+            // Merge fields and format missing placeholders
+            // Use translated text if available (Hindi), otherwise use finalDraft
+            let mergedText = draftDisplayText || finalDraft || '';
+            template?.fields?.forEach(f => {
+              const val = formData[f.key] || '';
+              if (val.toString().trim()) {
+                mergedText = mergedText.replace(
+                  new RegExp(`\\{\\{\\s*${f.key}\\s*\\}\\}`, 'gi'),
+                  val.toString().trim()
+                );
               }
             });
-            if (currentPageLines.length > 0) {
-              pages.push(currentPageLines.join('\n'));
-            }
-            return pages;
-          };
 
-          // Custom Renderer for Read Mode to convert titles to bold uppercase and clean markdown symbols
-          const renderFormattedDraft = (text) => {
-            if (!text) return null;
-            const lines = text.split('\n');
-            return lines.map((line, idx) => {
-              let cleanLine = line.trim();
-              
-              // Detect bold headings
-              let isBold = false;
-              if (cleanLine.startsWith('**') && cleanLine.endsWith('**')) {
-                isBold = true;
-                cleanLine = cleanLine.substring(2, cleanLine.length - 2).trim();
-              }
-              
-              // Clean markdown symbols
-              cleanLine = cleanLine
+            mergedText = mergedText.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
+              const f = template?.fields?.find(field => field.key === key);
+              return `[${f ? f.label : key} Required]`;
+            });
+
+            // Dynamic A4 Pagination Helper
+            const paginateText = text => {
+              if (!text) return [''];
+
+              // Clean markdown syntax from raw string
+              const cleanText = text
                 .replace(/\*\*/g, '')
                 .replace(/###/g, '')
                 .replace(/##/g, '')
-                .replace(/#/g, '');
-                
-              const isHeading = cleanLine && (
-                cleanLine === cleanLine.toUpperCase() && cleanLine.length > 4 ||
-                cleanLine.startsWith('BEFORE THE') ||
-                cleanLine.startsWith('IN THE COURT OF') ||
-                cleanLine.startsWith('COMPLAINANT DETAILS') ||
-                cleanLine.startsWith('ACCUSED DETAILS') ||
-                cleanLine.startsWith('FACTS OF THE CASE') ||
-                cleanLine.startsWith('OFFENCES') ||
-                cleanLine.startsWith('PRAYER') ||
-                cleanLine.startsWith('VERIFICATION') ||
-                isBold
-              );
-              
-              if (isHeading) {
+                .replace(/#/g, '')
+                .replace(/\[Complainant's\s*[^\]]*\]/gi, '')
+                .replace(/\[Accused's\s*[^\]]*\]/gi, '')
+                .replace(/\[[^\]]*Required\]/gi, '')
+                .replace(/\[[^\]]*Placeholder\]/gi, '')
+                .replace(/gamhappur/gi, '');
+
+              const lines = cleanText.split('\n');
+              const pages = [];
+              let currentPageLines = [];
+              let lineCount = 0;
+
+              lines.forEach(line => {
+                const approxLines = Math.max(1, Math.ceil(line.length / 85));
+                if (lineCount + approxLines > 38) {
+                  pages.push(currentPageLines.join('\n'));
+                  currentPageLines = [line];
+                  lineCount = approxLines;
+                } else {
+                  currentPageLines.push(line);
+                  lineCount += approxLines;
+                }
+              });
+              if (currentPageLines.length > 0) {
+                pages.push(currentPageLines.join('\n'));
+              }
+              return pages;
+            };
+
+            // Custom Renderer for Read Mode to convert titles to bold uppercase and clean markdown symbols
+            const renderFormattedDraft = text => {
+              if (!text) return null;
+              const lines = text.split('\n');
+              return lines.map((line, idx) => {
+                let cleanLine = line.trim();
+
+                // Detect bold headings
+                let isBold = false;
+                if (cleanLine.startsWith('**') && cleanLine.endsWith('**')) {
+                  isBold = true;
+                  cleanLine = cleanLine.substring(2, cleanLine.length - 2).trim();
+                }
+
+                // Clean markdown symbols
+                cleanLine = cleanLine
+                  .replace(/\*\*/g, '')
+                  .replace(/###/g, '')
+                  .replace(/##/g, '')
+                  .replace(/#/g, '');
+
+                const isHeading =
+                  cleanLine &&
+                  ((cleanLine === cleanLine.toUpperCase() && cleanLine.length > 4) ||
+                    cleanLine.startsWith('BEFORE THE') ||
+                    cleanLine.startsWith('IN THE COURT OF') ||
+                    cleanLine.startsWith('COMPLAINANT DETAILS') ||
+                    cleanLine.startsWith('ACCUSED DETAILS') ||
+                    cleanLine.startsWith('FACTS OF THE CASE') ||
+                    cleanLine.startsWith('OFFENCES') ||
+                    cleanLine.startsWith('PRAYER') ||
+                    cleanLine.startsWith('VERIFICATION') ||
+                    isBold);
+
+                if (isHeading) {
+                  return (
+                    <div
+                      key={idx}
+                      className="font-black text-center uppercase my-4 text-[13px] text-black tracking-wide leading-normal"
+                      style={{ fontFamily: '"Times New Roman", Times, serif', color: '#000000' }}
+                    >
+                      {cleanLine}
+                    </div>
+                  );
+                }
+
+                // Standard paragraphs
                 return (
-                  <div 
-                    key={idx} 
-                    className="font-black text-center uppercase my-4 text-[13px] text-black tracking-wide leading-normal"
-                    style={{ fontFamily: '"Times New Roman", Times, serif', color: '#000000' }}
+                  <div
+                    key={idx}
+                    className="min-h-[1.5em] text-justify text-[12px] text-black leading-[1.6] mb-2.5 font-serif"
+                    style={{
+                      fontFamily: '"Times New Roman", Times, serif',
+                      color: '#000000',
+                      textIndent:
+                        cleanLine.match(/^\d+\./) ||
+                        cleanLine.startsWith('Complainant:') ||
+                        cleanLine.startsWith('Accused:')
+                          ? '0'
+                          : '0.5in',
+                    }}
                   >
                     {cleanLine}
                   </div>
                 );
-              }
-              
-              // Standard paragraphs
-              return (
-                <div 
-                  key={idx} 
-                  className="min-h-[1.5em] text-justify text-[12px] text-black leading-[1.6] mb-2.5 font-serif"
-                  style={{ 
-                    fontFamily: '"Times New Roman", Times, serif', 
-                    color: '#000000',
-                    textIndent: (cleanLine.match(/^\d+\./) || cleanLine.startsWith('Complainant:') || cleanLine.startsWith('Accused:')) ? '0' : '0.5in' 
-                  }}
-                >
-                  {cleanLine}
-                </div>
-              );
-            });
-          };
+              });
+            };
 
-          const documentPages = paginateText(mergedText);
-          const wordCount = mergedText.split(/\s+/).filter(Boolean).length;
-          const readingTime = Math.ceil(wordCount / 220);
+            const documentPages = paginateText(mergedText);
+            const wordCount = mergedText.split(/\s+/).filter(Boolean).length;
+            const readingTime = Math.ceil(wordCount / 220);
 
-          return (
-            <div className="flex-1 flex flex-col h-full bg-[#FAFBFD] dark:bg-[#0A0E17] select-none text-left overflow-hidden">
-              
-              {/* Rich Word Toolbar (Editable Viewport) */}
-              {editorMode === 'EDIT' && (
-                <div className="bg-slate-50 dark:bg-[#151D30] border-b border-slate-200 dark:border-zinc-800 px-5 py-2 flex flex-wrap items-center gap-4 text-slate-600 dark:text-slate-355 select-none overflow-x-auto shrink-0">
-                  <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-zinc-800 pr-3.5">
-                    <button type="button" onClick={() => executeCommand('undo')} className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded transition-colors border-none bg-transparent cursor-pointer text-slate-500" title="Undo"><Undo size={13} /></button>
-                    <button type="button" onClick={() => executeCommand('redo')} className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded transition-colors border-none bg-transparent cursor-pointer text-slate-500" title="Redo"><Redo size={13} /></button>
+            return (
+              <div className="flex-1 flex flex-col h-full bg-[#FAFBFD] dark:bg-[#0A0E17] select-none text-left overflow-hidden">
+                {/* Rich Word Toolbar (Editable Viewport) */}
+                {editorMode === 'EDIT' && (
+                  <div className="bg-slate-50 dark:bg-[#151D30] border-b border-slate-200 dark:border-zinc-800 px-5 py-2 flex flex-wrap items-center gap-4 text-slate-600 dark:text-slate-355 select-none overflow-x-auto shrink-0">
+                    <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-zinc-800 pr-3.5">
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('undo')}
+                        className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded transition-colors border-none bg-transparent cursor-pointer text-slate-500"
+                        title="Undo"
+                      >
+                        <Undo size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('redo')}
+                        className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded transition-colors border-none bg-transparent cursor-pointer text-slate-500"
+                        title="Redo"
+                      >
+                        <Redo size={13} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 border-r border-slate-200 dark:border-zinc-800 pr-3.5">
+                      <select
+                        onChange={e => executeCommand('fontName', e.target.value)}
+                        className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded px-2 py-1 text-[10px] font-bold text-slate-705 dark:text-slate-300 outline-none"
+                      >
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Courier New">Courier Prime</option>
+                      </select>
+                      <select
+                        onChange={e => executeCommand('fontSize', e.target.value)}
+                        className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded px-1.5 py-1 text-[10px] font-bold text-slate-705 dark:text-slate-300 outline-none"
+                      >
+                        <option value="3">12pt (Normal)</option>
+                        <option value="4">14pt (Medium)</option>
+                        <option value="5">16pt (Large)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-zinc-800 pr-3.5 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('bold')}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded font-black border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Bold"
+                      >
+                        B
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('italic')}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded italic border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Italic"
+                      >
+                        I
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('underline')}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded underline border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Underline"
+                      >
+                        U
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('strikeThrough')}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded line-through border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Strike"
+                      >
+                        S
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-zinc-800 pr-3.5">
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('insertUnorderedList')}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded text-[10px] font-bold border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Bullets"
+                      >
+                        • List
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => executeCommand('insertOrderedList')}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded text-[10px] font-bold border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Numbers"
+                      >
+                        1. List
+                      </button>
+                      <button
+                        type="button"
+                        onClick={insertTable}
+                        className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded text-[10px] font-bold border-none bg-transparent cursor-pointer text-slate-700"
+                        title="Insert Table"
+                      >
+                        Table
+                      </button>
+                    </div>
+
+                    {/* AI Quick Tools */}
+                    <div className="flex items-center gap-1.5 ml-auto text-[#5B3DF5] font-black">
+                      <Sparkles size={13} />
+                      <span className="text-[9px] uppercase tracking-wider select-none mr-2">
+                        AI Tools:
+                      </span>
+                      <button
+                        type="button"
+                        disabled={isCopilotRefining}
+                        onClick={() => handleRefineField('draft', 'Rewrite')}
+                        className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5] rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border-none cursor-pointer"
+                      >
+                        Rewrite
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isCopilotRefining}
+                        onClick={() => handleRefineField('draft', 'Improve Legal Language')}
+                        className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5] rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border-none cursor-pointer"
+                      >
+                        Improve
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isCopilotRefining}
+                        onClick={() => handleRefineField('draft', 'Summarize')}
+                        className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5] rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border-none cursor-pointer"
+                      >
+                        Summarize
+                      </button>
+                    </div>
                   </div>
+                )}
 
-                  <div className="flex items-center gap-2 border-r border-slate-200 dark:border-zinc-800 pr-3.5">
-                    <select onChange={(e) => executeCommand('fontName', e.target.value)} className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded px-2 py-1 text-[10px] font-bold text-slate-705 dark:text-slate-300 outline-none">
-                      <option value="Times New Roman">Times New Roman</option>
-                      <option value="Arial">Arial</option>
-                      <option value="Courier New">Courier Prime</option>
-                    </select>
-                    <select onChange={(e) => executeCommand('fontSize', e.target.value)} className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded px-1.5 py-1 text-[10px] font-bold text-slate-705 dark:text-slate-300 outline-none">
-                      <option value="3">12pt (Normal)</option>
-                      <option value="4">14pt (Medium)</option>
-                      <option value="5">16pt (Large)</option>
-                    </select>
-                  </div>
+                {/* Two Column Legal Workspace (Outline Removed) */}
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0 select-none">
+                  {/* 1. Center Workspace - A4 Paper Sheets view */}
+                  <div className="flex-1 bg-slate-100 dark:bg-[#090D15] p-4 md:p-8 overflow-y-auto flex flex-col items-center custom-scrollbar relative min-h-0 select-text">
+                    {/* Inline loading overlay */}
+                    {isCopilotRefining && (
+                      <div className="absolute inset-0 bg-white/70 dark:bg-black/55 z-[2000] flex flex-col items-center justify-center backdrop-blur-xs select-none">
+                        <div className="flex flex-col items-center gap-3">
+                          <RefreshCw className="animate-spin text-[#5B3DF5] w-8 h-8" />
+                          <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider animate-pulse">
+                            AI: {copilotLoadingText || 'Refining Document'}...
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                  <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-zinc-800 pr-3.5 font-bold">
-                    <button type="button" onClick={() => executeCommand('bold')} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded font-black border-none bg-transparent cursor-pointer text-slate-700" title="Bold">B</button>
-                    <button type="button" onClick={() => executeCommand('italic')} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded italic border-none bg-transparent cursor-pointer text-slate-700" title="Italic">I</button>
-                    <button type="button" onClick={() => executeCommand('underline')} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded underline border-none bg-transparent cursor-pointer text-slate-700" title="Underline">U</button>
-                    <button type="button" onClick={() => executeCommand('strikeThrough')} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded line-through border-none bg-transparent cursor-pointer text-slate-700" title="Strike">S</button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-zinc-800 pr-3.5">
-                    <button type="button" onClick={() => executeCommand('insertUnorderedList')} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded text-[10px] font-bold border-none bg-transparent cursor-pointer text-slate-700" title="Bullets">• List</button>
-                    <button type="button" onClick={() => executeCommand('insertOrderedList')} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded text-[10px] font-bold border-none bg-transparent cursor-pointer text-slate-700" title="Numbers">1. List</button>
-                    <button type="button" onClick={insertTable} className="px-2 py-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded text-[10px] font-bold border-none bg-transparent cursor-pointer text-slate-700" title="Insert Table">Table</button>
-                  </div>
-
-                  {/* AI Quick Tools */}
-                  <div className="flex items-center gap-1.5 ml-auto text-[#5B3DF5] font-black">
-                    <Sparkles size={13} />
-                    <span className="text-[9px] uppercase tracking-wider select-none mr-2">AI Tools:</span>
-                    <button 
-                      type="button"
-                      disabled={isCopilotRefining}
-                      onClick={() => handleRefineField('draft', 'Rewrite')}
-                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5] rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border-none cursor-pointer"
-                    >
-                      Rewrite
-                    </button>
-                    <button 
-                      type="button"
-                      disabled={isCopilotRefining}
-                      onClick={() => handleRefineField('draft', 'Improve Legal Language')}
-                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5] rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border-none cursor-pointer"
-                    >
-                      Improve
-                    </button>
-                    <button 
-                      type="button"
-                      disabled={isCopilotRefining}
-                      onClick={() => handleRefineField('draft', 'Summarize')}
-                      className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#5B3DF5] rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border-none cursor-pointer"
-                    >
-                      Summarize
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Two Column Legal Workspace (Outline Removed) */}
-              <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0 select-none">
-                
-                {/* 1. Center Workspace - A4 Paper Sheets view */}
-                <div className="flex-1 bg-slate-100 dark:bg-[#090D15] p-4 md:p-8 overflow-y-auto flex flex-col items-center custom-scrollbar relative min-h-0 select-text">
-                  
-                  {/* Inline loading overlay */}
-                  {isCopilotRefining && (
-                    <div className="absolute inset-0 bg-white/70 dark:bg-black/55 z-[2000] flex flex-col items-center justify-center backdrop-blur-xs select-none">
-                      <div className="flex flex-col items-center gap-3">
-                        <RefreshCw className="animate-spin text-[#5B3DF5] w-8 h-8" />
-                        <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider animate-pulse">
-                          AI: {copilotLoadingText || 'Refining Document'}...
-                        </p>
+                    {/* Document Header Metadata info bar */}
+                    <div className="w-[816px] bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-xl p-3 mb-4 shadow-sm flex flex-wrap justify-between items-center text-[10px] font-bold text-slate-500 gap-y-2 select-none shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">
+                            Draft Type:
+                          </span>
+                          <span className="text-slate-800 dark:text-white uppercase font-black">
+                            {selectedType || 'Legal Draft'}
+                          </span>
+                        </div>
+                        <span className="text-slate-300">|</span>
+                        <div>
+                          <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">
+                            Case Link:
+                          </span>
+                          <span className="text-slate-800 dark:text-white font-extrabold">
+                            {allProjects.find(p => p._id === (linkedCaseId || currentCase?._id))
+                              ?.name || 'No Case Linked'}
+                          </span>
+                        </div>
+                        <span className="text-slate-300">|</span>
+                        <div>
+                          <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">
+                            Language:
+                          </span>
+                          <span className="text-[#5B3DF5] font-black uppercase">
+                            {outputLang === 'hi' ? 'Hindi' : 'English'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">
+                            Version:
+                          </span>
+                          <span className="text-slate-800 dark:text-white font-black bg-indigo-50 dark:bg-indigo-950/40 text-[#5B3DF5] px-1.5 py-0.5 rounded">
+                            v{draftVersion}
+                          </span>
+                        </div>
+                        <span className="text-slate-300">|</span>
+                        <div>
+                          <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">
+                            Timestamp:
+                          </span>
+                          <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                            {generationTimestamp || 'Now'}
+                          </span>
+                        </div>
+                        <span className="text-slate-300">|</span>
+                        <div>
+                          <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">
+                            Status:
+                          </span>
+                          <span className="text-green-600 bg-green-50 dark:bg-green-950/20 px-1.5 py-0.5 rounded font-black uppercase text-[8.5px] tracking-wider">
+                            Saved
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  {/* Document Header Metadata info bar */}
-                  <div className="w-[816px] bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-xl p-3 mb-4 shadow-sm flex flex-wrap justify-between items-center text-[10px] font-bold text-slate-500 gap-y-2 select-none shrink-0">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">Draft Type:</span>
-                        <span className="text-slate-800 dark:text-white uppercase font-black">{selectedType || 'Legal Draft'}</span>
-                      </div>
-                      <span className="text-slate-300">|</span>
-                      <div>
-                        <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">Case Link:</span>
-                        <span className="text-slate-800 dark:text-white font-extrabold">{allProjects.find(p => p._id === (linkedCaseId || currentCase?._id))?.name || 'No Case Linked'}</span>
-                      </div>
-                      <span className="text-slate-300">|</span>
-                      <div>
-                        <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">Language:</span>
-                        <span className="text-[#5B3DF5] font-black uppercase">{outputLang === 'hi' ? 'Hindi' : 'English'}</span>
-                      </div>
+                    {/* A4 Page Layout Sheets container */}
+                    <div className="flex flex-col items-center gap-4 md:gap-8 w-full select-text pb-24">
+                      <div
+                        key={activeDraftId || 'new-draft'}
+                        ref={editorRef}
+                        contentEditable={editorMode === 'EDIT'}
+                        suppressContentEditableWarning
+                        onInput={e => {
+                          const newText = e.currentTarget.innerHTML;
+                          setFinalDraft(newText);
+                          handleDraftChange(newText);
+                        }}
+                        className={`bg-white border border-slate-205 shadow-xl text-left relative flex flex-col rounded-lg transition-transform duration-200 select-text outline-none focus:ring-0 focus:outline-none ${
+                          isMobile ? 'w-full p-6 my-2' : 'w-[816px] min-h-[1056px] p-16'
+                        }`}
+                        style={{
+                          transform: isMobile ? 'none' : `scale(${zoomPercent / 100})`,
+                          transformOrigin: 'top center',
+                          fontFamily: '"Times New Roman", Times, serif',
+                          color: '#000000',
+                          fontSize: '12pt',
+                          lineHeight: '1.6',
+                        }}
+                        dangerouslySetInnerHTML={{ __html: initialHtml }}
+                      />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">Version:</span>
-                        <span className="text-slate-800 dark:text-white font-black bg-indigo-50 dark:bg-indigo-950/40 text-[#5B3DF5] px-1.5 py-0.5 rounded">v{draftVersion}</span>
+
+                    {/* Zoom controls float widget */}
+                    {!isMobile && (
+                      <div className="fixed bottom-6 bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-3 z-30 select-none">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                          Zoom
+                        </span>
+                        {[80, 100, 125, 150].map(pct => (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => setZoomPercent(pct)}
+                            className={`px-2 py-1 rounded-lg text-[9px] font-black border-none cursor-pointer ${
+                              zoomPercent === pct
+                                ? 'bg-[#5B3DF5] text-white shadow-sm'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
                       </div>
-                      <span className="text-slate-300">|</span>
-                      <div>
-                        <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">Timestamp:</span>
-                        <span className="text-slate-700 dark:text-slate-300 font-semibold">{generationTimestamp || 'Now'}</span>
-                      </div>
-                      <span className="text-slate-300">|</span>
-                      <div>
-                        <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">Status:</span>
-                        <span className="text-green-600 bg-green-50 dark:bg-green-950/20 px-1.5 py-0.5 rounded font-black uppercase text-[8.5px] tracking-wider">Saved</span>
-                      </div>
-                    </div>
+                    )}
+
+                    {/* Floating FAB for Copilot on mobile when collapsed */}
+                    {isMobile && !sidebarOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setSidebarOpen(true)}
+                        className="fixed bottom-20 right-6 w-12 h-12 bg-[#5B3DF5] text-white rounded-full shadow-2xl flex items-center justify-center z-[1999] border-none cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                        title="AI Copilot"
+                      >
+                        <Sparkles size={20} />
+                      </button>
+                    )}
                   </div>
 
-                  {/* A4 Page Layout Sheets container */}
-                  <div className="flex flex-col items-center gap-4 md:gap-8 w-full select-text pb-24">
-                    <div 
-                      key={activeDraftId || 'new-draft'}
-                      ref={editorRef}
-                      contentEditable={editorMode === 'EDIT'}
-                      suppressContentEditableWarning
-                      onInput={(e) => {
-                        const newText = e.currentTarget.innerHTML;
-                        setFinalDraft(newText);
-                        handleDraftChange(newText);
-                      }}
-                      className={`bg-white border border-slate-205 shadow-xl text-left relative flex flex-col rounded-lg transition-transform duration-200 select-text outline-none focus:ring-0 focus:outline-none ${
-                        isMobile ? 'w-full p-6 my-2' : 'w-[816px] min-h-[1056px] p-16'
-                      }`}
-                      style={{
-                        transform: isMobile ? 'none' : `scale(${zoomPercent / 100})`,
-                        transformOrigin: 'top center',
-                        fontFamily: '"Times New Roman", Times, serif',
-                        color: '#000000',
-                        fontSize: '12pt',
-                        lineHeight: '1.6',
-                      }}
-                      dangerouslySetInnerHTML={{ __html: initialHtml }}
-                    />
-                  </div>
-
-                  {/* Zoom controls float widget */}
-                  {!isMobile && (
-                    <div className="fixed bottom-6 bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-3 z-30 select-none">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Zoom</span>
-                      {[80, 100, 125, 150].map(pct => (
-                        <button
-                          key={pct}
-                          type="button"
-                          onClick={() => setZoomPercent(pct)}
-                          className={`px-2 py-1 rounded-lg text-[9px] font-black border-none cursor-pointer ${
-                            zoomPercent === pct
-                              ? 'bg-[#5B3DF5] text-white shadow-sm'
-                              : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {pct}%
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Floating FAB for Copilot on mobile when collapsed */}
-                  {isMobile && !sidebarOpen && (
-                    <button
-                      type="button"
-                      onClick={() => setSidebarOpen(true)}
-                      className="fixed bottom-20 right-6 w-12 h-12 bg-[#5B3DF5] text-white rounded-full shadow-2xl flex items-center justify-center z-[1999] border-none cursor-pointer hover:scale-105 active:scale-95 transition-all"
-                      title="AI Copilot"
-                    >
-                      <Sparkles size={20} />
-                    </button>
-                  )}
-                </div>
-
-                {/* =========================================
+                  {/* =========================================
                     AI COPILOT SIDE PANEL (independent)
                     Opens from the ⭐ AI Button in toolbar
                 ========================================= */}
-                <>
-                  {/* Backdrop */}
-                  {isAiPanelOpen && (
-                    <div
-                      className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-[3000]"
-                      onClick={() => setIsAiPanelOpen(false)}
-                    />
-                  )}
-                  {/* Panel */}
-                  <div
-                    className="fixed top-0 right-0 h-full bg-white dark:bg-[#111726] border-l border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col z-[3001] select-none overflow-hidden transition-transform duration-300 ease-in-out"
-                    style={{
-                      width: '360px',
-                      transform: isAiPanelOpen ? 'translateX(0)' : 'translateX(100%)',
-                    }}
-                  >
-                    {/* Header */}
-                    <div className="px-4 py-3 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-gradient-to-r from-indigo-50/60 to-purple-50/40 dark:from-indigo-950/20 dark:to-purple-950/10 shrink-0">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-xl bg-[#5B3DF5]/10 flex items-center justify-center">
-                          <Sparkles size={14} className="text-[#5B3DF5]" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">AI Copilot</h4>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Legal Intelligence Engine</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
+                  <>
+                    {/* Backdrop */}
+                    {isAiPanelOpen && (
+                      <div
+                        className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-[3000]"
                         onClick={() => setIsAiPanelOpen(false)}
-                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="grid grid-cols-4 border-b border-slate-200 dark:border-zinc-800 shrink-0">
-                      {['Assistant', 'Suggestions', 'Case Context', 'Citations'].map(tab => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => {
-                            setActiveCopilotTab(tab);
-                            localStorage.setItem('@aisa_copilot_active_tab', tab);
-                          }}
-                          className={`py-2.5 text-[8px] font-black uppercase tracking-wider text-center border-b-2 border-t-0 border-x-0 cursor-pointer transition-colors ${
-                            activeCopilotTab === tab
-                              ? 'border-[#5B3DF5] text-[#5B3DF5]'
-                              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                          }`}
-                        >
-                          {tab.split(' ')[0]}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-
-                      {/* ── ASSISTANT TAB ── */}
-                      {activeCopilotTab === 'Assistant' && (
-                        <div className="p-4 space-y-4">
-                          {/* Example chips */}
+                      />
+                    )}
+                    {/* Panel */}
+                    <div
+                      className="fixed top-0 right-0 h-full bg-white dark:bg-[#111726] border-l border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col z-[3001] select-none overflow-hidden transition-transform duration-300 ease-in-out"
+                      style={{
+                        width: '360px',
+                        transform: isAiPanelOpen ? 'translateX(0)' : 'translateX(100%)',
+                      }}
+                    >
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-gradient-to-r from-indigo-50/60 to-purple-50/40 dark:from-indigo-950/20 dark:to-purple-950/10 shrink-0">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-xl bg-[#5B3DF5]/10 flex items-center justify-center">
+                            <Sparkles size={14} className="text-[#5B3DF5]" />
+                          </div>
                           <div>
-                            <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 mb-2">Quick Prompts</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {['Rewrite paragraph', 'Suggest clauses', 'Generate prayer', 'Translate', 'Add preamble', 'Simplify'].map(chip => (
-                                <button
-                                  key={chip}
-                                  type="button"
-                                  onClick={() => {
-                                    const msgs = [...assistantMessages, { role: 'user', text: chip }];
-                                    setAssistantMessages(msgs);
-                                  }}
-                                  className="px-2 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-[#5B3DF5] text-[9px] font-bold rounded-lg border border-indigo-100 dark:border-indigo-800/50 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors border-none"
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">
+                              AI Copilot
+                            </h4>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                              Legal Intelligence Engine
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsAiPanelOpen(false)}
+                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+
+                      {/* Tabs */}
+                      <div className="grid grid-cols-4 border-b border-slate-200 dark:border-zinc-800 shrink-0">
+                        {['Assistant', 'Suggestions', 'Case Context', 'Citations'].map(tab => (
+                          <button
+                            key={tab}
+                            type="button"
+                            onClick={() => {
+                              setActiveCopilotTab(tab);
+                              localStorage.setItem('@aisa_copilot_active_tab', tab);
+                            }}
+                            className={`py-2.5 text-[8px] font-black uppercase tracking-wider text-center border-b-2 border-t-0 border-x-0 cursor-pointer transition-colors ${
+                              activeCopilotTab === tab
+                                ? 'border-[#5B3DF5] text-[#5B3DF5]'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                          >
+                            {tab.split(' ')[0]}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Tab Content */}
+                      <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        {/* ── ASSISTANT TAB ── */}
+                        {activeCopilotTab === 'Assistant' && (
+                          <div className="p-4 space-y-4">
+                            {/* Example chips */}
+                            <div>
+                              <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                Quick Prompts
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {[
+                                  'Rewrite paragraph',
+                                  'Suggest clauses',
+                                  'Generate prayer',
+                                  'Translate',
+                                  'Add preamble',
+                                  'Simplify',
+                                ].map(chip => (
+                                  <button
+                                    key={chip}
+                                    type="button"
+                                    onClick={() => {
+                                      const msgs = [
+                                        ...assistantMessages,
+                                        { role: 'user', text: chip },
+                                      ];
+                                      setAssistantMessages(msgs);
+                                    }}
+                                    className="px-2 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-[#5B3DF5] text-[9px] font-bold rounded-lg border border-indigo-100 dark:border-indigo-800/50 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-950/50 transition-colors border-none"
+                                  >
+                                    {chip}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Chat messages */}
+                            <div className="space-y-3 min-h-[120px]">
+                              {assistantMessages.length === 0 && (
+                                <div className="text-center py-6">
+                                  <Sparkles
+                                    size={24}
+                                    className="text-indigo-200 dark:text-indigo-800 mx-auto mb-2"
+                                  />
+                                  <p className="text-[10px] text-slate-400 font-semibold">
+                                    Ask me anything about your draft
+                                  </p>
+                                </div>
+                              )}
+                              {assistantMessages.map((msg, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
-                                  {chip}
-                                </button>
+                                  <div
+                                    className={`max-w-[85%] px-3 py-2 rounded-xl text-[10.5px] font-semibold leading-relaxed ${
+                                      msg.role === 'user'
+                                        ? 'bg-[#5B3DF5] text-white rounded-br-sm'
+                                        : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 rounded-bl-sm'
+                                    }`}
+                                  >
+                                    {msg.text}
+                                    {/* Action buttons under AI replies */}
+                                    {msg.role === 'assistant' && msg.text && (
+                                      <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-zinc-700">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (editorRef.current) {
+                                              const sel = window.getSelection();
+                                              if (sel.rangeCount > 0) {
+                                                const range = sel.getRangeAt(0);
+                                                range.collapse(false);
+                                                const node = document.createTextNode(
+                                                  '\n' + msg.text
+                                                );
+                                                range.insertNode(node);
+                                              }
+                                            }
+                                            toast.success('Inserted at cursor');
+                                          }}
+                                          className="text-[8px] font-black uppercase text-[#5B3DF5] border border-indigo-200 dark:border-indigo-800 rounded px-1.5 py-0.5 cursor-pointer bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
+                                        >
+                                          Insert
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const html = convertTextToHtml(msg.text);
+                                            setFinalDraft(html);
+                                            if (editorRef.current)
+                                              editorRef.current.innerHTML = html;
+                                            toast.success('Draft replaced');
+                                          }}
+                                          className="text-[8px] font-black uppercase text-slate-500 border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 cursor-pointer bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                                        >
+                                          Replace
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               ))}
+                              {isCopilotRefining && (
+                                <div className="flex justify-start">
+                                  <div className="bg-slate-100 dark:bg-zinc-800 px-3 py-2 rounded-xl rounded-bl-sm flex items-center gap-1.5">
+                                    <span
+                                      className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"
+                                      style={{ animationDelay: '0ms' }}
+                                    />
+                                    <span
+                                      className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"
+                                      style={{ animationDelay: '150ms' }}
+                                    />
+                                    <span
+                                      className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"
+                                      style={{ animationDelay: '300ms' }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div>
+                              <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                Quick Actions
+                              </p>
+                              <div className="grid grid-cols-1 gap-1.5">
+                                {[
+                                  {
+                                    label: 'Improve Draft Structure',
+                                    act: 'Improve headings, logical alignment, flow, and remove repetitions',
+                                    title: 'Improve Draft Structure',
+                                  },
+                                  {
+                                    label: 'Strengthen Legal Arguments',
+                                    act: 'Identify weaker logic, introduce statutory provisions, and add legal reasoning',
+                                    title: 'Strengthen Arguments',
+                                  },
+                                  {
+                                    label: 'Check Legal Grammar',
+                                    act: 'Review punctuation, syntax alignment, and style while keeping terminology',
+                                    title: 'Check Legal Grammar',
+                                  },
+                                  {
+                                    label: 'Simplify Language',
+                                    act: 'Simplify complex legal English expressions to clear, plain professional English',
+                                    title: 'Simplify Language',
+                                  },
+                                  {
+                                    label: 'Verify Legal Citations',
+                                    act: 'Validate statutory codes, rules, Acts, and highlight incorrect citations',
+                                    title: 'Verify Legal Citations',
+                                  },
+                                ].map(item => (
+                                  <button
+                                    key={item.label}
+                                    type="button"
+                                    disabled={isCopilotRefining}
+                                    onClick={() => handleCopilotQuickAction(item.title, item.act)}
+                                    className={`w-full flex items-center gap-2 p-2.5 rounded-xl text-[10px] font-bold text-left transition-colors border border-slate-100 dark:border-zinc-800 cursor-pointer ${
+                                      isCopilotRefining
+                                        ? 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-black/10'
+                                        : 'bg-slate-50/60 dark:bg-black/10 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-200 dark:hover:border-indigo-800'
+                                    }`}
+                                  >
+                                    <Sparkles size={10} className="text-[#5B3DF5] shrink-0" />
+                                    <span className="text-slate-700 dark:text-slate-300">
+                                      {item.label}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Document Insights */}
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/10 border border-indigo-100 dark:border-indigo-900/30 space-y-2">
+                              <p className="text-[8.5px] font-black uppercase tracking-widest text-indigo-400">
+                                Document Insights
+                              </p>
+                              <div className="space-y-1.5 text-[10px] text-slate-600 dark:text-slate-400 font-semibold">
+                                <div className="flex justify-between">
+                                  <span>Est. Pages</span>
+                                  <span className="font-bold text-slate-800 dark:text-white">
+                                    {Math.ceil(wordCount / 350)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Word Count</span>
+                                  <span className="font-bold text-slate-800 dark:text-white">
+                                    {wordCount}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Reading Time</span>
+                                  <span className="font-bold text-slate-800 dark:text-white">
+                                    {readingTime} min
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="flex justify-between text-[8.5px] font-black uppercase text-indigo-400 mb-1">
+                                  <span>Draft Readiness</span>
+                                  <span>92%</span>
+                                </div>
+                                <div className="w-full bg-indigo-100 dark:bg-indigo-900/30 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-[#5B3DF5] h-full rounded-full transition-all"
+                                    style={{ width: '92%' }}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
+                        )}
 
-                          {/* Chat messages */}
-                          <div className="space-y-3 min-h-[120px]">
-                            {assistantMessages.length === 0 && (
-                              <div className="text-center py-6">
-                                <Sparkles size={24} className="text-indigo-200 dark:text-indigo-800 mx-auto mb-2" />
-                                <p className="text-[10px] text-slate-400 font-semibold">Ask me anything about your draft</p>
-                              </div>
-                            )}
-                            {assistantMessages.map((msg, idx) => (
-                              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] px-3 py-2 rounded-xl text-[10.5px] font-semibold leading-relaxed ${
-                                  msg.role === 'user'
-                                    ? 'bg-[#5B3DF5] text-white rounded-br-sm'
-                                    : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300 rounded-bl-sm'
-                                }`}>
-                                  {msg.text}
-                                  {/* Action buttons under AI replies */}
-                                  {msg.role === 'assistant' && msg.text && (
-                                    <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-zinc-700">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          if (editorRef.current) {
-                                            const sel = window.getSelection();
-                                            if (sel.rangeCount > 0) {
-                                              const range = sel.getRangeAt(0);
-                                              range.collapse(false);
-                                              const node = document.createTextNode('\n' + msg.text);
-                                              range.insertNode(node);
-                                            }
-                                          }
-                                          toast.success('Inserted at cursor');
-                                        }}
-                                        className="text-[8px] font-black uppercase text-[#5B3DF5] border border-indigo-200 dark:border-indigo-800 rounded px-1.5 py-0.5 cursor-pointer bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
-                                      >
-                                        Insert
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const html = convertTextToHtml(msg.text);
-                                          setFinalDraft(html);
-                                          if (editorRef.current) editorRef.current.innerHTML = html;
-                                          toast.success('Draft replaced');
-                                        }}
-                                        className="text-[8px] font-black uppercase text-slate-500 border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 cursor-pointer bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                                      >
-                                        Replace
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
+                        {/* ── SUGGESTIONS TAB ── */}
+                        {activeCopilotTab === 'Suggestions' && (
+                          <div className="p-4 space-y-3">
+                            <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400">
+                              AI Audit & Recommendations
+                            </p>
+                            {[
+                              {
+                                title: 'Formatting Spacing Alignment',
+                                desc: 'Heading gaps conform to standard court guidelines.',
+                              },
+                              {
+                                title: 'Check Witness Annotation',
+                                desc: 'No witness information is present. Recommend adding at least one witness.',
+                              },
+                              {
+                                title: 'Check Missing Annexures',
+                                desc: 'No annexure files mapped. Recommend appending proof index sheets.',
+                              },
+                            ].map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-black/10 space-y-1.5"
+                              >
+                                <h5 className="text-[10px] font-black text-slate-800 dark:text-white uppercase">
+                                  {item.title}
+                                </h5>
+                                <p className="text-[10px] text-slate-500 leading-relaxed font-semibold">
+                                  {item.desc}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleCopilotQuickAction(
+                                      item.title,
+                                      `Apply recommendation: ${item.desc}`
+                                    )
+                                  }
+                                  className="text-[9px] font-black uppercase text-[#5B3DF5] border-none bg-transparent cursor-pointer hover:underline"
+                                >
+                                  Apply
+                                </button>
                               </div>
                             ))}
-                            {isCopilotRefining && (
-                              <div className="flex justify-start">
-                                <div className="bg-slate-100 dark:bg-zinc-800 px-3 py-2 rounded-xl rounded-bl-sm flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                  <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                  <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                </div>
-                              </div>
-                            )}
                           </div>
+                        )}
 
-                          {/* Quick Actions */}
-                          <div>
-                            <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 mb-2">Quick Actions</p>
-                            <div className="grid grid-cols-1 gap-1.5">
-                              {[
-                                { label: 'Improve Draft Structure', act: 'Improve headings, logical alignment, flow, and remove repetitions', title: 'Improve Draft Structure' },
-                                { label: 'Strengthen Legal Arguments', act: 'Identify weaker logic, introduce statutory provisions, and add legal reasoning', title: 'Strengthen Arguments' },
-                                { label: 'Check Legal Grammar', act: 'Review punctuation, syntax alignment, and style while keeping terminology', title: 'Check Legal Grammar' },
-                                { label: 'Simplify Language', act: 'Simplify complex legal English expressions to clear, plain professional English', title: 'Simplify Language' },
-                                { label: 'Verify Legal Citations', act: 'Validate statutory codes, rules, Acts, and highlight incorrect citations', title: 'Verify Legal Citations' }
-                              ].map(item => (
+                        {/* ── CASE CONTEXT TAB ── */}
+                        {activeCopilotTab === 'Case Context' && (
+                          <div className="p-4 space-y-3">
+                            <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400">
+                              Relevant Precedents
+                            </p>
+                            {[
+                              {
+                                title: 'State of Maharashtra v. Rajesh (2021)',
+                                desc: 'Precedent defining requirements for SHO FIR registrations under Sec. 154.',
+                              },
+                              {
+                                title: 'Karan Singh v. Union of India (2018)',
+                                desc: 'Supreme Court guidelines on delays in filing first information reports.',
+                              },
+                              {
+                                title: 'Lalita Kumari v. Govt. of U.P. (2014)',
+                                desc: 'Constitution Bench guidelines on mandatory registration of FIR under Sec. 154 CrPC.',
+                              },
+                            ].map(law => (
+                              <div
+                                key={law.title}
+                                className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-black/10 space-y-1"
+                              >
+                                <h5 className="text-[10px] font-black uppercase text-slate-800 dark:text-white">
+                                  {law.title}
+                                </h5>
+                                <p className="text-[10px] text-slate-500 leading-relaxed font-semibold">
+                                  {law.desc}
+                                </p>
                                 <button
-                                  key={item.label}
                                   type="button"
-                                  disabled={isCopilotRefining}
-                                  onClick={() => handleCopilotQuickAction(item.title, item.act)}
-                                  className={`w-full flex items-center gap-2 p-2.5 rounded-xl text-[10px] font-bold text-left transition-colors border border-slate-100 dark:border-zinc-800 cursor-pointer ${
-                                    isCopilotRefining ? 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-black/10' : 'bg-slate-50/60 dark:bg-black/10 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-200 dark:hover:border-indigo-800'
-                                  }`}
+                                  onClick={() =>
+                                    handleInsertCitation(`[Citation Precedent: ${law.title}]`)
+                                  }
+                                  className="text-[9px] font-black uppercase text-[#5B3DF5] border-none bg-transparent cursor-pointer hover:underline mt-1"
                                 >
-                                  <Sparkles size={10} className="text-[#5B3DF5] shrink-0" />
-                                  <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
+                                  + Insert Citation
                                 </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Document Insights */}
-                          <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/10 border border-indigo-100 dark:border-indigo-900/30 space-y-2">
-                            <p className="text-[8.5px] font-black uppercase tracking-widest text-indigo-400">Document Insights</p>
-                            <div className="space-y-1.5 text-[10px] text-slate-600 dark:text-slate-400 font-semibold">
-                              <div className="flex justify-between"><span>Est. Pages</span><span className="font-bold text-slate-800 dark:text-white">{Math.ceil(wordCount / 350)}</span></div>
-                              <div className="flex justify-between"><span>Word Count</span><span className="font-bold text-slate-800 dark:text-white">{wordCount}</span></div>
-                              <div className="flex justify-between"><span>Reading Time</span><span className="font-bold text-slate-800 dark:text-white">{readingTime} min</span></div>
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-[8.5px] font-black uppercase text-indigo-400 mb-1"><span>Draft Readiness</span><span>92%</span></div>
-                              <div className="w-full bg-indigo-100 dark:bg-indigo-900/30 h-1.5 rounded-full overflow-hidden">
-                                <div className="bg-[#5B3DF5] h-full rounded-full transition-all" style={{ width: '92%' }} />
                               </div>
-                            </div>
+                            ))}
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* ── SUGGESTIONS TAB ── */}
-                      {activeCopilotTab === 'Suggestions' && (
-                        <div className="p-4 space-y-3">
-                          <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400">AI Audit & Recommendations</p>
-                          {[
-                            { title: 'Formatting Spacing Alignment', desc: 'Heading gaps conform to standard court guidelines.' },
-                            { title: 'Check Witness Annotation', desc: 'No witness information is present. Recommend adding at least one witness.' },
-                            { title: 'Check Missing Annexures', desc: 'No annexure files mapped. Recommend appending proof index sheets.' }
-                          ].map((item, idx) => (
-                            <div key={idx} className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-black/10 space-y-1.5">
-                              <h5 className="text-[10px] font-black text-slate-800 dark:text-white uppercase">{item.title}</h5>
-                              <p className="text-[10px] text-slate-500 leading-relaxed font-semibold">{item.desc}</p>
-                              <button
-                                type="button"
-                                onClick={() => handleCopilotQuickAction(item.title, `Apply recommendation: ${item.desc}`)}
-                                className="text-[9px] font-black uppercase text-[#5B3DF5] border-none bg-transparent cursor-pointer hover:underline"
+                        {/* ── CITATIONS TAB ── */}
+                        {activeCopilotTab === 'Citations' && (
+                          <div className="p-4 space-y-3">
+                            <p className="text-[8.5px] font-black uppercase tracking-widest text-[#5B3DF5]">
+                              Citations & Annotations
+                            </p>
+                            {[
+                              {
+                                title: 'Section 154, CrPC',
+                                desc: 'Information in cognizable cases.',
+                              },
+                              {
+                                title: 'Section 420, IPC',
+                                desc: 'Cheating and dishonestly inducing delivery of property.',
+                              },
+                              {
+                                title: 'Section 34, IPC',
+                                desc: 'Acts done by several persons in furtherance of common intention.',
+                              },
+                            ].map(cit => (
+                              <div
+                                key={cit.title}
+                                className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-black/10 space-y-1"
                               >
-                                Apply
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                                <h5 className="text-[10px] font-black uppercase text-slate-800 dark:text-white">
+                                  {cit.title}
+                                </h5>
+                                <p className="text-[10px] text-slate-500 leading-relaxed font-semibold">
+                                  {cit.desc}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleInsertCitation(`[Citation Code: ${cit.title}]`)
+                                  }
+                                  className="text-[9px] font-black uppercase text-[#5B3DF5] border-none bg-transparent cursor-pointer hover:underline mt-1"
+                                >
+                                  + Insert Citation
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-                      {/* ── CASE CONTEXT TAB ── */}
-                      {activeCopilotTab === 'Case Context' && (
-                        <div className="p-4 space-y-3">
-                          <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400">Relevant Precedents</p>
-                          {[
-                            { title: 'State of Maharashtra v. Rajesh (2021)', desc: 'Precedent defining requirements for SHO FIR registrations under Sec. 154.' },
-                            { title: 'Karan Singh v. Union of India (2018)', desc: 'Supreme Court guidelines on delays in filing first information reports.' },
-                            { title: 'Lalita Kumari v. Govt. of U.P. (2014)', desc: 'Constitution Bench guidelines on mandatory registration of FIR under Sec. 154 CrPC.' }
-                          ].map(law => (
-                            <div key={law.title} className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-black/10 space-y-1">
-                              <h5 className="text-[10px] font-black uppercase text-slate-800 dark:text-white">{law.title}</h5>
-                              <p className="text-[10px] text-slate-500 leading-relaxed font-semibold">{law.desc}</p>
-                              <button
-                                type="button"
-                                onClick={() => handleInsertCitation(`[Citation Precedent: ${law.title}]`)}
-                                className="text-[9px] font-black uppercase text-[#5B3DF5] border-none bg-transparent cursor-pointer hover:underline mt-1"
+                      {/* Chat Input */}
+                      {activeCopilotTab === 'Assistant' && (
+                        <div className="p-3 border-t border-slate-200 dark:border-zinc-800 shrink-0">
+                          <form
+                            onSubmit={async e => {
+                              e.preventDefault();
+                              const input = e.target.elements.chatInput?.value?.trim();
+                              if (!input || isCopilotRefining) return;
+                              e.target.reset();
+                              const userMsg = { role: 'user', text: input };
+                              setAssistantMessages(prev => [...prev, userMsg]);
+                              setIsCopilotRefining(true);
+                              try {
+                                const docText = editorRef.current
+                                  ? editorRef.current.innerText
+                                  : finalDraft;
+                                const systemCtx = `You are an expert legal AI assistant. The user is working on a ${selectedType || 'legal'} document. Document content:\n\n${docText.slice(0, 3000)}`;
+                                const historyList = assistantMessages.map(m => ({
+                                  role: m.role,
+                                  parts: [{ text: m.text }],
+                                }));
+                                const { generateChatResponse } =
+                                  await import('../../../services/geminiService');
+                                const result = await generateChatResponse(
+                                  historyList,
+                                  input,
+                                  systemCtx,
+                                  [],
+                                  outputLang === 'hi' ? 'hi' : 'en',
+                                  null,
+                                  'legal'
+                                );
+                                setAssistantMessages(prev => [
+                                  ...prev,
+                                  { role: 'assistant', text: result || 'No response generated.' },
+                                ]);
+                              } catch (err) {
+                                setAssistantMessages(prev => [
+                                  ...prev,
+                                  {
+                                    role: 'assistant',
+                                    text: 'Sorry, I encountered an error. Please try again.',
+                                  },
+                                ]);
+                              } finally {
+                                setIsCopilotRefining(false);
+                              }
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <input
+                              name="chatInput"
+                              type="text"
+                              placeholder="Ask AI about your draft..."
+                              disabled={isCopilotRefining}
+                              className="flex-1 px-3 py-2 text-[11px] font-medium bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5B3DF5]/30 focus:border-[#5B3DF5] transition-all disabled:opacity-50"
+                            />
+                            <button
+                              type="submit"
+                              disabled={isCopilotRefining}
+                              className="w-8 h-8 bg-[#5B3DF5] hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl flex items-center justify-center border-none cursor-pointer transition-colors shrink-0"
+                            >
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                               >
-                                + Insert Citation
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* ── CITATIONS TAB ── */}
-                      {activeCopilotTab === 'Citations' && (
-                        <div className="p-4 space-y-3">
-                          <p className="text-[8.5px] font-black uppercase tracking-widest text-[#5B3DF5]">Citations & Annotations</p>
-                          {[
-                            { title: 'Section 154, CrPC', desc: 'Information in cognizable cases.' },
-                            { title: 'Section 420, IPC', desc: 'Cheating and dishonestly inducing delivery of property.' },
-                            { title: 'Section 34, IPC', desc: 'Acts done by several persons in furtherance of common intention.' }
-                          ].map(cit => (
-                            <div key={cit.title} className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-black/10 space-y-1">
-                              <h5 className="text-[10px] font-black uppercase text-slate-800 dark:text-white">{cit.title}</h5>
-                              <p className="text-[10px] text-slate-500 leading-relaxed font-semibold">{cit.desc}</p>
-                              <button
-                                type="button"
-                                onClick={() => handleInsertCitation(`[Citation Code: ${cit.title}]`)}
-                                className="text-[9px] font-black uppercase text-[#5B3DF5] border-none bg-transparent cursor-pointer hover:underline mt-1"
-                              >
-                                + Insert Citation
-                              </button>
-                            </div>
-                          ))}
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                              </svg>
+                            </button>
+                          </form>
                         </div>
                       )}
                     </div>
+                  </>
 
-                    {/* Chat Input */}
-                    {activeCopilotTab === 'Assistant' && (
-                      <div className="p-3 border-t border-slate-200 dark:border-zinc-800 shrink-0">
-                        <form
-                          onSubmit={async (e) => {
-                            e.preventDefault();
-                            const input = e.target.elements.chatInput?.value?.trim();
-                            if (!input || isCopilotRefining) return;
-                            e.target.reset();
-                            const userMsg = { role: 'user', text: input };
-                            setAssistantMessages(prev => [...prev, userMsg]);
-                            setIsCopilotRefining(true);
-                            try {
-                              const docText = editorRef.current ? editorRef.current.innerText : finalDraft;
-                              const systemCtx = `You are an expert legal AI assistant. The user is working on a ${selectedType || 'legal'} document. Document content:\n\n${docText.slice(0, 3000)}`;
-                              const historyList = assistantMessages.map(m => ({ role: m.role, parts: [{ text: m.text }] }));
-                              const { generateChatResponse } = await import('../../../services/geminiService');
-                              const result = await generateChatResponse(historyList, input, systemCtx, [], outputLang === 'hi' ? 'hi' : 'en', null, 'legal');
-                              setAssistantMessages(prev => [...prev, { role: 'assistant', text: result || 'No response generated.' }]);
-                            } catch (err) {
-                              setAssistantMessages(prev => [...prev, { role: 'assistant', text: 'Sorry, I encountered an error. Please try again.' }]);
-                            } finally {
-                              setIsCopilotRefining(false);
-                            }
-                          }}
-                          className="flex items-center gap-2"
-                        >
-                          <input
-                            name="chatInput"
-                            type="text"
-                            placeholder="Ask AI about your draft..."
-                            disabled={isCopilotRefining}
-                            className="flex-1 px-3 py-2 text-[11px] font-medium bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5B3DF5]/30 focus:border-[#5B3DF5] transition-all disabled:opacity-50"
-                          />
-                          <button
-                            type="submit"
-                            disabled={isCopilotRefining}
-                            className="w-8 h-8 bg-[#5B3DF5] hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl flex items-center justify-center border-none cursor-pointer transition-colors shrink-0"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                          </button>
-                        </form>
-                      </div>
-                    )}
-                  </div>
-                </>
-
-                {/* =========================================
+                  {/* =========================================
                     DRAFT VERSION HISTORY SIDE PANEL (independent)
                     Opens from the 🕒 History Button in toolbar
                 ========================================= */}
-                <>
-                  {/* Backdrop */}
-                  {isHistoryPanelOpen && (
-                    <div
-                      className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-[3000]"
-                      onClick={() => setIsHistoryPanelOpen(false)}
-                    />
-                  )}
-                  {/* Panel */}
-                  <div
-                    className="fixed top-0 right-0 h-full bg-white dark:bg-[#111726] border-l border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col z-[3001] select-none overflow-hidden transition-transform duration-300 ease-in-out"
-                    style={{
-                      width: '380px',
-                      transform: isHistoryPanelOpen ? 'translateX(0)' : 'translateX(100%)',
-                    }}
-                  >
-                    {/* Header */}
-                    <div className="px-4 py-3 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-gradient-to-r from-slate-50 to-slate-50 dark:from-zinc-900 dark:to-zinc-900 shrink-0">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
-                          <History size={14} className="text-[#5B3DF5]" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">Draft History</h4>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{draftVersionHistory.length} version{draftVersionHistory.length !== 1 ? 's' : ''} saved</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
+                  <>
+                    {/* Backdrop */}
+                    {isHistoryPanelOpen && (
+                      <div
+                        className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-[3000]"
                         onClick={() => setIsHistoryPanelOpen(false)}
-                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-
-                    {/* Search Bar */}
-                    <div className="px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800 shrink-0">
-                      <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-1.5">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 shrink-0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input
-                          type="text"
-                          placeholder="Search versions..."
-                          value={historySearchQuery || ''}
-                          onChange={e => setHistorySearchQuery(e.target.value)}
-                          className="flex-1 text-[11px] font-medium bg-transparent border-none outline-none text-slate-700 dark:text-slate-300 placeholder-slate-400"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Version List */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-                      {draftVersionHistory.length === 0 ? (
-                        <div className="text-center py-12">
-                          <History size={28} className="text-slate-200 dark:text-zinc-700 mx-auto mb-3" />
-                          <p className="text-[11px] text-slate-400 font-semibold">No version history yet</p>
-                          <p className="text-[9px] text-slate-300 dark:text-slate-600 font-medium mt-1">Save your draft to create your first version</p>
+                      />
+                    )}
+                    {/* Panel */}
+                    <div
+                      className="fixed top-0 right-0 h-full bg-white dark:bg-[#111726] border-l border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col z-[3001] select-none overflow-hidden transition-transform duration-300 ease-in-out"
+                      style={{
+                        width: '380px',
+                        transform: isHistoryPanelOpen ? 'translateX(0)' : 'translateX(100%)',
+                      }}
+                    >
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-gradient-to-r from-slate-50 to-slate-50 dark:from-zinc-900 dark:to-zinc-900 shrink-0">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
+                            <History size={14} className="text-[#5B3DF5]" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">
+                              Draft History
+                            </h4>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                              {draftVersionHistory.length} version
+                              {draftVersionHistory.length !== 1 ? 's' : ''} saved
+                            </p>
+                          </div>
                         </div>
-                      ) : (
-                        draftVersionHistory
-                          .filter(v => !historySearchQuery || (v.name || '').toLowerCase().includes(historySearchQuery.toLowerCase()))
-                          .map((version, idx) => (
-                            <div
-                              key={idx}
-                              className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-white dark:bg-black/10 hover:border-[#5B3DF5]/50 hover:shadow-sm transition-all"
+                        <button
+                          type="button"
+                          onClick={() => setIsHistoryPanelOpen(false)}
+                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg border-none bg-transparent cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+
+                      {/* Search Bar */}
+                      <div className="px-3 py-2.5 border-b border-slate-200 dark:border-zinc-800 shrink-0">
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-1.5">
+                          <svg
+                            width="11"
+                            height="11"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-slate-400 shrink-0"
+                          >
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                          </svg>
+                          <input
+                            type="text"
+                            placeholder="Search versions..."
+                            value={historySearchQuery || ''}
+                            onChange={e => setHistorySearchQuery(e.target.value)}
+                            className="flex-1 text-[11px] font-medium bg-transparent border-none outline-none text-slate-700 dark:text-slate-300 placeholder-slate-400"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Version List */}
+                      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+                        {draftVersionHistory.length === 0 ? (
+                          <div className="text-center py-12">
+                            <History
+                              size={28}
+                              className="text-slate-200 dark:text-zinc-700 mx-auto mb-3"
+                            />
+                            <p className="text-[11px] text-slate-400 font-semibold">
+                              No version history yet
+                            </p>
+                            <p className="text-[9px] text-slate-300 dark:text-slate-600 font-medium mt-1">
+                              Save your draft to create your first version
+                            </p>
+                          </div>
+                        ) : (
+                          draftVersionHistory
+                            .filter(
+                              v =>
+                                !historySearchQuery ||
+                                (v.name || '')
+                                  .toLowerCase()
+                                  .includes(historySearchQuery.toLowerCase())
+                            )
+                            .map((version, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3 border border-slate-100 dark:border-zinc-800 rounded-xl bg-white dark:bg-black/10 hover:border-[#5B3DF5]/50 hover:shadow-sm transition-all"
+                              >
+                                <div className="flex justify-between items-start mb-1.5">
+                                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-[#5B3DF5]">
+                                    v{version.version}
+                                  </span>
+                                  <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-widest">
+                                    {version.timestamp}
+                                  </span>
+                                </div>
+                                <h5 className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 mb-0.5">
+                                  {version.name || `Version ${version.version}`}
+                                </h5>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                                  By: {version.user || 'You'} {version.type && `· ${version.type}`}
+                                </p>
+                                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800/50">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleRestoreVersion(version);
+                                      setIsHistoryPanelOpen(false);
+                                    }}
+                                    className="text-[9px] font-black uppercase text-[#5B3DF5] hover:underline bg-transparent border-none cursor-pointer"
+                                  >
+                                    Restore
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDuplicateVersion(version)}
+                                    className="text-[9px] font-black uppercase text-slate-500 hover:text-slate-700 hover:underline bg-transparent border-none cursor-pointer"
+                                  >
+                                    Duplicate
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newName = prompt(
+                                        'Enter new version name:',
+                                        version.name || `Version ${version.version}`
+                                      );
+                                      if (newName !== null) handleRenameVersion(idx, newName);
+                                    }}
+                                    className="text-[9px] font-black uppercase text-slate-500 hover:text-slate-700 hover:underline bg-transparent border-none cursor-pointer"
+                                  >
+                                    Rename
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteVersion(idx)}
+                                    className="text-[9px] font-black uppercase text-rose-500 hover:underline bg-transparent border-none cursor-pointer"
+                                  >
+                                    Delete
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCompareVerA(version);
+                                      toast('Select another version to compare with', {
+                                        icon: '🔍',
+                                      });
+                                    }}
+                                    className="text-[9px] font-black uppercase text-indigo-500 hover:underline bg-transparent border-none cursor-pointer ml-auto"
+                                  >
+                                    Compare
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                        )}
+                      </div>
+
+                      {/* Footer: Compare Mode trigger */}
+                      {compareVerA && (
+                        <div className="px-3 py-2.5 border-t border-slate-200 dark:border-zinc-800 bg-indigo-50 dark:bg-indigo-950/20 shrink-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black uppercase text-[#5B3DF5]">
+                              Comparing: v{compareVerA.version}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setCompareVerA(null)}
+                              className="text-[9px] font-black uppercase text-slate-500 border-none bg-transparent cursor-pointer hover:underline"
                             >
-                              <div className="flex justify-between items-start mb-1.5">
-                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-[#5B3DF5]">
-                                  v{version.version}
-                                </span>
-                                <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-widest">{version.timestamp}</span>
-                              </div>
-                              <h5 className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 mb-0.5">
-                                {version.name || `Version ${version.version}`}
-                              </h5>
-                              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                                By: {version.user || 'You'} {version.type && `· ${version.type}`}
-                              </p>
-                              <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800/50">
-                                <button
-                                  type="button"
-                                  onClick={() => { handleRestoreVersion(version); setIsHistoryPanelOpen(false); }}
-                                  className="text-[9px] font-black uppercase text-[#5B3DF5] hover:underline bg-transparent border-none cursor-pointer"
-                                >
-                                  Restore
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDuplicateVersion(version)}
-                                  className="text-[9px] font-black uppercase text-slate-500 hover:text-slate-700 hover:underline bg-transparent border-none cursor-pointer"
-                                >
-                                  Duplicate
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newName = prompt('Enter new version name:', version.name || `Version ${version.version}`);
-                                    if (newName !== null) handleRenameVersion(idx, newName);
-                                  }}
-                                  className="text-[9px] font-black uppercase text-slate-500 hover:text-slate-700 hover:underline bg-transparent border-none cursor-pointer"
-                                >
-                                  Rename
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteVersion(idx)}
-                                  className="text-[9px] font-black uppercase text-rose-500 hover:underline bg-transparent border-none cursor-pointer"
-                                >
-                                  Delete
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCompareVerA(version);
-                                    toast('Select another version to compare with', { icon: '🔍' });
-                                  }}
-                                  className="text-[9px] font-black uppercase text-indigo-500 hover:underline bg-transparent border-none cursor-pointer ml-auto"
-                                >
-                                  Compare
-                                </button>
-                              </div>
-                            </div>
-                          ))
+                              Cancel
+                            </button>
+                          </div>
+                          <p className="text-[9px] text-slate-400 font-medium mt-0.5">
+                            Click Compare on another version to diff them
+                          </p>
+                        </div>
                       )}
                     </div>
+                  </>
 
-                    {/* Footer: Compare Mode trigger */}
-                    {compareVerA && (
-                      <div className="px-3 py-2.5 border-t border-slate-200 dark:border-zinc-800 bg-indigo-50 dark:bg-indigo-950/20 shrink-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-black uppercase text-[#5B3DF5]">
-                            Comparing: v{compareVerA.version}
-                          </span>
+                  {/* AI Copilot Refinement Comparison Modal */}
+                  {copilotComparison && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[130000] p-6 select-none animate-fadeIn">
+                      <div className="bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-2xl w-full max-w-5xl h-[80vh] flex flex-col shadow-2xl overflow-hidden text-left font-sans select-none">
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-black/10 shrink-0">
+                          <div>
+                            <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                              AI Copilot: Review Proposed Changes
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                              Action Refined: {copilotComparison.action}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setCopilotComparison(null)}
+                            className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-full border-none bg-transparent cursor-pointer text-slate-400"
+                            title="Close View"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        {/* Comparison Content */}
+                        <div className="flex-1 flex overflow-hidden min-h-0 divide-x divide-slate-200 dark:divide-zinc-800">
+                          {/* Left: Original Pleading Draft */}
+                          <div className="flex-1 flex flex-col min-w-0">
+                            <div className="px-4 py-2 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-405 tracking-wider shrink-0 select-none">
+                              Original Draft
+                            </div>
+                            <div className="flex-1 p-6 overflow-y-auto font-serif text-[12px] leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap select-text">
+                              {copilotComparison.original}
+                            </div>
+                          </div>
+
+                          {/* Right: Refined Draft */}
+                          <div className="flex-1 flex flex-col min-w-0">
+                            <div className="px-4 py-2 bg-indigo-50/50 dark:bg-indigo-950/20 border-b border-indigo-100 dark:border-zinc-800 text-[10px] font-black uppercase text-[#5B3DF5] tracking-wider shrink-0 select-none flex items-center justify-between">
+                              <span>Refined Draft</span>
+                              <span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-[8px] rounded font-extrabold uppercase">
+                                AI Proposed
+                              </span>
+                            </div>
+                            <div className="flex-1 p-6 overflow-y-auto font-serif text-[12px] leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap select-text bg-indigo-50/[0.01]">
+                              {copilotComparison.refined}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-black/10 flex items-center justify-end gap-3 shrink-0">
                           <button
                             type="button"
-                            onClick={() => setCompareVerA(null)}
-                            className="text-[9px] font-black uppercase text-slate-500 border-none bg-transparent cursor-pointer hover:underline"
+                            onClick={() => {
+                              setCopilotComparison(null);
+                              toast.error('✕ Proposed AI changes rejected.');
+                            }}
+                            className="px-4 py-2 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-350 rounded-xl text-xs font-black uppercase tracking-wider transition-colors border-none bg-transparent cursor-pointer"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCopilotComparison(null);
+                              toast.error('✕ Proposed AI changes rejected.');
+                            }}
+                            className="px-4 py-2 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-350 rounded-xl text-xs font-black uppercase tracking-wider transition-colors border-none bg-transparent cursor-pointer"
+                          >
+                            Reject All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newHtml = convertTextToHtml(copilotComparison.refined);
+                              setFinalDraft(newHtml);
+                              if (editorRef.current) {
+                                editorRef.current.innerHTML = newHtml;
+                              }
+                              setCopilotComparison(null);
+                              toast.success('✓ Refined draft applied successfully!');
+                            }}
+                            className="px-5 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm border-none cursor-pointer"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newHtml = convertTextToHtml(copilotComparison.refined);
+                              setFinalDraft(newHtml);
+                              if (editorRef.current) {
+                                editorRef.current.innerHTML = newHtml;
+                              }
+                              setCopilotComparison(null);
+                              toast.success('✓ Refined draft applied successfully!');
+                            }}
+                            className="px-5 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm border-none cursor-pointer"
+                          >
+                            Accept All
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Unified Track Changes / Version Comparison Modal */}
+                  {(() => {
+                    const isComparing = (compareVerA && compareVerB) || compareVersion;
+                    if (!isComparing) return null;
+
+                    const verA = compareVerA || compareVersion;
+                    const verB = compareVerB || { version: 'Current', content: finalDraft };
+                    const diffHtml = diffWords(verA.content, verB.content);
+
+                    return (
+                      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[130000] p-6 select-none animate-fadeIn">
+                        <div className="bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-3xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden text-left font-sans select-none">
+                          {/* Header */}
+                          <div className="px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-black/10 shrink-0">
+                            <div>
+                              <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                                Track Changes: Version Comparison
+                              </h3>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                Highlighting differences: Added text (green background), Deleted
+                                text (red strikethrough)
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setCompareVersion(null);
+                                setCompareVerA(null);
+                                setCompareVerB(null);
+                              }}
+                              className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-full border-none bg-transparent cursor-pointer text-slate-400"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+
+                          {/* Selectors and Legend */}
+                          <div className="px-6 py-3 bg-slate-50/50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 shrink-0 flex flex-wrap items-center justify-between gap-4 select-none">
+                            <div className="flex items-center gap-6">
+                              {/* Selector A */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase text-slate-400">
+                                  Version A:
+                                </span>
+                                <select
+                                  value={verA.version}
+                                  onChange={e => {
+                                    const matched = draftVersionHistory.find(
+                                      v => String(v.version) === e.target.value
+                                    );
+                                    if (matched) {
+                                      if (compareVersion) setCompareVersion(matched);
+                                      else setCompareVerA(matched);
+                                    }
+                                  }}
+                                  className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                                >
+                                  {draftVersionHistory.map(v => (
+                                    <option key={v.version} value={v.version}>
+                                      v{v.version} ({v.name || 'Saved'})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Selector B */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase text-slate-400">
+                                  Version B:
+                                </span>
+                                <select
+                                  value={verB.version}
+                                  onChange={e => {
+                                    if (e.target.value === 'Current') {
+                                      setCompareVerB(null);
+                                    } else {
+                                      const matched = draftVersionHistory.find(
+                                        v => String(v.version) === e.target.value
+                                      );
+                                      if (matched) setCompareVerB(matched);
+                                    }
+                                  }}
+                                  className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                                >
+                                  <option value="Current">Current Workspace</option>
+                                  {draftVersionHistory.map(v => (
+                                    <option key={v.version} value={v.version}>
+                                      v{v.version} ({v.name || 'Saved'})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Legend */}
+                            <div className="flex gap-3 text-[10px] font-bold">
+                              <span className="flex items-center gap-1">
+                                <span className="w-2.5 h-2.5 bg-rose-100 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900 rounded" />{' '}
+                                Deleted
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="w-2.5 h-2.5 bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900 rounded" />{' '}
+                                Added
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Main Scrollable Diff Area */}
+                          <div className="flex-1 p-8 overflow-y-auto bg-slate-50/20 dark:bg-zinc-950/20 select-text">
+                            <div
+                              className="max-w-3xl mx-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-12 shadow-sm font-serif text-[11pt] leading-[1.7] text-justify space-y-4 whitespace-pre-line"
+                              dangerouslySetInnerHTML={{ __html: diffHtml }}
+                            />
+                          </div>
+
+                          {/* Footer Actions */}
+                          <div className="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3 bg-slate-50 dark:bg-black/10 shrink-0">
+                            <button
+                              onClick={() => {
+                                setCompareVersion(null);
+                                setCompareVerA(null);
+                                setCompareVerB(null);
+                              }}
+                              className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-200 hover:bg-slate-300 text-slate-700 border-none cursor-pointer transition-colors"
+                            >
+                              Close
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleRestoreVersion(verA);
+                                setCompareVersion(null);
+                                setCompareVerA(null);
+                                setCompareVerB(null);
+                              }}
+                              className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-[#5B3DF5] text-white hover:bg-indigo-700 border-none cursor-pointer transition-all active:scale-95"
+                            >
+                              Restore v{verA.version}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Unsaved Changes Confirmation Modal */}
+                  {pendingStep && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[140000] p-4 select-none animate-fadeIn">
+                      <div className="bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl text-left select-none">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                          You have unsaved changes
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed mt-2">
+                          Do you want to Save before leaving?
+                        </p>
+                        <div className="flex gap-3 mt-6">
+                          <button
+                            type="button"
+                            onClick={() => setPendingStep(null)}
+                            className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-205 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black uppercase transition-colors border-none cursor-pointer"
                           >
                             Cancel
                           </button>
-                        </div>
-                        <p className="text-[9px] text-slate-400 font-medium mt-0.5">Click Compare on another version to diff them</p>
-                      </div>
-                    )}
-                  </div>
-                </>
-
-              {/* AI Copilot Refinement Comparison Modal */}
-              {copilotComparison && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[130000] p-6 select-none animate-fadeIn">
-                  <div className="bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-2xl w-full max-w-5xl h-[80vh] flex flex-col shadow-2xl overflow-hidden text-left font-sans select-none">
-                    
-                    {/* Header */}
-                    <div className="px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-black/10 shrink-0">
-                      <div>
-                        <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">AI Copilot: Review Proposed Changes</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                          Action Refined: {copilotComparison.action}
-                        </p>
-                      </div>
-                      <button 
-                        onClick={() => setCopilotComparison(null)} 
-                        className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-full border-none bg-transparent cursor-pointer text-slate-400"
-                        title="Close View"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-
-                    {/* Comparison Content */}
-                    <div className="flex-1 flex overflow-hidden min-h-0 divide-x divide-slate-200 dark:divide-zinc-800">
-                      {/* Left: Original Pleading Draft */}
-                      <div className="flex-1 flex flex-col min-w-0">
-                        <div className="px-4 py-2 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-405 tracking-wider shrink-0 select-none">
-                          Original Draft
-                        </div>
-                        <div className="flex-1 p-6 overflow-y-auto font-serif text-[12px] leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap select-text">
-                          {copilotComparison.original}
-                        </div>
-                      </div>
-
-                      {/* Right: Refined Draft */}
-                      <div className="flex-1 flex flex-col min-w-0">
-                        <div className="px-4 py-2 bg-indigo-50/50 dark:bg-indigo-950/20 border-b border-indigo-100 dark:border-zinc-800 text-[10px] font-black uppercase text-[#5B3DF5] tracking-wider shrink-0 select-none flex items-center justify-between">
-                          <span>Refined Draft</span>
-                          <span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-[8px] rounded font-extrabold uppercase">AI Proposed</span>
-                        </div>
-                        <div className="flex-1 p-6 overflow-y-auto font-serif text-[12px] leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap select-text bg-indigo-50/[0.01]">
-                          {copilotComparison.refined}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Discard changes
+                              lastSavedContentRef.current = finalDraft;
+                              setSaveButtonState('saved');
+                              const target = pendingStep;
+                              setPendingStep(null);
+                              setStep(target);
+                            }}
+                            className="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-black uppercase transition-colors border-none cursor-pointer"
+                          >
+                            Discard
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              // Save changes
+                              await handleSave(false);
+                              const target = pendingStep;
+                              setPendingStep(null);
+                              setStep(target);
+                            }}
+                            className="flex-1 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase transition-all shadow-sm border-none cursor-pointer"
+                          >
+                            Save & Exit
+                          </button>
                         </div>
                       </div>
                     </div>
-
-                    {/* Footer Actions */}
-                    <div className="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-black/10 flex items-center justify-end gap-3 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCopilotComparison(null);
-                          toast.error("✕ Proposed AI changes rejected.");
-                        }}
-                        className="px-4 py-2 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-350 rounded-xl text-xs font-black uppercase tracking-wider transition-colors border-none bg-transparent cursor-pointer"
-                      >
-                        Reject
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCopilotComparison(null);
-                          toast.error("✕ Proposed AI changes rejected.");
-                        }}
-                        className="px-4 py-2 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-350 rounded-xl text-xs font-black uppercase tracking-wider transition-colors border-none bg-transparent cursor-pointer"
-                      >
-                        Reject All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newHtml = convertTextToHtml(copilotComparison.refined);
-                          setFinalDraft(newHtml);
-                          if (editorRef.current) {
-                            editorRef.current.innerHTML = newHtml;
-                          }
-                          setCopilotComparison(null);
-                          toast.success("✓ Refined draft applied successfully!");
-                        }}
-                        className="px-5 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm border-none cursor-pointer"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newHtml = convertTextToHtml(copilotComparison.refined);
-                          setFinalDraft(newHtml);
-                          if (editorRef.current) {
-                            editorRef.current.innerHTML = newHtml;
-                          }
-                          setCopilotComparison(null);
-                          toast.success("✓ Refined draft applied successfully!");
-                        }}
-                        className="px-5 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm border-none cursor-pointer"
-                      >
-                        Accept All
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
-
-              {/* Unified Track Changes / Version Comparison Modal */}
-              {(() => {
-                const isComparing = (compareVerA && compareVerB) || compareVersion;
-                if (!isComparing) return null;
-
-                const verA = compareVerA || compareVersion;
-                const verB = compareVerB || { version: 'Current', content: finalDraft };
-                const diffHtml = diffWords(verA.content, verB.content);
-
-                return (
-                  <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[130000] p-6 select-none animate-fadeIn">
-                    <div className="bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-3xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden text-left font-sans select-none">
-                      
-                      {/* Header */}
-                      <div className="px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-black/10 shrink-0">
-                        <div>
-                          <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Track Changes: Version Comparison</h3>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                            Highlighting differences: Added text (green background), Deleted text (red strikethrough)
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            setCompareVersion(null);
-                            setCompareVerA(null);
-                            setCompareVerB(null);
-                          }} 
-                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-full border-none bg-transparent cursor-pointer text-slate-400"
-                        >
-                          <X size={18} />
-                        </button>
-                      </div>
-
-                      {/* Selectors and Legend */}
-                      <div className="px-6 py-3 bg-slate-50/50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 shrink-0 flex flex-wrap items-center justify-between gap-4 select-none">
-                        <div className="flex items-center gap-6">
-                          {/* Selector A */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase text-slate-400">Version A:</span>
-                            <select
-                              value={verA.version}
-                              onChange={(e) => {
-                                const matched = draftVersionHistory.find(v => String(v.version) === e.target.value);
-                                if (matched) {
-                                  if (compareVersion) setCompareVersion(matched);
-                                  else setCompareVerA(matched);
-                                }
-                              }}
-                              className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-                            >
-                              {draftVersionHistory.map(v => (
-                                <option key={v.version} value={v.version}>v{v.version} ({v.name || 'Saved'})</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Selector B */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase text-slate-400">Version B:</span>
-                            <select
-                              value={verB.version}
-                              onChange={(e) => {
-                                if (e.target.value === 'Current') {
-                                  setCompareVerB(null);
-                                } else {
-                                  const matched = draftVersionHistory.find(v => String(v.version) === e.target.value);
-                                  if (matched) setCompareVerB(matched);
-                                }
-                              }}
-                              className="bg-white dark:bg-zinc-800 border border-slate-250 dark:border-zinc-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
-                            >
-                              <option value="Current">Current Workspace</option>
-                              {draftVersionHistory.map(v => (
-                                <option key={v.version} value={v.version}>v{v.version} ({v.name || 'Saved'})</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Legend */}
-                        <div className="flex gap-3 text-[10px] font-bold">
-                          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-rose-100 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900 rounded" /> Deleted</span>
-                          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-900 rounded" /> Added</span>
-                        </div>
-                      </div>
-
-                      {/* Main Scrollable Diff Area */}
-                      <div className="flex-1 p-8 overflow-y-auto bg-slate-50/20 dark:bg-zinc-950/20 select-text">
-                        <div 
-                          className="max-w-3xl mx-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-12 shadow-sm font-serif text-[11pt] leading-[1.7] text-justify space-y-4 whitespace-pre-line"
-                          dangerouslySetInnerHTML={{ __html: diffHtml }}
-                        />
-                      </div>
-
-                      {/* Footer Actions */}
-                      <div className="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3 bg-slate-50 dark:bg-black/10 shrink-0">
-                        <button
-                          onClick={() => {
-                            setCompareVersion(null);
-                            setCompareVerA(null);
-                            setCompareVerB(null);
-                          }}
-                          className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-200 hover:bg-slate-300 text-slate-700 border-none cursor-pointer transition-colors"
-                        >
-                          Close
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleRestoreVersion(verA);
-                            setCompareVersion(null);
-                            setCompareVerA(null);
-                            setCompareVerB(null);
-                          }}
-                          className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-[#5B3DF5] text-white hover:bg-indigo-700 border-none cursor-pointer transition-all active:scale-95"
-                        >
-                          Restore v{verA.version}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Unsaved Changes Confirmation Modal */}
-              {pendingStep && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[140000] p-4 select-none animate-fadeIn">
-                  <div className="bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-3xl w-full max-w-md p-6 shadow-2xl text-left select-none">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">You have unsaved changes</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed mt-2">
-                      Do you want to Save before leaving?
-                    </p>
-                    <div className="flex gap-3 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => setPendingStep(null)}
-                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-205 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black uppercase transition-colors border-none cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Discard changes
-                          lastSavedContentRef.current = finalDraft;
-                          setSaveButtonState('saved');
-                          const target = pendingStep;
-                          setPendingStep(null);
-                          setStep(target);
-                        }}
-                        className="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-black uppercase transition-colors border-none cursor-pointer"
-                      >
-                        Discard
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          // Save changes
-                          await handleSave(false);
-                          const target = pendingStep;
-                          setPendingStep(null);
-                          setStep(target);
-                        }}
-                        className="flex-1 py-2.5 bg-[#5B3DF5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase transition-all shadow-sm border-none cursor-pointer"
-                      >
-                        Save & Exit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
         {/* ══════════════ STEP: SAVED ══════════════ */}
         {step === 'SAVED' && (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-10 text-left">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Saved Documents</h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">Explicitly saved advocate templates and litigation files</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                  Saved Documents
+                </h3>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                  Explicitly saved advocate templates and litigation files
+                </p>
               </div>
               <span className="text-[10px] font-black px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200/20 rounded-lg uppercase tracking-wider">
                 {savedDrafts.length} documents
@@ -5695,13 +6776,15 @@ CRITICAL PROMPT DIRECTIVE:
               <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#1A2540] rounded-3xl border border-dashed border-slate-200 dark:border-white/5 shadow-sm text-center">
                 <Folder size={40} className="text-slate-300 dark:text-zinc-700 mb-3" />
                 <p className="text-sm font-black text-slate-400">No saved drafts yet.</p>
-                <p className="text-xs text-slate-355 dark:text-zinc-655 mt-1">Create your first draft and click Save to keep it here.</p>
+                <p className="text-xs text-slate-355 dark:text-zinc-655 mt-1">
+                  Create your first draft and click Save to keep it here.
+                </p>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {savedDrafts.map(draft => (
-                  <div 
-                    key={draft.id} 
+                  <div
+                    key={draft.id}
                     className="bg-white dark:bg-[#1A2540] border border-slate-205 dark:border-white/5 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
                   >
                     <div className="flex items-start gap-4 min-w-0 w-full">
@@ -5716,39 +6799,53 @@ CRITICAL PROMPT DIRECTIVE:
                           <span className="text-[8px] font-black px-2 py-0.5 bg-indigo-50/50 dark:bg-indigo-950/30 text-[#5B3DF5] border border-indigo-200/20 rounded-full uppercase tracking-wider">
                             {draft.type || 'Legal Draft'}
                           </span>
-                          <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border ${
-                            draft.status === 'archived' 
-                              ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200/20' 
-                              : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200/20'
-                          }`}>
+                          <span
+                            className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                              draft.status === 'archived'
+                                ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200/20'
+                                : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200/20'
+                            }`}
+                          >
                             {draft.status === 'archived' ? 'Archived' : 'Active'}
                           </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 mt-3 text-[11px] font-semibold text-slate-500">
                           <div>
                             <span className="text-slate-400 mr-1.5">Linked Case:</span>
-                            <span className="text-slate-700 dark:text-slate-300 font-bold">{draft.caseName || 'No Case Linked'}</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-bold">
+                              {draft.caseName || 'No Case Linked'}
+                            </span>
                           </div>
                           <div>
                             <span className="text-slate-400 mr-1.5">Created Date:</span>
                             <span className="text-slate-700 dark:text-slate-300">
-                              {draft.createdAt ? new Date(draft.createdAt).toLocaleDateString('en-IN') : 'N/A'}
+                              {draft.createdAt
+                                ? new Date(draft.createdAt).toLocaleDateString('en-IN')
+                                : 'N/A'}
                             </span>
                           </div>
                           <div>
                             <span className="text-slate-400 mr-1.5">Updated Date:</span>
                             <span className="text-slate-700 dark:text-slate-300">
-                              {new Date(draft.date).toLocaleDateString('en-IN')} • {new Date(draft.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(draft.date).toLocaleDateString('en-IN')} •{' '}
+                              {new Date(draft.date).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </span>
                           </div>
                           <div>
                             <span className="text-slate-400 mr-1.5">Language:</span>
-                            <span className="text-slate-700 dark:text-slate-300 capitalize">{draft.mode === 'hindi' ? 'Hindi' : 'English'}</span>
+                            <span className="text-slate-700 dark:text-slate-300 capitalize">
+                              {draft.mode === 'hindi' ? 'Hindi' : 'English'}
+                            </span>
                           </div>
                           <div>
                             <span className="text-slate-400 mr-1.5">Version:</span>
-                            <span className="text-slate-700 dark:text-slate-300 font-bold">v{draft.version || 1}</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-bold">
+                              v{draft.version || 1}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -5773,16 +6870,21 @@ CRITICAL PROMPT DIRECTIVE:
                       {/* Dropdown triggers */}
                       <div className="relative">
                         <button
-                          onClick={() => setActiveCardMenuId(activeCardMenuId === draft.id ? null : draft.id)}
+                          onClick={() =>
+                            setActiveCardMenuId(activeCardMenuId === draft.id ? null : draft.id)
+                          }
                           className="p-2 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer border-none bg-transparent"
                           title="More Actions"
                         >
                           <MoreVertical size={16} />
                         </button>
-                        
+
                         {activeCardMenuId === draft.id && (
                           <>
-                            <div className="fixed inset-0 z-[4000]" onClick={() => setActiveCardMenuId(null)} />
+                            <div
+                              className="fixed inset-0 z-[4000]"
+                              onClick={() => setActiveCardMenuId(null)}
+                            />
                             <div className="absolute right-0 mt-2 w-[200px] bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl p-2 z-[4001] text-left animate-fadeIn">
                               <button
                                 onClick={() => {
@@ -5795,7 +6897,7 @@ CRITICAL PROMPT DIRECTIVE:
                                 <Edit3 size={13} />
                                 <span>Rename</span>
                               </button>
-                              
+
                               <button
                                 onClick={async () => {
                                   setActiveCardMenuId(null);
@@ -5817,12 +6919,12 @@ CRITICAL PROMPT DIRECTIVE:
                                         generationTimestamp: new Date().toLocaleString('en-IN'),
                                         lastModified: new Date().toISOString(),
                                         versions: draft.versions || [],
-                                        status: draft.status || 'active'
+                                        status: draft.status || 'active',
                                       };
                                       try {
                                         const response = await apiService.updateProject(caseId, {
                                           ...targetCase,
-                                          drafts: [dupItem, ...targetCase.drafts]
+                                          drafts: [dupItem, ...targetCase.drafts],
                                         });
                                         if (onUpdateCase) onUpdateCase(response);
                                         toast.success('Document duplicated');
@@ -5874,18 +6976,25 @@ CRITICAL PROMPT DIRECTIVE:
 
                               {/* Move to Case Selector */}
                               <div className="border-t border-slate-100 dark:border-white/5 my-1.5 pt-1.5 px-3.5">
-                                <span className="block text-[8.5px] font-black uppercase text-slate-400 mb-1">Move to Case</span>
+                                <span className="block text-[8.5px] font-black uppercase text-slate-400 mb-1">
+                                  Move to Case
+                                </span>
                                 <select
                                   value={draft.linkedCaseId || ''}
-                                  onChange={(e) => {
+                                  onChange={e => {
                                     setActiveCardMenuId(null);
-                                    if (e.target.value) handleMoveDraftToCase(draft, e.target.value);
+                                    if (e.target.value)
+                                      handleMoveDraftToCase(draft, e.target.value);
                                   }}
                                   className="w-full text-[10px] font-bold bg-slate-50 dark:bg-zinc-800 border border-slate-205 dark:border-zinc-700 rounded-lg px-2 py-1 outline-none cursor-pointer"
                                 >
-                                  <option value="" disabled>Select Case...</option>
+                                  <option value="" disabled>
+                                    Select Case...
+                                  </option>
                                   {allProjects.map(proj => (
-                                    <option key={proj._id} value={proj._id}>{proj.name}</option>
+                                    <option key={proj._id} value={proj._id}>
+                                      {proj.name}
+                                    </option>
                                   ))}
                                 </select>
                               </div>
@@ -5917,8 +7026,12 @@ CRITICAL PROMPT DIRECTIVE:
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-10 w-full text-left">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Draft History</h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">Automated compliance trail and version logs</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                  Draft History
+                </h3>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                  Automated compliance trail and version logs
+                </p>
               </div>
               <span className="text-[10px] font-black px-2.5 py-1 bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-200/20 rounded-lg uppercase tracking-wider">
                 {draftHistory.length} logs recorded
@@ -5961,8 +7074,12 @@ CRITICAL PROMPT DIRECTIVE:
             {filteredHistory.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#1A2540] rounded-3xl border border-dashed border-slate-200 dark:border-white/5 shadow-sm text-center">
                 <Clock size={40} className="text-slate-300 dark:text-zinc-700 mb-3" />
-                <p className="text-sm font-black text-slate-400">No drafting history entries found</p>
-                <p className="text-xs text-slate-400 dark:text-zinc-600 mt-1">Select a template above to generate a new legal draft.</p>
+                <p className="text-sm font-black text-slate-400">
+                  No drafting history entries found
+                </p>
+                <p className="text-xs text-slate-400 dark:text-zinc-600 mt-1">
+                  Select a template above to generate a new legal draft.
+                </p>
               </div>
             ) : (
               <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm">
@@ -5981,7 +7098,7 @@ CRITICAL PROMPT DIRECTIVE:
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                       {filteredHistory.map(item => (
-                        <tr 
+                        <tr
                           key={item.id}
                           className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/10 transition-colors group cursor-pointer"
                           onClick={() => handleLoadHistoryItem(item)}
@@ -6036,11 +7153,13 @@ CRITICAL PROMPT DIRECTIVE:
 
                           {/* Status */}
                           <td className="py-3 px-4 text-center">
-                            <span className={`inline-block text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                              item.status === 'Saved'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                            }`}>
+                            <span
+                              className={`inline-block text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                item.status === 'Saved'
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                                  : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                              }`}
+                            >
                               {item.status}
                             </span>
                           </td>
@@ -6069,20 +7188,46 @@ CRITICAL PROMPT DIRECTIVE:
       {/* ── Saved Confirmation Modal ── */}
       {savedNotice && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setSavedNotice(null)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            onClick={() => setSavedNotice(null)}
+          />
           <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
             <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-green-500/30">
               <Check size={28} strokeWidth={3} />
             </div>
             <h3 className="text-base font-black text-slate-900 dark:text-white">Draft Saved!</h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">Your document is saved and available offline.</p>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              Your document is saved and available offline.
+            </p>
             <div className="w-full mt-4 space-y-1.5 text-left bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl text-xs">
-              <div className="flex justify-between"><span className="text-slate-400">ID:</span><span className="font-bold dark:text-white">{savedNotice.id}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Saved:</span><span className="font-bold dark:text-white">{savedNotice.date} • {savedNotice.time}</span></div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">ID:</span>
+                <span className="font-bold dark:text-white">{savedNotice.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Saved:</span>
+                <span className="font-bold dark:text-white">
+                  {savedNotice.date} • {savedNotice.time}
+                </span>
+              </div>
             </div>
             <div className="flex gap-2 mt-4 w-full">
-              <button onClick={() => setSavedNotice(null)} className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-white rounded-xl text-xs font-black uppercase">Close</button>
-              <button onClick={() => { setSavedNotice(null); setStep('SAVED'); }} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase">View All</button>
+              <button
+                onClick={() => setSavedNotice(null)}
+                className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-white rounded-xl text-xs font-black uppercase"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setSavedNotice(null);
+                  setStep('SAVED');
+                }}
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase"
+              >
+                View All
+              </button>
             </div>
           </div>
         </div>
@@ -6091,80 +7236,94 @@ CRITICAL PROMPT DIRECTIVE:
       {/* ── Protected Edit Modal ── */}
       {isProtectedEditing && (
         <div className="fixed inset-0 z-[125000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsProtectedEditing(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsProtectedEditing(false)}
+          />
           <div className="relative bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh] text-left">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150 dark:border-white/5 shrink-0">
-              <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Protected Editor — Placeholders</h3>
-              <button onClick={() => setIsProtectedEditing(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                Protected Editor — Placeholders
+              </h3>
+              <button
+                onClick={() => setIsProtectedEditing(false)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"
+              >
                 <X size={16} className="text-slate-500" />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 custom-scrollbar">
               <div className="p-3 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl text-[10px] text-indigo-650 dark:text-indigo-400 font-bold leading-normal">
-                ℹ️ Legal formatting and structural text are protected. You can modify the extracted document placeholders below.
+                ℹ️ Legal formatting and structural text are protected. You can modify the extracted
+                document placeholders below.
               </div>
-              
-              {draftPlaceholders.length > 0 ? (
-                draftPlaceholders.map(ph => {
-                  return (
-                    <div key={ph.key} className="flex flex-col gap-1.5">
-                      <label className="text-[9.5px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                        <span>{ph.label}</span>
-                        <span className="text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/20 text-indigo-500 border border-indigo-200/20">
-                          Placeholder
-                        </span>
+
+              {draftPlaceholders.length > 0
+                ? draftPlaceholders.map(ph => {
+                    return (
+                      <div key={ph.key} className="flex flex-col gap-1.5">
+                        <label className="text-[9.5px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                          <span>{ph.label}</span>
+                          <span className="text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/20 text-indigo-500 border border-indigo-200/20">
+                            Placeholder
+                          </span>
+                        </label>
+                        <input
+                          type="text"
+                          value={placeholderValues[ph.key] || ''}
+                          onChange={e => {
+                            setPlaceholderValues(prev => ({ ...prev, [ph.key]: e.target.value }));
+                            setDraftPlaceholders(prevPhs =>
+                              prevPhs.map(item =>
+                                item.key === ph.key ? { ...item, value: e.target.value } : item
+                              )
+                            );
+                          }}
+                          placeholder={`Enter ${ph.label}...`}
+                          className="w-full border rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-[#141E35] border-slate-200 dark:border-white/8 text-slate-800 dark:text-white"
+                        />
+                      </div>
+                    );
+                  })
+                : template?.fields.map(field => (
+                    <div key={field.key} className="flex flex-col gap-1.5">
+                      <label className="text-[9.5px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-0.5">*</span>}
                       </label>
-                      <input
-                        type="text"
-                        value={placeholderValues[ph.key] || ''}
-                        onChange={e => {
-                          setPlaceholderValues(prev => ({ ...prev, [ph.key]: e.target.value }));
-                          setDraftPlaceholders(prevPhs => prevPhs.map(item => item.key === ph.key ? { ...item, value: e.target.value } : item));
+                      <FieldInput
+                        field={field}
+                        value={formData[field.key] || ''}
+                        onChange={val => {
+                          setFormData(prev => ({ ...prev, [field.key]: val }));
                         }}
-                        placeholder={`Enter ${ph.label}...`}
-                        className="w-full border rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-[#141E35] border-slate-200 dark:border-white/8 text-slate-800 dark:text-white"
+                        filled={true}
+                        country={formData.country}
+                        state={formData.state}
+                        district={formData.district}
                       />
                     </div>
-                  );
-                })
-              ) : (
-                template?.fields.map(field => (
-                  <div key={field.key} className="flex flex-col gap-1.5">
-                    <label className="text-[9.5px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-0.5">*</span>}
-                    </label>
-                    <FieldInput
-                      field={field}
-                      value={formData[field.key] || ''}
-                      onChange={val => {
-                        setFormData(prev => ({ ...prev, [field.key]: val }));
-                      }}
-                      filled={true}
-                      country={formData.country}
-                      state={formData.state}
-                      district={formData.district}
-                    />
-                  </div>
-                ))
-              )}
+                  ))}
             </div>
 
             <div className="flex gap-2.5 pt-4 border-t border-slate-150 dark:border-white/5 shrink-0">
-              <button 
-                onClick={() => setIsProtectedEditing(false)} 
+              <button
+                onClick={() => setIsProtectedEditing(false)}
                 className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-white rounded-xl text-xs font-black uppercase"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
-                  const updatedDraft = replacePlaceholders(originalGeneratedDraft, placeholderValues);
+                  const updatedDraft = replacePlaceholders(
+                    originalGeneratedDraft,
+                    placeholderValues
+                  );
                   setFinalDraft(updatedDraft);
                   setIsProtectedEditing(false);
                   toast.success('✓ Draft updated successfully!');
-                }} 
+                }}
                 className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-1.5"
               >
                 <Save size={13} />
@@ -6178,10 +7337,12 @@ CRITICAL PROMPT DIRECTIVE:
       {/* ── ChatGPT-Style Share Modal ── */}
       {isShareModalOpen && (
         <div className="fixed inset-0 z-[125000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsShareModalOpen(false)} />
-          
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsShareModalOpen(false)}
+          />
+
           <div className="relative bg-white dark:bg-[#0B1020] border border-slate-200 dark:border-white/5 rounded-3xl max-w-md w-full shadow-2xl flex flex-col overflow-hidden text-left animate-menu-appear p-6 space-y-5">
-            
             {/* Modal Header */}
             <div className="flex items-start justify-between">
               <div>
@@ -6193,8 +7354,8 @@ CRITICAL PROMPT DIRECTIVE:
                   This document can be shared securely.
                 </p>
               </div>
-              <button 
-                onClick={() => setIsShareModalOpen(false)} 
+              <button
+                onClick={() => setIsShareModalOpen(false)}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-405 dark:text-slate-400 transition-colors"
               >
                 <X size={16} />
@@ -6203,7 +7364,6 @@ CRITICAL PROMPT DIRECTIVE:
 
             {/* Accordion List */}
             <div className="space-y-2.5">
-              
               {/* Option 1: Copy Link */}
               <div className="border border-slate-150 dark:border-white/5 rounded-2xl overflow-hidden bg-slate-50/30 dark:bg-[#131C31]/5 transition-all">
                 <button
@@ -6214,13 +7374,17 @@ CRITICAL PROMPT DIRECTIVE:
                     <Link size={14} className="text-indigo-500" />
                     <span>Copy Link</span>
                   </span>
-                  <span className="text-[10px] text-slate-400">{shareAccordion === 'link' ? '▲' : '▼'}</span>
+                  <span className="text-[10px] text-slate-400">
+                    {shareAccordion === 'link' ? '▲' : '▼'}
+                  </span>
                 </button>
-                
+
                 {shareAccordion === 'link' && (
                   <div className="p-4 border-t border-slate-150 dark:border-white/5 bg-white dark:bg-[#0B1020] space-y-3.5">
                     <div className="flex flex-col gap-1 text-left">
-                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">Link Expiry</label>
+                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        Link Expiry
+                      </label>
                       <select
                         value={linkExpiry}
                         onChange={e => setLinkExpiry(e.target.value)}
@@ -6235,20 +7399,30 @@ CRITICAL PROMPT DIRECTIVE:
 
                     <button
                       onClick={() => {
-                        const randomToken = Math.random().toString(36).substring(2, 9).toUpperCase();
+                        const randomToken = Math.random()
+                          .toString(36)
+                          .substring(2, 9)
+                          .toUpperCase();
                         const secureUrl = `https://workspace.ailegal.in/share/secure/${randomToken}`;
                         navigator.clipboard.writeText(secureUrl);
-                        
+
                         setShareLogs(prev => [
                           {
                             id: Date.now(),
                             recipient: 'Public Link',
                             method: 'Secure Link',
-                            date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-                            time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                            details: `Expiry: ${linkExpiry}`
+                            date: new Date().toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            }),
+                            time: new Date().toLocaleTimeString('en-IN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }),
+                            details: `Expiry: ${linkExpiry}`,
                           },
-                          ...prev
+                          ...prev,
                         ]);
                         toast.success('✓ Secure link copied successfully.');
                         setIsShareModalOpen(false);
@@ -6272,68 +7446,101 @@ CRITICAL PROMPT DIRECTIVE:
                     <Mail size={14} className="text-indigo-500" />
                     <span>Email</span>
                   </span>
-                  <span className="text-[10px] text-slate-400">{shareAccordion === 'email' ? '▲' : '▼'}</span>
+                  <span className="text-[10px] text-slate-400">
+                    {shareAccordion === 'email' ? '▲' : '▼'}
+                  </span>
                 </button>
-                
+
                 {shareAccordion === 'email' && (
                   <div className="p-4 border-t border-slate-150 dark:border-white/5 bg-white dark:bg-[#0B1020] space-y-3.5">
                     <div className="flex flex-col gap-1.5 text-left">
-                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">Recipient Email</label>
-                      <input 
-                        type="email" 
-                        placeholder="client@firm.com" 
+                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        Recipient Email
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="client@firm.com"
                         value={emailRecipient}
                         onChange={e => setEmailRecipient(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5 text-left">
-                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">Subject</label>
-                      <input 
-                        type="text" 
+                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        Subject
+                      </label>
+                      <input
+                        type="text"
                         value={emailSubject}
                         onChange={e => setEmailSubject(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5 text-left">
-                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">Message Body</label>
-                      <textarea 
-                        rows={3} 
+                      <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        Message Body
+                      </label>
+                      <textarea
+                        rows={3}
                         value={emailMessage}
                         onChange={e => setEmailMessage(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-indigo-500 resize-none font-sans"
                       />
                     </div>
-                    
+
                     <div className="flex gap-4 p-2.5 bg-slate-50 dark:bg-zinc-900/40 rounded-xl border border-slate-100 dark:border-white/5 text-[11px] font-semibold text-slate-600 dark:text-slate-350">
                       <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="checkbox" checked={emailAttachPDF} onChange={e => setEmailAttachPDF(e.target.checked)} className="rounded text-indigo-650" />
+                        <input
+                          type="checkbox"
+                          checked={emailAttachPDF}
+                          onChange={e => setEmailAttachPDF(e.target.checked)}
+                          className="rounded text-indigo-650"
+                        />
                         <span>PDF</span>
                       </label>
                       <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="checkbox" checked={emailAttachDOCX} onChange={e => setEmailAttachDOCX(e.target.checked)} className="rounded text-indigo-650" />
+                        <input
+                          type="checkbox"
+                          checked={emailAttachDOCX}
+                          onChange={e => setEmailAttachDOCX(e.target.checked)}
+                          className="rounded text-indigo-650"
+                        />
                         <span>DOCX</span>
                       </label>
                       <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="checkbox" checked={emailAttachTXT} onChange={e => setEmailAttachTXT(e.target.checked)} className="rounded text-indigo-650" />
+                        <input
+                          type="checkbox"
+                          checked={emailAttachTXT}
+                          onChange={e => setEmailAttachTXT(e.target.checked)}
+                          className="rounded text-indigo-650"
+                        />
                         <span>TXT</span>
                       </label>
                     </div>
 
                     <button
                       onClick={() => {
-                        if (!emailRecipient) { toast.error('Enter recipient email'); return; }
+                        if (!emailRecipient) {
+                          toast.error('Enter recipient email');
+                          return;
+                        }
                         setShareLogs(prev => [
                           {
                             id: Date.now(),
                             recipient: emailRecipient,
                             method: 'Email',
-                            date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-                            time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                            details: `Sent attachments`
+                            date: new Date().toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            }),
+                            time: new Date().toLocaleTimeString('en-IN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }),
+                            details: `Sent attachments`,
                           },
-                          ...prev
+                          ...prev,
                         ]);
                         toast.success(`✓ Draft Email dispatched to ${emailRecipient}`);
                         setIsShareModalOpen(false);
@@ -6357,15 +7564,32 @@ CRITICAL PROMPT DIRECTIVE:
                     <Download size={14} className="text-indigo-500" />
                     <span>Download</span>
                   </span>
-                  <span className="text-[10px] text-slate-400">{shareAccordion === 'download' ? '▲' : '▼'}</span>
+                  <span className="text-[10px] text-slate-400">
+                    {shareAccordion === 'download' ? '▲' : '▼'}
+                  </span>
                 </button>
-                
+
                 {shareAccordion === 'download' && (
                   <div className="p-4 border-t border-slate-150 dark:border-white/5 bg-white dark:bg-[#0B1020] grid grid-cols-3 gap-2">
                     {[
-                      { id: 'PDF', label: 'PDF Draft', action: handleExportPDF, icon: <FileDown size={14} /> },
-                      { id: 'DOCX', label: 'DOCX Word', action: handleExportDOCX, icon: <FileText size={14} /> },
-                      { id: 'TXT', label: 'TXT Plain', action: handleDownload, icon: <Download size={14} /> }
+                      {
+                        id: 'PDF',
+                        label: 'PDF Draft',
+                        action: handleExportPDF,
+                        icon: <FileDown size={14} />,
+                      },
+                      {
+                        id: 'DOCX',
+                        label: 'DOCX Word',
+                        action: handleExportDOCX,
+                        icon: <FileText size={14} />,
+                      },
+                      {
+                        id: 'TXT',
+                        label: 'TXT Plain',
+                        action: handleDownload,
+                        icon: <Download size={14} />,
+                      },
                     ].map(item => (
                       <button
                         key={item.id}
@@ -6376,18 +7600,27 @@ CRITICAL PROMPT DIRECTIVE:
                               id: Date.now(),
                               recipient: 'Self',
                               method: 'Download',
-                              date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-                              time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                              details: `Format: ${item.id}`
+                              date: new Date().toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              }),
+                              time: new Date().toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }),
+                              details: `Format: ${item.id}`,
                             },
-                            ...prev
+                            ...prev,
                           ]);
                           setIsShareModalOpen(false);
                         }}
                         className="py-3 px-2 border border-slate-200 dark:border-white/5 hover:border-indigo-500 bg-slate-50 dark:bg-zinc-900 rounded-xl hover:bg-indigo-50/20 text-slate-805 dark:text-white transition-all flex flex-col items-center justify-center gap-1"
                       >
                         {item.icon}
-                        <span className="text-[9px] font-black uppercase tracking-wider">{item.label}</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider">
+                          {item.label}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -6397,63 +7630,81 @@ CRITICAL PROMPT DIRECTIVE:
               {/* Option 4: Permissions */}
               <div className="border border-slate-150 dark:border-white/5 rounded-2xl overflow-hidden bg-slate-50/30 dark:bg-[#131C31]/5 transition-all">
                 <button
-                  onClick={() => setShareAccordion(shareAccordion === 'permissions' ? '' : 'permissions')}
+                  onClick={() =>
+                    setShareAccordion(shareAccordion === 'permissions' ? '' : 'permissions')
+                  }
                   className="w-full px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-800 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
                     <Lock size={14} className="text-indigo-500" />
                     <span>Permissions</span>
                   </span>
-                  <span className="text-[10px] text-slate-400">{shareAccordion === 'permissions' ? '▲' : '▼'}</span>
+                  <span className="text-[10px] text-slate-400">
+                    {shareAccordion === 'permissions' ? '▲' : '▼'}
+                  </span>
                 </button>
-                
+
                 {shareAccordion === 'permissions' && (
                   <div className="p-4 border-t border-slate-150 dark:border-white/5 bg-white dark:bg-[#0B1020] space-y-3.5">
                     <div className="flex flex-col gap-2.5 bg-slate-50 dark:bg-zinc-900/40 p-3 rounded-2xl border border-slate-100 dark:border-white/5 text-xs font-semibold text-slate-650 dark:text-slate-350 text-left">
                       <label className="flex items-center gap-2 cursor-pointer py-1 border-b border-slate-150/45 dark:border-white/5">
-                        <input 
-                          type="checkbox" 
-                          checked={secReadOnly} 
-                          onChange={e => setSecReadOnly(e.target.checked)} 
+                        <input
+                          type="checkbox"
+                          checked={secReadOnly}
+                          onChange={e => setSecReadOnly(e.target.checked)}
                           className="rounded text-indigo-650 focus:ring-0"
                         />
                         <div>
-                          <p className="font-bold text-slate-800 dark:text-white leading-tight">View Only Access</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Viewer cannot edit standard draft content</p>
+                          <p className="font-bold text-slate-800 dark:text-white leading-tight">
+                            View Only Access
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                            Viewer cannot edit standard draft content
+                          </p>
                         </div>
                       </label>
 
                       <label className="flex items-center gap-2 cursor-pointer py-1 border-b border-slate-150/45 dark:border-white/5">
-                        <input 
-                          type="checkbox" 
-                          checked={!secDisableDownload} 
-                          onChange={e => setSecDisableDownload(!e.target.checked)} 
+                        <input
+                          type="checkbox"
+                          checked={!secDisableDownload}
+                          onChange={e => setSecDisableDownload(!e.target.checked)}
                           className="rounded text-indigo-650 focus:ring-0"
                         />
                         <div>
-                          <p className="font-bold text-slate-800 dark:text-white leading-tight">Allow Download Option</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Let viewers download standard PDF, DOCX, and TXT files</p>
+                          <p className="font-bold text-slate-800 dark:text-white leading-tight">
+                            Allow Download Option
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                            Let viewers download standard PDF, DOCX, and TXT files
+                          </p>
                         </div>
                       </label>
 
                       <label className="flex items-center gap-2 cursor-pointer py-1">
-                        <input 
-                          type="checkbox" 
-                          checked={secPasswordProtect} 
-                          onChange={e => setSecPasswordProtect(e.target.checked)} 
+                        <input
+                          type="checkbox"
+                          checked={secPasswordProtect}
+                          onChange={e => setSecPasswordProtect(e.target.checked)}
                           className="rounded text-indigo-650 focus:ring-0"
                         />
                         <div>
-                          <p className="font-bold text-slate-800 dark:text-white leading-tight">Password Protect Document</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Require password verification before access is granted</p>
+                          <p className="font-bold text-slate-800 dark:text-white leading-tight">
+                            Password Protect Document
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                            Require password verification before access is granted
+                          </p>
                         </div>
                       </label>
                     </div>
 
                     {secPasswordProtect && (
                       <div className="flex flex-col gap-1 text-left">
-                        <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">Security Gate Password</label>
-                        <input 
+                        <label className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                          Security Gate Password
+                        </label>
+                        <input
                           type="password"
                           placeholder="Enter custom gate password..."
                           value={secPassword}
@@ -6465,7 +7716,6 @@ CRITICAL PROMPT DIRECTIVE:
                   </div>
                 )}
               </div>
-
             </div>
 
             {/* Modal Footer */}
@@ -6480,13 +7730,18 @@ CRITICAL PROMPT DIRECTIVE:
               <button
                 onClick={() => {
                   if (shareAccordion === 'email') {
-                    if (!emailRecipient) { toast.error('Enter recipient email'); return; }
+                    if (!emailRecipient) {
+                      toast.error('Enter recipient email');
+                      return;
+                    }
                     toast.success(`✓ Document email sent to ${emailRecipient}`);
                   } else if (shareAccordion === 'permissions') {
                     toast.success('✓ Access permissions configuration updated');
                   } else if (shareAccordion === 'link') {
                     const randomToken = Math.random().toString(36).substring(2, 9).toUpperCase();
-                    navigator.clipboard.writeText(`https://workspace.ailegal.in/share/secure/${randomToken}`);
+                    navigator.clipboard.writeText(
+                      `https://workspace.ailegal.in/share/secure/${randomToken}`
+                    );
                     toast.success('✓ Link copied successfully.');
                   } else {
                     toast.success('✓ Document share configuration applied.');
@@ -6498,7 +7753,6 @@ CRITICAL PROMPT DIRECTIVE:
                 Share
               </button>
             </div>
-
           </div>
         </div>
       )}
@@ -6507,18 +7761,23 @@ CRITICAL PROMPT DIRECTIVE:
       {isMobilePreviewMenuOpen && (
         <div className="fixed inset-0 z-[125000] flex items-end justify-center select-none">
           {/* Overlay */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsMobilePreviewMenuOpen(false)} />
-          
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+            onClick={() => setIsMobilePreviewMenuOpen(false)}
+          />
+
           {/* Bottom Sheet content */}
           <div className="relative bg-white dark:bg-[#111726] border-t border-slate-200 dark:border-zinc-800 rounded-t-3xl w-full max-h-[80vh] shadow-2xl flex flex-col z-10 overflow-hidden animate-slideUp">
             {/* Grab handle */}
             <div className="w-12 h-1 bg-slate-350 dark:bg-zinc-700 rounded-full mx-auto my-3 shrink-0" />
-            
+
             <div className="px-6 pb-6 pt-2 space-y-4 overflow-y-auto">
               <div className="border-b pb-2 dark:border-zinc-800">
-                <h3 className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Document Actions</h3>
+                <h3 className="text-xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
+                  Document Actions
+                </h3>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-2.5">
                 <button
                   onClick={() => {
@@ -6567,12 +7826,14 @@ CRITICAL PROMPT DIRECTIVE:
               </div>
 
               <div className="border-t border-slate-100 dark:border-zinc-800 pt-3">
-                <p className="text-[10px] font-extrabold uppercase text-slate-400 dark:text-slate-500 mb-2">Export formats</p>
+                <p className="text-[10px] font-extrabold uppercase text-slate-400 dark:text-slate-500 mb-2">
+                  Export formats
+                </p>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { label: 'PDF', action: handleExportPDF, icon: <FileDown size={16} /> },
                     { label: 'DOCX', action: handleExportDOCX, icon: <FileCheck size={16} /> },
-                    { label: 'TXT', action: handleDownload, icon: <FileText size={16} /> }
+                    { label: 'TXT', action: handleDownload, icon: <FileText size={16} /> },
                   ].map(fmt => (
                     <button
                       key={fmt.label}
@@ -6596,7 +7857,10 @@ CRITICAL PROMPT DIRECTIVE:
       {/* ── Delete Confirmation Modal ── */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-[125000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsDeleteModalOpen(false)}
+          />
           <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
             <div className="w-12 h-12 bg-red-105 dark:bg-red-950/30 rounded-full flex items-center justify-center text-red-600 mb-4">
               <Trash2 size={24} />
@@ -6604,19 +7868,19 @@ CRITICAL PROMPT DIRECTIVE:
             <h3 className="text-base font-black text-slate-900 dark:text-white">Delete Draft?</h3>
             <p className="text-xs text-slate-400 font-medium mt-1">This action cannot be undone.</p>
             <div className="flex gap-3 mt-6 w-full">
-              <button 
-                onClick={() => setIsDeleteModalOpen(false)} 
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
                 className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-white rounded-xl text-xs font-black uppercase"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setFinalDraft('');
                   setStep('SELECT');
                   setIsDeleteModalOpen(false);
                   toast.success('Active draft deleted');
-                }} 
+                }}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase"
               >
                 Delete
@@ -6628,27 +7892,32 @@ CRITICAL PROMPT DIRECTIVE:
       {/* ── Saved Draft Delete Confirmation Modal ── */}
       {deleteConfirmationId && (
         <div className="fixed inset-0 z-[125000] flex items-center justify-center p-4 select-none">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirmationId(null)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setDeleteConfirmationId(null)}
+          />
           <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
             <div className="w-12 h-12 bg-red-50 dark:bg-red-950/30 rounded-full flex items-center justify-center text-red-600 mb-4">
               <Trash2 size={24} />
             </div>
-            <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">Delete Draft?</h3>
+            <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+              Delete Draft?
+            </h3>
             <p className="text-xs text-slate-450 font-medium mt-1">This action cannot be undone.</p>
             <div className="flex gap-3 mt-6 w-full">
-              <button 
+              <button
                 type="button"
-                onClick={() => setDeleteConfirmationId(null)} 
+                onClick={() => setDeleteConfirmationId(null)}
                 className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-white rounded-xl text-xs font-black uppercase border-none cursor-pointer"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   handleDeleteDraft(deleteConfirmationId);
                   setDeleteConfirmationId(null);
-                }} 
+                }}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black uppercase border-none cursor-pointer"
               >
                 Delete

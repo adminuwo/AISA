@@ -1,8 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPlans, getCreditPackages, purchasePlan, buyCredits, createSubscriptionOrder, getSubscriptionDetails } from '../services/pricingService';
+import {
+  getPlans,
+  getCreditPackages,
+  purchasePlan,
+  buyCredits,
+  createSubscriptionOrder,
+  getSubscriptionDetails,
+} from '../services/pricingService';
 import './Pricing.css';
-import { Check, X, ShieldAlert, Sparkles, Zap, Image as ImageIcon, Video, Search, Users, ChevronRight, ArrowLeft } from 'lucide-react';
+import {
+  Check,
+  X,
+  ShieldAlert,
+  Sparkles,
+  Zap,
+  Image as ImageIcon,
+  Video,
+  Search,
+  Users,
+  ChevronRight,
+  ArrowLeft,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUserStore } from '../userStore/useUserStore';
 import { updateUser, getUserData } from '../userStore/userData';
@@ -12,40 +31,48 @@ import useCreditStore from '../userStore/useCreditStore';
 
 // Helper function to format feature checklist descriptions dynamically matching DB limits
 const formatFeatureString = (feature, plan) => {
-    if (!feature || !plan) return feature;
-    let result = feature;
+  if (!feature || !plan) return feature;
+  let result = feature;
 
-    // 1. Total AI messages / chat limit / Unlimited Chat
-    if (/total AI messages/i.test(result) || /total messages/i.test(result) || /AI messages/i.test(result)) {
-        if (plan.chatLimit === -1 || plan.chatScope === 'unlimited') {
-            return "Unlimited AI Chat";
-        } else {
-            result = result.replace(/\d+/, plan.chatLimit ?? 100);
-        }
+  // 1. Total AI messages / chat limit / Unlimited Chat
+  if (
+    /total AI messages/i.test(result) ||
+    /total messages/i.test(result) ||
+    /AI messages/i.test(result)
+  ) {
+    if (plan.chatLimit === -1 || plan.chatScope === 'unlimited') {
+      return 'Unlimited AI Chat';
+    } else {
+      result = result.replace(/\d+/, plan.chatLimit ?? 100);
     }
+  }
 
-    // 2. Validity
-    if (/months validity/i.test(result) || /month validity/i.test(result) || /days validity/i.test(result)) {
-        const months = Math.round((plan.validityDays || 90) / 30);
-        result = result.replace(/\d+/, months);
-    }
+  // 2. Validity
+  if (
+    /months validity/i.test(result) ||
+    /month validity/i.test(result) ||
+    /days validity/i.test(result)
+  ) {
+    const months = Math.round((plan.validityDays || 90) / 30);
+    result = result.replace(/\d+/, months);
+  }
 
-    // 3. Images/day
-    if (/Images\/day/i.test(result)) {
-        result = result.replace(/\d+/, plan.imageLimit ?? 0);
-    }
+  // 3. Images/day
+  if (/Images\/day/i.test(result)) {
+    result = result.replace(/\d+/, plan.imageLimit ?? 0);
+  }
 
-    // 4. Carousel/day
-    if (/Carousel\/day/i.test(result)) {
-        result = result.replace(/\d+/, plan.carouselLimit ?? 0);
-    }
+  // 4. Carousel/day
+  if (/Carousel\/day/i.test(result)) {
+    result = result.replace(/\d+/, plan.carouselLimit ?? 0);
+  }
 
-    // 5. Videos/day
-    if (/Videos\/day/i.test(result)) {
-        result = result.replace(/\d+/, plan.videoLimit ?? 0);
-    }
+  // 5. Videos/day
+  if (/Videos\/day/i.test(result)) {
+    result = result.replace(/\d+/, plan.videoLimit ?? 0);
+  }
 
-    return result;
+  return result;
 };
 
 const Pricing = () => {
@@ -63,8 +90,12 @@ const Pricing = () => {
   const setUserState = useUserStore(state => state.setUser);
   const [activeCard, setActiveCard] = useState(0);
   const gridRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 1024);
-  const [isTabletCarousel, setIsTabletCarousel] = useState(typeof window !== 'undefined' && window.innerWidth > 768 && window.innerWidth <= 1024);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.innerWidth <= 1024
+  );
+  const [isTabletCarousel, setIsTabletCarousel] = useState(
+    typeof window !== 'undefined' && window.innerWidth > 768 && window.innerWidth <= 1024
+  );
   const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [billingSubmitted, setBillingSubmitted] = useState(false);
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState(null);
@@ -76,7 +107,7 @@ const Pricing = () => {
     city: '',
     state: 'Maharashtra',
     postalCode: '',
-    country: 'IN'
+    country: 'IN',
   });
 
   useEffect(() => {
@@ -90,7 +121,7 @@ const Pricing = () => {
         city: details.city || '',
         state: details.state || 'Maharashtra',
         postalCode: details.postalCode || '',
-        country: details.country || 'IN'
+        country: details.country || 'IN',
       });
     }
   }, [userState]);
@@ -120,7 +151,7 @@ const Pricing = () => {
     return () => grid.removeEventListener('scroll', handleScroll);
   }, [plans.length, isTabletCarousel]);
 
-  const scrollToCard = (idx) => {
+  const scrollToCard = idx => {
     const grid = gridRef.current;
     if (!grid) return;
     const cardWidth = grid.clientWidth * 0.42;
@@ -128,19 +159,19 @@ const Pricing = () => {
   };
 
   const getActiveToken = () => {
-    const userStr = localStorage.getItem("user");
+    const userStr = localStorage.getItem('user');
     let token = null;
-    if (userStr && userStr !== "undefined" && userStr !== "null") {
+    if (userStr && userStr !== 'undefined' && userStr !== 'null') {
       try {
         const userObj = JSON.parse(userStr);
         token = userObj?.token;
       } catch (e) {}
     }
-    if (!token || token === "undefined" || token === "null") {
-      token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+    if (!token || token === 'undefined' || token === 'null') {
+      token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     }
-    if (!token || token === "undefined" || token === "null") {
-      token = "";
+    if (!token || token === 'undefined' || token === 'null') {
+      token = '';
     }
     return token;
   };
@@ -173,10 +204,7 @@ const Pricing = () => {
   const fetchPricingData = async () => {
     try {
       setLoading(true);
-      const [plansData, packagesData] = await Promise.all([
-        getPlans(),
-        getCreditPackages()
-      ]);
+      const [plansData, packagesData] = await Promise.all([getPlans(), getCreditPackages()]);
       setPlans(plansData.plans || []);
       setPackages(packagesData.packages || []);
     } catch (error) {
@@ -188,28 +216,41 @@ const Pricing = () => {
   };
 
   const handleToggle = () => {
-    setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly');
+    setBillingCycle(prev => (prev === 'monthly' ? 'yearly' : 'monthly'));
   };
 
-  const renderQuotaSummary = (plan) => {
+  const renderQuotaSummary = plan => {
     const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
 
     if (isFree) {
       return [
         { text: `${plan.chatLimit || 100} total messages cap`, icon: <Zap size={14} /> },
-        { text: `${Math.round((plan.validityDays || 90) / 30)} months validity`, icon: <ShieldAlert size={14} /> },
-        { text: "Lock CashFlow & media creation", icon: <ImageIcon size={14} />, locked: true }
+        {
+          text: `${Math.round((plan.validityDays || 90) / 30)} months validity`,
+          icon: <ShieldAlert size={14} />,
+        },
+        { text: 'Lock CashFlow & media creation', icon: <ImageIcon size={14} />, locked: true },
       ];
     }
 
     const summary = [
-      { text: plan.chatLimit === -1 ? "Unlimited Chats" : `${plan.chatLimit} Messages`, icon: <Zap size={14} /> },
+      {
+        text: plan.chatLimit === -1 ? 'Unlimited Chats' : `${plan.chatLimit} Messages`,
+        icon: <Zap size={14} />,
+      },
     ];
 
     if (plan.imageLimit > 0) {
-      summary.push({ text: `${plan.imageLimit} Images / Day (HD/Ultra)`, icon: <ImageIcon size={14} /> });
+      summary.push({
+        text: `${plan.imageLimit} Images / Day (HD/Ultra)`,
+        icon: <ImageIcon size={14} />,
+      });
     } else {
-      summary.push({ text: plan.editImageAllowed ? "Edit Image (No Gen)" : "No Image Gen/Edit", icon: <ImageIcon size={14} />, locked: !plan.editImageAllowed });
+      summary.push({
+        text: plan.editImageAllowed ? 'Edit Image (No Gen)' : 'No Image Gen/Edit',
+        icon: <ImageIcon size={14} />,
+        locked: !plan.editImageAllowed,
+      });
     }
 
     if (plan.videoLimit > 0) {
@@ -217,7 +258,7 @@ const Pricing = () => {
     } else if (plan.carouselLimit > 0) {
       summary.push({ text: `${plan.carouselLimit} Carousel / Day`, icon: <Video size={14} /> });
     } else {
-      summary.push({ text: "No Carousel/Video Gen", icon: <Video size={14} />, locked: true });
+      summary.push({ text: 'No Carousel/Video Gen', icon: <Video size={14} />, locked: true });
     }
 
     return summary;
@@ -226,20 +267,20 @@ const Pricing = () => {
   const executeUpgrade = async (plan, billingDetails) => {
     try {
       setProcessing(true);
-      
+
       const totalAmount = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
       const basePrice = Math.round((totalAmount / 1.18) * 100) / 100;
       const gstAmount = Math.round((totalAmount - basePrice) * 100) / 100;
-      
+
       // Print breakdown in console as requested
-      console.log("========================================");
-      console.log("[CHECKOUT] GST INVOICE CALCULATION (GST INCLUSIVE)");
+      console.log('========================================');
+      console.log('[CHECKOUT] GST INVOICE CALCULATION (GST INCLUSIVE)');
       console.log(`Plan Name:   ${plan.planName}`);
       console.log(`Base Price (excl. GST):  ₹${basePrice}`);
       console.log(`GST (18% inclusive):     ₹${gstAmount}`);
       console.log(`Total (Inclusive):       ₹${totalAmount}`);
-      console.log("Billing Details:", billingDetails);
-      console.log("========================================");
+      console.log('Billing Details:', billingDetails);
+      console.log('========================================');
 
       const orderRes = await createSubscriptionOrder({ planId: plan._id, billingCycle });
       if (orderRes.isFree) {
@@ -247,7 +288,8 @@ const Pricing = () => {
         toast.success(`Successfully upgraded to ${plan.planName}!`);
         const updatedUser = updateUser({
           credits: res.credits,
-          founderStatus: plan.planName.toLowerCase() === 'founder plan' ? true : userState.user.founderStatus
+          founderStatus:
+            plan.planName.toLowerCase() === 'founder plan' ? true : userState.user.founderStatus,
         });
         setUserState({ user: updatedUser });
         useCreditStore.getState().syncCredits();
@@ -258,17 +300,25 @@ const Pricing = () => {
       const options = {
         key: orderRes.key,
         amount: orderRes.order.amount,
-        currency: "INR",
-        name: "AISA™",
+        currency: 'INR',
+        name: 'AISA™',
         description: `Upgrade to ${plan.planName}`,
         order_id: orderRes.order.id,
         handler: async function (response) {
           try {
-            const res = await purchasePlan(plan._id, billingCycle, response.razorpay_payment_id, billingDetails);
+            const res = await purchasePlan(
+              plan._id,
+              billingCycle,
+              response.razorpay_payment_id,
+              billingDetails
+            );
             toast.success(`Successfully upgraded to ${plan.planName}!`);
             const updatedUser = updateUser({
               credits: res.credits,
-              founderStatus: plan.planName.toLowerCase() === 'founder plan' ? true : userState.user.founderStatus
+              founderStatus:
+                plan.planName.toLowerCase() === 'founder plan'
+                  ? true
+                  : userState.user.founderStatus,
             });
             setUserState({ user: updatedUser });
             useCreditStore.getState().syncCredits();
@@ -277,10 +327,10 @@ const Pricing = () => {
           }
         },
         prefill: {
-          name: billingDetails?.billingName || userState?.user?.name || "User",
-          email: userState?.user?.email || ""
+          name: billingDetails?.billingName || userState?.user?.name || 'User',
+          email: userState?.user?.email || '',
         },
-        theme: { color: "var(--color-primary)" }
+        theme: { color: 'var(--color-primary)' },
       };
 
       const rzp = new window.Razorpay(options);
@@ -288,7 +338,6 @@ const Pricing = () => {
         toast.error('Payment failed: ' + response.error.description);
       });
       rzp.open();
-
     } catch (err) {
       toast.error(err.response?.data?.message || 'Upgrade failed. Please try again.');
     } finally {
@@ -296,14 +345,14 @@ const Pricing = () => {
     }
   };
 
-  const handleUpgrade = async (plan) => {
+  const handleUpgrade = async plan => {
     const token = getActiveToken();
     if (!token) {
       toast.error(t('pleaseLoginToUpgrade') || 'Please login to upgrade your plan');
       navigate('/login');
       return;
     }
-    
+
     const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
     if (price === 0) {
       executeUpgrade(plan, null);
@@ -313,7 +362,7 @@ const Pricing = () => {
     }
   };
 
-  const handleBuyCredits = async (pkg) => {
+  const handleBuyCredits = async pkg => {
     const token = getActiveToken();
     if (!token) {
       toast.error(t('pleaseLoginToPurchaseCredits') || 'Please login to purchase credits');
@@ -337,8 +386,8 @@ const Pricing = () => {
       const options = {
         key: orderRes.key,
         amount: orderRes.order.amount,
-        currency: "INR",
-        name: "AISA™",
+        currency: 'INR',
+        name: 'AISA™',
         description: `Buy ${pkg.credits} Credits`,
         order_id: orderRes.order.id,
         handler: async function (response) {
@@ -353,10 +402,10 @@ const Pricing = () => {
           }
         },
         prefill: {
-          name: userState?.user?.name || "User",
-          email: userState?.user?.email || ""
+          name: userState?.user?.name || 'User',
+          email: userState?.user?.email || '',
         },
-        theme: { color: "var(--color-primary)" }
+        theme: { color: 'var(--color-primary)' },
       };
 
       const rzp = new window.Razorpay(options);
@@ -364,7 +413,6 @@ const Pricing = () => {
         toast.error('Payment failed: ' + response.error.description);
       });
       rzp.open();
-
     } catch (err) {
       toast.error('Purchase failed.');
     } finally {
@@ -382,72 +430,158 @@ const Pricing = () => {
       switch (featureKey) {
         case 'chat':
           if (isFree) {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
           return <span className="feature-badge">✓ {t('priority')}</span>;
 
         case 'generate_image':
           if (plan.imageLimit > 0) {
-            return <span className="feature-badge">✓ {t('ultraHD')} ({plan.imageLimit}/day)</span>;
+            return (
+              <span className="feature-badge">
+                ✓ {t('ultraHD')} ({plan.imageLimit}/day)
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'edit_image':
           if (plan.editImageAllowed) {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'generate_video':
           if (plan.videoLimit > 0) {
-            return <span className="feature-badge">✓ {t('fourKUltra')} ({plan.videoLimit}/day)</span>;
+            return (
+              <span className="feature-badge">
+                ✓ {t('fourKUltra')} ({plan.videoLimit}/day)
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'magic_card':
           if (plan.videoLimit > 0 || planKey === 'plan_3') {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'web_search':
         case 'deep_search':
         case 'code_writer':
         case 'convert_audio':
           if (planKey !== 'plan_0' && !isFree) {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'convert_docs':
           if (planKey === 'plan_1') {
             return <span className="feature-badge">{t('advanced')}</span>;
           }
           if (planKey === 'plan_2') {
-            return <span className="feature-badge" style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}>{t('expert')}</span>;
+            return (
+              <span
+                className="feature-badge"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
+              >
+                {t('expert')}
+              </span>
+            );
           }
           if (planKey === 'plan_3') {
-            return <span className="feature-badge" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>{t('pro')} + {t('team')}</span>;
+            return (
+              <span
+                className="feature-badge"
+                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
+              >
+                {t('pro')} + {t('team')}
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'ai_legal':
           if (!isFree) {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'ai_cashflow':
           if (plan.cashflowAllowed) {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         case 'ai_ads':
           if (plan.carouselLimit > 0) {
-            return <span className="flex items-center justify-center"><Check size={20} className="check-icon" /></span>;
+            return (
+              <span className="flex items-center justify-center">
+                <Check size={20} className="check-icon" />
+              </span>
+            );
           }
-          return <span className="flex items-center justify-center"><X size={20} className="cross-icon" /></span>;
+          return (
+            <span className="flex items-center justify-center">
+              <X size={20} className="cross-icon" />
+            </span>
+          );
 
         default:
           return null;
@@ -467,7 +601,7 @@ const Pricing = () => {
       { feature: 'AISA Convert Documents', key: 'convert_docs' },
       { feature: 'AISA AI Legal™', key: 'ai_legal' },
       { feature: 'AISA AI Cashflow™', key: 'ai_cashflow' },
-      { feature: 'AISA AI Ads', key: 'ai_ads' }
+      { feature: 'AISA AI Ads', key: 'ai_ads' },
     ];
 
     return (
@@ -491,44 +625,44 @@ const Pricing = () => {
                     {row.feature.replace('AISA ', '')}
                   </td>
                   {plans.map(plan => (
-                    <td key={`${plan._id}-${row.feature}`}>
-                      {getFeatureValue(row.key, plan)}
-                    </td>
+                    <td key={`${plan._id}-${row.feature}`}>{getFeatureValue(row.key, plan)}</td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="comparison-swipe-hint">
-          ← Swipe to explore plans details →
-        </div>
+        <div className="comparison-swipe-hint">← Swipe to explore plans details →</div>
       </div>
     );
   };
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center text-white">Loading incredible pricing...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center text-white">
+        Loading incredible pricing...
+      </div>
+    );
   }
 
   // Map old DB plan names to new display names
   const PLAN_NAME_MAP = {
-    'free': 'Free',
+    free: 'Free',
     'free plan': 'Free',
-    'starter': 'Starter',
+    starter: 'Starter',
     'starter plan': 'Starter',
-    'pro': 'Pro',
+    pro: 'Pro',
     'pro plan': 'Pro',
-    'business': 'Business',
+    business: 'Business',
     'business plan': 'Business',
   };
 
-  const getDisplayPlanName = (planName) => {
+  const getDisplayPlanName = planName => {
     return PLAN_NAME_MAP[planName.toLowerCase()] || planName;
   };
 
   // Detect the "Startup Pro" (formerly Founder) plan
-  const isStartupProPlan = (plan) => {
+  const isStartupProPlan = plan => {
     const name = plan.planName.toLowerCase();
     return name.includes('founder') || name.includes('startup pro') || name.includes('startup');
   };
@@ -545,9 +679,13 @@ const Pricing = () => {
         <p>{t('choosePerfectPlan')}</p>
 
         <div className="billing-toggle">
-          <span className={`billing-label ${billingCycle === 'monthly' ? 'active' : ''}`}>{t('monthly')}</span>
+          <span className={`billing-label ${billingCycle === 'monthly' ? 'active' : ''}`}>
+            {t('monthly')}
+          </span>
           <div className={`toggle-switch ${billingCycle}`} onClick={handleToggle}></div>
-          <span className={`billing-label ${billingCycle === 'yearly' ? 'active' : ''}`}>{t('yearly')}</span>
+          <span className={`billing-label ${billingCycle === 'yearly' ? 'active' : ''}`}>
+            {t('yearly')}
+          </span>
           {billingCycle === 'yearly' && <span className="save-badge">{t('saveBadge')}</span>}
         </div>
       </div>
@@ -555,50 +693,62 @@ const Pricing = () => {
       {/* ── Mobile swipe hint ── */}
       {isTabletCarousel && (
         <div className="pricing-swipe-hint" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5l7 7-7 7" /></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
           <span>Swipe to explore plans</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5l7 7-7 7" /></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
         </div>
       )}
 
       <div className="pricing-grid" ref={gridRef}>
-        {plans.map((plan) => {
-          const isFounder = plan.planName.toLowerCase().includes('startup pro') || plan.planName.toLowerCase().includes('startup');
+        {plans.map(plan => {
+          const isFounder =
+            plan.planName.toLowerCase().includes('startup pro') ||
+            plan.planName.toLowerCase().includes('startup');
           const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
           const isCurrentPlan = (() => {
             if (!currentPlanName) return false;
             const pn = plan.planName.toLowerCase().trim();
             const pid = (plan.planId || '').toLowerCase().trim();
             const cName = currentPlanName.toLowerCase().trim();
-            if (cName === 'startup pro' || cName === 'startup' || cName === 'plan_2') return pn.includes('startup') || pid === 'plan_2' || pn.includes('pro');
+            if (cName === 'startup pro' || cName === 'startup' || cName === 'plan_2')
+              return pn.includes('startup') || pid === 'plan_2' || pn.includes('pro');
             if (cName === 'free' || cName === 'free tier' || cName === 'plan_0') return isFree;
-            if (cName === 'plan_1' || cName === 'creator' || cName === 'starter') return pid === 'plan_1' || pn.includes('starter') || pn.includes('creator');
-            if (cName === 'plan_3' || cName === 'business' || cName === 'enterprise') return pid === 'plan_3' || pn.includes('business') || pn.includes('enterprise');
+            if (cName === 'plan_1' || cName === 'creator' || cName === 'starter')
+              return pid === 'plan_1' || pn.includes('starter') || pn.includes('creator');
+            if (cName === 'plan_3' || cName === 'business' || cName === 'enterprise')
+              return pid === 'plan_3' || pn.includes('business') || pn.includes('enterprise');
             return pid === cName || pn.includes(cName) || cName.includes(pn.split(' ')[0]);
           })();
 
-
           // Fetch ALL values directly from the Database (no frontend math)
-          const displayPrice = billingCycle === 'yearly' ? (plan.priceYearlyPerMonth || plan.priceMonthly) : plan.priceMonthly;
-          const displayCredits = billingCycle === 'yearly' ? (plan.creditsYearly || plan.credits) : plan.credits;
+          const displayPrice =
+            billingCycle === 'yearly'
+              ? plan.priceYearlyPerMonth || plan.priceMonthly
+              : plan.priceMonthly;
+          const displayCredits =
+            billingCycle === 'yearly' ? plan.creditsYearly || plan.credits : plan.credits;
           const totalYearlyAmount = plan.priceYearly || 0;
-          const displayValidity = billingCycle === 'yearly' ? (plan.validityYearly || 12) + ' Months' : (plan.validityMonthly || 1) + ' Month';
+          const displayValidity =
+            billingCycle === 'yearly'
+              ? (plan.validityYearly || 12) + ' Months'
+              : (plan.validityMonthly || 1) + ' Month';
 
           return (
-            <div key={plan._id} className={`pricing-card ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''}`}>
-              {isCurrentPlan && (
-                <div className="current-plan-badge">
-                  ✓ {t('currentPlan')}
-                </div>
-              )}
+            <div
+              key={plan._id}
+              className={`pricing-card ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''}`}
+            >
+              {isCurrentPlan && <div className="current-plan-badge">✓ {t('currentPlan')}</div>}
               {!isCurrentPlan && plan.badge && (
                 <div className={`popular-badge ${isFounder ? 'launch-badge' : ''}`}>
                   {plan.badge}
                 </div>
               )}
-              {isFree && (
-                <div className="free-tier-badge">💬 {t('chatOnly')}</div>
-              )}
+              {isFree && <div className="free-tier-badge">💬 {t('chatOnly')}</div>}
 
               <h3 className="plan-name">{getDisplayPlanName(plan.planName)}</h3>
 
@@ -613,7 +763,13 @@ const Pricing = () => {
                   <span className="currency">₹</span>
                   {displayPrice}
                   <span className="billing-period">
-                    {billingCycle === 'yearly' ? (isFounder ? '/mo (lifetime)' : '/mo') : (isFounder ? '/mo (lifetime)' : '/mo')}
+                    {billingCycle === 'yearly'
+                      ? isFounder
+                        ? '/mo (lifetime)'
+                        : '/mo'
+                      : isFounder
+                        ? '/mo (lifetime)'
+                        : '/mo'}
                   </span>
                 </div>
 
@@ -625,7 +781,8 @@ const Pricing = () => {
 
                 {billingCycle === 'yearly' && !isFree && (
                   <div className="billed-yearly-label">
-                    {t('billedYearlyLabel')} ₹{totalYearlyAmount}{t('billedYearlySuffix')}
+                    {t('billedYearlyLabel')} ₹{totalYearlyAmount}
+                    {t('billedYearlySuffix')}
                   </div>
                 )}
               </div>
@@ -662,14 +819,18 @@ const Pricing = () => {
                     <li key={i}>
                       <Check size={16} />
                       <span className="flex items-center gap-1.5">
-                        <span className="aisa-badge-small" style={{ fontSize: '0.6rem', padding: '1px 4px', minWidth: '30px' }}>AISA™</span>
+                        <span
+                          className="aisa-badge-small"
+                          style={{ fontSize: '0.6rem', padding: '1px 4px', minWidth: '30px' }}
+                        >
+                          AISA™
+                        </span>
                         {formattedFeature.replace(/^AISA\s+/i, '')}
                       </span>
                     </li>
                   );
                 })}
               </ul>
-
 
               {isCurrentPlan ? (
                 <button className="cta-button current-plan-btn" disabled>
@@ -683,7 +844,7 @@ const Pricing = () => {
                 >
                   {displayPrice === 0
                     ? t('startForFree')
-                    : (billingCycle === 'yearly')
+                    : billingCycle === 'yearly'
                       ? `${t('upgradeFor')} ₹${totalYearlyAmount}${t('billedYearlySuffix')}`
                       : t('upgradeTo') + getDisplayPlanName(plan.planName)}
                 </button>
@@ -716,7 +877,7 @@ const Pricing = () => {
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
           <div className="w-full max-w-lg bg-[#0e1726] border border-white/10 rounded-2xl p-6 shadow-2xl text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
-            <button 
+            <button
               onClick={() => setBillingModalOpen(false)}
               className="absolute top-4 right-4 text-white/50 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-all"
             >
@@ -734,11 +895,19 @@ const Pricing = () => {
             <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-4 font-medium text-sm space-y-2">
               <div className="flex justify-between text-white/60">
                 <span>Plan:</span>
-                <span className="font-bold text-white">{selectedPlanForUpgrade.planName} ({billingCycle})</span>
+                <span className="font-bold text-white">
+                  {selectedPlanForUpgrade.planName} ({billingCycle})
+                </span>
               </div>
               <div className="flex justify-between text-white/60 pt-1">
                 <span>Total Amount:</span>
-                <span className="font-bold text-primary">₹{(billingCycle === 'yearly' ? selectedPlanForUpgrade.priceYearly : selectedPlanForUpgrade.priceMonthly).toFixed(2)}</span>
+                <span className="font-bold text-primary">
+                  ₹
+                  {(billingCycle === 'yearly'
+                    ? selectedPlanForUpgrade.priceYearly
+                    : selectedPlanForUpgrade.priceMonthly
+                  ).toFixed(2)}
+                </span>
               </div>
             </div>
 

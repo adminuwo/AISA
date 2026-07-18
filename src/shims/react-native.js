@@ -2,7 +2,7 @@
 export * from 'react-native-web';
 // Mock TurboModuleRegistry for compatibility with react-native-reanimated
 export const TurboModuleRegistry = {
-  get: (moduleName) => {
+  get: moduleName => {
     console.warn(`[Shim] TurboModuleRegistry.get(${moduleName}) called - returning null`);
     return null;
   },

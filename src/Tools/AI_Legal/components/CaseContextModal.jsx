@@ -1,19 +1,48 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Scale, Briefcase, X, Sparkles, FileText, Users,
-  Gavel, Shield, FolderOpen, Zap, AlertCircle
+  Scale,
+  Briefcase,
+  X,
+  Sparkles,
+  FileText,
+  Users,
+  Gavel,
+  Shield,
+  FolderOpen,
+  Zap,
+  AlertCircle,
 } from 'lucide-react';
 
 // ─── MODULE CONFIG ────────────────────────────────────────────────────────────
 const MODULE_META = {
-  legal_argument_builder:  { icon: Gavel,      color: 'from-violet-600 to-indigo-600',  label: 'Argument Builder'  },
-  legal_precedents:        { icon: Scale,       color: 'from-indigo-600 to-blue-600',    label: 'Legal Precedent'   },
-  legal_draft_maker:       { icon: FileText,    color: 'from-blue-600 to-cyan-600',      label: 'Draft Maker'       },
-  legal_evidence_checker:  { icon: Shield,      color: 'from-emerald-600 to-teal-600',  label: 'Evidence Analysis' },
-  legal_case_predictor:    { icon: Zap,         color: 'from-amber-600 to-orange-600',  label: 'Case Predictor'    },
-  legal_contract_analyzer: { icon: FolderOpen,  color: 'from-rose-600 to-pink-600',     label: 'Contract Review'   },
-  legal_strategy_engine:   { icon: Sparkles,    color: 'from-purple-600 to-violet-600', label: 'Strategy Engine'   },
+  legal_argument_builder: {
+    icon: Gavel,
+    color: 'from-violet-600 to-indigo-600',
+    label: 'Argument Builder',
+  },
+  legal_precedents: { icon: Scale, color: 'from-indigo-600 to-blue-600', label: 'Legal Precedent' },
+  legal_draft_maker: { icon: FileText, color: 'from-blue-600 to-cyan-600', label: 'Draft Maker' },
+  legal_evidence_checker: {
+    icon: Shield,
+    color: 'from-emerald-600 to-teal-600',
+    label: 'Evidence Analysis',
+  },
+  legal_case_predictor: {
+    icon: Zap,
+    color: 'from-amber-600 to-orange-600',
+    label: 'Case Predictor',
+  },
+  legal_contract_analyzer: {
+    icon: FolderOpen,
+    color: 'from-rose-600 to-pink-600',
+    label: 'Contract Review',
+  },
+  legal_strategy_engine: {
+    icon: Sparkles,
+    color: 'from-purple-600 to-violet-600',
+    label: 'Strategy Engine',
+  },
 };
 
 /**
@@ -39,7 +68,11 @@ const CaseContextModal = ({
 }) => {
   if (!isOpen) return null;
 
-  const meta = MODULE_META[moduleId] || { icon: Scale, color: 'from-indigo-600 to-violet-600', label: moduleName };
+  const meta = MODULE_META[moduleId] || {
+    icon: Scale,
+    color: 'from-indigo-600 to-violet-600',
+    label: moduleName,
+  };
   const ModuleIcon = meta.icon;
 
   const caseName = caseData?.title || caseData?.name || 'Untitled Case';
@@ -53,8 +86,8 @@ const CaseContextModal = ({
   // Summary items to display
   const summaryItems = [
     clientName && { label: 'Client / Petitioner', value: clientName, icon: Users },
-    opponent   && { label: 'Opponent / Respondent', value: opponent, icon: Users },
-    court      && { label: 'Court', value: court, icon: Gavel },
+    opponent && { label: 'Opponent / Respondent', value: opponent, icon: Users },
+    court && { label: 'Court', value: court, icon: Gavel },
     docCount > 0 && { label: 'Evidence Files', value: `${docCount} uploaded`, icon: FileText },
     argCount > 0 && { label: 'Previous Arguments', value: `${argCount} built`, icon: Scale },
     factCount > 0 && { label: 'Case Events', value: `${factCount} on timeline`, icon: AlertCircle },
@@ -86,7 +119,9 @@ const CaseContextModal = ({
             <div className="w-10 h-1.5 bg-slate-200 dark:bg-zinc-700 rounded-full mx-auto mt-3 mb-1 sm:hidden" />
 
             {/* Header gradient */}
-            <div className={`px-6 pt-6 pb-5 bg-gradient-to-br ${meta.color} relative overflow-hidden`}>
+            <div
+              className={`px-6 pt-6 pb-5 bg-gradient-to-br ${meta.color} relative overflow-hidden`}
+            >
               <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-3">
@@ -94,7 +129,9 @@ const CaseContextModal = ({
                     <ModuleIcon size={20} className="text-white" />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-white/70">Active Case Detected</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white/70">
+                      Active Case Detected
+                    </p>
                     <h2 className="text-base font-black text-white leading-tight">{meta.label}</h2>
                   </div>
                 </div>
@@ -110,7 +147,9 @@ const CaseContextModal = ({
               <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-white/15 backdrop-blur-sm rounded-2xl border border-white/20 relative z-10">
                 <Briefcase size={14} className="text-white shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[9px] text-white/70 font-bold uppercase tracking-widest">Case</p>
+                  <p className="text-[9px] text-white/70 font-bold uppercase tracking-widest">
+                    Case
+                  </p>
                   <p className="text-sm font-black text-white leading-tight truncate">{caseName}</p>
                 </div>
               </div>
@@ -118,18 +157,23 @@ const CaseContextModal = ({
 
             {/* Body */}
             <div className="px-5 py-4 space-y-4">
-
               {/* Case summary */}
               {summaryItems.length > 0 && (
                 <div className="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-4 pt-3 pb-1.5">Case Summary</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-4 pt-3 pb-1.5">
+                    Case Summary
+                  </p>
                   <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {summaryItems.map(({ label, value, icon: Icon }, i) => (
                       <div key={i} className="flex items-center gap-3 px-4 py-2">
                         <Icon size={12} className="text-slate-400 shrink-0" />
                         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold truncate">{label}</span>
-                          <span className="text-[10px] text-slate-700 dark:text-slate-200 font-black truncate max-w-[140px] text-right">{value}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold truncate">
+                            {label}
+                          </span>
+                          <span className="text-[10px] text-slate-700 dark:text-slate-200 font-black truncate max-w-[140px] text-right">
+                            {value}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -140,15 +184,23 @@ const CaseContextModal = ({
               {/* Description */}
               {caseData?.description && (
                 <div className="bg-amber-50/60 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl px-4 py-3">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Case Facts</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed line-clamp-3">{caseData.description}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">
+                    Case Facts
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed line-clamp-3">
+                    {caseData.description}
+                  </p>
                 </div>
               )}
 
               {/* Question */}
               <div className="text-center">
-                <p className="text-xs font-black text-slate-700 dark:text-slate-200">How would you like to continue?</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Choose your working mode for {meta.label}</p>
+                <p className="text-xs font-black text-slate-700 dark:text-slate-200">
+                  How would you like to continue?
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Choose your working mode for {meta.label}
+                </p>
               </div>
 
               {/* Buttons */}

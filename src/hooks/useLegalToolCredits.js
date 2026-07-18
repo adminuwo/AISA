@@ -7,15 +7,15 @@ import useCreditStore from '../userStore/useCreditStore';
  * Returns true immediately.
  */
 export const useLegalToolCredits = () => {
-    const { isLoading } = useCreditStore();
+  const { isLoading } = useCreditStore();
 
-    const handleToolUsage = useCallback(async (toolName, cost = 0) => {
-        return true;
-    }, []);
+  const handleToolUsage = useCallback(async (toolName, cost = 0) => {
+    return true;
+  }, []);
 
-    return {
-        handleToolUsage,
-        currentCredits: 9999, // dummy value for legacy UI compatibility
-        isLoading: false
-    };
+  return {
+    handleToolUsage,
+    currentCredits: 9999, // dummy value for legacy UI compatibility
+    isLoading: false,
+  };
 };

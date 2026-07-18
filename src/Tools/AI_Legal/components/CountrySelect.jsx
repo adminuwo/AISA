@@ -3,69 +3,267 @@ import { Search, ChevronDown, X, Globe, Check } from 'lucide-react';
 
 // ─── All countries of the world ───────────────────────────────────────────────
 export const ALL_COUNTRIES = [
-  'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola',
-  'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
-  'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados',
-  'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
-  'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei',
-  'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia',
-  'Cameroon', 'Canada', 'Central African Republic', 'Chad', 'Chile',
-  'China', 'Colombia', 'Comoros', 'Congo (Brazzaville)', 'Congo (Kinshasa)',
-  'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czech Republic',
-  'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador',
-  'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Estonia',
-  'Eswatini', 'Ethiopia', 'Fiji', 'Finland', 'France',
-  'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana',
-  'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau',
-  'Guyana', 'Haiti', 'Honduras', 'Hungary', 'Iceland',
-  'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland',
-  'Israel', 'Italy', 'Ivory Coast', 'Jamaica', 'Japan',
-  'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kuwait',
-  'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho',
-  'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg',
-  'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali',
-  'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico',
-  'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro',
-  'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru',
-  'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger',
-  'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman',
-  'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea',
-  'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
-  'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis',
-  'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe',
-  'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone',
-  'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia',
-  'South Africa', 'South Korea', 'South Sudan', 'Spain', 'Sri Lanka',
-  'Sudan', 'Suriname', 'Sweden', 'Switzerland', 'Syria',
-  'Taiwan', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste',
-  'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey',
-  'Turkmenistan', 'Tuvalu', 'Uganda', 'Ukraine', 'United Arab Emirates',
-  'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu',
-  'Vatican City', 'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe',
+  'Afghanistan',
+  'Albania',
+  'Algeria',
+  'Andorra',
+  'Angola',
+  'Antigua and Barbuda',
+  'Argentina',
+  'Armenia',
+  'Australia',
+  'Austria',
+  'Azerbaijan',
+  'Bahamas',
+  'Bahrain',
+  'Bangladesh',
+  'Barbados',
+  'Belarus',
+  'Belgium',
+  'Belize',
+  'Benin',
+  'Bhutan',
+  'Bolivia',
+  'Bosnia and Herzegovina',
+  'Botswana',
+  'Brazil',
+  'Brunei',
+  'Bulgaria',
+  'Burkina Faso',
+  'Burundi',
+  'Cabo Verde',
+  'Cambodia',
+  'Cameroon',
+  'Canada',
+  'Central African Republic',
+  'Chad',
+  'Chile',
+  'China',
+  'Colombia',
+  'Comoros',
+  'Congo (Brazzaville)',
+  'Congo (Kinshasa)',
+  'Costa Rica',
+  'Croatia',
+  'Cuba',
+  'Cyprus',
+  'Czech Republic',
+  'Denmark',
+  'Djibouti',
+  'Dominica',
+  'Dominican Republic',
+  'Ecuador',
+  'Egypt',
+  'El Salvador',
+  'Equatorial Guinea',
+  'Eritrea',
+  'Estonia',
+  'Eswatini',
+  'Ethiopia',
+  'Fiji',
+  'Finland',
+  'France',
+  'Gabon',
+  'Gambia',
+  'Georgia',
+  'Germany',
+  'Ghana',
+  'Greece',
+  'Grenada',
+  'Guatemala',
+  'Guinea',
+  'Guinea-Bissau',
+  'Guyana',
+  'Haiti',
+  'Honduras',
+  'Hungary',
+  'Iceland',
+  'India',
+  'Indonesia',
+  'Iran',
+  'Iraq',
+  'Ireland',
+  'Israel',
+  'Italy',
+  'Ivory Coast',
+  'Jamaica',
+  'Japan',
+  'Jordan',
+  'Kazakhstan',
+  'Kenya',
+  'Kiribati',
+  'Kuwait',
+  'Kyrgyzstan',
+  'Laos',
+  'Latvia',
+  'Lebanon',
+  'Lesotho',
+  'Liberia',
+  'Libya',
+  'Liechtenstein',
+  'Lithuania',
+  'Luxembourg',
+  'Madagascar',
+  'Malawi',
+  'Malaysia',
+  'Maldives',
+  'Mali',
+  'Malta',
+  'Marshall Islands',
+  'Mauritania',
+  'Mauritius',
+  'Mexico',
+  'Micronesia',
+  'Moldova',
+  'Monaco',
+  'Mongolia',
+  'Montenegro',
+  'Morocco',
+  'Mozambique',
+  'Myanmar',
+  'Namibia',
+  'Nauru',
+  'Nepal',
+  'Netherlands',
+  'New Zealand',
+  'Nicaragua',
+  'Niger',
+  'Nigeria',
+  'North Korea',
+  'North Macedonia',
+  'Norway',
+  'Oman',
+  'Pakistan',
+  'Palau',
+  'Palestine',
+  'Panama',
+  'Papua New Guinea',
+  'Paraguay',
+  'Peru',
+  'Philippines',
+  'Poland',
+  'Portugal',
+  'Qatar',
+  'Romania',
+  'Russia',
+  'Rwanda',
+  'Saint Kitts and Nevis',
+  'Saint Lucia',
+  'Saint Vincent and the Grenadines',
+  'Samoa',
+  'San Marino',
+  'Sao Tome and Principe',
+  'Saudi Arabia',
+  'Senegal',
+  'Serbia',
+  'Seychelles',
+  'Sierra Leone',
+  'Singapore',
+  'Slovakia',
+  'Slovenia',
+  'Solomon Islands',
+  'Somalia',
+  'South Africa',
+  'South Korea',
+  'South Sudan',
+  'Spain',
+  'Sri Lanka',
+  'Sudan',
+  'Suriname',
+  'Sweden',
+  'Switzerland',
+  'Syria',
+  'Taiwan',
+  'Tajikistan',
+  'Tanzania',
+  'Thailand',
+  'Timor-Leste',
+  'Togo',
+  'Tonga',
+  'Trinidad and Tobago',
+  'Tunisia',
+  'Turkey',
+  'Turkmenistan',
+  'Tuvalu',
+  'Uganda',
+  'Ukraine',
+  'United Arab Emirates',
+  'United Kingdom',
+  'United States',
+  'Uruguay',
+  'Uzbekistan',
+  'Vanuatu',
+  'Vatican City',
+  'Venezuela',
+  'Vietnam',
+  'Yemen',
+  'Zambia',
+  'Zimbabwe',
 ];
 
 // Country flag emoji lookup (top countries)
 const FLAG_EMOJI = {
-  'India': '🇮🇳', 'United States': '🇺🇸', 'United Kingdom': '🇬🇧',
-  'Canada': '🇨🇦', 'Australia': '🇦🇺', 'Germany': '🇩🇪',
-  'France': '🇫🇷', 'Italy': '🇮🇹', 'Spain': '🇪🇸', 'Japan': '🇯🇵',
-  'China': '🇨🇳', 'Singapore': '🇸🇬', 'United Arab Emirates': '🇦🇪',
-  'Saudi Arabia': '🇸🇦', 'Qatar': '🇶🇦', 'Brazil': '🇧🇷',
-  'Russia': '🇷🇺', 'South Africa': '🇿🇦', 'Pakistan': '🇵🇰',
-  'Bangladesh': '🇧🇩', 'Sri Lanka': '🇱🇰', 'Nepal': '🇳🇵',
-  'Malaysia': '🇲🇾', 'Indonesia': '🇮🇩', 'Philippines': '🇵🇭',
-  'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'South Korea': '🇰🇷',
-  'Turkey': '🇹🇷', 'Netherlands': '🇳🇱', 'Sweden': '🇸🇪',
-  'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Switzerland': '🇨🇭',
-  'Poland': '🇵🇱', 'Mexico': '🇲🇽', 'Argentina': '🇦🇷',
-  'Chile': '🇨🇱', 'New Zealand': '🇳🇿', 'Ireland': '🇮🇪',
-  'Portugal': '🇵🇹', 'Greece': '🇬🇷', 'Egypt': '🇪🇬',
-  'Nigeria': '🇳🇬', 'Kenya': '🇰🇪', 'Ethiopia': '🇪🇹',
-  'Ghana': '🇬🇭', 'Morocco': '🇲🇦', 'Israel': '🇮🇱',
-  'Iraq': '🇮🇶', 'Iran': '🇮🇷', 'Kuwait': '🇰🇼',
-  'Bahrain': '🇧🇭', 'Oman': '🇴🇲', 'Jordan': '🇯🇴',
-  'Lebanon': '🇱🇧', 'Myanmar': '🇲🇲', 'Cambodia': '🇰🇭',
-  'Ukraine': '🇺🇦', 'Belarus': '🇧🇾', 'Kazakhstan': '🇰🇿',
+  India: '🇮🇳',
+  'United States': '🇺🇸',
+  'United Kingdom': '🇬🇧',
+  Canada: '🇨🇦',
+  Australia: '🇦🇺',
+  Germany: '🇩🇪',
+  France: '🇫🇷',
+  Italy: '🇮🇹',
+  Spain: '🇪🇸',
+  Japan: '🇯🇵',
+  China: '🇨🇳',
+  Singapore: '🇸🇬',
+  'United Arab Emirates': '🇦🇪',
+  'Saudi Arabia': '🇸🇦',
+  Qatar: '🇶🇦',
+  Brazil: '🇧🇷',
+  Russia: '🇷🇺',
+  'South Africa': '🇿🇦',
+  Pakistan: '🇵🇰',
+  Bangladesh: '🇧🇩',
+  'Sri Lanka': '🇱🇰',
+  Nepal: '🇳🇵',
+  Malaysia: '🇲🇾',
+  Indonesia: '🇮🇩',
+  Philippines: '🇵🇭',
+  Thailand: '🇹🇭',
+  Vietnam: '🇻🇳',
+  'South Korea': '🇰🇷',
+  Turkey: '🇹🇷',
+  Netherlands: '🇳🇱',
+  Sweden: '🇸🇪',
+  Norway: '🇳🇴',
+  Denmark: '🇩🇰',
+  Switzerland: '🇨🇭',
+  Poland: '🇵🇱',
+  Mexico: '🇲🇽',
+  Argentina: '🇦🇷',
+  Chile: '🇨🇱',
+  'New Zealand': '🇳🇿',
+  Ireland: '🇮🇪',
+  Portugal: '🇵🇹',
+  Greece: '🇬🇷',
+  Egypt: '🇪🇬',
+  Nigeria: '🇳🇬',
+  Kenya: '🇰🇪',
+  Ethiopia: '🇪🇹',
+  Ghana: '🇬🇭',
+  Morocco: '🇲🇦',
+  Israel: '🇮🇱',
+  Iraq: '🇮🇶',
+  Iran: '🇮🇷',
+  Kuwait: '🇰🇼',
+  Bahrain: '🇧🇭',
+  Oman: '🇴🇲',
+  Jordan: '🇯🇴',
+  Lebanon: '🇱🇧',
+  Myanmar: '🇲🇲',
+  Cambodia: '🇰🇭',
+  Ukraine: '🇺🇦',
+  Belarus: '🇧🇾',
+  Kazakhstan: '🇰🇿',
 };
 
 // ─── CountrySelect Component ──────────────────────────────────────────────────
@@ -90,7 +288,7 @@ const CountrySelect = ({
 
   // Close on outside click
   useEffect(() => {
-    const handler = (e) => {
+    const handler = e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
         setQuery('');
@@ -116,14 +314,20 @@ const CountrySelect = ({
     }
   }, [highlighted]);
 
-  const handleSelect = useCallback((country) => {
-    onChange(country);
-    setOpen(false);
-    setQuery('');
-  }, [onChange]);
+  const handleSelect = useCallback(
+    country => {
+      onChange(country);
+      setOpen(false);
+      setQuery('');
+    },
+    [onChange]
+  );
 
-  const handleKeyDown = (e) => {
-    if (!open) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') setOpen(true); return; }
+  const handleKeyDown = e => {
+    if (!open) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') setOpen(true);
+      return;
+    }
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -146,7 +350,7 @@ const CountrySelect = ({
     }
   };
 
-  const flag = value ? (FLAG_EMOJI[value] || '🌍') : null;
+  const flag = value ? FLAG_EMOJI[value] || '🌍' : null;
   const borderClass = filled
     ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/50 dark:bg-emerald-950/10'
     : 'border-slate-200 dark:border-white/8 bg-white dark:bg-[#141E35]';
@@ -166,14 +370,19 @@ const CountrySelect = ({
         ) : (
           <Globe size={15} className="text-slate-400 shrink-0" />
         )}
-        <span className={`flex-1 truncate ${value ? 'text-slate-800 dark:text-white font-semibold' : 'text-slate-400'} flex items-center gap-1.5`}>
+        <span
+          className={`flex-1 truncate ${value ? 'text-slate-800 dark:text-white font-semibold' : 'text-slate-400'} flex items-center gap-1.5`}
+        >
           {value || placeholder}
           {value && <Check size={14} className="text-emerald-500 shrink-0" />}
         </span>
         {value && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onChange(''); }}
+            onClick={e => {
+              e.stopPropagation();
+              onChange('');
+            }}
             className="p-0.5 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-full shrink-0 transition-colors"
             aria-label="Clear selection"
           >
@@ -201,7 +410,10 @@ const CountrySelect = ({
               ref={inputRef}
               type="text"
               value={query}
-              onChange={e => { setQuery(e.target.value); setHighlighted(0); }}
+              onChange={e => {
+                setQuery(e.target.value);
+                setHighlighted(0);
+              }}
               placeholder="Type to search country..."
               className="flex-1 text-xs font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-400"
               aria-label="Search countries"
@@ -209,7 +421,10 @@ const CountrySelect = ({
             {query && (
               <button
                 type="button"
-                onClick={() => { setQuery(''); setHighlighted(0); }}
+                onClick={() => {
+                  setQuery('');
+                  setHighlighted(0);
+                }}
                 className="p-0.5 hover:bg-slate-100 dark:hover:bg-zinc-700 rounded-full"
               >
                 <X size={11} className="text-slate-400" />
@@ -244,8 +459,8 @@ const CountrySelect = ({
                       isSelected
                         ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold'
                         : isHovered
-                        ? 'bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-white'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                          ? 'bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-white'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -256,15 +471,17 @@ const CountrySelect = ({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      {isSelected && <Check size={14} className="text-indigo-600 dark:text-indigo-400" />}
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                        isSelected
-                          ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
-                          : 'border-slate-300 dark:border-zinc-600 bg-transparent'
-                      }`}>
-                        {isSelected && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                        )}
+                      {isSelected && (
+                        <Check size={14} className="text-indigo-600 dark:text-indigo-400" />
+                      )}
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                          isSelected
+                            ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
+                            : 'border-slate-300 dark:border-zinc-600 bg-transparent'
+                        }`}
+                      >
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </div>
                     </div>
                   </button>
