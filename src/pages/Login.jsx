@@ -3,8 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Key, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { API, apis, AppRoute } from '../types';
-import { setUserData, userData as userDataAtom } from '../userStore/userData';
-import { useSetRecoilState } from 'recoil';
+import { useUserStore } from '../userStore/useUserStore';
+import { setUserData } from '../userStore/userData';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +17,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const setUserRecoil = useSetRecoilState(userDataAtom);
+  const setUserRecoil = useUserStore(state => state.setUser);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

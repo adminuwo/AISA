@@ -1,11 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
 import { LaptopMinimalCheck } from 'lucide-react';
-import { toggleState } from '../../userStore/userData';
-import { useRecoilState } from 'recoil';
+import { useUserStore } from '../../userStore/useUserStore';
 import { motion } from 'framer-motion';
 const NotificationBar = ({ msg, error }) => {
-  const [notifiyTgl, setNotifyTgl] = useRecoilState(toggleState)
+  const { toggles: notifiyTgl, setToggle } = useUserStore();
   return (
     <motion.div
       initial={{ opacity: 0, y: -50, scale: 0.9 }}
@@ -19,7 +18,7 @@ const NotificationBar = ({ msg, error }) => {
         </div> : <LaptopMinimalCheck className='text-secondary' />}
 
           <div className="error__title">{msg}</div>
-          <div onClick={() => { setNotifyTgl({ ...notifiyTgl, notify: false }) }} className="error__close"><svg xmlns="http://www.w3.org/2000/svg" width={20} viewBox="0 0 20 20" height={20}><path fill="#393a37" d="m15.8333 5.34166-1.175-1.175-4.6583 4.65834-4.65833-4.65834-1.175 1.175 4.65833 4.65834-4.65833 4.6583 1.175 1.175 4.65833-4.6583 4.6583 4.6583 1.175-1.175-4.6583-4.6583z" /></svg></div>
+          <div onClick={() => { setToggle('notify', false) }} className="error__close"><svg xmlns="http://www.w3.org/2000/svg" width={20} viewBox="0 0 20 20" height={20}><path fill="#393a37" d="m15.8333 5.34166-1.175-1.175-4.6583 4.65834-4.65833-4.65834-1.175 1.175 4.65833 4.65834-4.65833 4.6583 1.175 1.175 4.65833-4.6583 4.6583 4.6583 1.175-1.175-4.6583-4.6583z" /></svg></div>
         </div>
       </StyledWrapper>
     </motion.div>

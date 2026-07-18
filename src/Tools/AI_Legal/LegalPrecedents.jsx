@@ -15,8 +15,7 @@ import {
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
-import { useSetRecoilState } from 'recoil';
-import { toggleState } from '../../userStore/userData';
+import { useUserStore } from '../../userStore/useUserStore';
 import { apis } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import LanguageToggle from './components/shared/LanguageToggle';
@@ -775,17 +774,17 @@ export const CaseDetailView = ({
         tags = []
     } = caseItem;
 
-    const setTglState = useSetRecoilState(toggleState);
+    const setToggle = useUserStore(state => state.setToggle);
     const responseRef = React.useRef(null);
 
     useEffect(() => {
-        setTglState(prev => ({ ...prev, focusMode: true }));
+        setToggle('focusMode', true);
         document.body.classList.add('focus-mode');
         return () => {
-            setTglState(prev => ({ ...prev, focusMode: false }));
+            setToggle('focusMode', false);
             document.body.classList.remove('focus-mode');
         };
-    }, [setTglState]);
+    }, [setToggle]);
 
     useEffect(() => {
         if (aiResponses.summarize || aiResponses.compare) {

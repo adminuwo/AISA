@@ -13,8 +13,7 @@ import {
 import Loader from '../Components/Loader/Loader';
 import { getModeIcon, getModeName, MODES } from '../utils/modeDetection';
 import toast from 'react-hot-toast';
-import { useRecoilValue } from 'recoil';
-import { userData } from '../userStore/userData';
+import { useUserStore } from '../userStore/useUserStore';
 import { motion } from 'framer-motion';
 import { logo } from '../constants';
 import { apis } from '../types';
@@ -331,8 +330,7 @@ const SharedChat = () => {
     fetchSharedChat();
   }, [shareId]);
 
-  const userStore = useRecoilValue(userData);
-  const currentUser = userStore?.user;
+  const currentUser = useUserStore(state => state.user);
 
   const handleDuplicate = async () => {
     try {

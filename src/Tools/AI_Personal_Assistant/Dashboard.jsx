@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '../../services/apiService';
 import TaskModal from './TaskModal';
 import { Plus, CheckCircle, Clock, Calendar as CalendarIcon, AlertTriangle, Trash2, Mic, Settings2, Menu as MenuIcon } from 'lucide-react';
-import { useRecoilState } from 'recoil';
-import { toggleState } from '../../userStore/userData';
+import { useUserStore } from '../../userStore/useUserStore';
 import DeleteConfirmModal from '../../Components/DeleteConfirmModal';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../context/LanguageContext';
@@ -17,8 +16,8 @@ const Dashboard = () => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null });
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, today, pending, completed
-    const [tglState, setTglState] = useRecoilState(toggleState);
-    const toggleSidebar = () => setTglState(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }));
+    const { toggles: tglState, setToggle } = useUserStore();
+    const toggleSidebar = () => setToggle('sidebarOpen', !tglState.sidebarOpen);
     const { speakReminder, stopReminderVoice } = usePersonalization();
 
     const notifiedRef = useRef(new Set());

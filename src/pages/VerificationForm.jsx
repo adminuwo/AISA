@@ -3,8 +3,8 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, CheckCircle, ArrowLeft, AlertCircle, Pencil, ArrowRight } from 'lucide-react';
 import { AppRoute, apis } from '../types';
 import axios from 'axios';
-import { getUserData, setUserData, userData as userDataAtom } from '../userStore/userData';
-import { useSetRecoilState } from 'recoil';
+import { useUserStore } from '../userStore/useUserStore';
+import { getUserData, setUserData } from '../userStore/userData';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,7 @@ export default function VerificationForm() {
     const navigate = useNavigate();
     const location = useLocation();
     const { t } = useLanguage();
-    const setUserRecoil = useSetRecoilState(userDataAtom);
+    const setUserRecoil = useUserStore(state => state.setUser);
 
     const [verificationCode, setVerificationCode] = useState('');
     const [loading, setLoading] = useState(false);

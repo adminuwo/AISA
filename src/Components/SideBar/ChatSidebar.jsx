@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { useRecoilState, useRecoilValue } from 'recoil';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Search, Plus, Folder, FolderOpen, ChevronDown, Edit2, Trash2, Check, PlusCircle,
@@ -15,13 +14,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useGenerationStore, selectGeneratingChatIds } from '../../userStore/useGenerationStore';
 import { useShallow } from 'zustand/react/shallow';
-import {
-  sessionsData,
-  activeProjectIdData,
-  activeModeData,
-  activeLegalToolData,
-  activeProjectsData
-} from '../../userStore/userData';
+import { useUserStore } from '../../userStore/useUserStore';
 
 import DeleteConfirmModal from '../DeleteConfirmModal.jsx';
 import ShareModal from '../ShareModal';
@@ -34,12 +27,18 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
 
   const isDark = theme === 'dark';
 
-  // --- Recoil States ---
-  const [sessions, setSessions] = useRecoilState(sessionsData);
-  const [projects, setProjects] = useRecoilState(activeProjectsData);
-  const [currentProjectId, setCurrentProjectId] = useRecoilState(activeProjectIdData);
-  const [currentMode, setMode] = useRecoilState(activeModeData);
-  const [, setLegalTool] = useRecoilState(activeLegalToolData);
+  // --- Zustand Store States ---
+  const {
+    sessions,
+    setSessions,
+    activeProjects: projects,
+    setActiveProjects: setProjects,
+    activeProjectId: currentProjectId,
+    setActiveProjectId: setCurrentProjectId,
+    activeMode: currentMode,
+    setActiveMode: setMode,
+    setActiveLegalToolData: setLegalTool,
+  } = useUserStore();
 
   // --- Local UI States ---
   const [currentSessionId, setCurrentSessionId] = useState(sessionId || 'new');

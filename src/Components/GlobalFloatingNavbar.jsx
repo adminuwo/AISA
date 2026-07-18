@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Moon, User, Menu } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { getUserData, clearUser, toggleState, activeModeData } from '../userStore/userData';
+import { useUserStore } from '../userStore/useUserStore';
+import { getUserData, clearUser } from '../userStore/userData';
 import ProfileSettingsDropdown from './ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
 
 /**
@@ -18,10 +18,13 @@ const GlobalFloatingNavbar = () => {
   const scrollThreshold = 15;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const [tglState, setTglState] = useRecoilState(toggleState);
+  const {
+    toggles: tglState,
+    setToggle,
+    activeMode: currentMode
+  } = useUserStore();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
-  const currentMode = useRecoilValue(activeModeData);
   const isLegalWorkspace = currentMode === 'LEGAL_TOOLKIT' || window.location.pathname.startsWith('/dashboard/legal');
 
   useEffect(() => {
@@ -100,7 +103,7 @@ const GlobalFloatingNavbar = () => {
         {!isLegalWorkspace && (
           <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => setTglState(prev => ({ ...prev, sidebarOpen: true }))}
+              onClick={() => setToggle('sidebarOpen', true)}
               className="lg:hidden w-10 h-10 flex items-center justify-center bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl text-primary pointer-events-auto"
           >
               <Menu className="w-6 h-6 stroke-[2.5]" />

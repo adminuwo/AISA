@@ -16,8 +16,8 @@ import useCreditStore from '../../userStore/useCreditStore';
 import { usePersonalization } from '../../context/PersonalizationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { getUserData, getAccounts, removeAccount, setUserData, updateUser, userData } from '../../userStore/userData';
-import { useRecoilState } from 'recoil';
+import { getUserData, getAccounts, removeAccount, setUserData, updateUser } from '../../userStore/userData';
+import { useUserStore } from '../../userStore/useUserStore';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { API, apis } from '../../types';
@@ -31,8 +31,8 @@ import { PrivacyPolicyContent } from '../../landingpage/PolicyModals/PrivacyPoli
 
 const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     const fileInputRef = useRef(null);
-    const [currentUserData, setUserRecoil] = useRecoilState(userData);
-    const user = currentUserData.user || getUserData() || {};
+    const { user: currentUser, setUser: setUserRecoil } = useUserStore();
+    const user = currentUser || getUserData() || {};
     const { limits, usage, renewalDate } = useCreditStore();
     const {
         personalizations,

@@ -4,8 +4,8 @@ import { getPlans, getCreditPackages, purchasePlan, buyCredits, createSubscripti
 import './Pricing.css';
 import { Check, X, ShieldAlert, Sparkles, Zap, Image as ImageIcon, Video, Search, Users, ChevronRight, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useRecoilState } from 'recoil';
-import { userData, updateUser, getUserData } from '../userStore/userData';
+import { useUserStore } from '../userStore/useUserStore';
+import { updateUser, getUserData } from '../userStore/userData';
 import { useLanguage } from '../context/LanguageContext';
 
 import useCreditStore from '../userStore/useCreditStore';
@@ -58,7 +58,9 @@ const Pricing = () => {
   const [showUpsell, setShowUpsell] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [currentPlanName, setCurrentPlanName] = useState('');
-  const [userState, setUserState] = useRecoilState(userData);
+  const user = useUserStore(state => state.user);
+  const userState = { user };
+  const setUserState = useUserStore(state => state.setUser);
   const [activeCard, setActiveCard] = useState(0);
   const gridRef = useRef(null);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 1024);

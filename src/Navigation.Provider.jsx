@@ -12,9 +12,9 @@ import SharedChat from './pages/SharedChat';
 
 import { AppRoute, apis } from './types';
 import { Menu, Bell, Sun, Moon, LogIn, User, Gavel } from 'lucide-react';
+import { useUserStore } from './userStore/useUserStore';
+import { getUserData, clearUser, setUserData } from './userStore/userData';
 import { useTheme } from './context/ThemeContext';
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { toggleState, getUserData, clearUser, activeModeData, activeLegalToolData, legalViewData, userData, setUserData } from './userStore/userData';
 import axios from 'axios';
 import { usePersonalization } from './context/PersonalizationContext';
 import NotificationCenter from './Components/NotificationBar/NotificationCenter.jsx';
@@ -197,25 +197,28 @@ const useScrollNavbar = () => {
 };
 
 const DashboardLayout = () => {
-  const [tglState, setTglState] = useRecoilState(toggleState);
+  const {
+    toggles: tglState,
+    setToggle,
+    user: currentUser,
+    activeMode: currentMode,
+    activeLegalToolData: selectedLegalTool,
+    legalView,
+  } = useUserStore();
   const isSidebarOpen = tglState.sidebarOpen;
-  const setIsSidebarOpen = (val) => setTglState(prev => ({ ...prev, sidebarOpen: val }));
+  const setIsSidebarOpen = (val) => setToggle('sidebarOpen', val);
 
   const location = useLocation();
   const isFullScreen = false;
 
-  const currentUserData = useRecoilValue(userData);
-  // Re-evaluate user and token based on Recoil state changes or fallback to localStorage
-  const user = currentUserData?.user || getUserData() || { name: 'Guest' };
-  const token = currentUserData?.user?.token || getUserData()?.token;
+  // Re-evaluate user and token based on Zustand state changes or fallback to localStorage
+  const user = currentUser || getUserData() || { name: 'Guest' };
+  const token = currentUser?.token || getUserData()?.token;
   
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const currentMode = useRecoilValue(activeModeData);
-  const selectedLegalTool = useRecoilValue(activeLegalToolData);
-  const legalView = useRecoilValue(legalViewData);
   const isLegalWorkspace = currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/cases';
   const isMobile = window.innerWidth < 768;
   const searchParams = new URLSearchParams(location.search);
@@ -387,7 +390,7 @@ const SSOInterceptor = ({ children }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const setUserRecoil = useSetRecoilState(userData);
+  const setUser = useUserStore(state => state.setUser);
   // Ref to ensure SSO handoff only runs once per token
   const processedSSORef = useRef(false);
 
@@ -412,7 +415,7 @@ const SSOInterceptor = ({ children }) => {
           .then(res => {
             const { token, user } = res.data;
             setUserData(user);
-            setUserRecoil({ user: user });
+            setUser(user);
             localStorage.setItem("userId", user.id);
             localStorage.setItem("token", token);
             // After successful handoff, just let them be on the dashboard!
@@ -454,7 +457,7 @@ const NavigateToCaseChat = () => {
 };
 
 const NavigateProvider = () => {
-  const [tglState] = useRecoilState(toggleState);
+  const tglState = useUserStore(state => state.toggles);
 
   return (
     <SSOInterceptor>

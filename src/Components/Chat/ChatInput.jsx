@@ -1,9 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRecoilState } from 'recoil';
 import { useIsDark } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { toggleState } from '../../userStore/userData';
+import { useUserStore } from '../../userStore/useUserStore';
 import { logo } from '../../constants';
 import LegalLogo from '../../Tools/AI_Legal/components/LegalLogo';
 
@@ -154,7 +153,7 @@ export const ChatInput = ({
 }) => {
   const isDark = useIsDark();
   const { t } = useLanguage();
-  const [tglState] = useRecoilState(toggleState);
+  const tglState = useUserStore(state => state.toggles);
 
   const getAgentCapabilities = (agentName, category) => {
     const name = (agentName || '').toLowerCase();

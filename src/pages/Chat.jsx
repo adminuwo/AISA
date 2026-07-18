@@ -11,7 +11,7 @@ import { Menu, Transition, Dialog, Listbox, Portal } from '@headlessui/react';
 import { generateChatResponse, generateFollowUpPrompts } from '../services/geminiService';
 import { chatStorageService } from '../services/chatStorageService';
 import { useLanguage } from '../context/LanguageContext';
-import { useRecoilState } from 'recoil';
+import { useUserStore } from '../userStore/useUserStore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -50,7 +50,7 @@ import { toCanvas } from 'html-to-image';
 import html2canvas from 'html2canvas-pro';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
 import { copyText } from '../utils/clipboard';
-import { userData, getUserData, clearUser, sessionsData, toggleState, memoryData, activeProjectIdData, activeModeData, activeLegalToolData, activeProjectsData, legalViewData } from '../userStore/userData';
+import { getUserData, clearUser } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
 import PremiumUpsellModal from '../Components/PremiumUpsellModal';
@@ -663,7 +663,8 @@ const Chat = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [excelHTML, setExcelHTML] = useState(null);
   const [textPreview, setTextPreview] = useState(null);
-  const [sessions, setSessions] = useRecoilState(sessionsData);
+  const sessions = useUserStore(state => state.sessions);
+  const setSessions = useUserStore(state => state.setSessions);
   const [inputValue, setInputValue] = useState('');
   const [longTextPreview, setLongTextPreview] = useState(null);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
@@ -698,8 +699,13 @@ const Chat = () => {
     };
   }, []);
 
-  const [tglState, setTglState] = useRecoilState(toggleState);
-  const [memory, setMemoryRecoil] = useRecoilState(memoryData);
+  const tglState = useUserStore(state => state.toggles);
+  const setTglState = (updater) => {
+    const next = typeof updater === 'function' ? updater(useUserStore.getState().toggles) : updater;
+    Object.entries(next).forEach(([k, v]) => useUserStore.getState().setToggle(k, v));
+  };
+  const memory = useUserStore(state => state.memory);
+  const setMemoryRecoil = useUserStore(state => state.setMemory);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [typingMessageId, setTypingMessageId] = useState(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -884,7 +890,8 @@ const Chat = () => {
   const USER_MSG_COLLAPSE_CHARS = 200; // Collapse threshold
 
   // --- MY CASE CRM STATES ---
-  const [legalView, setLegalView] = useRecoilState(legalViewData); // 'DASHBOARD' | 'CHAT' | 'PRECEDENTS'
+  const legalView = useUserStore(state => state.legalView); // 'DASHBOARD' | 'CHAT' | 'PRECEDENTS'
+  const setLegalView = useUserStore(state => state.setLegalView);
 
   useEffect(() => {
     if (legalView) {
@@ -900,7 +907,8 @@ const Chat = () => {
     }
   }, [currentCase]);
 
-  const [allProjects, setAllProjects] = useRecoilState(activeProjectsData);
+  const allProjects = useUserStore(state => state.activeProjects);
+  const setAllProjects = useUserStore(state => state.setActiveProjects);
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [listeningTime, setListeningTime] = useState(0);
@@ -910,7 +918,8 @@ const Chat = () => {
   const recognitionRef = useRef(null);
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [selectedToolType, setSelectedToolType] = useState(null);
-  const [currentMode, setCurrentMode] = useRecoilState(activeModeData);
+  const currentMode = useUserStore(state => state.activeMode);
+  const setCurrentMode = useUserStore(state => state.setActiveMode);
   const [isDeepSearch, setIsDeepSearch] = useState(false);
   const [isWebSearch, setIsWebSearch] = useState(false);
   const [isImageGeneration, setIsImageGeneration] = useState(false);
@@ -933,7 +942,8 @@ const Chat = () => {
   const [activeLegalToolkit, setActiveLegalToolkit] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
   const [unlockedTools, setUnlockedTools] = useState([]);
-  const [selectedLegalTool, setSelectedLegalTool] = useRecoilState(activeLegalToolData);
+  const selectedLegalTool = useUserStore(state => state.activeLegalToolData);
+  const setSelectedLegalTool = useUserStore(state => state.setActiveLegalToolData);
   const excludedFloatingNavTools = ['legal_my_case', 'legal_precedents', 'legal-precedents', 'my-case', 'legal_precedents_search', 'legal_general_chat', 'legal_free_chat'];
   const showFloatingNavbar = currentMode === 'LEGAL_TOOLKIT' &&
     selectedLegalTool?.id &&
@@ -1095,7 +1105,8 @@ const Chat = () => {
   const transcriptRef = useRef(''); // Ref for speech transcript
   const isManualStopRef = useRef(false); // Track manual stop to avoid recursive loops
   const isDetectionPausedRef = useRef(false); // Pause detection after explicit dismissal
-  const [currentProjectId, setCurrentProjectId] = useRecoilState(activeProjectIdData);
+  const currentProjectId = useUserStore(state => state.activeProjectId);
+  const setCurrentProjectId = useUserStore(state => state.setActiveProjectId);
 
   // ─── Deep Link Case & General Chat Route Handling ───
   const lastHydratedRef = useRef(null);

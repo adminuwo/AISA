@@ -1,4 +1,4 @@
-import { atom } from "recoil"
+
 
 const getAvatarUrl = (user) => {
   if (!user || !user.email) return "";
@@ -122,52 +122,4 @@ const getUser = () => {
   }
   return null
 }
-export const toggleState = atom({
-  key: "toggle",
-  default: { subscripPgTgl: false, notify: false, sidebarOpen: false, platformSubTgl: false, focusMode: false }
-})
 
-export const userData = atom({
-  key: 'userData',
-  default: { user: getUser() }
-})
-
-export const sessionsData = atom({
-  key: 'sessionsData',
-  default: []
-})
-
-export const memoryData = atom({
-  key: 'memoryData',
-  default: null
-})
-
-export const activeProjectIdData = atom({
-  key: 'activeProjectIdData',
-  default: localStorage.getItem('aisa_active_project_id') || null
-})
-
-export const activeModeData = atom({
-  key: 'activeModeData',
-  default: localStorage.getItem('aisa_active_mode') || 'NORMAL_CHAT'
-})
-
-export const activeLegalToolData = atom({
-  key: 'activeLegalToolData',
-  default: (() => {
-    try {
-      const saved = localStorage.getItem('aisa_active_legal_tool_data');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) { return null; }
-  })()
-})
-
-export const activeProjectsData = atom({
-  key: 'activeProjectsData',
-  default: []
-})
-
-export const legalViewData = atom({
-  key: 'legalViewData',
-  default: localStorage.getItem('aisa_legal_view') || 'CHAT'
-})

@@ -46,8 +46,8 @@ import { apis, AppRoute, API } from '../../types';
 import ShareModal from '../ShareModal';
 import { faqs, logo } from '../../constants';
 import NotificationBar from '../NotificationBar/NotificationBar.jsx';
-import { useRecoilState } from 'recoil';
-import { clearUser, getUserData, setUserData, toggleState, userData, sessionsData, activeProjectIdData, activeModeData, activeLegalToolData, activeProjectsData } from '../../userStore/userData';
+import { useUserStore } from '../../userStore/useUserStore';
+import { clearUser, getUserData, setUserData } from '../../userStore/userData';
 import axios from 'axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme, useIsDark } from '../../context/ThemeContext';
@@ -71,9 +71,13 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
   const getFlagUrl = (code) => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 
   const navigate = useNavigate();
-  const [notifiyTgl, setNotifyTgl] = useRecoilState(toggleState);
-  const [currentUserData, setUserRecoil] = useRecoilState(userData);
-  const user = currentUserData.user || getUserData() || { name: "Loading...", email: "...", role: "user" };
+  const {
+    toggles: notifiyTgl,
+    user: currentUser,
+    setUser: setUserRecoil,
+    setActiveProjects: setProjects
+  } = useUserStore();
+  const user = currentUser || getUserData() || { name: "Loading...", email: "...", role: "user" };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   // New States
   const [isNavigating, setIsNavigating] = useState(false);
@@ -92,7 +96,6 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
 
 
   const [planName, setPlanName] = useState("Free Plan");
-  const [, setProjects] = useRecoilState(activeProjectsData);
 
   // Magic Glow State
   const glowX = useMotionValue(0);
