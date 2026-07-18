@@ -1686,9 +1686,9 @@ html.lenis body {
     padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* Prevent overlapping of fixed navbar — spacing is handled dynamically by main padding-top, 12px for content aesthetics */
+  /* Clear floating buttons — 76px padding inside scrollable viewport so messages clear floating header buttons at scroll-to-top */
   .chatgpt-container:not(.no-top-padding) {
-    padding-top: 12px !important;
+    padding-top: 76px !important;
   }
 }
 

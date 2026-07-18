@@ -291,14 +291,13 @@ const DashboardLayout = () => {
   // Sync CSS variable for child pages top-padding
   useEffect(() => {
     const handleResize = () => {
-      const isMobileViewport = window.innerWidth < 1024;
-      const hValue = allowNavbar && isMobileViewport && showOnScroll ? '64px' : '0px';
-      document.documentElement.style.setProperty('--mobile-nav-h', hValue);
+      // Set to 0px permanently to allow chat and dashboard contents to expand to the top.
+      document.documentElement.style.setProperty('--mobile-nav-h', '0px');
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [allowNavbar, showOnScroll]);
+  }, []);
 
   return (
     <div
@@ -351,7 +350,7 @@ const DashboardLayout = () => {
         {allowNavbar && !isFullScreen && !isSidebarOpen && !tglState.focusMode && (
           <div
             className={`navbar fixed top-0 left-0 right-0 z-[1001] transition-transform duration-300 ${isLegalWorkspace ? 'lg:left-0' : 'lg:left-[280px]'}
-              ${showOnScroll ? 'translate-y-0' : '-translate-y-full'}`}
+              ${showOnScroll ? 'translate-y-0' : '-translate-y-full'} bg-transparent border-none shadow-none`}
           >
             <div className="flex items-center justify-between lg:justify-end px-6 py-3 bg-transparent shrink-0">
               <motion.button
