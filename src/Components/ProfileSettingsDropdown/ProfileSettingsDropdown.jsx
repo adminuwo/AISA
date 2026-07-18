@@ -132,7 +132,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             }).then(res => {
                 if (res.data) {
                     const mergedData = setUserData(res.data);
-                    setUserRecoil(prev => ({ ...prev, user: mergedData }));
+                    setUserRecoil({ user: mergedData });
                 }
             }).catch(err => console.error("Profile sync failed", err));
 
@@ -242,7 +242,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                     if (res.data) {
                         // Update local state and storage
                         const updatedUser = setUserData(res.data);
-                        setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+                        setUserRecoil({ user: updatedUser });
                     }
                 }
                 toast.success(t('profileUpdatedSuccess') || 'Profile updated successfully');
@@ -303,7 +303,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
             if (res.data.success && res.data.avatar) {
                 const updatedUser = { ...user, avatar: res.data.avatar };
-                setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+                setUserRecoil({ user: updatedUser });
                 setUserData(updatedUser);
                 toast.success("Profile photo updated!");
                 setShowCropper(false);
@@ -329,7 +329,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
             if (res.data.success) {
                 const updatedUser = { ...user, avatar: "" };
-                setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+                setUserRecoil({ user: updatedUser });
                 setUserData(updatedUser);
                 toast.dismiss(loadingToast);
                 toast.success("Profile photo removed!");
@@ -389,7 +389,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             toast.success("Gmail disconnected successfully!");
 
             // Sync both Recoil and localStorage
-            setUserRecoil(prev => ({ ...prev, user: updatedUser }));
+            setUserRecoil({ user: updatedUser });
             setUserData(updatedUser);
 
         } catch (err) {

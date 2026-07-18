@@ -49,6 +49,7 @@ import NotificationBar from '../NotificationBar/NotificationBar.jsx';
 import { useUserStore } from '../../userStore/useUserStore';
 import { clearUser, getUserData, setUserData } from '../../userStore/userData';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme, useIsDark } from '../../context/ThemeContext';
 import { usePersonalization } from '../../context/PersonalizationContext';
@@ -546,10 +547,21 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
                                   const tid = toast.loading("Disconnecting...");
                                   try {
                                     await axios.delete(`${API}/connectors/gmail/disconnect`, { headers: { Authorization: `Bearer ${token}` } });
-                                    const updatedUser = { ...user, personalizations: { ...user.personalizations, apps: user.personalizations.apps.filter(a => a.name !== 'Gmail') } };
+                                    const updatedApps = (user?.personalizations?.apps || []).filter(a => a.name !== 'Gmail');
+                                    const updatedUser = {
+                                      ...user,
+                                      personalizations: {
+                                        ...user?.personalizations,
+                                        apps: updatedApps
+                                      }
+                                    };
+                                    setUserData(updatedUser);
                                     setUserRecoil({ user: updatedUser });
                                     toast.success("Disconnected!", { id: tid });
-                                  } catch (e) { toast.error("Failed", { id: tid }); }
+                                  } catch (e) {
+                                    console.error("Disconnect error in sidebar:", e);
+                                    toast.error("Failed", { id: tid });
+                                  }
                                 } else {
                                   // Connect
                                   try {
