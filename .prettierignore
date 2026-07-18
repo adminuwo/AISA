@@ -1,0 +1,8 @@
+/dist
+/node_modules
+*.css
+*.html
+*.svg
+package-lock.json
+# Large files — format these manually in a dedicated cleanup session
+src/pages/Chat.jsx
