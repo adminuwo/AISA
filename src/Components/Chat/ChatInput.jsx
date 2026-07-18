@@ -243,7 +243,7 @@ export const ChatInput = ({
     >
       <div
         className="relative z-20 bg-transparent"
-        style={{ padding: '0.5rem 1rem calc(1.75rem + env(safe-area-inset-bottom, 0px)) 1rem' }}
+        style={{ padding: '0.5rem 1rem calc(4px + env(safe-area-inset-bottom, 0px)) 1rem' }}
       >
         <div className="max-w-4xl mx-auto w-full pointer-events-auto">
           <form
