@@ -292,13 +292,13 @@ const DashboardLayout = () => {
   useEffect(() => {
     const handleResize = () => {
       const isMobileViewport = window.innerWidth < 1024;
-      const hValue = allowNavbar && isMobileViewport ? '64px' : '0px';
+      const hValue = allowNavbar && isMobileViewport && showOnScroll ? '64px' : '0px';
       document.documentElement.style.setProperty('--mobile-nav-h', hValue);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [allowNavbar]);
+  }, [allowNavbar, showOnScroll]);
 
   return (
     <div

@@ -1686,9 +1686,9 @@ html.lenis body {
     padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* Prevent overlapping of fixed navbar — 76px clears the 64px mobile header */
+  /* Prevent overlapping of fixed navbar — spacing is handled dynamically by main padding-top, 12px for content aesthetics */
   .chatgpt-container:not(.no-top-padding) {
-    padding-top: 76px !important;
+    padding-top: 12px !important;
   }
 }
 
