@@ -1,19 +1,19 @@
-import './App.css'
-import NavigationProvider from './Navigation.Provider'
-import { useEffect } from 'react'
-import AOS from 'aos'
-import 'aos/dist/aos.css'
-import axios from 'axios'
-import toast from 'react-hot-toast'
-import { clearUser } from './userStore/userData'
-//chat 
+import './App.css';
+import NavigationProvider from './Navigation.Provider';
+import { useEffect } from 'react';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { clearUser } from './userStore/userData';
+//chat
 // Global Interceptor for Session Management
 axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  response => response,
+  error => {
     if (error.response && error.response.status === 401) {
       if (error.response.data?.code === 'SESSION_REVOKED') {
-        toast.error("Security Alert: You have been logged out remotely.");
+        toast.error('Security Alert: You have been logged out remotely.');
         clearUser();
         // Force refresh to login
         setTimeout(() => {
@@ -26,19 +26,16 @@ axios.interceptors.response.use(
 );
 
 function App() {
-  console.log("[DEBUG] App component function is executing...");
+  console.log('[DEBUG] App component function is executing...');
   useEffect(() => {
     AOS.init({
       duration: 800,
       once: true,
       easing: 'ease-out-quint',
-    })
-  }, [])
+    });
+  }, []);
 
-  return (
-    <NavigationProvider />
-  )
+  return <NavigationProvider />;
 }
 
-export default App
-
+export default App;

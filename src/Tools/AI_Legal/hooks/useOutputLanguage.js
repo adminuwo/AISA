@@ -3,7 +3,7 @@ import { generateChatResponse } from '../../../services/geminiService';
 import { useLanguage } from '../../../context/LanguageContext';
 
 // ── Translation system prompt generator ──────────────────────────────────────────
-const getTranslationPrompt = (targetLang) => {
+const getTranslationPrompt = targetLang => {
   return `You are a professional legal translator. Translate the following text into ${targetLang === 'Hindi' ? 'Hindi (Devanagari script)' : 'formal legal English'}.
 
 CRITICAL RULES:
@@ -21,10 +21,10 @@ CRITICAL RULES:
 };
 
 // ── Simple hash for cache keying ───────────────────────────────────────────────
-const simpleHash = (str) => {
+const simpleHash = str => {
   let h = 0;
   for (let i = 0; i < Math.min(str.length, 500); i++) {
-    h = ((h << 5) - h) + str.charCodeAt(i);
+    h = (h << 5) - h + str.charCodeAt(i);
     h |= 0;
   }
   return h.toString(36);
@@ -35,10 +35,10 @@ const globalTranslationCache = new Map();
 
 /**
  * useOutputLanguage
- * 
+ *
  * @param {string} moduleId - Unique ID for this module (e.g. 'legal_chat', 'draft_maker')
  * @param {string} sessionId - Optional session/chat ID for per-session persistence
- * 
+ *
  * @returns {{
  *   outputLang: 'en'|'hi',
  *   setOutputLang: Function,
@@ -60,87 +60,92 @@ const useOutputLanguage = (moduleId = 'legal', sessionId = '') => {
   // Track in-flight translation promises to avoid duplicate calls
   const inFlightRef = useRef(new Map());
 
-  const setOutputLang = useCallback((lang) => {
-    setToolkitLanguage(lang === 'hi' ? 'Hindi' : 'English');
-  }, [setToolkitLanguage]);
+  const setOutputLang = useCallback(
+    lang => {
+      setToolkitLanguage(lang === 'hi' ? 'Hindi' : 'English');
+    },
+    [setToolkitLanguage]
+  );
 
   /**
    * Translate a single text block to Hindi/English.
    * Returns cached version if available.
    */
-  const translateText = useCallback(async (text, targetLanguage) => {
-    if (!text || !text.trim()) return text;
+  const translateText = useCallback(
+    async (text, targetLanguage) => {
+      if (!text || !text.trim()) return text;
 
-    const target = targetLanguage || (toolkitLanguage === 'Hindi' ? 'Hindi' : 'English');
-    const cacheKey = simpleHash(text) + '_' + target;
+      const target = targetLanguage || (toolkitLanguage === 'Hindi' ? 'Hindi' : 'English');
+      const cacheKey = simpleHash(text) + '_' + target;
 
-    // 1. Check local component cache
-    if (localCache.current.has(cacheKey)) {
-      return localCache.current.get(cacheKey);
-    }
-
-    // 2. Check global cross-component cache
-    if (globalTranslationCache.has(cacheKey)) {
-      const cached = globalTranslationCache.get(cacheKey);
-      localCache.current.set(cacheKey, cached);
-      return cached;
-    }
-
-    // 3. If already translating this exact text, wait for that promise
-    if (inFlightRef.current.has(cacheKey)) {
-      return inFlightRef.current.get(cacheKey);
-    }
-
-    // 4. Call Gemini for translation
-    const translationPromise = (async () => {
-      try {
-        const sysPrompt = getTranslationPrompt(target);
-        const response = await generateChatResponse(
-          [],           // history
-          text,         // message to translate
-          sysPrompt,
-          [],           // attachments
-          'English',    // API response language param
-          null,         // abortSignal
-          'legal',      // mode
-          null,         // sessionId
-          null          // projectId
-        );
-
-        const translated =
-          response?.reply ||
-          (typeof response === 'string' ? response : '') ||
-          text;
-
-        // Cache it
-        localCache.current.set(cacheKey, translated);
-        globalTranslationCache.set(cacheKey, translated);
-        return translated;
-      } catch (err) {
-        console.error('[useOutputLanguage] Translation failed:', err);
-        return text; // Fallback to original on error
-      } finally {
-        inFlightRef.current.delete(cacheKey);
+      // 1. Check local component cache
+      if (localCache.current.has(cacheKey)) {
+        return localCache.current.get(cacheKey);
       }
-    })();
 
-    inFlightRef.current.set(cacheKey, translationPromise);
-    return translationPromise;
-  }, [toolkitLanguage]);
+      // 2. Check global cross-component cache
+      if (globalTranslationCache.has(cacheKey)) {
+        const cached = globalTranslationCache.get(cacheKey);
+        localCache.current.set(cacheKey, cached);
+        return cached;
+      }
+
+      // 3. If already translating this exact text, wait for that promise
+      if (inFlightRef.current.has(cacheKey)) {
+        return inFlightRef.current.get(cacheKey);
+      }
+
+      // 4. Call Gemini for translation
+      const translationPromise = (async () => {
+        try {
+          const sysPrompt = getTranslationPrompt(target);
+          const response = await generateChatResponse(
+            [], // history
+            text, // message to translate
+            sysPrompt,
+            [], // attachments
+            'English', // API response language param
+            null, // abortSignal
+            'legal', // mode
+            null, // sessionId
+            null // projectId
+          );
+
+          const translated =
+            response?.reply || (typeof response === 'string' ? response : '') || text;
+
+          // Cache it
+          localCache.current.set(cacheKey, translated);
+          globalTranslationCache.set(cacheKey, translated);
+          return translated;
+        } catch (err) {
+          console.error('[useOutputLanguage] Translation failed:', err);
+          return text; // Fallback to original on error
+        } finally {
+          inFlightRef.current.delete(cacheKey);
+        }
+      })();
+
+      inFlightRef.current.set(cacheKey, translationPromise);
+      return translationPromise;
+    },
+    [toolkitLanguage]
+  );
 
   /**
    * Get display text synchronously.
    * Returns Hindi from cache if lang='hi' and cached, else original.
    */
-  const getDisplayText = useCallback((text) => {
-    if (outputLang === 'en' || !text) return text;
-    const cacheKey = simpleHash(text) + '_Hindi';
-    return (
-      localCache.current.get(cacheKey) ||
-      globalTranslationCache.get(cacheKey) ||
-      text // Return original until translation resolves
-    );
-  }, [outputLang]);
+  const getDisplayText = useCallback(
+    text => {
+      if (outputLang === 'en' || !text) return text;
+      const cacheKey = simpleHash(text) + '_Hindi';
+      return (
+        localCache.current.get(cacheKey) || globalTranslationCache.get(cacheKey) || text // Return original until translation resolves
+      );
+    },
+    [outputLang]
+  );
 
   const clearCache = useCallback(() => {
     localCache.current.clear();

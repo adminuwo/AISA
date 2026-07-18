@@ -27,14 +27,13 @@ export const ActiveCaseProvider = ({ children, currentCase, activeModuleId }) =>
     }
   }, [activeModuleId]);
 
-  const value = React.useMemo(() => ({
-    triggerAutoRun,
-    setTriggerAutoRun
-  }), [triggerAutoRun]);
-
-  return (
-    <ActiveCaseContext.Provider value={value}>
-      {children}
-    </ActiveCaseContext.Provider>
+  const value = React.useMemo(
+    () => ({
+      triggerAutoRun,
+      setTriggerAutoRun,
+    }),
+    [triggerAutoRun]
   );
+
+  return <ActiveCaseContext.Provider value={value}>{children}</ActiveCaseContext.Provider>;
 };

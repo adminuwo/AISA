@@ -20,15 +20,15 @@ const useCaseWorkspaceStore = create(
       workspaces: {}, // { [caseId]: CaseWorkspaceState }
       activeCaseId: null,
 
-      setActiveCaseId: (caseId) => set({ activeCaseId: caseId }),
+      setActiveCaseId: caseId => set({ activeCaseId: caseId }),
 
-      getWorkspace: (caseId) => {
+      getWorkspace: caseId => {
         return get().workspaces[caseId] || null;
       },
 
       updateWorkspace: (caseId, updates) => {
         if (!caseId) return;
-        set((state) => ({
+        set(state => ({
           workspaces: {
             ...state.workspaces,
             [caseId]: {
@@ -40,18 +40,18 @@ const useCaseWorkspaceStore = create(
                 draftState: {},
                 aiContext: {},
                 uiState: { scrollPosition: 0 },
-                updatedAt: Date.now()
+                updatedAt: Date.now(),
               }),
               ...updates,
-              updatedAt: Date.now()
-            }
-          }
+              updatedAt: Date.now(),
+            },
+          },
         }));
       },
 
       saveMessage: (caseId, message) => {
         if (!caseId) return;
-        set((state) => {
+        set(state => {
           const workspace = state.workspaces[caseId] || { messages: [] };
           return {
             workspaces: {
@@ -59,43 +59,43 @@ const useCaseWorkspaceStore = create(
               [caseId]: {
                 ...workspace,
                 messages: [...(workspace.messages || []), message],
-                updatedAt: Date.now()
-              }
-            }
+                updatedAt: Date.now(),
+              },
+            },
           };
         });
       },
 
       setMessages: (caseId, messages) => {
         if (!caseId) return;
-        set((state) => ({
+        set(state => ({
           workspaces: {
             ...state.workspaces,
             [caseId]: {
               ...(state.workspaces[caseId] || {}),
               messages,
-              updatedAt: Date.now()
-            }
-          }
+              updatedAt: Date.now(),
+            },
+          },
         }));
       },
 
-      clearWorkspace: (caseId) => {
-        set((state) => {
+      clearWorkspace: caseId => {
+        set(state => {
           const newWorkspaces = { ...state.workspaces };
           delete newWorkspaces[caseId];
           return { workspaces: newWorkspaces };
         });
       },
 
-      restoreWorkspace: (caseId) => {
+      restoreWorkspace: caseId => {
         const ws = get().workspaces[caseId];
         if (ws) {
           set({ activeCaseId: caseId });
           return ws;
         }
         return null;
-      }
+      },
     }),
     {
       name: 'aisa-case-workspace-storage',

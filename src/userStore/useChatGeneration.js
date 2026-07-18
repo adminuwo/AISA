@@ -30,12 +30,14 @@ import { useShallow } from 'zustand/react/shallow';
  * @param {string} chatId  The current session/chat ID
  * @returns generation helpers + state selectors
  */
-export const useChatGeneration = (chatId) => {
+export const useChatGeneration = chatId => {
   const store = useGenerationStore;
 
   // ── Stable snapshot refs to avoid stale closures ──────────────────────────
   const chatIdRef = useRef(chatId);
-  useEffect(() => { chatIdRef.current = chatId; }, [chatId]);
+  useEffect(() => {
+    chatIdRef.current = chatId;
+  }, [chatId]);
 
   // ── State readers (re-render on change) ───────────────────────────────────
   const generation = useGenerationStore(state => state.generations[chatId]);
@@ -67,7 +69,7 @@ export const useChatGeneration = (chatId) => {
     useGenerationStore.getState().setLoadingText(targetId, text);
   }, []);
 
-  const complete = useCallback((id) => {
+  const complete = useCallback(id => {
     const targetId = id || chatIdRef.current;
     useGenerationStore.getState().completeGeneration(targetId);
   }, []);
@@ -77,17 +79,17 @@ export const useChatGeneration = (chatId) => {
     useGenerationStore.getState().failGeneration(targetId, error);
   }, []);
 
-  const abort = useCallback((id) => {
+  const abort = useCallback(id => {
     const targetId = id || chatIdRef.current;
     useGenerationStore.getState().abortGeneration(targetId);
   }, []);
 
-  const getAbortController = useCallback((id) => {
+  const getAbortController = useCallback(id => {
     const targetId = id || chatIdRef.current;
     return useGenerationStore.getState().getAbortController(targetId) ?? null;
   }, []);
 
-  const getAbortSignal = useCallback((id) => {
+  const getAbortSignal = useCallback(id => {
     const targetId = id || chatIdRef.current;
     return useGenerationStore.getState().getAbortController(targetId)?.signal ?? null;
   }, []);

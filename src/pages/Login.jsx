@@ -12,7 +12,6 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { logo } from '../constants';
 import { chatStorageService } from '../services/chatStorageService';
 
-
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,7 +47,7 @@ const Login = () => {
         acceptedTerms: true,
         acceptedPrivacy: true,
         termsVersion: 'v1.2',
-        privacyVersion: 'v1.1'
+        privacyVersion: 'v1.1',
       };
 
       if (pendingAction === 'google' && pendingPayload) {
@@ -77,14 +76,17 @@ const Login = () => {
   // Auto-accept cookies on login — user has agreed to platform use by signing in
   const autoAcceptCookies = () => {
     if (!localStorage.getItem('aisa_cookie_consent')) {
-      localStorage.setItem('aisa_cookie_consent', JSON.stringify({
-        accepted: true,
-        analytics: true,
-        preferences: true,
-        functional: true,
-        essential: true,
-        timestamp: new Date().toISOString()
-      }));
+      localStorage.setItem(
+        'aisa_cookie_consent',
+        JSON.stringify({
+          accepted: true,
+          analytics: true,
+          preferences: true,
+          functional: true,
+          essential: true,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   };
 
@@ -118,31 +120,30 @@ const Login = () => {
         name: userName,
         email: userEmail,
         token: token,
-        role: "user",
-        plan: "Basic",
-        provider: provider || "local",
-        avatar: picture || ""
+        role: 'user',
+        plan: 'Basic',
+        provider: provider || 'local',
+        avatar: picture || '',
       };
 
       // Real state update & storage
       setUserData(userData);
       setUserRecoil({ user: userData });
-      localStorage.setItem("userId", userId);
-      localStorage.setItem("token", token);
-      localStorage.setItem("provider", provider || "local");
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('token', token);
+      localStorage.setItem('provider', provider || 'local');
       autoAcceptCookies();
 
       const from = location.state?.from || AppRoute.DASHBOARD;
       navigate(from, { replace: true });
-      console.log("[LOGIN] Social auth success, initiating merge...");
+      console.log('[LOGIN] Social auth success, initiating merge...');
       chatStorageService.mergeGuestChats();
     }
   }, [location, navigate, setUserRecoil]);
 
-
   const handleSubmit = async (e, consentPayload = null) => {
     if (e) e.preventDefault();
-    setMessage("");
+    setMessage('');
     setLoading(true);
     setError(false);
 
@@ -158,12 +159,12 @@ const Login = () => {
 
       setUserData(res.data);
       setUserRecoil({ user: res.data });
-      localStorage.setItem("userId", res.data.id);
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem('userId', res.data.id);
+      localStorage.setItem('token', res.data.token);
       autoAcceptCookies();
 
       navigate(from, { replace: true });
-      console.log("[LOGIN] Standard login success, initiating merge...");
+      console.log('[LOGIN] Standard login success, initiating merge...');
       chatStorageService.mergeGuestChats();
     } catch (err) {
       if (err.response?.data?.code === 'TERMS_UPDATE_REQUIRED') {
@@ -174,8 +175,13 @@ const Login = () => {
         return;
       }
 
-      if (email === 'test_legal_agent@example.com' || err.message?.includes('Network Error') || err.response?.status >= 500 || !err.response) {
-        toast.success("Logging in with Mock demo account (Offline/Demo Mode)");
+      if (
+        email === 'test_legal_agent@example.com' ||
+        err.message?.includes('Network Error') ||
+        err.response?.status >= 500 ||
+        !err.response
+      ) {
+        toast.success('Logging in with Mock demo account (Offline/Demo Mode)');
         const from = location.state?.from || AppRoute.DASHBOARD;
         const mockUser = {
           id: 'mock_user_id',
@@ -184,12 +190,12 @@ const Login = () => {
           token: 'mock_token',
           role: 'user',
           plan: 'Premium',
-          avatar: ''
+          avatar: '',
         };
         setUserData(mockUser);
         setUserRecoil({ user: mockUser });
-        localStorage.setItem("userId", mockUser.id);
-        localStorage.setItem("token", mockUser.token);
+        localStorage.setItem('userId', mockUser.id);
+        localStorage.setItem('token', mockUser.token);
         autoAcceptCookies();
         navigate(from, { replace: true });
         return;
@@ -210,7 +216,7 @@ const Login = () => {
     try {
       // Get user info from Google using the access token
       const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       });
 
       const { email, name, picture } = userInfoRes.data;
@@ -220,7 +226,7 @@ const Login = () => {
         credential: tokenResponse.access_token,
         email,
         name,
-        picture
+        picture,
       };
       if (consentPayload) {
         Object.assign(payload, consentPayload);
@@ -233,12 +239,12 @@ const Login = () => {
 
       setUserData(res.data);
       setUserRecoil({ user: res.data });
-      localStorage.setItem("userId", res.data.id);
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem('userId', res.data.id);
+      localStorage.setItem('token', res.data.token);
       autoAcceptCookies();
 
       navigate(from, { replace: true });
-      console.log("[LOGIN] Google login success, initiating merge...");
+      console.log('[LOGIN] Google login success, initiating merge...');
       chatStorageService.mergeGuestChats();
     } catch (err) {
       if (err.response?.data?.code === 'TERMS_UPDATE_REQUIRED') {
@@ -265,7 +271,6 @@ const Login = () => {
     },
   });
 
-
   return (
     <div className="min-h-screen w-screen flex flex-col items-center justify-center relative overflow-x-hidden bg-[#f8fafc] dark:bg-[#020617] aisa-scalable-text p-4 md:p-8">
       {/* Background Blobs - STATIC */}
@@ -276,7 +281,6 @@ const Login = () => {
 
       {/* Content Container - Vertically Centered */}
       <div className="relative w-full max-w-[400px] flex flex-col items-center z-50 transform -translate-y-2">
-
         {/* Canonical Logo - Scaled for all devices */}
         <div className="w-full flex justify-center mb-3 shrink-0">
           <img
@@ -292,8 +296,12 @@ const Login = () => {
           <div className="absolute -top-[100%] -left-[100%] w-[300%] h-[300%] bg-gradient-to-br from-white/10 via-transparent to-transparent rotate-45 pointer-events-none" />
 
           <div className="text-center mb-4 relative">
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-1 tracking-tighter uppercase">{t('welcomeBack')}</h2>
-            <p className="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">{t('signInToContinue')}</p>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-1 tracking-tighter uppercase">
+              {t('welcomeBack')}
+            </h2>
+            <p className="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">
+              {t('signInToContinue')}
+            </p>
           </div>
 
           <AnimatePresence mode="wait">
@@ -309,15 +317,13 @@ const Login = () => {
             )}
           </AnimatePresence>
 
-
-
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 className="w-full bg-white/20 dark:bg-slate-800/20 border border-white/30 dark:border-white/5 rounded-xl py-3 pl-12 pr-4 text-slate-700 dark:text-white placeholder-slate-400/70 focus:outline-none transition-all font-medium text-sm backdrop-blur-md"
                 required
@@ -329,7 +335,7 @@ const Login = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="••••••"
                 className="w-full bg-white/20 dark:bg-slate-800/20 border border-white/30 dark:border-white/5 rounded-xl py-3 pl-12 pr-12 text-slate-700 dark:text-white placeholder-slate-400/70 focus:outline-none transition-all font-medium text-sm tracking-[0.3em] backdrop-blur-md"
                 required
@@ -352,7 +358,7 @@ const Login = () => {
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                "LOGIN"
+                'LOGIN'
               )}
             </motion.button>
           </form>
@@ -360,7 +366,9 @@ const Login = () => {
           {/* Divider */}
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50" />
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Secure Social Login</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
+              Secure Social Login
+            </span>
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50" />
           </div>
 
@@ -378,14 +386,32 @@ const Login = () => {
                 <div className="w-5 h-5 border-2 border-slate-300 border-t-primary rounded-full animate-spin" />
               ) : (
                 <>
-                  <svg className="w-5 h-5 mb-1" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                    <path fill="none" d="M0 0h48v48H0z"/>
+                  <svg
+                    className="w-5 h-5 mb-1"
+                    viewBox="0 0 48 48"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                    />
+                    <path fill="none" d="M0 0h48v48H0z" />
                   </svg>
-                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Google</span>
+                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
+                    Google
+                  </span>
                 </>
               )}
             </motion.button>
@@ -394,29 +420,46 @@ const Login = () => {
             <motion.button
               whileHover={{ y: -2, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => { window.location.href = apis.appleLogin; }}
+              onClick={() => {
+                window.location.href = apis.appleLogin;
+              }}
               className="group relative flex flex-col items-center justify-center p-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:shadow-md"
             >
               <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-              <svg className="w-5 h-5 mb-1 fill-current text-black dark:text-white" viewBox="0 0 170 170">
+              <svg
+                className="w-5 h-5 mb-1 fill-current text-black dark:text-white"
+                viewBox="0 0 170 170"
+              >
                 <path d="m150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.197-2.12-9.973-3.17-14.34-3.17-4.58 0-9.492 1.05-14.746 3.17-5.254 2.13-9.49 3.29-12.71 3.48-5.253.39-10.37-1.77-15.35-6.47-3.04-2.79-6.79-7.14-11.24-13.06-4.45-5.91-8.25-12.51-11.41-19.78-3.15-7.26-4.73-14.85-4.73-22.77 0-10.73 2.53-19.89 7.58-27.48 4.09-6.13 9.42-10.66 15.98-13.59 6.57-2.93 13.25-4.4 20.03-4.4 4.04 0 9.06 1.05 15.08 3.14 6.02 2.1 10.15 3.15 12.39 3.15 1.48 0 5.8-1.12 12.96-3.37 7.16-2.25 13.3-3.23 18.42-2.93 13 1.08 23.36 6.3 31.06 15.65-11.52 6.93-17.28 17.06-17.28 30.38 0 10.18 3.03 18.67 9.09 25.44 3.04 3.42 6.78 6.24 11.23 8.48zm-26.65-103.11c0 8.08-3 15.82-8.99 23.23-7.55 9.06-16.14 14-25.75 14.86-.34-8.15 2.68-15.97 9.05-23.47 3.25-3.83 7.37-7.25 12.35-10.27 4.99-3.01 9.42-4.63 13.28-4.87.04.18.06.35.06.52z" />
               </svg>
-              <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Apple ID</span>
+              <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
+                Apple ID
+              </span>
             </motion.button>
           </div>
 
           <div className="mt-3">
-            <Link to="/forgot-password" opacity={0.6} className="text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors uppercase tracking-widest">
+            <Link
+              to="/forgot-password"
+              opacity={0.6}
+              className="text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors uppercase tracking-widest"
+            >
               Forgot Password?
             </Link>
           </div>
 
           <div className="mt-4 pt-4 border-t border-white/10 dark:border-slate-800/50 text-[10px] font-bold text-slate-400 tracking-wide uppercase">
-            No account? <Link to="/signup" className="text-primary hover:underline ml-1 uppercase font-black">Create Now</Link>
+            No account?{' '}
+            <Link to="/signup" className="text-primary hover:underline ml-1 uppercase font-black">
+              Create Now
+            </Link>
           </div>
         </div>
 
-        <Link to="/" className="mt-4 flex items-center justify-center gap-2 text-slate-400 hover:text-slate-600 font-bold text-[9px] uppercase tracking-widest transition-all">
+        <Link
+          to="/"
+          className="mt-4 flex items-center justify-center gap-2 text-slate-400 hover:text-slate-600 font-bold text-[9px] uppercase tracking-widest transition-all"
+        >
           <ArrowLeft className="w-3 h-3" />
           {t('backToHome')}
         </Link>
@@ -453,7 +496,7 @@ const Login = () => {
                   <div className="h-1 w-20 bg-primary/20 mx-auto rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: "100%" }}
+                      animate={{ width: '100%' }}
                       transition={{ duration: 2.5, repeat: Infinity }}
                       className="h-full bg-primary"
                     />
@@ -501,9 +544,15 @@ const Login = () => {
                   <input
                     type="checkbox"
                     checked={modalAgreedToTerms}
-                    onChange={(e) => setModalAgreedToTerms(e.target.checked)}
+                    onChange={e => setModalAgreedToTerms(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
-                    style={{ width: '16px', height: '16px', minWidth: '16px', minHeight: '16px', flexShrink: 0 }}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      minWidth: '16px',
+                      minHeight: '16px',
+                      flexShrink: 0,
+                    }}
                   />
                   <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-tight">
                     I agree to the{' '}
@@ -512,7 +561,7 @@ const Login = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-bold"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
                     >
                       Terms & Conditions
                     </a>
@@ -524,9 +573,15 @@ const Login = () => {
                   <input
                     type="checkbox"
                     checked={modalAcknowledgedPrivacy}
-                    onChange={(e) => setModalAcknowledgedPrivacy(e.target.checked)}
+                    onChange={e => setModalAcknowledgedPrivacy(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
-                    style={{ width: '16px', height: '16px', minWidth: '16px', minHeight: '16px', flexShrink: 0 }}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      minWidth: '16px',
+                      minHeight: '16px',
+                      flexShrink: 0,
+                    }}
                   />
                   <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 leading-tight">
                     I acknowledge the{' '}
@@ -535,7 +590,7 @@ const Login = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-bold"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
                     >
                       Privacy Policy
                     </a>
@@ -547,9 +602,15 @@ const Login = () => {
                   <input
                     type="checkbox"
                     checked={modalMarketingOptIn}
-                    onChange={(e) => setModalMarketingOptIn(e.target.checked)}
+                    onChange={e => setModalMarketingOptIn(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
-                    style={{ width: '16px', height: '16px', minWidth: '16px', minHeight: '16px', flexShrink: 0 }}
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      minWidth: '16px',
+                      minHeight: '16px',
+                      flexShrink: 0,
+                    }}
                   />
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-500 leading-tight">
                     I agree to receive marketing updates (Optional)

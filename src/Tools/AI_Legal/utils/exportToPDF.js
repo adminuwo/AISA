@@ -37,11 +37,17 @@ function markdownToHTML(md) {
   let inOL = false;
 
   const closeList = () => {
-    if (inUL) { htmlLines.push('</ul>'); inUL = false; }
-    if (inOL) { htmlLines.push('</ol>'); inOL = false; }
+    if (inUL) {
+      htmlLines.push('</ul>');
+      inUL = false;
+    }
+    if (inOL) {
+      htmlLines.push('</ol>');
+      inOL = false;
+    }
   };
 
-  const inlineFormat = (text) =>
+  const inlineFormat = text =>
     text
       .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -65,14 +71,33 @@ function markdownToHTML(md) {
     const h3 = line.match(/^###\s+(.*)/);
     const h2 = line.match(/^##\s+(.*)/);
     const h1 = line.match(/^#\s+(.*)/);
-    if (h1) { closeList(); htmlLines.push(`<h1>${inlineFormat(h1[1])}</h1>`); continue; }
-    if (h2) { closeList(); htmlLines.push(`<h2>${inlineFormat(h2[1])}</h2>`); continue; }
-    if (h3) { closeList(); htmlLines.push(`<h3>${inlineFormat(h3[1])}</h3>`); continue; }
+    if (h1) {
+      closeList();
+      htmlLines.push(`<h1>${inlineFormat(h1[1])}</h1>`);
+      continue;
+    }
+    if (h2) {
+      closeList();
+      htmlLines.push(`<h2>${inlineFormat(h2[1])}</h2>`);
+      continue;
+    }
+    if (h3) {
+      closeList();
+      htmlLines.push(`<h3>${inlineFormat(h3[1])}</h3>`);
+      continue;
+    }
 
     // Unordered list item  (- / * / •)
     const ulMatch = line.match(/^(\s*)[-*•]\s+(.*)/);
     if (ulMatch) {
-      if (!inUL) { if (inOL) { htmlLines.push('</ol>'); inOL = false; } htmlLines.push('<ul>'); inUL = true; }
+      if (!inUL) {
+        if (inOL) {
+          htmlLines.push('</ol>');
+          inOL = false;
+        }
+        htmlLines.push('<ul>');
+        inUL = true;
+      }
       htmlLines.push(`<li>${inlineFormat(ulMatch[2])}</li>`);
       continue;
     }
@@ -80,7 +105,14 @@ function markdownToHTML(md) {
     // Ordered list item
     const olMatch = line.match(/^(\s*)\d+[.)]\s+(.*)/);
     if (olMatch) {
-      if (!inOL) { if (inUL) { htmlLines.push('</ul>'); inUL = false; } htmlLines.push('<ol>'); inOL = true; }
+      if (!inOL) {
+        if (inUL) {
+          htmlLines.push('</ul>');
+          inUL = false;
+        }
+        htmlLines.push('<ol>');
+        inOL = true;
+      }
       htmlLines.push(`<li>${inlineFormat(olMatch[2])}</li>`);
       continue;
     }
@@ -228,7 +260,8 @@ const RENDER_CSS = `
 // ---------------------------------------------------------------------------
 function buildRenderFrame(headerHTML, contentHTML) {
   const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:794px;height:auto;border:0;visibility:hidden;';
+  iframe.style.cssText =
+    'position:fixed;top:-9999px;left:-9999px;width:794px;height:auto;border:0;visibility:hidden;';
   document.body.appendChild(iframe);
 
   const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -255,7 +288,7 @@ function buildRenderFrame(headerHTML, contentHTML) {
 // Wait for iframe fonts to load
 // ---------------------------------------------------------------------------
 function waitForFonts(iframe) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const win = iframe.contentWindow;
     if (win.document.fonts && win.document.fonts.ready) {
       win.document.fonts.ready.then(resolve);
@@ -280,7 +313,16 @@ function waitForFonts(iframe) {
  * @param {object}  [options.meta]         - Key-value pairs shown below the title
  * @param {string}  [options.lang]         - 'en' | 'hi'
  */
-export async function exportToPDF({ element, htmlContent, text, title, filename, meta = {}, lang = 'en', returnBlob = false }) {
+export async function exportToPDF({
+  element,
+  htmlContent,
+  text,
+  title,
+  filename,
+  meta = {},
+  lang = 'en',
+  returnBlob = false,
+}) {
   // 1. Build header HTML
   const metaRows = Object.entries(meta)
     .map(([k, v]) => `<span><strong>${k}:</strong> ${v}</span>`)
@@ -315,7 +357,7 @@ export async function exportToPDF({ element, htmlContent, text, title, filename,
   let canvas;
   try {
     canvas = await html2canvas(root, {
-      scale: 2,                  // 2× for crisp text on retina and print
+      scale: 2, // 2× for crisp text on retina and print
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
@@ -327,21 +369,21 @@ export async function exportToPDF({ element, htmlContent, text, title, filename,
   }
 
   // 6. Slice canvas into A4 pages and embed in jsPDF
-  const A4_W_MM  = 210;
-  const A4_H_MM  = 297;
-  const DPI      = 96;
+  const A4_W_MM = 210;
+  const A4_H_MM = 297;
+  const DPI = 96;
   const MM_PER_PX = 25.4 / DPI;
 
   // canvas is at scale=2, so 1 canvas px = 0.5 logical px
-  const canvasW  = canvas.width;           // px at scale 2
-  const canvasH  = canvas.height;          // px at scale 2
+  const canvasW = canvas.width; // px at scale 2
+  const canvasH = canvas.height; // px at scale 2
 
   // A4 page height in canvas pixels (at scale 2)
   const pageH_px = Math.round((A4_H_MM / MM_PER_PX) * 2);
-  const pageW_px = canvasW;               // full width fills page
+  const pageW_px = canvasW; // full width fills page
 
-  const imgW_mm  = A4_W_MM;
-  const imgH_mm  = (pageW_px / canvasW) * A4_W_MM;  // = A4_W_MM (full width)
+  const imgW_mm = A4_W_MM;
+  const imgH_mm = (pageW_px / canvasW) * A4_W_MM; // = A4_W_MM (full width)
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -354,7 +396,7 @@ export async function exportToPDF({ element, htmlContent, text, title, filename,
 
     // Draw the slice onto a temporary canvas of full A4 height to ensure alignment
     const sliceCanvas = document.createElement('canvas');
-    sliceCanvas.width  = pageW_px;
+    sliceCanvas.width = pageW_px;
     sliceCanvas.height = pageH_px;
     const ctx = sliceCanvas.getContext('2d');
     ctx.fillStyle = '#ffffff';
@@ -378,7 +420,11 @@ export async function exportToPDF({ element, htmlContent, text, title, filename,
     ctx.font = "20px 'Times New Roman', Times, serif";
     ctx.fillStyle = '#475569';
     ctx.textAlign = 'center';
-    ctx.fillText(`AI LEGAL™   |   Confidential Legal Document   |   Page ${pageIndex + 1} of ${totalPages}`, pageW_px / 2, pageH_px - 30);
+    ctx.fillText(
+      `AI LEGAL™   |   Confidential Legal Document   |   Page ${pageIndex + 1} of ${totalPages}`,
+      pageW_px / 2,
+      pageH_px - 30
+    );
 
     const sliceImgData = sliceCanvas.toDataURL('image/png');
 

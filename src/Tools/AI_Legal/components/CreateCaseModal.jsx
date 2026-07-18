@@ -1,8 +1,23 @@
 import React, { useState, useEffect, useMemo, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { 
-  X, Calendar, User, Users, Gavel, FileText, Upload, Plus, Shield, 
-  List, ChevronDown, Phone, Globe, Search, Hash, AlertTriangle, Trash2
+import {
+  X,
+  Calendar,
+  User,
+  Users,
+  Gavel,
+  FileText,
+  Upload,
+  Plus,
+  Shield,
+  List,
+  ChevronDown,
+  Phone,
+  Globe,
+  Search,
+  Hash,
+  AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../../../services/apiService';
@@ -51,16 +66,37 @@ const COUNTRIES = [
   { flag: '🇲🇾', name: 'Malaysia', iso: 'MY', dial: '+60' },
   { flag: '🇹🇭', name: 'Thailand', iso: 'TH', dial: '+66' },
   { flag: '🇻🇳', name: 'Vietnam', iso: 'VN', dial: '+84' },
-  { flag: '🇳🇿', name: 'New Zealand', iso: 'NZ', dial: '+64' }
+  { flag: '🇳🇿', name: 'New Zealand', iso: 'NZ', dial: '+64' },
 ];
 
 // --- Case Categories ---
 const ALL_CATEGORIES = [
-  'Civil', 'Criminal', 'Family', 'Property', 'Corporate', 'Cyber Crime',
-  'Consumer', 'Banking', 'Tax', 'Labour', 'Arbitration', 'Immigration',
-  'Constitutional', 'Environment', 'Intellectual Property', 'Contract',
-  'Insurance', 'Real Estate', 'Employment', 'Company', 'Consumer Protection',
-  'Medical Negligence', 'Domestic Violence', 'Bail', 'Appeal', 'Other'
+  'Civil',
+  'Criminal',
+  'Family',
+  'Property',
+  'Corporate',
+  'Cyber Crime',
+  'Consumer',
+  'Banking',
+  'Tax',
+  'Labour',
+  'Arbitration',
+  'Immigration',
+  'Constitutional',
+  'Environment',
+  'Intellectual Property',
+  'Contract',
+  'Insurance',
+  'Real Estate',
+  'Employment',
+  'Company',
+  'Consumer Protection',
+  'Medical Negligence',
+  'Domestic Violence',
+  'Bail',
+  'Appeal',
+  'Other',
 ];
 
 const CLIENT_ROLES = ['Petitioner', 'Appellant', 'Applicant', 'Plaintiff'];
@@ -83,7 +119,7 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
     filingDate: '',
     incidentDate: '',
     status: 'Active',
-    caseSummary: ''
+    caseSummary: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -99,11 +135,18 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
   const loadCaseFromApi = (caseId, active) => {
     setIsLoading(true);
     setLoadingError(null);
-    apiService.getProject(caseId)
+    apiService
+      .getProject(caseId)
       .then(fullCase => {
         if (!active) return;
-        console.log("Loaded Full Case Details:", fullCase);
-        const categories = fullCase.caseCategories || (fullCase.caseType ? (Array.isArray(fullCase.caseType) ? fullCase.caseType : fullCase.caseType.split(', ')) : []);
+        console.log('Loaded Full Case Details:', fullCase);
+        const categories =
+          fullCase.caseCategories ||
+          (fullCase.caseType
+            ? Array.isArray(fullCase.caseType)
+              ? fullCase.caseType
+              : fullCase.caseType.split(', ')
+            : []);
         setCaseData({
           id: fullCase._id || fullCase.id || '',
           title: fullCase.title || fullCase.name || '',
@@ -121,14 +164,14 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
           filingDate: fullCase.filingDate || '',
           incidentDate: fullCase.incidentDate || '',
           status: fullCase.status || 'Active',
-          caseSummary: fullCase.caseSummary || fullCase.summary || ''
+          caseSummary: fullCase.caseSummary || fullCase.summary || '',
         });
         setIsLoading(false);
       })
       .catch(err => {
         if (!active) return;
-        console.error("Failed to fetch case details:", err);
-        setLoadingError("Unable to load case details.");
+        console.error('Failed to fetch case details:', err);
+        setLoadingError('Unable to load case details.');
         setIsLoading(false);
       });
   };
@@ -136,7 +179,8 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
   useEffect(() => {
     let active = true;
     if (editingCase && isVisible) {
-      const caseId = editingCase._id || editingCase.id || (typeof editingCase === 'string' ? editingCase : '');
+      const caseId =
+        editingCase._id || editingCase.id || (typeof editingCase === 'string' ? editingCase : '');
       if (caseId) {
         loadCaseFromApi(caseId, active);
       }
@@ -159,7 +203,7 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
         filingDate: '',
         incidentDate: '',
         status: 'Active',
-        caseSummary: ''
+        caseSummary: '',
       });
     }
     return () => {
@@ -173,7 +217,7 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
     return ALL_CATEGORIES.filter(c => c.toLowerCase().includes(q));
   }, [categorySearch]);
 
-  const toggleCategory = (cat) => {
+  const toggleCategory = cat => {
     setCaseData(prev => {
       const cats = prev.caseCategories || [];
       if (cats.includes(cat)) {
@@ -212,10 +256,10 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
     const savedPayload = {
       ...caseData,
       name: caseData.title,
-      caseType: caseData.caseCategories.join(', ')
+      caseType: caseData.caseCategories.join(', '),
     };
     onSave(savedPayload);
-    
+
     // Reset form
     setCaseData({
       title: '',
@@ -233,7 +277,7 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
       filingDate: '',
       incidentDate: '',
       status: 'Active',
-      caseSummary: ''
+      caseSummary: '',
     });
   };
 
@@ -264,18 +308,25 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
               leaveTo="opacity-0 scale-95 translate-y-8"
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-[2rem] bg-white dark:bg-zinc-900 p-6 sm:p-8 text-left align-middle shadow-2xl transition-all border border-slate-200 dark:border-zinc-800">
-                
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4 mb-6">
                   <div>
-                    <Dialog.Title as="h3" className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight"
+                    >
                       {editingCase ? 'Edit Case Intelligence' : 'New Case Intelligence'}
                     </Dialog.Title>
                     <p className="text-[10px] sm:text-xs text-subtext font-semibold mt-0.5">
-                      {editingCase ? 'Modify professional legal case details' : 'Enter professional legal case details'}
+                      {editingCase
+                        ? 'Modify professional legal case details'
+                        : 'Enter professional legal case details'}
                     </p>
                   </div>
-                  <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                  <button
+                    onClick={onClose}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                  >
                     <X size={20} className="text-slate-500 dark:text-slate-400" />
                   </button>
                 </div>
@@ -285,16 +336,23 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                   {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-16 space-y-4">
                       <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs font-black text-indigo-650 dark:text-indigo-400 uppercase tracking-widest animate-pulse">Loading case data...</p>
+                      <p className="text-xs font-black text-indigo-650 dark:text-indigo-400 uppercase tracking-widest animate-pulse">
+                        Loading case data...
+                      </p>
                     </div>
                   ) : loadingError ? (
                     <div className="flex flex-col items-center justify-center py-12 space-y-4 text-center">
                       <AlertTriangle size={40} className="text-rose-500 animate-bounce" />
-                      <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{loadingError}</p>
+                      <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                        {loadingError}
+                      </p>
                       <button
                         type="button"
                         onClick={() => {
-                          const caseId = editingCase._id || editingCase.id || (typeof editingCase === 'string' ? editingCase : '');
+                          const caseId =
+                            editingCase._id ||
+                            editingCase.id ||
+                            (typeof editingCase === 'string' ? editingCase : '');
                           if (caseId) {
                             loadCaseFromApi(caseId, true);
                           }
@@ -312,13 +370,18 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
                           SECTION 1 — Case Identity
                         </h4>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Case Title */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Case Title *</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Case Title *
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
-                              <FileText size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0" />
+                              <FileText
+                                size={18}
+                                className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0"
+                              />
                               <input
                                 type="text"
                                 placeholder="e.g. Smith vs Matrix Corp"
@@ -331,7 +394,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Case Status */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Case Status</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Case Status
+                            </label>
                             <div className="relative">
                               <select
                                 value={caseData.status}
@@ -349,11 +414,15 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Priority */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Priority</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Priority
+                            </label>
                             <div className="relative">
                               <select
                                 value={caseData.priority}
-                                onChange={e => setCaseData({ ...caseData, priority: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, priority: e.target.value })
+                                }
                                 className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 dark:text-white outline-none cursor-pointer appearance-none pr-10"
                               >
                                 <option value="Standard">Standard</option>
@@ -366,18 +435,26 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Case Category Selection */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Case Category *</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Case Category *
+                            </label>
                             <button
-                               type="button"
-                               onClick={() => setShowCategoryPicker(true)}
-                               className="w-full flex items-center justify-between bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-left min-h-[52px]"
+                              type="button"
+                              onClick={() => setShowCategoryPicker(true)}
+                              className="w-full flex items-center justify-between bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-2.5 text-left min-h-[52px]"
                             >
                               <div className="flex items-center gap-2 flex-wrap max-w-[85%]">
-                                <List size={18} className="text-indigo-600 dark:text-indigo-400 mr-1 shrink-0" />
+                                <List
+                                  size={18}
+                                  className="text-indigo-600 dark:text-indigo-400 mr-1 shrink-0"
+                                />
                                 {caseData.caseCategories && caseData.caseCategories.length > 0 ? (
                                   <div className="flex flex-wrap gap-1">
                                     {caseData.caseCategories.slice(0, 2).map(cat => (
-                                      <span key={cat} className="bg-indigo-600 text-white rounded-md text-[9px] font-black uppercase px-2 py-0.5 shrink-0">
+                                      <span
+                                        key={cat}
+                                        className="bg-indigo-600 text-white rounded-md text-[9px] font-black uppercase px-2 py-0.5 shrink-0"
+                                      >
                                         {cat}
                                       </span>
                                     ))}
@@ -388,7 +465,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                                     )}
                                   </div>
                                 ) : (
-                                  <span className="text-sm font-bold text-slate-400">Select categories...</span>
+                                  <span className="text-sm font-bold text-slate-400">
+                                    Select categories...
+                                  </span>
                                 )}
                               </div>
                               <ChevronDown size={16} className="text-slate-400 shrink-0" />
@@ -403,11 +482,13 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
                           SECTION 2 — Participants
                         </h4>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Client Role */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Client Role *</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Client Role *
+                            </label>
                             <button
                               type="button"
                               onClick={() => setShowClientRolePicker(true)}
@@ -415,7 +496,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                             >
                               <div className="flex items-center gap-2">
                                 <User size={18} className="text-indigo-600 dark:text-indigo-400" />
-                                <span className={`text-sm font-bold ${caseData.clientRole ? 'text-slate-850 dark:text-white' : 'text-slate-400'}`}>
+                                <span
+                                  className={`text-sm font-bold ${caseData.clientRole ? 'text-slate-850 dark:text-white' : 'text-slate-400'}`}
+                                >
                                   {caseData.clientRole || 'Select Client Role'}
                                 </span>
                               </div>
@@ -425,7 +508,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Opponent Role */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Opponent Role</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Opponent Role
+                            </label>
                             <button
                               type="button"
                               onClick={() => setShowOpponentRolePicker(true)}
@@ -433,7 +518,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                             >
                               <div className="flex items-center gap-2">
                                 <Users size={18} className="text-indigo-600 dark:text-indigo-400" />
-                                <span className={`text-sm font-bold ${caseData.opponentRole ? 'text-slate-850 dark:text-white' : 'text-slate-400'}`}>
+                                <span
+                                  className={`text-sm font-bold ${caseData.opponentRole ? 'text-slate-850 dark:text-white' : 'text-slate-400'}`}
+                                >
                                   {caseData.opponentRole || 'Select Opponent Role'}
                                 </span>
                               </div>
@@ -443,14 +530,21 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Client Name */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Client Name *</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Client Name *
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
-                              <User size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0" />
+                              <User
+                                size={18}
+                                className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0"
+                              />
                               <input
                                 type="text"
                                 placeholder="Enter Client Name"
                                 value={caseData.clientName}
-                                onChange={e => setCaseData({ ...caseData, clientName: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, clientName: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-800 dark:text-white"
                               />
                             </div>
@@ -458,14 +552,21 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Opponent Name */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Opponent Name</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Opponent Name
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
-                              <Users size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0" />
+                              <Users
+                                size={18}
+                                className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0"
+                              />
                               <input
                                 type="text"
                                 placeholder="Enter Opponent Name"
                                 value={caseData.opponentName}
-                                onChange={e => setCaseData({ ...caseData, opponentName: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, opponentName: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-800 dark:text-white"
                               />
                             </div>
@@ -479,18 +580,25 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
                           SECTION 3 — Court Details
                         </h4>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Court */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Court</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Court
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
-                              <Gavel size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0" />
+                              <Gavel
+                                size={18}
+                                className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0"
+                              />
                               <input
                                 type="text"
                                 placeholder="Supreme Court, etc."
                                 value={caseData.courtName}
-                                onChange={e => setCaseData({ ...caseData, courtName: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, courtName: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-800 dark:text-white"
                               />
                             </div>
@@ -498,13 +606,17 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Court Type */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Court Type</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Court Type
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
                               <input
                                 type="text"
                                 placeholder="e.g. High Court, District Court"
                                 value={caseData.courtType}
-                                onChange={e => setCaseData({ ...caseData, courtType: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, courtType: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-800 dark:text-white"
                               />
                             </div>
@@ -512,7 +624,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* State */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">State</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              State
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
                               <input
                                 type="text"
@@ -526,13 +640,17 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* District */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">District</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              District
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
                               <input
                                 type="text"
                                 placeholder="e.g. Central Delhi"
                                 value={caseData.district}
-                                onChange={e => setCaseData({ ...caseData, district: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, district: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-800 dark:text-white"
                               />
                             </div>
@@ -540,7 +658,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* City */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">City</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              City
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
                               <input
                                 type="text"
@@ -560,17 +680,24 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
                           SECTION 4 — Important Dates
                         </h4>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {/* Filing Date */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Filing Date</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Filing Date
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
-                              <Calendar size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0" />
+                              <Calendar
+                                size={18}
+                                className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0"
+                              />
                               <input
                                 type="date"
                                 value={caseData.filingDate}
-                                onChange={e => setCaseData({ ...caseData, filingDate: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, filingDate: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-855 dark:text-white cursor-pointer"
                               />
                             </div>
@@ -578,14 +705,21 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
                           {/* Incident Date */}
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Incident Date</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                              Incident Date
+                            </label>
                             <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
-                              <Calendar size={18} className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0" />
+                              <Calendar
+                                size={18}
+                                className="text-indigo-600 dark:text-indigo-400 mr-2 shrink-0"
+                              />
                               <input
                                 type="date"
                                 max={new Date().toISOString().split('T')[0]}
                                 value={caseData.incidentDate}
-                                onChange={e => setCaseData({ ...caseData, incidentDate: e.target.value })}
+                                onChange={e =>
+                                  setCaseData({ ...caseData, incidentDate: e.target.value })
+                                }
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-855 dark:text-white cursor-pointer"
                               />
                             </div>
@@ -599,16 +733,20 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
                           SECTION 5 — Case Summary
                         </h4>
-                        
+
                         {/* Case Summary */}
                         <div className="space-y-1.5 mb-4">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">Case Summary *</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1">
+                            Case Summary *
+                          </label>
                           <div className="flex items-start bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
                             <textarea
                               rows={5}
                               placeholder="Describe the timeline, facts, claims, important events, and relief sought..."
                               value={caseData.caseSummary}
-                              onChange={e => setCaseData({ ...caseData, caseSummary: e.target.value })}
+                              onChange={e =>
+                                setCaseData({ ...caseData, caseSummary: e.target.value })
+                              }
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-sm font-bold text-slate-850 dark:text-white resize-none"
                             />
                           </div>
@@ -627,7 +765,6 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                     {editingCase ? 'Update Case' : 'Create Case'}
                   </button>
                 </div>
-
               </Dialog.Panel>
             </Transition.Child>
           </div>
@@ -637,7 +774,11 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
         {/* Category Picker Modal */}
         <Transition.Root show={showCategoryPicker} as={Fragment}>
-          <Dialog as="div" className="relative z-[130000]" onClose={() => setShowCategoryPicker(false)}>
+          <Dialog
+            as="div"
+            className="relative z-[130000]"
+            onClose={() => setShowCategoryPicker(false)}
+          >
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
             <div className="fixed inset-0 overflow-y-auto flex items-end justify-center p-4">
               <Transition.Child
@@ -651,10 +792,16 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
               >
                 <Dialog.Panel className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl p-6 text-left shadow-2xl border-t border-slate-100 dark:border-zinc-800">
                   <div className="flex justify-between items-center mb-1">
-                    <Dialog.Title className="text-md font-extrabold text-slate-900 dark:text-white">Case Categories</Dialog.Title>
-                    <button onClick={() => setShowCategoryPicker(false)} className="p-1"><X size={18} className="text-slate-400" /></button>
+                    <Dialog.Title className="text-md font-extrabold text-slate-900 dark:text-white">
+                      Case Categories
+                    </Dialog.Title>
+                    <button onClick={() => setShowCategoryPicker(false)} className="p-1">
+                      <X size={18} className="text-slate-400" />
+                    </button>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-semibold mb-4">{caseData.caseCategories.length} selected · max 10</p>
+                  <p className="text-[10px] text-slate-400 font-semibold mb-4">
+                    {caseData.caseCategories.length} selected · max 10
+                  </p>
                   <div className="flex items-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 mb-4">
                     <Search size={14} className="text-slate-400 mr-2" />
                     <input
@@ -673,13 +820,23 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           key={cat}
                           onClick={() => toggleCategory(cat)}
                           className={`w-full flex items-center gap-3 px-3 py-3.5 text-left text-xs font-bold transition-all ${
-                            isActive ? 'bg-indigo-50/50 dark:bg-indigo-950/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                            isActive
+                              ? 'bg-indigo-50/50 dark:bg-indigo-950/10'
+                              : 'hover:bg-slate-50 dark:hover:bg-white/5'
                           }`}
                         >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isActive ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-zinc-700'}`}>
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isActive ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-zinc-700'}`}
+                          >
                             {isActive && <span className="text-[10px]">✓</span>}
                           </div>
-                          <span className={isActive ? 'text-indigo-650' : 'text-slate-850 dark:text-slate-250'}>{cat}</span>
+                          <span
+                            className={
+                              isActive ? 'text-indigo-650' : 'text-slate-850 dark:text-slate-250'
+                            }
+                          >
+                            {cat}
+                          </span>
                         </button>
                       );
                     })}
@@ -695,7 +852,9 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                       onClick={() => setShowCategoryPicker(false)}
                       className="flex-[2] py-3 text-center bg-indigo-600 rounded-xl text-xs font-black text-white hover:opacity-90"
                     >
-                      {caseData.caseCategories.length === 0 ? 'Skip' : `Confirm ${caseData.caseCategories.length}`}
+                      {caseData.caseCategories.length === 0
+                        ? 'Skip'
+                        : `Confirm ${caseData.caseCategories.length}`}
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -706,7 +865,11 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
         {/* Client Role Picker Modal */}
         <Transition.Root show={showClientRolePicker} as={Fragment}>
-          <Dialog as="div" className="relative z-[130000]" onClose={() => setShowClientRolePicker(false)}>
+          <Dialog
+            as="div"
+            className="relative z-[130000]"
+            onClose={() => setShowClientRolePicker(false)}
+          >
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
             <div className="fixed inset-0 overflow-y-auto flex items-end justify-center p-4">
               <Transition.Child
@@ -720,8 +883,12 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
               >
                 <Dialog.Panel className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl p-6 text-left shadow-2xl border-t border-slate-100 dark:border-zinc-800">
                   <div className="flex justify-between items-center mb-4">
-                    <Dialog.Title className="text-md font-extrabold text-slate-900 dark:text-white">Select Client Role</Dialog.Title>
-                    <button onClick={() => setShowClientRolePicker(false)} className="p-1"><X size={18} className="text-slate-400" /></button>
+                    <Dialog.Title className="text-md font-extrabold text-slate-900 dark:text-white">
+                      Select Client Role
+                    </Dialog.Title>
+                    <button onClick={() => setShowClientRolePicker(false)} className="p-1">
+                      <X size={18} className="text-slate-400" />
+                    </button>
                   </div>
                   <div className="space-y-1">
                     {CLIENT_ROLES.map(role => (
@@ -732,11 +899,15 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           setShowClientRolePicker(false);
                         }}
                         className={`w-full flex items-center justify-between px-4 py-3 text-left text-xs font-bold transition-all rounded-xl ${
-                          caseData.clientRole === role ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-650' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200'
+                          caseData.clientRole === role
+                            ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-650'
+                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200'
                         }`}
                       >
                         <span>{role}</span>
-                        {caseData.clientRole === role && <span className="text-indigo-600 text-[10px]">✓ Selected</span>}
+                        {caseData.clientRole === role && (
+                          <span className="text-indigo-600 text-[10px]">✓ Selected</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -748,7 +919,11 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
 
         {/* Opponent Role Picker Modal */}
         <Transition.Root show={showOpponentRolePicker} as={Fragment}>
-          <Dialog as="div" className="relative z-[130000]" onClose={() => setShowOpponentRolePicker(false)}>
+          <Dialog
+            as="div"
+            className="relative z-[130000]"
+            onClose={() => setShowOpponentRolePicker(false)}
+          >
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
             <div className="fixed inset-0 overflow-y-auto flex items-end justify-center p-4">
               <Transition.Child
@@ -762,8 +937,12 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
               >
                 <Dialog.Panel className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl p-6 text-left shadow-2xl border-t border-slate-100 dark:border-zinc-800">
                   <div className="flex justify-between items-center mb-4">
-                    <Dialog.Title className="text-md font-extrabold text-slate-900 dark:text-white">Select Objector Type</Dialog.Title>
-                    <button onClick={() => setShowOpponentRolePicker(false)} className="p-1"><X size={18} className="text-slate-400" /></button>
+                    <Dialog.Title className="text-md font-extrabold text-slate-900 dark:text-white">
+                      Select Objector Type
+                    </Dialog.Title>
+                    <button onClick={() => setShowOpponentRolePicker(false)} className="p-1">
+                      <X size={18} className="text-slate-400" />
+                    </button>
                   </div>
                   <div className="space-y-1">
                     {OPPONENT_ROLES.map(role => (
@@ -774,11 +953,15 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
                           setShowOpponentRolePicker(false);
                         }}
                         className={`w-full flex items-center justify-between px-4 py-3 text-left text-xs font-bold transition-all rounded-xl ${
-                          caseData.opponentRole === role ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-650' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200'
+                          caseData.opponentRole === role
+                            ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-650'
+                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-800 dark:text-slate-200'
                         }`}
                       >
                         <span>{role}</span>
-                        {caseData.opponentRole === role && <span className="text-indigo-600 text-[10px]">✓ Selected</span>}
+                        {caseData.opponentRole === role && (
+                          <span className="text-indigo-600 text-[10px]">✓ Selected</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -787,7 +970,6 @@ const CreateCaseModal = ({ isDark, isVisible, onClose, onSave, editingCase }) =>
             </div>
           </Dialog>
         </Transition.Root>
-
       </Dialog>
     </Transition.Root>
   );

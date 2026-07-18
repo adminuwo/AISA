@@ -2,7 +2,15 @@ import React, { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { X, Bookmark, AlertCircle, ChevronRight } from 'lucide-react';
 
-const SavedToolsModal = ({ isDark, isVisible, onClose, savedTools, onLaunchTool, onRemoveTool, primaryColor = '#4f46e5' }) => {
+const SavedToolsModal = ({
+  isDark,
+  isVisible,
+  onClose,
+  savedTools,
+  onLaunchTool,
+  onRemoveTool,
+  primaryColor = '#4f46e5',
+}) => {
   return (
     <Transition.Root show={isVisible} as={Fragment}>
       <Dialog as="div" className="relative z-[120000]" onClose={onClose}>
@@ -35,11 +43,17 @@ const SavedToolsModal = ({ isDark, isVisible, onClose, savedTools, onLaunchTool,
                   <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
                     <Bookmark size={20} className="fill-current" />
                   </div>
-                  <Dialog.Title as="h3" className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-black text-slate-900 dark:text-white tracking-tight"
+                  >
                     Saved Tools
                   </Dialog.Title>
                 </div>
-                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                >
                   <X size={18} className="text-slate-500 dark:text-slate-400" />
                 </button>
               </div>
@@ -49,15 +63,17 @@ const SavedToolsModal = ({ isDark, isVisible, onClose, savedTools, onLaunchTool,
                 {savedTools.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                     <AlertCircle size={40} className="text-slate-300 dark:text-slate-700 mb-4" />
-                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">No Saved Tools</h4>
+                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">
+                      No Saved Tools
+                    </h4>
                     <p className="text-xs text-subtext mt-2 max-w-[240px] leading-relaxed font-medium">
                       Tap the bookmark icon on any AI Legal card to save it here for quick access.
                     </p>
                   </div>
                 ) : (
-                  savedTools.map((tool) => (
-                    <div 
-                      key={tool.toolId} 
+                  savedTools.map(tool => (
+                    <div
+                      key={tool.toolId}
                       className="bg-slate-50 dark:bg-black/20 border border-slate-250 dark:border-zinc-800/50 rounded-2xl p-4 flex flex-col gap-3 group"
                     >
                       <div className="flex justify-between items-start">
@@ -69,7 +85,7 @@ const SavedToolsModal = ({ isDark, isVisible, onClose, savedTools, onLaunchTool,
                             {tool.category}
                           </span>
                         </div>
-                        <button 
+                        <button
                           onClick={() => onRemoveTool(tool.toolId)}
                           className="p-2 bg-red-50 dark:bg-red-950/20 rounded-xl text-red-500 hover:scale-105 active:scale-95 transition-all"
                           title="Remove Bookmark"
@@ -77,8 +93,8 @@ const SavedToolsModal = ({ isDark, isVisible, onClose, savedTools, onLaunchTool,
                           <Bookmark size={14} className="fill-current" />
                         </button>
                       </div>
-                      
-                      <button 
+
+                      <button
                         onClick={() => {
                           onClose();
                           onLaunchTool(tool.toolId);

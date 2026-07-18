@@ -33,7 +33,7 @@ const DistrictSelect = ({
 
   // Close on outside click
   useEffect(() => {
-    const handler = (e) => {
+    const handler = e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
         setQuery('');
@@ -59,21 +59,25 @@ const DistrictSelect = ({
     }
   }, [highlighted]);
 
-  const handleSelect = useCallback((districtName) => {
-    onChange(districtName);
-    setOpen(false);
-    setQuery('');
-  }, [onChange]);
+  const handleSelect = useCallback(
+    districtName => {
+      onChange(districtName);
+      setOpen(false);
+      setQuery('');
+    },
+    [onChange]
+  );
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = e => {
     if (!open) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         setOpen(true);
       }
       return;
     }
-    
-    const maxIndex = filtered.length + (query.trim() && !filtered.includes(query.trim()) ? 1 : 0) - 1;
+
+    const maxIndex =
+      filtered.length + (query.trim() && !filtered.includes(query.trim()) ? 1 : 0) - 1;
 
     switch (e.key) {
       case 'ArrowDown':
@@ -115,21 +119,28 @@ const DistrictSelect = ({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={`w-full flex items-center gap-2 border rounded-xl px-4 py-3 text-sm font-medium outline-none transition-all ${
-          !state ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-white/5' : 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
+          !state
+            ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-white/5'
+            : 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
         } ${borderClass} text-left`}
       >
-        <Landmark size={15} className={`shrink-0 ${!state ? 'text-slate-300 dark:text-zinc-700' : 'text-slate-400'}`} />
-        <span className={`flex-1 truncate ${value ? 'text-slate-800 dark:text-white font-semibold' : 'text-slate-400'} flex items-center gap-1.5`}>
-          {!state 
-            ? 'Select State / Province first...' 
-            : value || placeholder
-          }
+        <Landmark
+          size={15}
+          className={`shrink-0 ${!state ? 'text-slate-300 dark:text-zinc-700' : 'text-slate-400'}`}
+        />
+        <span
+          className={`flex-1 truncate ${value ? 'text-slate-800 dark:text-white font-semibold' : 'text-slate-400'} flex items-center gap-1.5`}
+        >
+          {!state ? 'Select State / Province first...' : value || placeholder}
           {value && state && <Check size={14} className="text-emerald-500 shrink-0" />}
         </span>
         {value && state && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onChange(''); }}
+            onClick={e => {
+              e.stopPropagation();
+              onChange('');
+            }}
             className="p-0.5 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-full shrink-0 transition-colors"
             aria-label="Clear selection"
           >
@@ -157,7 +168,10 @@ const DistrictSelect = ({
               ref={inputRef}
               type="text"
               value={query}
-              onChange={e => { setQuery(e.target.value); setHighlighted(0); }}
+              onChange={e => {
+                setQuery(e.target.value);
+                setHighlighted(0);
+              }}
               placeholder="Type to search district..."
               className="flex-1 text-xs font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-400"
               aria-label="Search districts"
@@ -165,7 +179,10 @@ const DistrictSelect = ({
             {query && (
               <button
                 type="button"
-                onClick={() => { setQuery(''); setHighlighted(0); }}
+                onClick={() => {
+                  setQuery('');
+                  setHighlighted(0);
+                }}
                 className="p-0.5 hover:bg-slate-100 dark:hover:bg-zinc-700 rounded-full"
               >
                 <X size={11} className="text-slate-400" />
@@ -194,22 +211,24 @@ const DistrictSelect = ({
                     isSelected
                       ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold'
                       : isHovered
-                      ? 'bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-white'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                        ? 'bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-white'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <span className="text-xs font-semibold flex-1 truncate pr-2">{districtName}</span>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {isSelected && <Check size={14} className="text-indigo-600 dark:text-indigo-400" />}
-                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                      isSelected
-                        ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
-                        : 'border-slate-300 dark:border-zinc-600 bg-transparent'
-                    }`}>
-                      {isSelected && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                      )}
+                    {isSelected && (
+                      <Check size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    )}
+                    <div
+                      className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
+                          : 'border-slate-300 dark:border-zinc-600 bg-transparent'
+                      }`}
+                    >
+                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                     </div>
                   </div>
                 </button>
@@ -217,39 +236,48 @@ const DistrictSelect = ({
             })}
 
             {/* Custom option when query doesn't match list exactly */}
-            {query.trim() && !districts.some(d => d.toLowerCase() === query.trim().toLowerCase()) && (
-              <button
-                type="button"
-                role="option"
-                onClick={() => handleSelect(query.trim())}
-                onMouseEnter={() => setHighlighted(filtered.length)}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
-                  highlighted === filtered.length
-                    ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5'
-                }`}
-              >
-                <span className="text-xs font-bold truncate flex-1 pr-2">Use Custom: "{query.trim()}"</span>
+            {query.trim() &&
+              !districts.some(d => d.toLowerCase() === query.trim().toLowerCase()) && (
+                <button
+                  type="button"
+                  role="option"
+                  onClick={() => handleSelect(query.trim())}
+                  onMouseEnter={() => setHighlighted(filtered.length)}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
+                    highlighted === filtered.length
+                      ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold'
+                      : 'text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <span className="text-xs font-bold truncate flex-1 pr-2">
+                    Use Custom: "{query.trim()}"
+                  </span>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {value === query.trim() && <Check size={14} className="text-indigo-600 dark:text-indigo-400" />}
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                    value === query.trim()
-                      ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
-                      : 'border-slate-300 dark:border-zinc-600 bg-transparent'
-                  }`}>
+                  <div className="flex items-center gap-2 shrink-0">
                     {value === query.trim() && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                      <Check size={14} className="text-indigo-600 dark:text-indigo-400" />
                     )}
+                    <div
+                      className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                        value === query.trim()
+                          ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
+                          : 'border-slate-300 dark:border-zinc-600 bg-transparent'
+                      }`}
+                    >
+                      {value === query.trim() && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </button>
-            )}
+                </button>
+              )}
 
             {filtered.length === 0 && !query.trim() && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Landmark size={24} className="text-slate-300 dark:text-zinc-700 mb-2" />
-                <p className="text-xs font-bold text-slate-400">No districts found. Type custom district above.</p>
+                <p className="text-xs font-bold text-slate-400">
+                  No districts found. Type custom district above.
+                </p>
               </div>
             )}
           </div>

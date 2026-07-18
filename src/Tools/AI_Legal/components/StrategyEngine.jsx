@@ -1,12 +1,59 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  ChevronLeft, ChevronRight, Gavel, Plus, FileText, Copy,
-  Share2, FileDown, History, Search, X, Shield, Clock,
-  Brain, Scale, BookOpen, AlertTriangle, TrendingUp, Mic,
-  Database, Cpu, Briefcase, Building2, Landmark, Folder, Printer, CheckCircle2,
-  Award, Check, Eye, RefreshCw, Send, AlertCircle, Trash2, ChevronDown, ChevronUp,
-  Info, Sparkles, Download, ArrowRight, Lock, PlusCircle, Activity, Flame, Calendar,
-  DollarSign, CheckSquare, Square, UserCheck, Upload, Cloud, Save, RotateCcw, Menu
+  ChevronLeft,
+  ChevronRight,
+  Gavel,
+  Plus,
+  FileText,
+  Copy,
+  Share2,
+  FileDown,
+  History,
+  Search,
+  X,
+  Shield,
+  Clock,
+  Brain,
+  Scale,
+  BookOpen,
+  AlertTriangle,
+  TrendingUp,
+  Mic,
+  Database,
+  Cpu,
+  Briefcase,
+  Building2,
+  Landmark,
+  Folder,
+  Printer,
+  CheckCircle2,
+  Award,
+  Check,
+  Eye,
+  RefreshCw,
+  Send,
+  AlertCircle,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Sparkles,
+  Download,
+  ArrowRight,
+  Lock,
+  PlusCircle,
+  Activity,
+  Flame,
+  Calendar,
+  DollarSign,
+  CheckSquare,
+  Square,
+  UserCheck,
+  Upload,
+  Cloud,
+  Save,
+  RotateCcw,
+  Menu,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { generateChatResponse } from '../../../services/geminiService';
@@ -24,17 +71,67 @@ import CopyOutputButton from './shared/CopyOutputButton';
 // Specialized litigation roadmap templates
 const allTools = [
   { id: 'Bail', name: 'Bail Strategy', desc: 'Pre-arrest roadmap & stay', category: 'Criminal' },
-  { id: 'Criminal', name: 'Criminal Defense', desc: 'Theft & investigation plans', category: 'Criminal' },
+  {
+    id: 'Criminal',
+    name: 'Criminal Defense',
+    desc: 'Theft & investigation plans',
+    category: 'Criminal',
+  },
   { id: 'Civil', name: 'Civil Litigation', desc: 'Damages & contract breach', category: 'Civil' },
-  { id: 'AnticipatoryBail', name: 'Anticipatory Bail', desc: 'Preventive arrest & warrants', category: 'Criminal' },
-  { id: 'FIRResponse', name: 'FIR Response', desc: 'Quashing petitions & counter', category: 'Criminal' },
-  { id: 'EvidencePlanning', name: 'Property Dispute', desc: 'Adverse possession title', category: 'Property' },
-  { id: 'AppealStrategy', name: 'Appeal Strategy', desc: 'High Court & judicial errors', category: 'Civil' },
-  { id: 'CrossExamination', name: 'Cross Examination', desc: 'Witness questioning strategies', category: 'Trial' },
-  { id: 'SettlementStrategy', name: 'Settlement Plan', desc: 'Mediation & trade settlement', category: 'Corporate' },
-  { id: 'DivorceCustody', name: 'Custody & Alimony Plan', desc: 'Child custody & separation terms', category: 'Family' },
-  { id: 'TaxAppeal', name: 'GST Dispute Strategy', desc: 'Indirect tax recovery challenge', category: 'Tax' },
-  { id: 'WrongfulTermination', name: 'Wrongful Termination', desc: 'Employment contract breach claims', category: 'Employment' },
+  {
+    id: 'AnticipatoryBail',
+    name: 'Anticipatory Bail',
+    desc: 'Preventive arrest & warrants',
+    category: 'Criminal',
+  },
+  {
+    id: 'FIRResponse',
+    name: 'FIR Response',
+    desc: 'Quashing petitions & counter',
+    category: 'Criminal',
+  },
+  {
+    id: 'EvidencePlanning',
+    name: 'Property Dispute',
+    desc: 'Adverse possession title',
+    category: 'Property',
+  },
+  {
+    id: 'AppealStrategy',
+    name: 'Appeal Strategy',
+    desc: 'High Court & judicial errors',
+    category: 'Civil',
+  },
+  {
+    id: 'CrossExamination',
+    name: 'Cross Examination',
+    desc: 'Witness questioning strategies',
+    category: 'Trial',
+  },
+  {
+    id: 'SettlementStrategy',
+    name: 'Settlement Plan',
+    desc: 'Mediation & trade settlement',
+    category: 'Corporate',
+  },
+  {
+    id: 'DivorceCustody',
+    name: 'Custody & Alimony Plan',
+    desc: 'Child custody & separation terms',
+    category: 'Family',
+  },
+  {
+    id: 'TaxAppeal',
+    name: 'GST Dispute Strategy',
+    desc: 'Indirect tax recovery challenge',
+    category: 'Tax',
+  },
+  {
+    id: 'WrongfulTermination',
+    name: 'Wrongful Termination',
+    desc: 'Employment contract breach claims',
+    category: 'Employment',
+  },
 ];
 
 const LITIGATION_SYSTEM_PROMPT = `You are a professional courtroom litigation attorney and judicial strategy architect.
@@ -183,249 +280,309 @@ CRITICAL PROMPT DIRECTIVE:
 const TEMPLATE_SEED_DATA = {
   Bail: {
     title: 'Bail Application - Cyber Crime Embezzlement',
-    facts: 'Anticipating custody in a financial technology embezzlement lawsuit. Police are conducting investigations under Section 318 of BNS. Prosecution relies on server login records originating from client home IP.',
-    timeline: 'April 10, 2026: Account access logs flagged.\nMay 2, 2026: Notice received from Police under Section 41A CrPC.\nJune 12, 2026: FIR registered at cyber cell.',
-    evidence: '1. Shared Wi-Fi router lease agreement - Admissibility: High, Strength: Strong\n2. Router access log sheets - Admissibility: High, Strength: Medium\n3. Detailed ledger reconciliation reports - Admissibility: Medium, Strength: Strong',
+    facts:
+      'Anticipating custody in a financial technology embezzlement lawsuit. Police are conducting investigations under Section 318 of BNS. Prosecution relies on server login records originating from client home IP.',
+    timeline:
+      'April 10, 2026: Account access logs flagged.\nMay 2, 2026: Notice received from Police under Section 41A CrPC.\nJune 12, 2026: FIR registered at cyber cell.',
+    evidence:
+      '1. Shared Wi-Fi router lease agreement - Admissibility: High, Strength: Strong\n2. Router access log sheets - Admissibility: High, Strength: Medium\n3. Detailed ledger reconciliation reports - Admissibility: Medium, Strength: Strong',
     witnesses: '1. Harish Rao - System Admin\n2. Kavita Lal - Security Analyst',
     opponent: 'Claims absolute fraudulent transfer of tokens and seeks custodial interrogation.',
     relief: 'Interim protection against arrest under Section 438 of CrPC.',
     orders: 'Notice issued to state prosecutor.',
-    notes: 'Prioritize audit logs submission.'
+    notes: 'Prioritize audit logs submission.',
   },
   Criminal: {
     title: 'Criminal Defense Plan - Alleged Theft',
-    facts: 'Accused of receiving stolen inventory at retail store. Opponent states CCTV capture confirms face, but frame rates are low and unverified. Accused bought items via official bank draft receipt.',
-    timeline: 'March 15, 2026: Acquisition of inventory from supplier.\nApril 22, 2026: Supplier arrested for theft.\nMay 1, 2026: Search conducted at client premises.',
-    evidence: '1. Original bank draft receipt for purchase - Admissibility: High, Strength: Strong\n2. Supplier trade license copy - Admissibility: High, Strength: Strong\n3. CCTV footage analysis report - Admissibility: Medium, Strength: Weak',
+    facts:
+      'Accused of receiving stolen inventory at retail store. Opponent states CCTV capture confirms face, but frame rates are low and unverified. Accused bought items via official bank draft receipt.',
+    timeline:
+      'March 15, 2026: Acquisition of inventory from supplier.\nApril 22, 2026: Supplier arrested for theft.\nMay 1, 2026: Search conducted at client premises.',
+    evidence:
+      '1. Original bank draft receipt for purchase - Admissibility: High, Strength: Strong\n2. Supplier trade license copy - Admissibility: High, Strength: Strong\n3. CCTV footage analysis report - Admissibility: Medium, Strength: Weak',
     witnesses: '1. Amit Sen - Store Clerk\n2. Rajesh Sharma - Accountant',
     opponent: 'Asserts client had knowledge of stolen nature of goods.',
     relief: 'Quashing of FIR under Section 482 or acquittal at trial.',
     orders: 'None.',
-    notes: 'Verify bank draft clearing date.'
+    notes: 'Verify bank draft clearing date.',
   },
   Civil: {
     title: 'Civil Litigation recovery - Gupta Tech vs Apex Retail',
-    facts: 'Recovery suit for contract delays. Plaintiff demands INR 12 Lakhs liquidated damages. Defendant states delays are caused by direct delays in design approvals by the Plaintiff.',
-    timeline: 'Jan 15, 2026: Supply order signed.\nFeb 20, 2026: Revised specifications sent by client.\nApril 10, 2026: Completed modules delivered.',
-    evidence: '1. Email logs requesting approval for designs - Admissibility: High, Strength: Strong\n2. Mobilization payment receipts - Admissibility: High, Strength: Strong\n3. Delivery confirmation receipts - Admissibility: High, Strength: Strong',
+    facts:
+      'Recovery suit for contract delays. Plaintiff demands INR 12 Lakhs liquidated damages. Defendant states delays are caused by direct delays in design approvals by the Plaintiff.',
+    timeline:
+      'Jan 15, 2026: Supply order signed.\nFeb 20, 2026: Revised specifications sent by client.\nApril 10, 2026: Completed modules delivered.',
+    evidence:
+      '1. Email logs requesting approval for designs - Admissibility: High, Strength: Strong\n2. Mobilization payment receipts - Admissibility: High, Strength: Strong\n3. Delivery confirmation receipts - Admissibility: High, Strength: Strong',
     witnesses: '1. Suresh Sen - Lead Designer\n2. Dev Gupta - Manager',
     opponent: 'Claims delays caused solely by mobilization constraints of the supplier.',
     relief: 'Recovery of INR 12 Lakhs plus interest @ 18% p.a.',
     orders: 'Writ of summons served.',
-    notes: 'Prepare comparative delay analysis chart.'
+    notes: 'Prepare comparative delay analysis chart.',
   },
   Cyber: {
     title: 'Cyber Security Breach Liability Suit',
-    facts: 'Server database breach litigation. Opponent alleges security breach from user account. User logs show session tokens were active from overlapping geo-locations (Delhi and Singapore) within 5 minutes.',
-    timeline: 'May 1, 2026: Data breach detected.\nMay 3, 2026: Account suspended.\nJune 10, 2026: Notice of compensation claim.',
-    evidence: '1. ISP authentication log reports - Admissibility: High, Strength: Strong\n2. Multi-factor authentication history - Admissibility: High, Strength: Strong\n3. IT audit compliance certification - Admissibility: High, Strength: Strong',
+    facts:
+      'Server database breach litigation. Opponent alleges security breach from user account. User logs show session tokens were active from overlapping geo-locations (Delhi and Singapore) within 5 minutes.',
+    timeline:
+      'May 1, 2026: Data breach detected.\nMay 3, 2026: Account suspended.\nJune 10, 2026: Notice of compensation claim.',
+    evidence:
+      '1. ISP authentication log reports - Admissibility: High, Strength: Strong\n2. Multi-factor authentication history - Admissibility: High, Strength: Strong\n3. IT audit compliance certification - Admissibility: High, Strength: Strong',
     witnesses: '1. Dr. Arun Sen - Cyber Analyst\n2. Priya Mehra - IT Admin',
     opponent: 'Claims gross negligence in maintaining credential security protocols.',
     relief: 'Dismissal of claim for lack of negligent cause.',
     orders: 'None.',
-    notes: 'Verify VPN logs for the active token session.'
+    notes: 'Verify VPN logs for the active token session.',
   },
   AnticipatoryBail: {
     title: 'Anticipatory Bail - Loan Default Exposure',
-    facts: 'Apprehension of arrest regarding bank loan default. Matter under corporate investigation scanner. Client is cooperative and ready to join inquiry.',
-    timeline: 'June 2025: Account declared NPA.\nMarch 2026: Forensic audit report submitted.\nJune 20, 2026: Summons issued by economic offenses wing.',
-    evidence: '1. Medical certificates of the promoter - Admissibility: High, Strength: Strong\n2. Details of assets pledged to the bank - Admissibility: High, Strength: Strong\n3. Letter of cooperation sent to IO - Admissibility: High, Strength: Strong',
+    facts:
+      'Apprehension of arrest regarding bank loan default. Matter under corporate investigation scanner. Client is cooperative and ready to join inquiry.',
+    timeline:
+      'June 2025: Account declared NPA.\nMarch 2026: Forensic audit report submitted.\nJune 20, 2026: Summons issued by economic offenses wing.',
+    evidence:
+      '1. Medical certificates of the promoter - Admissibility: High, Strength: Strong\n2. Details of assets pledged to the bank - Admissibility: High, Strength: Strong\n3. Letter of cooperation sent to IO - Admissibility: High, Strength: Strong',
     witnesses: '1. Dr. R. K. Sen - Consultant\n2. Suresh Lal - Financial Advisor',
     opponent: 'Alleges diversion of funds for personal assets.',
     relief: 'Pre-arrest bail direction protecting promoter liberty.',
     orders: 'Ad-interim protection granted subject to deposit of 10% amount.',
-    notes: 'Secure promoter passport copy.'
+    notes: 'Secure promoter passport copy.',
   },
   FIRResponse: {
     title: 'FIR Quashing Petition - Partnership Dispute',
-    facts: 'FIR alleging criminal breach of trust. Dispute is purely civil regarding partnership firm profits split. No criminal intent shown in records.',
-    timeline: 'Feb 2026: Partnership dissolved.\nApril 2026: Mutual settlement talks failed.\nJune 10, 2026: FIR registered by outgoing partner.',
-    evidence: '1. Written partnership deed with arbitration clause - Admissibility: High, Strength: Strong\n2. Bank accounts ledger sheet for partnership - Admissibility: High, Strength: Strong\n3. Dissolution agreement draft - Admissibility: High, Strength: Strong',
+    facts:
+      'FIR alleging criminal breach of trust. Dispute is purely civil regarding partnership firm profits split. No criminal intent shown in records.',
+    timeline:
+      'Feb 2026: Partnership dissolved.\nApril 2026: Mutual settlement talks failed.\nJune 10, 2026: FIR registered by outgoing partner.',
+    evidence:
+      '1. Written partnership deed with arbitration clause - Admissibility: High, Strength: Strong\n2. Bank accounts ledger sheet for partnership - Admissibility: High, Strength: Strong\n3. Dissolution agreement draft - Admissibility: High, Strength: Strong',
     witnesses: '1. Ajay Sen - partner auditor\n2. Meena Sen - mediation witness',
     opponent: 'Claims deliberate siphoning of capital before dissolution.',
     relief: 'Quashing of FIR under Section 482 of CrPC / BNSS.',
     orders: 'Notice issued, stay on investigation granted.',
-    notes: 'Submit ledger copy showing tax payments.'
+    notes: 'Submit ledger copy showing tax payments.',
   },
   EvidencePlanning: {
     title: 'Property Dispute Declaratory Suit',
-    facts: 'Seeking adverse possession declaration. Client has stayed on the property since 1994, paying utilities and local land revenue taxes continuously.',
-    timeline: 'May 1994: Initial possession under oral agreement.\nJune 2010: Registered owner passed away.\nJune 2026: Legal heirs threatened eviction.',
-    evidence: '1. Electricity bills from 1995 to 2026 - Admissibility: High, Strength: Strong\n2. Land revenue tax receipts - Admissibility: High, Strength: Strong\n3. Affidavit declarations from neighbors - Admissibility: Medium, Strength: Medium',
+    facts:
+      'Seeking adverse possession declaration. Client has stayed on the property since 1994, paying utilities and local land revenue taxes continuously.',
+    timeline:
+      'May 1994: Initial possession under oral agreement.\nJune 2010: Registered owner passed away.\nJune 2026: Legal heirs threatened eviction.',
+    evidence:
+      '1. Electricity bills from 1995 to 2026 - Admissibility: High, Strength: Strong\n2. Land revenue tax receipts - Admissibility: High, Strength: Strong\n3. Affidavit declarations from neighbors - Admissibility: Medium, Strength: Medium',
     witnesses: '1. Mr. Ram Avtar - Neighbor\n2. Dev Das - Postman',
     opponent: 'Claims client is a permissive user and licensee.',
     relief: 'Declaration of title by adverse possession.',
     orders: 'Status quo order passed on eviction attempts.',
-    notes: 'Collect municipal voting register entries.'
+    notes: 'Collect municipal voting register entries.',
   },
   AppealStrategy: {
     title: 'First Appeal - Eviction Decree Error',
-    facts: 'Appeal against lower court order granting eviction. Appellant claims trial judge completely ignored balance of convenience and lack of notice.',
-    timeline: 'May 2025: Injunction suit dismissed.\nJune 2026: Decree copy certified.\nJune 28, 2026: Appeal filed in District Court.',
-    evidence: '1. Trial court judgment record copy - Admissibility: High, Strength: Strong\n2. Rent deposits slips - Admissibility: High, Strength: Strong\n3. Notice of demand response proof - Admissibility: High, Strength: Strong',
+    facts:
+      'Appeal against lower court order granting eviction. Appellant claims trial judge completely ignored balance of convenience and lack of notice.',
+    timeline:
+      'May 2025: Injunction suit dismissed.\nJune 2026: Decree copy certified.\nJune 28, 2026: Appeal filed in District Court.',
+    evidence:
+      '1. Trial court judgment record copy - Admissibility: High, Strength: Strong\n2. Rent deposits slips - Admissibility: High, Strength: Strong\n3. Notice of demand response proof - Admissibility: High, Strength: Strong',
     witnesses: '1. Appellant himself - tenant',
     opponent: 'Claims tenant default of over 12 months.',
     relief: 'Setting aside eviction decree and restoration of tenancy.',
     orders: 'Execution of decree stayed pending appeal.',
-    notes: 'File deposit application for outstanding rent.'
+    notes: 'File deposit application for outstanding rent.',
   },
   CrossExamination: {
     title: 'Cross Examination Prep - Opposing Manager',
-    facts: 'Preparing cross questions for opposing project manager regarding contract delivery logs showing verbal approvals of milestones.',
-    timeline: 'Oct 2025: Work started.\nDec 2025: Verbal approval granted for milestones 1 and 2.\nJan 2026: Formal rejection letter sent.',
-    evidence: '1. WhatsApp chat logs confirming verbal approvals - Admissibility: High, Strength: Medium\n2. Site visitor registers signed by manager - Admissibility: High, Strength: Strong\n3. Work progress photographs - Admissibility: High, Strength: Strong',
+    facts:
+      'Preparing cross questions for opposing project manager regarding contract delivery logs showing verbal approvals of milestones.',
+    timeline:
+      'Oct 2025: Work started.\nDec 2025: Verbal approval granted for milestones 1 and 2.\nJan 2026: Formal rejection letter sent.',
+    evidence:
+      '1. WhatsApp chat logs confirming verbal approvals - Admissibility: High, Strength: Medium\n2. Site visitor registers signed by manager - Admissibility: High, Strength: Strong\n3. Work progress photographs - Admissibility: High, Strength: Strong',
     witnesses: '1. Lead engineer - present during inspections',
     opponent: 'Denies any verbal approval or site visitations.',
     relief: 'Impeaching credibility of opponent witness.',
     orders: 'None.',
-    notes: 'Verify WhatsApp timestamps match log files.'
+    notes: 'Verify WhatsApp timestamps match log files.',
   },
   SettlementStrategy: {
     title: 'Settlement Brief - Franchise Dissolution',
-    facts: 'Franchise split dispute. Client seeks amicable resolution of trade trademark disputes. Opponent asks for INR 50 Lakhs payment.',
-    timeline: 'Jan 2026: Split announced.\nMarch 2026: Mediation talks initiated.\nJune 2026: Final draft proposal review.',
-    evidence: '1. Franchise revenue loss statements - Admissibility: High, Strength: Strong\n2. Competitor shop lease papers - Admissibility: High, Strength: Strong\n3. Trademark license drafts - Admissibility: High, Strength: Strong',
+    facts:
+      'Franchise split dispute. Client seeks amicable resolution of trade trademark disputes. Opponent asks for INR 50 Lakhs payment.',
+    timeline:
+      'Jan 2026: Split announced.\nMarch 2026: Mediation talks initiated.\nJune 2026: Final draft proposal review.',
+    evidence:
+      '1. Franchise revenue loss statements - Admissibility: High, Strength: Strong\n2. Competitor shop lease papers - Admissibility: High, Strength: Strong\n3. Trademark license drafts - Admissibility: High, Strength: Strong',
     witnesses: '1. Mr. Dev - Mediator',
     opponent: 'Insists on complete exit fee payments.',
     relief: 'Mutual release of liabilities and exit fee of INR 15 Lakhs.',
     orders: 'Mediation report submitted.',
-    notes: 'Prepare final draft exit agreement.'
+    notes: 'Prepare final draft exit agreement.',
   },
   DivorceCustody: {
     title: 'Custody & Alimony Plan - Verma vs Verma',
-    facts: 'Divorce petition with child custody challenge. Mother seeks sole physical custody of 7-year-old child and maintenance of INR 75,000/month. Father seeks joint legal custody citing stable employment and housing.',
-    timeline: 'April 2024: Marriage solemnized.\nMarch 2026: Separation due to compatibility issues.\nJune 15, 2026: Family court filing.',
-    evidence: '1. School reports showing active father participation - Admissibility: High, Strength: Strong\n2. Joint bank account statements - Admissibility: High, Strength: Medium\n3. Rent receipts for family house - Admissibility: High, Strength: Strong',
+    facts:
+      'Divorce petition with child custody challenge. Mother seeks sole physical custody of 7-year-old child and maintenance of INR 75,000/month. Father seeks joint legal custody citing stable employment and housing.',
+    timeline:
+      'April 2024: Marriage solemnized.\nMarch 2026: Separation due to compatibility issues.\nJune 15, 2026: Family court filing.',
+    evidence:
+      '1. School reports showing active father participation - Admissibility: High, Strength: Strong\n2. Joint bank account statements - Admissibility: High, Strength: Medium\n3. Rent receipts for family house - Admissibility: High, Strength: Strong',
     witnesses: '1. Dr. Neha Sen - Child Psychologist\n2. Ramesh Verma - Neighbor',
     opponent: 'Claims father has long travel schedules and cannot commit to child-rearing.',
     relief: 'Joint custody rights and reasonable monthly maintenance splits.',
     orders: 'Interim visitations allowed on weekends.',
-    notes: 'Prioritize psychologist welfare reports.'
+    notes: 'Prioritize psychologist welfare reports.',
   },
   TaxAppeal: {
     title: 'GST Appeal - Apex Retail Tax liability',
-    facts: 'Challenge against input tax credit (ITC) denial. Tax authority claims supplier did not deposit GST collected, seeking recovery of INR 8.5 Lakhs plus 18% penalty.',
-    timeline: 'Jan 2025: Invoice raised by supplier.\nMarch 2026: Show cause notice issued.\nJune 5, 2026: Recovery demand order.',
-    evidence: '1. GST invoices with transaction logs - Admissibility: High, Strength: Strong\n2. Bank statements showing full payment to supplier - Admissibility: High, Strength: Strong\n3. Tax return transcripts (Form GSTR-2B) - Admissibility: High, Strength: Strong',
+    facts:
+      'Challenge against input tax credit (ITC) denial. Tax authority claims supplier did not deposit GST collected, seeking recovery of INR 8.5 Lakhs plus 18% penalty.',
+    timeline:
+      'Jan 2025: Invoice raised by supplier.\nMarch 2026: Show cause notice issued.\nJune 5, 2026: Recovery demand order.',
+    evidence:
+      '1. GST invoices with transaction logs - Admissibility: High, Strength: Strong\n2. Bank statements showing full payment to supplier - Admissibility: High, Strength: Strong\n3. Tax return transcripts (Form GSTR-2B) - Admissibility: High, Strength: Strong',
     witnesses: '1. Rajan Sen - Chartered Accountant',
     opponent: 'Asserts buyer is jointly liable if supplier default occurs.',
     relief: 'Stay on tax recovery and reversal of input credit denial.',
     orders: 'None.',
-    notes: 'Submit proof of bona fide trade transactions.'
+    notes: 'Submit proof of bona fide trade transactions.',
   },
   WrongfulTermination: {
     title: 'Wrongful Termination - Sen vs InfoTech',
-    facts: 'Wrongful dismissal tech lawsuit. Employee terminated immediately without notice pay or compensation. Employer claims performance issues, but employee has 5 consecutive excellent ratings.',
-    timeline: 'Dec 2023: Joining date.\nMay 2026: Excellent performance rating email.\nJune 18, 2026: Termination email citing downsizing.',
-    evidence: '1. Appointment letter specifying 3 months notice - Admissibility: High, Strength: Strong\n2. Email appraisal records - Admissibility: High, Strength: Strong\n3. Separation severance draft - Admissibility: High, Strength: Medium',
+    facts:
+      'Wrongful dismissal tech lawsuit. Employee terminated immediately without notice pay or compensation. Employer claims performance issues, but employee has 5 consecutive excellent ratings.',
+    timeline:
+      'Dec 2023: Joining date.\nMay 2026: Excellent performance rating email.\nJune 18, 2026: Termination email citing downsizing.',
+    evidence:
+      '1. Appointment letter specifying 3 months notice - Admissibility: High, Strength: Strong\n2. Email appraisal records - Admissibility: High, Strength: Strong\n3. Separation severance draft - Admissibility: High, Strength: Medium',
     witnesses: '1. Ajay Lal - Project Manager',
     opponent: 'Claims termination was aligned with restructuring provisions.',
     relief: 'Reinstatement or 3 months severance salary pay plus interest.',
     orders: 'None.',
-    notes: 'Check separation clause specifications.'
-  }
+    notes: 'Check separation clause specifications.',
+  },
 };
 
 // Parsing Helpers
-const parseEvidenceText = (text) => {
+const parseEvidenceText = text => {
   if (!text) return [];
-  return text.split('\n').filter(line => line.trim()).map((line, idx) => {
-    const cleanLine = line.replace(/^\d+[\.\)\s-]*|^\s*[-*•]\s*/, '').trim();
-    const parts = cleanLine.split(' - ');
-    const name = parts[0] || 'Evidence #' + (idx + 1);
-    const detail = parts[1] || '';
-    const detailsMap = detail.split(', ');
+  return text
+    .split('\n')
+    .filter(line => line.trim())
+    .map((line, idx) => {
+      const cleanLine = line.replace(/^\d+[\.\)\s-]*|^\s*[-*•]\s*/, '').trim();
+      const parts = cleanLine.split(' - ');
+      const name = parts[0] || 'Evidence #' + (idx + 1);
+      const detail = parts[1] || '';
+      const detailsMap = detail.split(', ');
 
-    let admissibility = 'High';
-    let strength = 'Strong';
-    let credibility = 'High';
+      let admissibility = 'High';
+      let strength = 'Strong';
+      let credibility = 'High';
 
-    detailsMap.forEach(d => {
-      if (d.toLowerCase().includes('admissibility')) {
-        admissibility = d.split(':')[1]?.trim() || admissibility;
-      }
-      if (d.toLowerCase().includes('strength')) {
-        strength = d.split(':')[1]?.trim() || strength;
-      }
+      detailsMap.forEach(d => {
+        if (d.toLowerCase().includes('admissibility')) {
+          admissibility = d.split(':')[1]?.trim() || admissibility;
+        }
+        if (d.toLowerCase().includes('strength')) {
+          strength = d.split(':')[1]?.trim() || strength;
+        }
+      });
+
+      return {
+        id: `ev_${idx}_${Date.now()}`,
+        name,
+        type:
+          name.toLowerCase().includes('email') ||
+          name.toLowerCase().includes('whatsapp') ||
+          name.toLowerCase().includes('log')
+            ? 'Digital'
+            : 'Document',
+        admissibility: admissibility.replace(/admissibility:?/i, '').trim(),
+        strength: strength.replace(/strength:?/i, '').trim(),
+        credibility,
+        linkedWitness: 'N/A',
+        status: 'Admitted',
+        risk: admissibility === 'Low' || strength === 'Weak' ? 'High' : 'Low',
+      };
     });
-
-    return {
-      id: `ev_${idx}_${Date.now()}`,
-      name,
-      type: name.toLowerCase().includes('email') || name.toLowerCase().includes('whatsapp') || name.toLowerCase().includes('log') ? 'Digital' : 'Document',
-      admissibility: admissibility.replace(/admissibility:?/i, '').trim(),
-      strength: strength.replace(/strength:?/i, '').trim(),
-      credibility,
-      linkedWitness: 'N/A',
-      status: 'Admitted',
-      risk: admissibility === 'Low' || strength === 'Weak' ? 'High' : 'Low'
-    };
-  });
 };
 
-const parseWitnessText = (text) => {
+const parseWitnessText = text => {
   if (!text) return [];
-  return text.split('\n').filter(line => line.trim()).map((line, idx) => {
-    const cleanLine = line.replace(/^\d+[\.\)\s-]*|^\s*[-*•]\s*/, '').trim();
-    const parts = cleanLine.split(' - ');
-    const name = parts[0] || 'Witness #' + (idx + 1);
-    const role = parts[1] || 'Witness';
-    return {
-      id: `wit_${idx}_${Date.now()}`,
-      name,
-      role,
-      supports: idx % 2 === 0 ? 'Plaintiff' : 'Defendant',
-      weakness: 'None identified',
-      questions: [`Please verify the details of the event on the record?`],
-      credibilityScore: 85 - (idx * 5)
-    };
-  });
+  return text
+    .split('\n')
+    .filter(line => line.trim())
+    .map((line, idx) => {
+      const cleanLine = line.replace(/^\d+[\.\)\s-]*|^\s*[-*•]\s*/, '').trim();
+      const parts = cleanLine.split(' - ');
+      const name = parts[0] || 'Witness #' + (idx + 1);
+      const role = parts[1] || 'Witness';
+      return {
+        id: `wit_${idx}_${Date.now()}`,
+        name,
+        role,
+        supports: idx % 2 === 0 ? 'Plaintiff' : 'Defendant',
+        weakness: 'None identified',
+        questions: [`Please verify the details of the event on the record?`],
+        credibilityScore: 85 - idx * 5,
+      };
+    });
 };
 
-const parseTimelineText = (text) => {
+const parseTimelineText = text => {
   if (!text) return [];
-  return text.split('\n').filter(line => line.trim()).map((line, idx) => {
-    const cleanLine = line.replace(/^\d+[\.\)\s-]*|^\s*[-*•]\s*/, '').trim();
-    const parts = cleanLine.split(': ');
-    let date = 'N/A';
-    let title = cleanLine;
-    if (parts.length > 1) {
-      date = parts[0];
-      title = parts[1];
-    } else {
-      const dateMatch = cleanLine.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}|\d{4}/i);
-      if (dateMatch) {
-        date = dateMatch[0];
+  return text
+    .split('\n')
+    .filter(line => line.trim())
+    .map((line, idx) => {
+      const cleanLine = line.replace(/^\d+[\.\)\s-]*|^\s*[-*•]\s*/, '').trim();
+      const parts = cleanLine.split(': ');
+      let date = 'N/A';
+      let title = cleanLine;
+      if (parts.length > 1) {
+        date = parts[0];
+        title = parts[1];
+      } else {
+        const dateMatch = cleanLine.match(
+          /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}|\d{4}/i
+        );
+        if (dateMatch) {
+          date = dateMatch[0];
+        }
       }
-    }
-    return {
-      id: `time_${idx}_${Date.now()}`,
-      title,
-      date,
-      description: `Case milestone event`
-    };
-  });
+      return {
+        id: `time_${idx}_${Date.now()}`,
+        title,
+        date,
+        description: `Case milestone event`,
+      };
+    });
 };
 
-const serializeEvidenceList = (list) => {
-  return list.map((ev, idx) => `${idx + 1}. ${ev.name} - Admissibility: ${ev.admissibility}, Strength: ${ev.strength}`).join('\n');
+const serializeEvidenceList = list => {
+  return list
+    .map(
+      (ev, idx) =>
+        `${idx + 1}. ${ev.name} - Admissibility: ${ev.admissibility}, Strength: ${ev.strength}`
+    )
+    .join('\n');
 };
 
-const serializeWitnessList = (list) => {
+const serializeWitnessList = list => {
   return list.map((w, idx) => `${idx + 1}. ${w.name} - ${w.role}`).join('\n');
 };
 
-const serializeTimelineList = (list) => {
+const serializeTimelineList = list => {
   return list.map((t, idx) => `${t.date}: ${t.title}`).join('\n');
 };
 
-const generatePath = (val) => {
+const generatePath = val => {
   const num = Number(val) || 50;
-  const p1 = 20 - (num * 0.1);
-  const p2 = 22 - (num * 0.08);
-  const p3 = 18 - (num * 0.12);
-  const p4 = 15 - (num * 0.14);
-  return `M0,${p1} L25,${p2} L50,${p3} L75,${p4} L100,${20 - (num * 0.13)}`;
+  const p1 = 20 - num * 0.1;
+  const p2 = 22 - num * 0.08;
+  const p3 = 18 - num * 0.12;
+  const p4 = 15 - num * 0.14;
+  return `M0,${p1} L25,${p2} L50,${p3} L75,${p4} L100,${20 - num * 0.13}`;
 };
 
 const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
@@ -468,8 +625,20 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   const [timelineList, setTimelineList] = useState([]);
 
   // Inline Add states
-  const [newEv, setNewEv] = useState({ name: '', type: 'Document', admissibility: 'High', strength: 'Strong', credibility: 'High', risk: 'Low' });
-  const [newWit, setNewWit] = useState({ name: '', role: '', supports: 'Plaintiff', credibilityScore: 85 });
+  const [newEv, setNewEv] = useState({
+    name: '',
+    type: 'Document',
+    admissibility: 'High',
+    strength: 'Strong',
+    credibility: 'High',
+    risk: 'Low',
+  });
+  const [newWit, setNewWit] = useState({
+    name: '',
+    role: '',
+    supports: 'Plaintiff',
+    credibilityScore: 85,
+  });
   const [newTime, setNewTime] = useState({ date: '', title: '' });
 
   // Get active case context for auto-running
@@ -497,12 +666,12 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   const [rawStrategyResult, setRawStrategyResult] = useState(null);
   const [isStrategyTranslating, setIsStrategyTranslating] = useState(false);
   const [strategyResult, _setStrategyResult] = useState(null);
-  const setStrategyResult = (val) => {
-    console.log("[StrategyEngine] setStrategyResult called with:", val);
-    console.trace("[StrategyEngine] setStrategyResult Call Stack");
+  const setStrategyResult = val => {
+    console.log('[StrategyEngine] setStrategyResult called with:', val);
+    console.trace('[StrategyEngine] setStrategyResult Call Stack');
     _setStrategyResult(val);
   };
-  const setRawStrategyResultAndSync = (val) => {
+  const setRawStrategyResultAndSync = val => {
     setRawStrategyResult(val);
     setStrategyResult(val);
   };
@@ -514,7 +683,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   const loadingRef = useRef(null);
   const reportRef = useRef(null);
   const contextChangeRef = useRef(null);
-  const stableContextChange = useCallback((ctx) => {
+  const stableContextChange = useCallback(ctx => {
     contextChangeRef.current?.(ctx);
   }, []);
 
@@ -553,20 +722,20 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     out_precedents: true,
     out_matrix: true,
     out_settlement: true,
-    out_actions: true
+    out_actions: true,
   });
 
   // ── Advocate Notes State ───────────────────────────────────────────────────────
-  const [advocateNotes, setAdvocateNotes] = useState([]);          // persisted notes array
-  const [currentNoteText, setCurrentNoteText] = useState('');      // editor textarea value
-  const [editingNoteId, setEditingNoteId] = useState(null);        // null = new note mode
-  const [notesSaveStatus, setNotesSaveStatus] = useState('idle');  // 'idle'|'saving'|'saved'|'error'
-  const [lastSavedAt, setLastSavedAt] = useState(null);            // Date obj of last save
+  const [advocateNotes, setAdvocateNotes] = useState([]); // persisted notes array
+  const [currentNoteText, setCurrentNoteText] = useState(''); // editor textarea value
+  const [editingNoteId, setEditingNoteId] = useState(null); // null = new note mode
+  const [notesSaveStatus, setNotesSaveStatus] = useState('idle'); // 'idle'|'saving'|'saved'|'error'
+  const [lastSavedAt, setLastSavedAt] = useState(null); // Date obj of last save
   const [noteSearch, setNoteSearch] = useState('');
   const [notesSortOrder, setNotesSortOrder] = useState('newest');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // note id pending delete
-  const [pendingNotesClose, setPendingNotesClose] = useState(false);// unsaved-changes guard
-  const [expandedNoteId, setExpandedNoteId] = useState(null);      // expanded card id
+  const [pendingNotesClose, setPendingNotesClose] = useState(false); // unsaved-changes guard
+  const [expandedNoteId, setExpandedNoteId] = useState(null); // expanded card id
   const autosaveTimerRef = useRef(null);
   // ──────────────────────────────────────────────────────────────────────────────
 
@@ -612,7 +781,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     courtName: '',
     assignedAdvocate: '',
     stage: 'Pre-litigation',
-    summary: ''
+    summary: '',
   });
 
   const {
@@ -628,19 +797,42 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     if (!result) return null;
 
     const EXCLUDED_KEYS = new Set([
-      'id', '_id', 'timestamp', 'overallStrategyScore', 'winningProbability', 'litigationRisk',
-      'evidenceStrength', 'precedentSupport', 'aiConfidence', 'courtReadiness',
-      'missingEvidenceCount', 'missingDocumentsCount', 'settlementProbability', 'appealRisk',
-      'similarityScore', 'legal', 'evidence', 'procedural', 'financial', 'strategic',
-      'riskPercentage', 'settlementChance', 'credibilityScore'
+      'id',
+      '_id',
+      'timestamp',
+      'overallStrategyScore',
+      'winningProbability',
+      'litigationRisk',
+      'evidenceStrength',
+      'precedentSupport',
+      'aiConfidence',
+      'courtReadiness',
+      'missingEvidenceCount',
+      'missingDocumentsCount',
+      'settlementProbability',
+      'appealRisk',
+      'similarityScore',
+      'legal',
+      'evidence',
+      'procedural',
+      'financial',
+      'strategic',
+      'riskPercentage',
+      'settlementChance',
+      'credibilityScore',
     ]);
 
-    const isBypass = (str) => {
+    const isBypass = str => {
       if (!str || typeof str !== 'string') return true;
       const trimmed = str.trim();
       if (!trimmed) return true;
       if (/^[0-9a-fA-F]{32,64}$/.test(trimmed)) return true;
-      if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(trimmed)) return true;
+      if (
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+          trimmed
+        )
+      )
+        return true;
       if (/^\d+(%|\/\d+)?$/.test(trimmed)) return true;
       if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return true;
       return false;
@@ -700,7 +892,9 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         setValueAtPath(cloned, item.path, translatedSegments[idx]);
       });
     } else {
-      console.warn(`[deepTranslate] strategy translation mismatch: got ${translatedSegments.length}, expected ${translatableList.length}`);
+      console.warn(
+        `[deepTranslate] strategy translation mismatch: got ${translatedSegments.length}, expected ${translatableList.length}`
+      );
       translatableList.forEach((item, idx) => {
         const translatedVal = translatedSegments[idx] || item.original;
         setValueAtPath(cloned, item.path, translatedVal);
@@ -721,7 +915,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     const sampleText = rawStrategyResult.strategies?.primary?.description || '';
     const hasDevanagari = /[\u0900-\u097F]/.test(sampleText);
     const rawIsHindi = hasDevanagari;
-    const targetIsHindi = (targetLang === 'Hindi');
+    const targetIsHindi = targetLang === 'Hindi';
 
     if (rawIsHindi === targetIsHindi) {
       _setStrategyResult(rawStrategyResult);
@@ -729,13 +923,15 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     }
 
     setIsStrategyTranslating(true);
-    deepTranslateStrategyData(rawStrategyResult, targetLang, (txt) => translateStrategyText(txt, targetLang))
-      .then((translated) => {
+    deepTranslateStrategyData(rawStrategyResult, targetLang, txt =>
+      translateStrategyText(txt, targetLang)
+    )
+      .then(translated => {
         _setStrategyResult(translated);
         setIsStrategyTranslating(false);
       })
-      .catch((err) => {
-        console.error("Failed to translate strategy data:", err);
+      .catch(err => {
+        console.error('Failed to translate strategy data:', err);
         _setStrategyResult(rawStrategyResult);
         setIsStrategyTranslating(false);
       });
@@ -773,7 +969,12 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   useEffect(() => {
     if (activeProjectObject && strategySource === 'EXISTING_CASE') {
       setClientName(activeProjectObject.clientName || activeProjectObject.client || '');
-      setOpponentName(activeProjectObject.opponentName || activeProjectObject.accused || activeProjectObject.opponent || '');
+      setOpponentName(
+        activeProjectObject.opponentName ||
+          activeProjectObject.accused ||
+          activeProjectObject.opponent ||
+          ''
+      );
       setMatterType(activeProjectObject.caseType || activeProjectObject.matterType || 'Civil');
       setCourtName(activeProjectObject.courtName || activeProjectObject.court || '');
       setAssignedAdvocate(activeProjectObject.assignedAdvocate || 'Senior Counsel');
@@ -784,7 +985,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   }, [activeProjectObject, strategySource]);
 
   // Strategy Source change handler
-  const handleStrategySourceChange = (source) => {
+  const handleStrategySourceChange = source => {
     setStrategySource(source);
     setRawStrategyResultAndSync(null);
     if (source === 'MANUAL_SCENARIO') {
@@ -818,18 +1019,19 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     }
   };
 
-  const toggleAccordion = (name) => {
+  const toggleAccordion = name => {
     if (name.startsWith('out_')) {
       setCollapsedBlocks(prev => ({
         ...prev,
-        [name]: !prev[name]
+        [name]: !prev[name],
       }));
       return;
     }
-    setActiveAccordion(prev => prev === name ? null : name);
+    setActiveAccordion(prev => (prev === name ? null : name));
     // Track workflow step based on expanded section
     if (name === 'facts' || name === 'timeline') setActiveWorkflowStep('fact_analysis');
-    else if (name === 'evidence' || name === 'witnesses') setActiveWorkflowStep('evidence_analysis');
+    else if (name === 'evidence' || name === 'witnesses')
+      setActiveWorkflowStep('evidence_analysis');
     else if (name === 'opponent') setActiveWorkflowStep('opponent_prediction');
     else if (name === 'relief' || name === 'orders') setActiveWorkflowStep('legal_risk_analysis');
   };
@@ -873,7 +1075,6 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     }
   }, [currentCase, strategySource]);
 
-
   const resetPlatformState = () => {
     setCaseTitle('');
     setCaseFacts('');
@@ -892,7 +1093,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     setTasks([]);
   };
 
-  const hydrateFromCase = (caseObj) => {
+  const hydrateFromCase = caseObj => {
     if (!caseObj) return;
     const isDifferentCase = lastLoadedCaseIdRef.current !== caseObj._id;
     lastLoadedCaseIdRef.current = caseObj._id;
@@ -912,7 +1113,9 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       setAdvocateNotes(Array.isArray(ls.advocateNotes) ? ls.advocateNotes : []);
 
       if (isDifferentCase) {
-        console.log(`[StrategyEngine] Case ID changed from previous to ${caseObj._id}. Hydrating strategyResult from DB.`);
+        console.log(
+          `[StrategyEngine] Case ID changed from previous to ${caseObj._id}. Hydrating strategyResult from DB.`
+        );
         setRawStrategyResultAndSync(ls.activeStrategy || null);
         // Reset notes editor when switching case
         setCurrentNoteText('');
@@ -920,7 +1123,9 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         setNotesSaveStatus('idle');
         setLastSavedAt(null);
       } else {
-        console.log(`[StrategyEngine] Same Case ID ${caseObj._id} updated. Retaining local strategyResult.`);
+        console.log(
+          `[StrategyEngine] Same Case ID ${caseObj._id} updated. Retaining local strategyResult.`
+        );
       }
 
       setTasks(ls.tasks || []);
@@ -929,10 +1134,16 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       // Load structured lists
       setEvidenceList(parseEvidenceText(ls.scenarioEvidence || ''));
       setWitnessList(parseWitnessText(ls.scenarioWitnesses || ''));
-      setTimelineList(parseTimelineText(ls.scenarioTimeline || caseObj.hearingDate ? `Hearing: ${caseObj.hearingDate}` : ''));
+      setTimelineList(
+        parseTimelineText(
+          ls.scenarioTimeline || caseObj.hearingDate ? `Hearing: ${caseObj.hearingDate}` : ''
+        )
+      );
     } else {
       if (isDifferentCase) {
-        console.log(`[StrategyEngine] Case ID changed to ${caseObj._id} (no litigationStrategy). Resetting platform state.`);
+        console.log(
+          `[StrategyEngine] Case ID changed to ${caseObj._id} (no litigationStrategy). Resetting platform state.`
+        );
         resetPlatformState();
         setAdvocateNotes([]);
         setCurrentNoteText('');
@@ -940,22 +1151,28 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         setNotesSaveStatus('idle');
         setLastSavedAt(null);
       } else {
-        console.log(`[StrategyEngine] Same Case ID ${caseObj._id} updated (no litigationStrategy). Retaining local strategyResult.`);
+        console.log(
+          `[StrategyEngine] Same Case ID ${caseObj._id} updated (no litigationStrategy). Retaining local strategyResult.`
+        );
       }
       setCaseTitle(caseObj.name || '');
       setCaseFacts(caseObj.description || caseObj.summary || '');
-      setTimelineList(parseTimelineText(caseObj.hearingDate ? `Hearing: ${caseObj.hearingDate}` : ''));
+      setTimelineList(
+        parseTimelineText(caseObj.hearingDate ? `Hearing: ${caseObj.hearingDate}` : '')
+      );
     }
   };
 
-  const autoLoadCaseDetails = (targetCase) => {
+  const autoLoadCaseDetails = targetCase => {
     const activeObj = targetCase || currentCase || allProjects.find(p => p._id === linkedCaseId);
     if (!activeObj) return;
 
     const mapped = mapCaseToForm(activeObj);
     setCaseTitle(activeObj.name || activeObj.title || '');
     setCaseFacts(activeObj.description || activeObj.summary || '');
-    setScenarioTimeline(activeObj.hearingDate ? `Hearing milestone scheduled: ${activeObj.hearingDate}` : '');
+    setScenarioTimeline(
+      activeObj.hearingDate ? `Hearing milestone scheduled: ${activeObj.hearingDate}` : ''
+    );
     setScenarioEvidence(mapped.evidenceSummary || '');
     setScenarioWitnesses(mapped.witnesses || '');
     setScenarioOpponent(mapped.respondent ? `Opposing Party: ${mapped.respondent}` : '');
@@ -966,10 +1183,12 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     // Parse list structures
     setEvidenceList(parseEvidenceText(mapped.evidenceSummary || ''));
     setWitnessList(parseWitnessText(mapped.witnesses || ''));
-    setTimelineList(parseTimelineText(activeObj.hearingDate ? `Hearing: ${activeObj.hearingDate}` : ''));
+    setTimelineList(
+      parseTimelineText(activeObj.hearingDate ? `Hearing: ${activeObj.hearingDate}` : '')
+    );
   };
 
-  const handleUseActiveCaseToggle = (checked) => {
+  const handleUseActiveCaseToggle = checked => {
     setIsUsingActiveCase(checked);
     if (checked) {
       autoLoadCaseDetails();
@@ -994,7 +1213,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         const newProj = await apiService.createProject({
           name: title,
           isLegalCase: true,
-          description: `Automatically created for litigation strategy of ${caseTitle || 'matter'}.`
+          description: `Automatically created for litigation strategy of ${caseTitle || 'matter'}.`,
         });
         activeId = newProj._id;
         activeProj = newProj;
@@ -1003,7 +1222,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         if (onUpdateCase) onUpdateCase(newProj);
         toast.success(`📁 Database Case created: "${title}"`);
       } catch (e) {
-        console.error("Auto-create case failed", e);
+        console.error('Auto-create case failed', e);
       } finally {
         setIsSyncing(false);
       }
@@ -1011,7 +1230,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     return { activeId, activeProj };
   };
 
-  const syncToDatabase = async (updates) => {
+  const syncToDatabase = async updates => {
     if (strategySource !== 'EXISTING_CASE') return;
     const activeId = linkedCaseId || currentCase?._id;
     if (!activeId) return;
@@ -1036,13 +1255,13 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
           activeStrategy: strategyResult || currentLs.activeStrategy || null,
           tasks,
           auditLogs,
-          ...updates
-        }
+          ...updates,
+        },
       };
       const response = await apiService.updateProject(activeId, payload);
       if (onUpdateCase) onUpdateCase(response);
     } catch (e) {
-      console.error("Database sync failed", e);
+      console.error('Database sync failed', e);
     } finally {
       setIsSyncing(false);
     }
@@ -1056,7 +1275,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       timestamp,
       action,
       details,
-      editedBy: `${userName} (${userEmail})`
+      editedBy: `${userName} (${userEmail})`,
     };
 
     const targetList = customLogsList || auditLogs;
@@ -1070,7 +1289,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
 
   // ── Advocate Notes Handlers ────────────────────────────────────────────────────
 
-  const handleSaveNote = async (customNotesList) => {
+  const handleSaveNote = async customNotesList => {
     const text = currentNoteText.trim();
     if (!text) return;
     const userData = getUserData();
@@ -1082,9 +1301,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     let updatedNotes;
     if (editingNoteId) {
       updatedNotes = (customNotesList || advocateNotes).map(n =>
-        n.id === editingNoteId
-          ? { ...n, text, updatedAt: now, version: (n.version || 1) + 1 }
-          : n
+        n.id === editingNoteId ? { ...n, text, updatedAt: now, version: (n.version || 1) + 1 } : n
       );
     } else {
       const newNote = {
@@ -1093,7 +1310,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         createdAt: now,
         updatedAt: now,
         author,
-        version: 1
+        version: 1,
       };
       updatedNotes = [newNote, ...(customNotesList || advocateNotes)];
       setEditingNoteId(newNote.id);
@@ -1109,7 +1326,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
           const currentLs = activeProj?.litigationStrategy || {};
           await apiService.updateProject(activeId, {
             ...activeProj,
-            litigationStrategy: { ...currentLs, advocateNotes: updatedNotes }
+            litigationStrategy: { ...currentLs, advocateNotes: updatedNotes },
           });
           if (onUpdateCase) {
             // soft update local reference — don't refetch
@@ -1126,7 +1343,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     }
   };
 
-  const handleDeleteNote = async (noteId) => {
+  const handleDeleteNote = async noteId => {
     const updatedNotes = advocateNotes.filter(n => n.id !== noteId);
     setAdvocateNotes(updatedNotes);
     setShowDeleteConfirm(null);
@@ -1143,7 +1360,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
           const currentLs = activeProj?.litigationStrategy || {};
           await apiService.updateProject(activeId, {
             ...activeProj,
-            litigationStrategy: { ...currentLs, advocateNotes: updatedNotes }
+            litigationStrategy: { ...currentLs, advocateNotes: updatedNotes },
           });
         }
       }
@@ -1154,7 +1371,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     }
   };
 
-  const handleEditNote = (note) => {
+  const handleEditNote = note => {
     setCurrentNoteText(note.text);
     setEditingNoteId(note.id);
     setNotesSaveStatus('idle');
@@ -1171,7 +1388,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   // Attempt to close the drawer — show guard if unsaved changes exist
   const handleNotesDrawerClose = () => {
     const savedText = editingNoteId
-      ? (advocateNotes.find(n => n.id === editingNoteId)?.text || '')
+      ? advocateNotes.find(n => n.id === editingNoteId)?.text || ''
       : '';
     if (currentNoteText.trim() && currentNoteText.trim() !== savedText.trim()) {
       setPendingNotesClose(true);
@@ -1207,7 +1424,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         const newProj = await apiService.createProject({
           name: title,
           isLegalCase: true,
-          description: caseFacts.trim() || `Strategy brief for ${title}.`
+          description: caseFacts.trim() || `Strategy brief for ${title}.`,
         });
         setLinkedCaseId(newProj._id);
         setStrategySource('EXISTING_CASE');
@@ -1218,7 +1435,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
           activeStrategy: strategyResult,
           scenarioTimeline: serializeTimelineList(timelineList),
           scenarioEvidence: serializeEvidenceList(evidenceList),
-          scenarioWitnesses: serializeWitnessList(witnessList)
+          scenarioWitnesses: serializeWitnessList(witnessList),
         });
 
         toast.success(`📁 Case saved and synchronized in Database: "${title}"`);
@@ -1226,14 +1443,14 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         const { activeId } = await ensureCaseCreated();
         if (activeId) {
           await syncToDatabase({
-            activeStrategy: strategyResult
+            activeStrategy: strategyResult,
           });
-          toast.success(t('strategyUpdatedInDb') || "Strategy successfully updated in Database!");
+          toast.success(t('strategyUpdatedInDb') || 'Strategy successfully updated in Database!');
         }
       }
     } catch (err) {
-      console.error("Save strategy failed:", err);
-      toast.error((t('strategySaveFailed') || "Failed to save strategy: ") + err.message);
+      console.error('Save strategy failed:', err);
+      toast.error((t('strategySaveFailed') || 'Failed to save strategy: ') + err.message);
     } finally {
       setIsSyncing(false);
     }
@@ -1245,7 +1462,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     const newTask = {
       id: `task_${Date.now()}`,
       task: newTaskText.trim(),
-      completed: false
+      completed: false,
     };
     const updatedTasks = [...tasks, newTask];
     setTasks(updatedTasks);
@@ -1254,22 +1471,25 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     if (strategySource === 'EXISTING_CASE') {
       await syncToDatabase({ tasks: updatedTasks });
     }
-    await logAudit("Task Appended", `Added procedural strategy task: "${newTask.task}"`);
-    toast.success(t('taskAppended') || "Task appended to checklist.");
+    await logAudit('Task Appended', `Added procedural strategy task: "${newTask.task}"`);
+    toast.success(t('taskAppended') || 'Task appended to checklist.');
   };
 
-  const handleToggleTask = async (taskId) => {
-    const updatedTasks = tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
+  const handleToggleTask = async taskId => {
+    const updatedTasks = tasks.map(t => (t.id === taskId ? { ...t, completed: !t.completed } : t));
     setTasks(updatedTasks);
 
     if (strategySource === 'EXISTING_CASE') {
       await syncToDatabase({ tasks: updatedTasks });
     }
     const target = tasks.find(t => t.id === taskId);
-    await logAudit("Task Toggled", `Marked task "${target.task}" as ${!target.completed ? 'COMPLETED' : 'PENDING'}`);
+    await logAudit(
+      'Task Toggled',
+      `Marked task "${target.task}" as ${!target.completed ? 'COMPLETED' : 'PENDING'}`
+    );
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async taskId => {
     const target = tasks.find(t => t.id === taskId);
     const updatedTasks = tasks.filter(t => t.id !== taskId);
     setTasks(updatedTasks);
@@ -1277,7 +1497,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     if (strategySource === 'EXISTING_CASE') {
       await syncToDatabase({ tasks: updatedTasks });
     }
-    await logAudit("Task Deleted", `Removed task: "${target.task}"`);
+    await logAudit('Task Deleted', `Removed task: "${target.task}"`);
   };
 
   const readinessMetrics = useMemo(() => {
@@ -1287,11 +1507,13 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       const completedTasks = tasks.filter(t => t.completed).length;
       const taskPercentage = totalTasks > 0 ? Math.round((completedTasks * 100) / totalTasks) : 100;
 
-      const overall = Math.round((base.evidence + base.witness + base.documentation + base.argument + taskPercentage) / 5);
+      const overall = Math.round(
+        (base.evidence + base.witness + base.documentation + base.argument + taskPercentage) / 5
+      );
       return {
         ...base,
         taskPercentage,
-        overall
+        overall,
       };
     }
     return {
@@ -1300,7 +1522,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       documentation: '--',
       argument: '--',
       taskPercentage: '--',
-      overall: '--'
+      overall: '--',
     };
   }, [strategyResult, tasks]);
 
@@ -1308,20 +1530,35 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   const strategyReadinessCalculated = useMemo(() => {
     // Defensive coercions — state may be set to non-string by OCR extraction
     const safeClientName = typeof clientName === 'string' ? clientName : String(clientName || '');
-    const safeOpponentName = typeof opponentName === 'string' ? opponentName : String(opponentName || '');
+    const safeOpponentName =
+      typeof opponentName === 'string' ? opponentName : String(opponentName || '');
     const safeCaseFacts = typeof caseFacts === 'string' ? caseFacts : String(caseFacts || '');
     const safeCaseTitle = typeof caseTitle === 'string' ? caseTitle : String(caseTitle || '');
 
     const isManual = strategySource === 'MANUAL_SCENARIO';
-    const infoOk = isManual ? (safeCaseTitle.trim() ? 1 : 0) : (safeClientName.trim() && safeOpponentName.trim() ? 1 : 0);
+    const infoOk = isManual
+      ? safeCaseTitle.trim()
+        ? 1
+        : 0
+      : safeClientName.trim() && safeOpponentName.trim()
+        ? 1
+        : 0;
     const factsOk = safeCaseFacts.trim().length > 15 ? 1 : 0;
     const timelineOk = timelineList.length > 0 ? 1 : 0;
     const evidenceOk = evidenceList.length > 0 ? 1 : 0;
     const witnessesOk = witnessList.length > 0 ? 1 : 0;
-    const safeOpponent = typeof scenarioOpponent === 'string' ? scenarioOpponent : String(scenarioOpponent || '');
+    const safeOpponent =
+      typeof scenarioOpponent === 'string' ? scenarioOpponent : String(scenarioOpponent || '');
     const opponentOk = safeOpponent.trim().length > 10 ? 1 : 0;
 
-    const score = Math.round(((infoOk * 15) + (factsOk * 25) + (timelineOk * 15) + (evidenceOk * 15) + (witnessesOk * 15) + (opponentOk * 15)));
+    const score = Math.round(
+      infoOk * 15 +
+        factsOk * 25 +
+        timelineOk * 15 +
+        evidenceOk * 15 +
+        witnessesOk * 15 +
+        opponentOk * 15
+    );
 
     return {
       info: infoOk === 1,
@@ -1330,14 +1567,27 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       evidence: evidenceOk === 1,
       witnesses: witnessesOk === 1,
       opponent: opponentOk === 1,
-      overall: score
+      overall: score,
     };
-  }, [clientName, opponentName, caseFacts, caseTitle, timelineList, evidenceList, witnessList, scenarioOpponent, strategySource]);
+  }, [
+    clientName,
+    opponentName,
+    caseFacts,
+    caseTitle,
+    timelineList,
+    evidenceList,
+    witnessList,
+    scenarioOpponent,
+    strategySource,
+  ]);
 
   // --- Dynamic workflow bar status indicators ---
-  const getWorkflowStepStatus = (stepKey) => {
+  const getWorkflowStepStatus = stepKey => {
     if (stepKey === 'case_selection') {
-      return (strategySource === 'EXISTING_CASE' && activeProjectObject) || (strategySource !== 'EXISTING_CASE' && clientName.trim()) ? 'COMPLETE' : 'PENDING';
+      return (strategySource === 'EXISTING_CASE' && activeProjectObject) ||
+        (strategySource !== 'EXISTING_CASE' && clientName.trim())
+        ? 'COMPLETE'
+        : 'PENDING';
     }
     if (stepKey === 'fact_analysis') {
       return caseFacts.trim().length > 15 && timelineList.length > 0 ? 'COMPLETE' : 'PENDING';
@@ -1346,13 +1596,20 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       return evidenceList.length > 0 && witnessList.length > 0 ? 'COMPLETE' : 'PENDING';
     }
     if (stepKey === 'opponent_prediction') {
-      return scenarioOpponent.trim().length > 10 || (strategyResult && strategyResult.opponentStrategy) ? 'COMPLETE' : 'PENDING';
+      return scenarioOpponent.trim().length > 10 ||
+        (strategyResult && strategyResult.opponentStrategy)
+        ? 'COMPLETE'
+        : 'PENDING';
     }
     if (stepKey === 'legal_risk_analysis') {
-      return scenarioOrders.trim() || (strategyResult && strategyResult.risks) ? 'COMPLETE' : 'PENDING';
+      return scenarioOrders.trim() || (strategyResult && strategyResult.risks)
+        ? 'COMPLETE'
+        : 'PENDING';
     }
     if (stepKey === 'winning_probability') {
-      return strategyResult && strategyResult.stats?.winningProbability !== '--' ? 'COMPLETE' : 'PENDING';
+      return strategyResult && strategyResult.stats?.winningProbability !== '--'
+        ? 'COMPLETE'
+        : 'PENDING';
     }
     if (stepKey === 'argument_planning') {
       return strategyResult && strategyResult.finalArguments ? 'COMPLETE' : 'PENDING';
@@ -1379,14 +1636,19 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
       scenarioOpponent.trim() ? `Opponent Position: ${scenarioOpponent.trim()}` : '',
       scenarioRelief.trim() ? `Relief Sought: ${scenarioRelief.trim()}` : '',
       scenarioOrders.trim() ? `Previous Orders: ${scenarioOrders.trim()}` : '',
-      scenarioNotes.trim() ? `Notes: ${scenarioNotes.trim()}` : ''
-    ].filter(Boolean).join('\n\n');
+      scenarioNotes.trim() ? `Notes: ${scenarioNotes.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
 
-    const factsText = currentFactsText.trim() || targetCase?.description || targetCase?.summary || '';
+    const factsText =
+      currentFactsText.trim() || targetCase?.description || targetCase?.summary || '';
     const currentTitle = caseTitle.trim() || targetCase?.name || 'Custom Courtroom Strategy';
 
     if (!factsText.trim()) {
-      toast.error(t('provideCaseFactsFirst') || "Please provide case facts or load templates first.");
+      toast.error(
+        t('provideCaseFactsFirst') || 'Please provide case facts or load templates first.'
+      );
       return;
     }
 
@@ -1394,7 +1656,9 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
     setRawStrategyResultAndSync(null);
     setAuditStep('Reading Facts...');
 
-    const toastId = toast.loading(`AI litigation workspace: compiling ${actionType.replace('_', ' ').toLowerCase()}...`);
+    const toastId = toast.loading(
+      `AI litigation workspace: compiling ${actionType.replace('_', ' ').toLowerCase()}...`
+    );
 
     let customizedPrompt = `Matter Title: ${currentTitle}\nClient Name: ${clientName}\nOpponent Name: ${opponentName}\nCourt Name: ${courtName}\nMatter Type: ${matterType}`;
     if (strategySource === 'MANUAL_SCENARIO') {
@@ -1423,7 +1687,7 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         attachments.push({
           url: `data:image/png;base64,${img.base64}`,
           name: img.name,
-          type: 'image'
+          type: 'image',
         });
       });
     }
@@ -1439,224 +1703,327 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
         'legal'
       );
 
-      const responseText = typeof response === 'string' ? response : (response?.reply || '');
+      const responseText = typeof response === 'string' ? response : response?.reply || '';
 
-      if (responseText.includes("System Busy") || responseText.includes("System Message") || responseText.includes("System Error")) {
+      if (
+        responseText.includes('System Busy') ||
+        responseText.includes('System Message') ||
+        responseText.includes('System Error')
+      ) {
         throw new Error(responseText);
       }
 
       let parsed = null;
       try {
-        const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/(\{[\s\S]*\})/);
+        const jsonMatch =
+          responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/(\{[\s\S]*\})/);
         if (jsonMatch) {
           parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
         } else {
           parsed = JSON.parse(responseText.trim());
         }
         if (!parsed || !parsed.stats) {
-          throw new Error("Missing stats object");
+          throw new Error('Missing stats object');
         }
       } catch (err) {
-        console.warn("Structured litigation strategy parsing failed or returned empty. Instantiating premium fallback strategy model...", err);
+        console.warn(
+          'Structured litigation strategy parsing failed or returned empty. Instantiating premium fallback strategy model...',
+          err
+        );
         parsed = {
-          "stats": {
-            "overallStrategyScore": 76,
-            "winningProbability": 68,
-            "litigationRisk": 32,
-            "evidenceStrength": 74,
-            "precedentSupport": 80,
-            "aiConfidence": 85,
-            "courtReadiness": 70,
-            "missingEvidenceCount": evidenceList.length === 0 ? 3 : 1,
-            "missingDocumentsCount": 1,
-            "settlementProbability": 45,
-            "appealRisk": 30,
-            "opponentRiskLevel": "Medium"
+          stats: {
+            overallStrategyScore: 76,
+            winningProbability: 68,
+            litigationRisk: 32,
+            evidenceStrength: 74,
+            precedentSupport: 80,
+            aiConfidence: 85,
+            courtReadiness: 70,
+            missingEvidenceCount: evidenceList.length === 0 ? 3 : 1,
+            missingDocumentsCount: 1,
+            settlementProbability: 45,
+            appealRisk: 30,
+            opponentRiskLevel: 'Medium',
           },
-          "strategies": {
-            "primary": {
-              "title": "Primary Argument & Proof Staging",
-              "description": `Leverage the core claims under legal provisions relevant to ${matterType || 'Civil'} disputes. Build initial arguments focusing heavily on establishing the transaction/agreement details.`
+          strategies: {
+            primary: {
+              title: 'Primary Argument & Proof Staging',
+              description: `Leverage the core claims under legal provisions relevant to ${matterType || 'Civil'} disputes. Build initial arguments focusing heavily on establishing the transaction/agreement details.`,
             },
-            "alternative": {
-              "title": "Mediation & Settlement Offer",
-              "description": "Establish a structured dialogue to seek mediation under Section 89 of the CPC (or relevant arbitration clauses) to reduce litigation timeline and cost."
+            alternative: {
+              title: 'Mediation & Settlement Offer',
+              description:
+                'Establish a structured dialogue to seek mediation under Section 89 of the CPC (or relevant arbitration clauses) to reduce litigation timeline and cost.',
             },
-            "backup": {
-              "title": "Procedural Delay Safeguards",
-              "description": "Ensure immediate filing of caveat petitions and prevent any ex-parte interim relief orders from the opponent."
+            backup: {
+              title: 'Procedural Delay Safeguards',
+              description:
+                'Ensure immediate filing of caveat petitions and prevent any ex-parte interim relief orders from the opponent.',
             },
-            "emergency": {
-              "title": "Interim Stay / Appeal Preparation",
-              "description": "Prepare immediate applications for interim injunction or temporary stay under Order 39 Rules 1 and 2 CPC if urgent rights are threatened."
-            }
+            emergency: {
+              title: 'Interim Stay / Appeal Preparation',
+              description:
+                'Prepare immediate applications for interim injunction or temporary stay under Order 39 Rules 1 and 2 CPC if urgent rights are threatened.',
+            },
           },
-          "winningRoadmap": [
-            { "stage": "Notice Stage", "status": "Completed", "description": `Send formal legal notice/demand letter to ${opponentName || 'opposite party'}.` },
-            { "stage": "Suit Ingestion", "status": "In Progress", "description": `Draft and file the main pleadings/plaint in the registry of ${courtName || 'the competent court'}.` },
-            { "stage": "Interim Stay Application", "status": "Staged", "description": "Argue for urgent temporary injunction or ad-interim relief." },
-            { "stage": "Written Statement", "status": "Staged", "description": "Opponent files reply; replication or rejoinder to be submitted." },
-            { "stage": "Issues Framing", "status": "Staged", "description": "Framing of core legal questions by the honorable judge." },
-            { "stage": "Evidence Recording", "status": "Staged", "description": "Cross-examination of witnesses; file evidentiary affidavits." },
-            { "stage": "Final Arguments", "status": "Staged", "description": "Argue the case citing binding precedents." },
-            { "stage": "Judgment & Decree", "status": "Staged", "description": "Execution of decree or preparing appeal if needed." }
+          winningRoadmap: [
+            {
+              stage: 'Notice Stage',
+              status: 'Completed',
+              description: `Send formal legal notice/demand letter to ${opponentName || 'opposite party'}.`,
+            },
+            {
+              stage: 'Suit Ingestion',
+              status: 'In Progress',
+              description: `Draft and file the main pleadings/plaint in the registry of ${courtName || 'the competent court'}.`,
+            },
+            {
+              stage: 'Interim Stay Application',
+              status: 'Staged',
+              description: 'Argue for urgent temporary injunction or ad-interim relief.',
+            },
+            {
+              stage: 'Written Statement',
+              status: 'Staged',
+              description: 'Opponent files reply; replication or rejoinder to be submitted.',
+            },
+            {
+              stage: 'Issues Framing',
+              status: 'Staged',
+              description: 'Framing of core legal questions by the honorable judge.',
+            },
+            {
+              stage: 'Evidence Recording',
+              status: 'Staged',
+              description: 'Cross-examination of witnesses; file evidentiary affidavits.',
+            },
+            {
+              stage: 'Final Arguments',
+              status: 'Staged',
+              description: 'Argue the case citing binding precedents.',
+            },
+            {
+              stage: 'Judgment & Decree',
+              status: 'Staged',
+              description: 'Execution of decree or preparing appeal if needed.',
+            },
           ],
-          "evidenceStrategy": {
-            "strong": evidenceList.length > 0
-              ? evidenceList.map(e => ({ "evidence": e.title || e.name || "Uploaded Document", "reason": "Corroborates key facts and timelines directly." }))
-              : [{ "evidence": "Primary Transaction/Agreement Document", "reason": "Provides direct, binding proof of the mutual obligations." }],
-            "weak": [
-              { "evidence": "Oral Statements & Secondary Logs", "reason": "Requires strong corroboration through written trail to be accepted." }
-            ],
-            "missing": [
-              { "evidence": "Official Certified Bank Records / Communication Logs", "reason": "Crucial to establish the concrete timeline of breach." }
-            ],
-            "priority": [
-              { "evidence": "Affidavits of Key Attesting Witnesses", "reason": "Secure first to lock down testimony before trial starts." }
-            ],
-            "sequence": [
-              "Mark primary agreements and notices as Exhibit-A.",
-              "Produce bank records under Section 65B of the Evidence Act.",
-              "Introduce testimony of the primary witness."
-            ]
-          },
-          "witnessStrategy": {
-            "key": [
-              { "witness": `${clientName || 'Plaintiff'} (Primary claimant)`, "purpose": "Testify regarding the agreement, transaction details, and events of default." }
-            ],
-            "optional": [
-              { "witness": "Attesting Witness / Accountant", "purpose": "Confirm transactions and sign-offs on official ledgers." }
-            ],
-            "weak": [
-              { "witness": "Third-Party Secondary Observers", "purpose": "Vulnerable to timeline discrepancy challenges during cross." }
-            ],
-            "crossExamination": [
+          evidenceStrategy: {
+            strong:
+              evidenceList.length > 0
+                ? evidenceList.map(e => ({
+                    evidence: e.title || e.name || 'Uploaded Document',
+                    reason: 'Corroborates key facts and timelines directly.',
+                  }))
+                : [
+                    {
+                      evidence: 'Primary Transaction/Agreement Document',
+                      reason: 'Provides direct, binding proof of the mutual obligations.',
+                    },
+                  ],
+            weak: [
               {
-                "topic": "Notice Receipt & Default Timeline",
-                "questions": ["Did you receive the written notice on the specified date?", "Why was there no formal response filed within 15 days?"],
-                "followUps": ["If you dispute the claims, why is there no documentation of the dispute prior to this suit?"],
-                "traps": ["Confirming the agreement signing while disputing its terms."]
-              }
-            ]
-          },
-          "opponentStrategy": {
-            "likelyDefence": `Opponent ${opponentName || 'Defendant'} will likely argue lack of jurisdiction, procedural delay (limitation bar), or deny signing of key documentation.`,
-            "likelyObjections": [
-              "Objection to the admissibility of electronic evidence without certificate.",
-              "Challenge to the value/adequacy of stamp duty on agreements."
+                evidence: 'Oral Statements & Secondary Logs',
+                reason: 'Requires strong corroboration through written trail to be accepted.',
+              },
             ],
-            "counterArguments": [
-              "Plea of waiver or mutual settlement prior to litigation.",
-              "Plea of force majeure or commercial impossibility of performance."
+            missing: [
+              {
+                evidence: 'Official Certified Bank Records / Communication Logs',
+                reason: 'Crucial to establish the concrete timeline of breach.',
+              },
             ],
-            "appealPossibility": "High probability of appeal to higher court if decree is granted.",
-            "delayStrategy": "Likely to seek adjournments on grounds of counsel unavailability or seeking additional documents."
+            priority: [
+              {
+                evidence: 'Affidavits of Key Attesting Witnesses',
+                reason: 'Secure first to lock down testimony before trial starts.',
+              },
+            ],
+            sequence: [
+              'Mark primary agreements and notices as Exhibit-A.',
+              'Produce bank records under Section 65B of the Evidence Act.',
+              'Introduce testimony of the primary witness.',
+            ],
           },
-          "counterStrategy": [
+          witnessStrategy: {
+            key: [
+              {
+                witness: `${clientName || 'Plaintiff'} (Primary claimant)`,
+                purpose:
+                  'Testify regarding the agreement, transaction details, and events of default.',
+              },
+            ],
+            optional: [
+              {
+                witness: 'Attesting Witness / Accountant',
+                purpose: 'Confirm transactions and sign-offs on official ledgers.',
+              },
+            ],
+            weak: [
+              {
+                witness: 'Third-Party Secondary Observers',
+                purpose: 'Vulnerable to timeline discrepancy challenges during cross.',
+              },
+            ],
+            crossExamination: [
+              {
+                topic: 'Notice Receipt & Default Timeline',
+                questions: [
+                  'Did you receive the written notice on the specified date?',
+                  'Why was there no formal response filed within 15 days?',
+                ],
+                followUps: [
+                  'If you dispute the claims, why is there no documentation of the dispute prior to this suit?',
+                ],
+                traps: ['Confirming the agreement signing while disputing its terms.'],
+              },
+            ],
+          },
+          opponentStrategy: {
+            likelyDefence: `Opponent ${opponentName || 'Defendant'} will likely argue lack of jurisdiction, procedural delay (limitation bar), or deny signing of key documentation.`,
+            likelyObjections: [
+              'Objection to the admissibility of electronic evidence without certificate.',
+              'Challenge to the value/adequacy of stamp duty on agreements.',
+            ],
+            counterArguments: [
+              'Plea of waiver or mutual settlement prior to litigation.',
+              'Plea of force majeure or commercial impossibility of performance.',
+            ],
+            appealPossibility: 'High probability of appeal to higher court if decree is granted.',
+            delayStrategy:
+              'Likely to seek adjournments on grounds of counsel unavailability or seeking additional documents.',
+          },
+          counterStrategy: [
             {
-              "opponentArgument": "Plea of lack of knowledge or contract signature denial",
-              "counterResponse": "Produce notary records, witness statements, and original signatures.",
-              "evidenceRequired": "Notarized copies and forensic handwriting expert report if needed.",
-              "applicableLaw": "Indian Evidence Act / relevant rules of contract proof",
-              "recommendedAction": "File application to summon the attesting notary public."
-            }
+              opponentArgument: 'Plea of lack of knowledge or contract signature denial',
+              counterResponse:
+                'Produce notary records, witness statements, and original signatures.',
+              evidenceRequired:
+                'Notarized copies and forensic handwriting expert report if needed.',
+              applicableLaw: 'Indian Evidence Act / relevant rules of contract proof',
+              recommendedAction: 'File application to summon the attesting notary public.',
+            },
           ],
-          "judgePerspective": {
-            "likelyQuestions": [
-              "What is the exact financial damage / quantum of relief claimed?",
-              "Was the statutory notice period served correctly in compliance with law?"
+          judgePerspective: {
+            likelyQuestions: [
+              'What is the exact financial damage / quantum of relief claimed?',
+              'Was the statutory notice period served correctly in compliance with law?',
             ],
-            "courtConcerns": [
-              "Avoidance of unnecessary litigation if mediation is viable.",
-              "Correct computation of court fees and valuation of the suit."
+            courtConcerns: [
+              'Avoidance of unnecessary litigation if mediation is viable.',
+              'Correct computation of court fees and valuation of the suit.',
             ],
-            "weakAreas": [
-              "Lack of certified electronic evidence trails (missing 65B/63 certificate).",
-              "Slight delay in instituting proceedings past initial default date."
+            weakAreas: [
+              'Lack of certified electronic evidence trails (missing 65B/63 certificate).',
+              'Slight delay in instituting proceedings past initial default date.',
             ],
-            "legalObservations": [
-              "Statutory timelines must be strictly adhered to under local acts.",
-              "Pleadings cannot be amended at a late stage without showing bona fide."
+            legalObservations: [
+              'Statutory timelines must be strictly adhered to under local acts.',
+              'Pleadings cannot be amended at a late stage without showing bona fide.',
             ],
-            "expectedFocusAreas": [
-              "The initial mutual agreement clauses.",
-              "Proof of default or breach events."
-            ]
+            expectedFocusAreas: [
+              'The initial mutual agreement clauses.',
+              'Proof of default or breach events.',
+            ],
           },
-          "precedents": [
+          precedents: [
             {
-              "citation": "A. B. Builders v. Union of India, AIR 2021 SC 4025",
-              "court": "Supreme Court of India",
-              "summary": "Settled that when transaction proof and default notice are uncontroverted, relief must be granted.",
-              "similarityScore": 92,
-              "type": "Binding Precedent"
+              citation: 'A. B. Builders v. Union of India, AIR 2021 SC 4025',
+              court: 'Supreme Court of India',
+              summary:
+                'Settled that when transaction proof and default notice are uncontroverted, relief must be granted.',
+              similarityScore: 92,
+              type: 'Binding Precedent',
             },
             {
-              "citation": "Rajesh Kumar v. Amit Verma, 2024 Delhi HC 1102",
-              "court": "Delhi High Court",
-              "summary": "Clarified limitations on procedural extensions when clear statutory timelines exist.",
-              "similarityScore": 88,
-              "type": "Persuasive Precedent"
-            }
+              citation: 'Rajesh Kumar v. Amit Verma, 2024 Delhi HC 1102',
+              court: 'Delhi High Court',
+              summary:
+                'Clarified limitations on procedural extensions when clear statutory timelines exist.',
+              similarityScore: 88,
+              type: 'Persuasive Precedent',
+            },
           ],
-          "laws": [
-            { "section": "Section 138 (where applicable) / General Contract Breach rules", "act": "Negotiable Instruments Act / Indian Contract Act, 1872", "applicability": "Establishes liability for default or failure to perform legal obligations." }
-          ],
-          "timeline": [
-            { "phase": "Demand Notice", "duration": "15 Days", "description": `Serve legal demand notice of default to ${opponentName || 'opposite party'}.` },
-            { "phase": "Suit Drafting & Filing", "duration": "10 Days", "description": "Pleadings drafting, court fee check, and registry entry." },
-            { "phase": "Summons Return & Appearance", "duration": "30 Days", "description": "Opponent summoned to file written statement." }
-          ],
-          "risks": {
-            "legal": 25,
-            "evidence": 35,
-            "procedural": 15,
-            "financial": 45,
-            "strategic": 20,
-            "riskPercentage": 30
-          },
-          "settlement": {
-            "settlementChance": 50,
-            "negotiationStrategy": "Open with a firm stance on full recovery, offering waiver of interest if settled within 30 days.",
-            "mediationPossibility": "Highly suitable for court-directed mediation.",
-            "arbitrationSuitability": "Arbitration clauses valid"
-          },
-          "negotiationPositions": {
-            "opening": "Full claim amount + 18% interest + legal costs.",
-            "middle": "Full claim amount + waiver of interest + shared costs.",
-            "final": "75% of principal claim, payable in immediate lump sum.",
-            "fallback": "Complete trial litigation for full recovery."
-          },
-          "crossExamPlanner": [
+          laws: [
             {
-              "witness": `${opponentName || 'Opposite Party'}`,
-              "mainQuestions": ["Did you execute the agreement on the date specified?", "Is this signature yours?"],
-              "followUps": ["If yes, why was the payment/obligation not performed?"],
-              "contradictionQuestions": ["Reviewing transaction ledger sheets against bank logs."],
-              "credibilityQuestions": ["Did you file tax returns detailing this liability?"],
-              "closingQuestions": ["Admit that the payment remains unpaid to date."]
-            }
+              section: 'Section 138 (where applicable) / General Contract Breach rules',
+              act: 'Negotiable Instruments Act / Indian Contract Act, 1872',
+              applicability:
+                'Establishes liability for default or failure to perform legal obligations.',
+            },
           ],
-          "finalArguments": {
-            "opening": "Opening outlines the transaction, default, and compliance with statutory notice.",
-            "arguments": [
-              "Execution of agreement is undisputed.",
-              "Event of default has been proven via bank ledger.",
-              "Opponent failed to reply to statutory notice."
-            ],
-            "evidenceRefs": ["Exhibit P-1 (Agreement)", "Exhibit P-2 (Bank Ledger)"],
-            "laws": ["Indian Contract Act, 1872"],
-            "precedents": ["AIR 2021 SC 4025"],
-            "prayer": "Direct the defendant to pay the full sum with interest.",
-            "submission": "Decree suit in favor of plaintiff."
+          timeline: [
+            {
+              phase: 'Demand Notice',
+              duration: '15 Days',
+              description: `Serve legal demand notice of default to ${opponentName || 'opposite party'}.`,
+            },
+            {
+              phase: 'Suit Drafting & Filing',
+              duration: '10 Days',
+              description: 'Pleadings drafting, court fee check, and registry entry.',
+            },
+            {
+              phase: 'Summons Return & Appearance',
+              duration: '30 Days',
+              description: 'Opponent summoned to file written statement.',
+            },
+          ],
+          risks: {
+            legal: 25,
+            evidence: 35,
+            procedural: 15,
+            financial: 45,
+            strategic: 20,
+            riskPercentage: 30,
           },
-          "appealStrategy": {
-            "grounds": [
-              "Error in calculating the damage valuation.",
-              "Failure of lower court to admit vital secondary proof."
+          settlement: {
+            settlementChance: 50,
+            negotiationStrategy:
+              'Open with a firm stance on full recovery, offering waiver of interest if settled within 30 days.',
+            mediationPossibility: 'Highly suitable for court-directed mediation.',
+            arbitrationSuitability: 'Arbitration clauses valid',
+          },
+          negotiationPositions: {
+            opening: 'Full claim amount + 18% interest + legal costs.',
+            middle: 'Full claim amount + waiver of interest + shared costs.',
+            final: '75% of principal claim, payable in immediate lump sum.',
+            fallback: 'Complete trial litigation for full recovery.',
+          },
+          crossExamPlanner: [
+            {
+              witness: `${opponentName || 'Opposite Party'}`,
+              mainQuestions: [
+                'Did you execute the agreement on the date specified?',
+                'Is this signature yours?',
+              ],
+              followUps: ['If yes, why was the payment/obligation not performed?'],
+              contradictionQuestions: ['Reviewing transaction ledger sheets against bank logs.'],
+              credibilityQuestions: ['Did you file tax returns detailing this liability?'],
+              closingQuestions: ['Admit that the payment remains unpaid to date.'],
+            },
+          ],
+          finalArguments: {
+            opening:
+              'Opening outlines the transaction, default, and compliance with statutory notice.',
+            arguments: [
+              'Execution of agreement is undisputed.',
+              'Event of default has been proven via bank ledger.',
+              'Opponent failed to reply to statutory notice.',
             ],
-            "timeline": "30 days from date of decree copy."
-          }
+            evidenceRefs: ['Exhibit P-1 (Agreement)', 'Exhibit P-2 (Bank Ledger)'],
+            laws: ['Indian Contract Act, 1872'],
+            precedents: ['AIR 2021 SC 4025'],
+            prayer: 'Direct the defendant to pay the full sum with interest.',
+            submission: 'Decree suit in favor of plaintiff.',
+          },
+          appealStrategy: {
+            grounds: [
+              'Error in calculating the damage valuation.',
+              'Failure of lower court to admit vital secondary proof.',
+            ],
+            timeline: '30 days from date of decree copy.',
+          },
         };
       }
 
@@ -1670,28 +2037,33 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
           const newTasks = parsed.pendingTasks.map((t, idx) => ({
             id: `task_${Date.now()}_${idx}`,
             task: t.task,
-            completed: false
+            completed: false,
           }));
           setTasks(newTasks);
           await syncToDatabase({
             activeStrategy: parsed,
-            tasks: newTasks
+            tasks: newTasks,
           });
         } else {
           await syncToDatabase({
-            activeStrategy: parsed
+            activeStrategy: parsed,
           });
         }
-        await logAudit("AI Litigation Strategy Simulated", `Completed strategy run with {t('winningProbability') || 'Winning Probability'}: ${parsed.stats.winningProbability}%.`);
+        await logAudit(
+          'AI Litigation Strategy Simulated',
+          `Completed strategy run with {t('winningProbability') || 'Winning Probability'}: ${parsed.stats.winningProbability}%.`
+        );
       } else {
-        toast.success("Litigation strategy generated locally!");
+        toast.success('Litigation strategy generated locally!');
       }
 
-      toast.success(t('aiAnalysisComplete') || "AI litigation analysis complete!", { id: toastId });
-
+      toast.success(t('aiAnalysisComplete') || 'AI litigation analysis complete!', { id: toastId });
     } catch (e) {
-      console.error("Simulation error", e);
-      toast.error((t('failedToCompileSimulation') || "Failed to compile strategy simulation: ") + e.message, { id: toastId });
+      console.error('Simulation error', e);
+      toast.error(
+        (t('failedToCompileSimulation') || 'Failed to compile strategy simulation: ') + e.message,
+        { id: toastId }
+      );
     } finally {
       setIsAuditing(false);
       setAuditStep('');
@@ -1699,14 +2071,16 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   };
 
   // --- Real-time AI Extract/Autofill helpers ---
-  const runAIFieldExtraction = async (fieldType) => {
+  const runAIFieldExtraction = async fieldType => {
     if (!caseFacts.trim()) {
-      toast.error(t('enterCaseFactsFirst') || "Please enter Case Facts first so the AI can extract data.");
+      toast.error(
+        t('enterCaseFactsFirst') || 'Please enter Case Facts first so the AI can extract data.'
+      );
       return;
     }
     const tid = toast.loading(`AI extracting ${fieldType} from case facts...`);
     try {
-      let prompt = "";
+      let prompt = '';
       if (fieldType === 'timeline') {
         prompt = `Based on these case facts: "${caseFacts}", extract a chronological timeline of events. Return ONLY a JSON array of events. No conversational text.
 Schema: [{"title": "Event Title", "date": "Date/Time string", "description": "Short explanation"}]`;
@@ -1721,16 +2095,19 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       const response = await generateChatResponse(
         [],
         prompt,
-        "You are an expert litigation analysis AI. Return ONLY valid JSON.",
+        'You are an expert litigation analysis AI. Return ONLY valid JSON.',
         [],
         toolkitLanguage || 'English',
         null,
         'legal'
       );
-      const responseText = typeof response === 'string' ? response : (response?.reply || '');
+      const responseText = typeof response === 'string' ? response : response?.reply || '';
 
       let parsed = null;
-      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/(\{[\s\S]*\})/) || responseText.match(/(\[[\s\S]*\])/);
+      const jsonMatch =
+        responseText.match(/```json\s*([\s\S]*?)\s*```/) ||
+        responseText.match(/(\{[\s\S]*\})/) ||
+        responseText.match(/(\[[\s\S]*\])/);
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
       } else {
@@ -1740,7 +2117,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       if (fieldType === 'timeline') {
         const formatted = parsed.map((item, idx) => ({
           id: `time_${idx}_${Date.now()}`,
-          ...item
+          ...item,
         }));
         setTimelineList(formatted);
         const serialized = serializeTimelineList(formatted);
@@ -1748,11 +2125,13 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         if (strategySource === 'EXISTING_CASE') {
           await syncToDatabase({ scenarioTimeline: serialized });
         }
-        toast.success(t('timelineMilestonesExtracted') || "Timeline milestones extracted!", { id: tid });
+        toast.success(t('timelineMilestonesExtracted') || 'Timeline milestones extracted!', {
+          id: tid,
+        });
       } else if (fieldType === 'evidence') {
         const formatted = parsed.map((item, idx) => ({
           id: `ev_${idx}_${Date.now()}`,
-          ...item
+          ...item,
         }));
         setEvidenceList(formatted);
         const serialized = serializeEvidenceList(formatted);
@@ -1760,11 +2139,11 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         if (strategySource === 'EXISTING_CASE') {
           await syncToDatabase({ scenarioEvidence: serialized });
         }
-        toast.success(t('evidenceItemsExtracted') || "Evidence items extracted!", { id: tid });
+        toast.success(t('evidenceItemsExtracted') || 'Evidence items extracted!', { id: tid });
       } else if (fieldType === 'witnesses') {
         const formatted = parsed.map((item, idx) => ({
           id: `wit_${idx}_${Date.now()}`,
-          ...item
+          ...item,
         }));
         setWitnessList(formatted);
         const serialized = serializeWitnessList(formatted);
@@ -1772,53 +2151,58 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         if (strategySource === 'EXISTING_CASE') {
           await syncToDatabase({ scenarioWitnesses: serialized });
         }
-        toast.success(t('witnessPoolIdentified') || "Witness pool identified!", { id: tid });
+        toast.success(t('witnessPoolIdentified') || 'Witness pool identified!', { id: tid });
       }
     } catch (err) {
-      console.error("AI Extraction failed", err);
-      toast.error(t('extractionFailed') || "Failed to extract data. Make sure facts are detailed.", { id: tid });
+      console.error('AI Extraction failed', err);
+      toast.error(
+        t('extractionFailed') || 'Failed to extract data. Make sure facts are detailed.',
+        { id: tid }
+      );
     }
   };
 
   // --- Document Drag and Drop upload extraction ---
-  const handleDragOver = (e) => {
+  const handleDragOver = e => {
     e.preventDefault();
   };
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = e => {
     e.preventDefault();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = e => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     addFilesToList(files);
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = e => {
     const files = Array.from(e.target.files);
     addFilesToList(files);
   };
 
-  const addFilesToList = (files) => {
+  const addFilesToList = files => {
     const formatted = files.map((file, idx) => ({
       id: `file_${idx}_${Date.now()}`,
       name: file.name,
       size: Math.round(file.size / 1024) + ' KB',
       type: file.type,
-      status: 'Staged'
+      status: 'Staged',
     }));
     setUploadedFiles(prev => [...prev, ...formatted]);
-    toast.success(`${files.length} ` + (t('documentsUploaded') || "documents uploaded to workspace."));
+    toast.success(
+      `${files.length} ` + (t('documentsUploaded') || 'documents uploaded to workspace.')
+    );
   };
 
   const runDocumentAnalysis = async () => {
     if (uploadedFiles.length === 0) {
-      toast.error(t('uploadOneDocFirst') || "Please upload at least one legal document first.");
+      toast.error(t('uploadOneDocFirst') || 'Please upload at least one legal document first.');
       return;
     }
     setIsExtractingDocs(true);
-    const tid = toast.loading("AI OCR & Legal Document Parsing active...");
+    const tid = toast.loading('AI OCR & Legal Document Parsing active...');
 
     // Simulate OCR steps for UI
     setUploadedFiles(prev => prev.map(f => ({ ...f, status: 'OCR Running' })));
@@ -1850,17 +2234,20 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       const response = await generateChatResponse(
         [],
         prompt,
-        "You are an expert Legal AI parser. Return ONLY valid JSON matching the schema.",
+        'You are an expert Legal AI parser. Return ONLY valid JSON matching the schema.',
         [],
         toolkitLanguage || 'English',
         null,
         'legal'
       );
 
-      const responseText = typeof response === 'string' ? response : (response?.reply || '');
+      const responseText = typeof response === 'string' ? response : response?.reply || '';
 
       let parsed = null;
-      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/(\{[\s\S]*\})/) || responseText.match(/(\[[\s\S]*\])/);
+      const jsonMatch =
+        responseText.match(/```json\s*([\s\S]*?)\s*```/) ||
+        responseText.match(/(\{[\s\S]*\})/) ||
+        responseText.match(/(\[[\s\S]*\])/);
       if (jsonMatch) {
         parsed = JSON.parse(jsonMatch[1] || jsonMatch[0]);
       } else {
@@ -1883,21 +2270,41 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
           setScenarioTimeline(serializeTimelineList(parsed.timeline));
         }
         if (parsed.evidence) {
-          setEvidenceList(parsed.evidence.map((e, i) => ({ id: `ev_${i}_${Date.now()}`, credibility: 'High', linkedWitness: 'N/A', status: 'Ready', ...e })));
+          setEvidenceList(
+            parsed.evidence.map((e, i) => ({
+              id: `ev_${i}_${Date.now()}`,
+              credibility: 'High',
+              linkedWitness: 'N/A',
+              status: 'Ready',
+              ...e,
+            }))
+          );
           setScenarioEvidence(serializeEvidenceList(parsed.evidence));
         }
         if (parsed.witnesses) {
-          setWitnessList(parsed.witnesses.map((w, i) => ({ id: `wit_${i}_${Date.now()}`, weakness: 'None', questions: [], ...w })));
+          setWitnessList(
+            parsed.witnesses.map((w, i) => ({
+              id: `wit_${i}_${Date.now()}`,
+              weakness: 'None',
+              questions: [],
+              ...w,
+            }))
+          );
           setScenarioWitnesses(serializeWitnessList(parsed.witnesses));
         }
 
         setUploadedFiles(prev => prev.map(f => ({ ...f, status: 'Extracted' })));
-        toast.success(t('documentsParsed') || "Documents successfully parsed! Scenario builder prefilled.", { id: tid });
+        toast.success(
+          t('documentsParsed') || 'Documents successfully parsed! Scenario builder prefilled.',
+          { id: tid }
+        );
         setActiveWorkflowStep('fact_analysis');
       }
     } catch (err) {
       console.error(err);
-      toast.error(t('documentExtractionFailed') || "Failed to extract content from documents.", { id: tid });
+      toast.error(t('documentExtractionFailed') || 'Failed to extract content from documents.', {
+        id: tid,
+      });
       setUploadedFiles(prev => prev.map(f => ({ ...f, status: 'Failed' })));
     } finally {
       setIsExtractingDocs(false);
@@ -1909,7 +2316,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     if (!strategyResult) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      toast.error(t('popupBlocked') || "Popup blocked! Enable popups to print/export PDF.");
+      toast.error(t('popupBlocked') || 'Popup blocked! Enable popups to print/export PDF.');
       return;
     }
 
@@ -1925,7 +2332,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       <head>
         <meta charset="UTF-8"/>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-        <title>AI LEGAL™ ${t('strategyEngineTitle') || "Strategy Engine"} - ${caseTitle}</title>
+        <title>AI LEGAL™ ${t('strategyEngineTitle') || 'Strategy Engine'} - ${caseTitle}</title>
         ${styles}
         <style>
           @page { size: A4; margin: 15mm; }
@@ -1980,7 +2387,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     const docHtml = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
-        <title>AI LEGAL™ ${t('strategyReportTitle') || "AI LEGAL™ Full Litigation Strategy Report"}</title>
+        <title>AI LEGAL™ ${t('strategyReportTitle') || 'AI LEGAL™ Full Litigation Strategy Report'}</title>
         <!--[if gte mso 9]>
         <xml>
           <w:WordDocument>
@@ -2171,23 +2578,35 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
             <th style="padding: 8px; text-align: left; font-size: 10pt;">Status</th>
             <th style="padding: 8px; text-align: left; font-size: 10pt;">Description</th>
           </tr>
-          ${strategyResult.winningRoadmap?.map(t => `
+          ${
+            strategyResult.winningRoadmap
+              ?.map(
+                t => `
             <tr>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; font-weight: bold;">${t.stage}</td>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; color: #4338ca; font-weight: bold;">${t.status}</td>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt;">${t.description}</td>
             </tr>
-          `).join('') || '<tr><td colspan="3">None</td></tr>'}
+          `
+              )
+              .join('') || '<tr><td colspan="3">None</td></tr>'
+          }
         </table>
 
         <div class="section-title">Witness Cross Examination Roadmap</div>
         <ul>
-          ${strategyResult.witnessStrategy?.crossExamination?.map(c => `
+          ${
+            strategyResult.witnessStrategy?.crossExamination
+              ?.map(
+                c => `
             <li style="margin-bottom: 12px;">
               <strong>Topic: ${c.topic}</strong>
               <br/>Suggested Questions: ${c.questions?.join(' // ')}
             </li>
-          `).join('') || '<li>None</li>'}
+          `
+              )
+              .join('') || '<li>None</li>'
+          }
         </ul>
 
         <div class="section-title">Top Litigation Risks</div>
@@ -2203,14 +2622,20 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
             <th style="padding: 8px; text-align: left; font-size: 10pt;">Match</th>
             <th style="padding: 8px; text-align: left; font-size: 10pt;">Ratio Decidendi</th>
           </tr>
-          ${strategyResult.precedents?.map(p => `
+          ${
+            strategyResult.precedents
+              ?.map(
+                p => `
             <tr>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; font-weight: bold;">${p.citation}</td>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt;">${p.court}</td>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt; color: #16a34a; font-weight: bold;">${p.similarityScore}%</td>
               <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 9.5pt;">${p.summary}</td>
             </tr>
-          `).join('') || '<tr><td colspan="4">None</td></tr>'}
+          `
+              )
+              .join('') || '<tr><td colspan="4">None</td></tr>'
+          }
         </table>
 
         <div class="footer">
@@ -2229,22 +2654,31 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    logAudit("Exported Word Report", "Downloaded litigation strategy document report.");
-    toast.success(t('wordExported') || "Word Document exported successfully!");
+    logAudit('Exported Word Report', 'Downloaded litigation strategy document report.');
+    toast.success(t('wordExported') || 'Word Document exported successfully!');
   };
 
   const handlePrintBriefPDF = () => {
     if (!strategyResult) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      toast.error("Popup blocked! Enable popups to print/export.");
+      toast.error('Popup blocked! Enable popups to print/export.');
       return;
     }
 
     const timestamp = new Date().toLocaleString();
-    const strengthsList = strategyResult.evidenceStrategy?.strong?.map(e => e.evidence) || ['Clear document trail', 'Consistent witness testimony'];
-    const weaknessesList = strategyResult.evidenceStrategy?.missing?.map(e => e.evidence) || ['Corroborative forensic proof', 'Written communication records'];
-    const risksList = strategyResult.risks?.map(r => r.description) || ['Procedural delays', 'Counter-claim exposure'];
+    const strengthsList = strategyResult.evidenceStrategy?.strong?.map(e => e.evidence) || [
+      'Clear document trail',
+      'Consistent witness testimony',
+    ];
+    const weaknessesList = strategyResult.evidenceStrategy?.missing?.map(e => e.evidence) || [
+      'Corroborative forensic proof',
+      'Written communication records',
+    ];
+    const risksList = strategyResult.risks?.map(r => r.description) || [
+      'Procedural delays',
+      'Counter-claim exposure',
+    ];
 
     const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
       .map(el => el.outerHTML)
@@ -2255,7 +2689,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       <head>
         <meta charset="UTF-8"/>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-        <title>AI LEGAL™ ${t('executiveLitigationBriefTitle') || "AI LEGAL™ Executive Litigation Brief"} - ${caseTitle}</title>
+        <title>AI LEGAL™ ${t('executiveLitigationBriefTitle') || 'AI LEGAL™ Executive Litigation Brief'} - ${caseTitle}</title>
         ${styles}
         <style>
           @page { size: A4; margin: 20mm; }
@@ -2348,13 +2782,29 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
             <div class="space-y-2">
               <h3 class="text-xs font-black uppercase tracking-wider text-emerald-600 border-b pb-1">Top {t('strengthsTitle') || 'Strengths'}</h3>
               <div class="space-y-1">
-                ${strengthsList.slice(0, 4).map(s => `<div class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-start gap-1.5">✓ ${s}</div>`).join('') || '<div class="text-xs italic text-slate-400">None identified</div>'}
+                ${
+                  strengthsList
+                    .slice(0, 4)
+                    .map(
+                      s =>
+                        `<div class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-start gap-1.5">✓ ${s}</div>`
+                    )
+                    .join('') || '<div class="text-xs italic text-slate-400">None identified</div>'
+                }
               </div>
             </div>
             <div class="space-y-2">
               <h3 class="text-xs font-black uppercase tracking-wider text-red-650 border-b pb-1">Key {t('weaknessesTitle') || 'Weaknesses'}</h3>
               <div class="space-y-1">
-                ${weaknessesList.slice(0, 4).map(w => `<div class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-start gap-1.5">✗ ${w}</div>`).join('') || '<div class="text-xs italic text-slate-400">None identified</div>'}
+                ${
+                  weaknessesList
+                    .slice(0, 4)
+                    .map(
+                      w =>
+                        `<div class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-start gap-1.5">✗ ${w}</div>`
+                    )
+                    .join('') || '<div class="text-xs italic text-slate-400">None identified</div>'
+                }
               </div>
             </div>
           </div>
@@ -2372,9 +2822,21 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
           <div class="space-y-2 page-break-avoid">
             <h3 class="text-xs font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1">{t('immediateNextStepsTitle') || 'Immediate Next Steps'}</h3>
             <div class="space-y-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
-              ${(strategyResult.aiRecommendations?.doFirst || []).slice(0, 3).map(act => `<div class="flex items-start gap-1.5">➔ <strong>[Do First]</strong> ${act}</div>`).join('')}
-              ${(strategyResult.aiRecommendations?.doNext || []).slice(0, 2).map(act => `<div class="flex items-start gap-1.5">➔ <strong>[Do Next]</strong> ${act}</div>`).join('')}
-              ${(!strategyResult.aiRecommendations?.doFirst?.length && !strategyResult.aiRecommendations?.doNext?.length) ? `<div class="text-xs italic text-slate-400">None listed.</div>` : ''}
+              ${(strategyResult.aiRecommendations?.doFirst || [])
+                .slice(0, 3)
+                .map(
+                  act =>
+                    `<div class="flex items-start gap-1.5">➔ <strong>[Do First]</strong> ${act}</div>`
+                )
+                .join('')}
+              ${(strategyResult.aiRecommendations?.doNext || [])
+                .slice(0, 2)
+                .map(
+                  act =>
+                    `<div class="flex items-start gap-1.5">➔ <strong>[Do Next]</strong> ${act}</div>`
+                )
+                .join('')}
+              ${!strategyResult.aiRecommendations?.doFirst?.length && !strategyResult.aiRecommendations?.doNext?.length ? `<div class="text-xs italic text-slate-400">None listed.</div>` : ''}
             </div>
           </div>
 
@@ -2406,14 +2868,23 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
   const handleExportBriefDoc = () => {
     if (!strategyResult) return;
 
-    const strengthsList = strategyResult.evidenceStrategy?.strong?.map(e => e.evidence) || ['Clear document trail', 'Consistent witness testimony'];
-    const weaknessesList = strategyResult.evidenceStrategy?.missing?.map(e => e.evidence) || ['Corroborative forensic proof', 'Written communication records'];
-    const risksList = strategyResult.risks?.map(r => r.description) || ['Procedural delays', 'Counter-claim exposure'];
+    const strengthsList = strategyResult.evidenceStrategy?.strong?.map(e => e.evidence) || [
+      'Clear document trail',
+      'Consistent witness testimony',
+    ];
+    const weaknessesList = strategyResult.evidenceStrategy?.missing?.map(e => e.evidence) || [
+      'Corroborative forensic proof',
+      'Written communication records',
+    ];
+    const risksList = strategyResult.risks?.map(r => r.description) || [
+      'Procedural delays',
+      'Counter-claim exposure',
+    ];
 
     const docHtml = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
-        <title>AI LEGAL™ ${t('executiveLitigationBriefTitle') || "AI LEGAL™ Executive Litigation Brief"}</title>
+        <title>AI LEGAL™ ${t('executiveLitigationBriefTitle') || 'AI LEGAL™ Executive Litigation Brief'}</title>
         <!--[if gte mso 9]>
         <xml>
           <w:WordDocument>
@@ -2556,13 +3027,23 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
             <td style="width: 50%; vertical-align: top; padding-right: 15px;">
               <h4 style="color:#16a34a; margin-top:0;">Top {t('strengthsTitle') || 'Strengths'}</h4>
               <ul>
-                ${strengthsList.slice(0, 4).map(s => `<li style="margin-bottom:6px;">${s}</li>`).join('') || '<li>None</li>'}
+                ${
+                  strengthsList
+                    .slice(0, 4)
+                    .map(s => `<li style="margin-bottom:6px;">${s}</li>`)
+                    .join('') || '<li>None</li>'
+                }
               </ul>
             </td>
             <td style="width: 50%; vertical-align: top; padding-left: 15px;">
               <h4 style="color:#dc2626; margin-top:0;">Key {t('weaknessesTitle') || 'Weaknesses'}</h4>
               <ul>
-                ${weaknessesList.slice(0, 4).map(w => `<li style="margin-bottom:6px;">${w}</li>`).join('') || '<li>None</li>'}
+                ${
+                  weaknessesList
+                    .slice(0, 4)
+                    .map(w => `<li style="margin-bottom:6px;">${w}</li>`)
+                    .join('') || '<li>None</li>'
+                }
               </ul>
             </td>
           </tr>
@@ -2574,8 +3055,14 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
 
         <div class="section-title">{t('immediateNextStepsTitle') || 'Immediate Next Steps'}</div>
         <ul>
-          ${(strategyResult.aiRecommendations?.doFirst || []).slice(0, 3).map(act => `<li><strong>[Do First]</strong> ${act}</li>`).join('')}
-          ${(strategyResult.aiRecommendations?.doNext || []).slice(0, 2).map(act => `<li><strong>[Do Next]</strong> ${act}</li>`).join('')}
+          ${(strategyResult.aiRecommendations?.doFirst || [])
+            .slice(0, 3)
+            .map(act => `<li><strong>[Do First]</strong> ${act}</li>`)
+            .join('')}
+          ${(strategyResult.aiRecommendations?.doNext || [])
+            .slice(0, 2)
+            .map(act => `<li><strong>[Do Next]</strong> ${act}</li>`)
+            .join('')}
         </ul>
 
         <div class="recommendation-box">
@@ -2601,8 +3088,11 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    logAudit("Exported Litigation Brief Word", "Downloaded executive litigation brief Word Document.");
-    toast.success("Executive Brief Word Document exported successfully!");
+    logAudit(
+      'Exported Litigation Brief Word',
+      'Downloaded executive litigation brief Word Document.'
+    );
+    toast.success('Executive Brief Word Document exported successfully!');
   };
 
   const handleQuickToolSelect = (toolId, toolName) => {
@@ -2623,17 +3113,17 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       setWitnessList(parseWitnessText(seed.witnesses));
       setTimelineList(parseTimelineText(seed.timeline));
 
-      toast.success((t('templateLoaded') || "Template loaded: ") + seed.title);
+      toast.success((t('templateLoaded') || 'Template loaded: ') + seed.title);
       addToRecentTemplates(toolId);
       setActiveWorkflowStep('fact_analysis');
     }
   };
 
-  const handleQuickActionTrigger = async (actionType) => {
+  const handleQuickActionTrigger = async actionType => {
     await runLitigationSimulation(actionType);
   };
 
-  const addToRecentTemplates = (id) => {
+  const addToRecentTemplates = id => {
     setRecentTemplates(prev => {
       const filtered = prev.filter(t => t !== id);
       const updated = [id, ...filtered].slice(0, 5);
@@ -2651,51 +3141,67 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         caseFacts: p.litigationStrategy.caseFacts || p.description,
         activeStrategy: p.litigationStrategy.activeStrategy,
         stats: p.litigationStrategy.activeStrategy.stats,
-        timestamp: p.litigationStrategy.auditLogs?.[p.litigationStrategy.auditLogs.length - 1]?.timestamp
-          ? new Date(p.litigationStrategy.auditLogs[p.litigationStrategy.auditLogs.length - 1].timestamp).toLocaleString()
-          : new Date(p.updatedAt || p.createdAt || Date.now()).toLocaleString()
+        timestamp: p.litigationStrategy.auditLogs?.[p.litigationStrategy.auditLogs.length - 1]
+          ?.timestamp
+          ? new Date(
+              p.litigationStrategy.auditLogs[p.litigationStrategy.auditLogs.length - 1].timestamp
+            ).toLocaleString()
+          : new Date(p.updatedAt || p.createdAt || Date.now()).toLocaleString(),
       }));
   }, [localProjects]);
 
-  const deleteHistoryItem = async (projectId) => {
+  const deleteHistoryItem = async projectId => {
     try {
       const proj = localProjects.find(p => p._id === projectId);
       if (proj) {
         const payload = {
           ...proj,
-          litigationStrategy: null
+          litigationStrategy: null,
         };
         const response = await apiService.updateProject(projectId, payload);
-        setLocalProjects(prev => prev.map(p => p._id === projectId ? { ...p, litigationStrategy: null } : p));
+        setLocalProjects(prev =>
+          prev.map(p => (p._id === projectId ? { ...p, litigationStrategy: null } : p))
+        );
         if (onUpdateCase) onUpdateCase(response);
-        toast.success(t('strategyRemoved') || "Strategy removed from history.");
+        toast.success(t('strategyRemoved') || 'Strategy removed from history.');
       }
     } catch (e) {
-      toast.error(t('deleteStrategyFailed') || "Failed to delete strategy from archive.");
+      toast.error(t('deleteStrategyFailed') || 'Failed to delete strategy from archive.');
     }
   };
 
-  const handleCaseSelect = (caseId) => {
+  const handleCaseSelect = caseId => {
     setLinkedCaseId(caseId);
     const selectedProj = localProjects.find(p => p._id === caseId);
     if (selectedProj) {
       hydrateFromCase(selectedProj);
       setIsUsingActiveCase(true);
-      toast.success((t('selectedActiveCase') || "Selected Active Case: ") + selectedProj.name);
+      toast.success((t('selectedActiveCase') || 'Selected Active Case: ') + selectedProj.name);
       setActiveWorkflowStep('fact_analysis');
     }
   };
 
   const filteredTemplates = useMemo(() => {
     return allTools.filter(t => {
-      const matchesSearch = t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
+      const matchesSearch =
+        t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
         t.desc.toLowerCase().includes(templateSearch.toLowerCase());
-      const matchesCategory = selectedTemplateCategory === 'All' || t.category === selectedTemplateCategory;
+      const matchesCategory =
+        selectedTemplateCategory === 'All' || t.category === selectedTemplateCategory;
       return matchesSearch && matchesCategory;
     });
   }, [templateSearch, selectedTemplateCategory]);
 
-  const categoriesList = ['All', 'Civil', 'Criminal', 'Corporate', 'Property', 'Family', 'Tax', 'Employment'];
+  const categoriesList = [
+    'All',
+    'Civil',
+    'Criminal',
+    'Corporate',
+    'Property',
+    'Family',
+    'Tax',
+    'Employment',
+  ];
 
   const stats = useMemo(() => {
     if (strategyResult && strategyResult.stats) {
@@ -2713,17 +3219,17 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       missingDocumentsCount: 0,
       settlementProbability: '--',
       appealRisk: '--',
-      opponentRiskLevel: '--'
+      opponentRiskLevel: '--',
     };
   }, [strategyResult]);
 
   // Handle new case creation modal submit
   const handleCreateNewCase = async () => {
     if (!newCaseForm.clientName.trim()) {
-      toast.error(t('clientNameRequired') || "Client Name is required");
+      toast.error(t('clientNameRequired') || 'Client Name is required');
       return;
     }
-    const tid = toast.loading("Creating legal matter...");
+    const tid = toast.loading('Creating legal matter...');
     try {
       const name = newCaseForm.accused
         ? `${newCaseForm.clientName} vs ${newCaseForm.accused}`
@@ -2738,7 +3244,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         courtName: newCaseForm.courtName,
         assignedAdvocate: newCaseForm.assignedAdvocate || 'Senior Counsel',
         stage: newCaseForm.stage,
-        isLegalCase: true
+        isLegalCase: true,
       };
 
       const newProj = await apiService.createProject(payload);
@@ -2746,7 +3252,9 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       setLinkedCaseId(newProj._id);
       hydrateFromCase(newProj);
 
-      toast.success(t('litigationMatterCreated') || "New litigation matter created successfully!", { id: tid });
+      toast.success(t('litigationMatterCreated') || 'New litigation matter created successfully!', {
+        id: tid,
+      });
       setNewCaseModalOpen(false);
       setNewCaseForm({
         clientName: '',
@@ -2755,11 +3263,11 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         courtName: '',
         assignedAdvocate: '',
         stage: 'Pre-litigation',
-        summary: ''
+        summary: '',
       });
     } catch (e) {
       console.error(e);
-      toast.error(t('failedToCreateCase') || "Failed to create case", { id: tid });
+      toast.error(t('failedToCreateCase') || 'Failed to create case', { id: tid });
     }
   };
 
@@ -2768,13 +3276,20 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     if (!newEv.name.trim()) return;
     const item = {
       id: `ev_${Date.now()}`,
-      ...newEv
+      ...newEv,
     };
     const newList = [...evidenceList, item];
     setEvidenceList(newList);
     setScenarioEvidence(serializeEvidenceList(newList));
-    setNewEv({ name: '', type: 'Document', admissibility: 'High', strength: 'Strong', credibility: 'High', risk: 'Low' });
-    toast.success(t('evidenceAdded') || "Evidence added to dossier.");
+    setNewEv({
+      name: '',
+      type: 'Document',
+      admissibility: 'High',
+      strength: 'Strong',
+      credibility: 'High',
+      risk: 'Low',
+    });
+    toast.success(t('evidenceAdded') || 'Evidence added to dossier.');
   };
 
   const handleAddWitness = () => {
@@ -2783,13 +3298,13 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       id: `wit_${Date.now()}`,
       ...newWit,
       weakness: 'None',
-      questions: ['Please clarify your observation during cross-examination?']
+      questions: ['Please clarify your observation during cross-examination?'],
     };
     const newList = [...witnessList, item];
     setWitnessList(newList);
     setScenarioWitnesses(serializeWitnessList(newList));
     setNewWit({ name: '', role: '', supports: 'Plaintiff', credibilityScore: 85 });
-    toast.success(t('witnessAdded') || "Witness added to pool.");
+    toast.success(t('witnessAdded') || 'Witness added to pool.');
   };
 
   const handleAddTimeline = () => {
@@ -2797,36 +3312,44 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     const item = {
       id: `time_${Date.now()}`,
       ...newTime,
-      description: 'Custom timeline event'
+      description: 'Custom timeline event',
     };
     const newList = [...timelineList, item];
     setTimelineList(newList);
     setScenarioTimeline(serializeTimelineList(newList));
     setNewTime({ date: '', title: '' });
-    toast.success(t('timelineMilestoneAdded') || "Timeline milestone added.");
+    toast.success(t('timelineMilestoneAdded') || 'Timeline milestone added.');
   };
 
-  const handleRemoveEvidence = (id) => {
+  const handleRemoveEvidence = id => {
     const newList = evidenceList.filter(e => e.id !== id);
     setEvidenceList(newList);
     setScenarioEvidence(serializeEvidenceList(newList));
   };
 
-  const handleRemoveWitness = (id) => {
+  const handleRemoveWitness = id => {
     const newList = witnessList.filter(w => w.id !== id);
     setWitnessList(newList);
     setScenarioWitnesses(serializeWitnessList(newList));
   };
 
-  const handleRemoveTimeline = (id) => {
+  const handleRemoveTimeline = id => {
     const newList = timelineList.filter(t => t.id !== id);
     setTimelineList(newList);
     setScenarioTimeline(serializeTimelineList(newList));
   };
 
   // Chip toggler helper for Relief Seeking
-  const reliefChips = ['Damages', 'Permanent Injunction', 'Interim Relief', 'Specific Performance', 'Compensation', 'Stay Order', 'Declaration'];
-  const handleToggleReliefChip = (chip) => {
+  const reliefChips = [
+    'Damages',
+    'Permanent Injunction',
+    'Interim Relief',
+    'Specific Performance',
+    'Compensation',
+    'Stay Order',
+    'Declaration',
+  ];
+  const handleToggleReliefChip = chip => {
     let currentReliefs = scenarioRelief.split(', ').filter(Boolean);
     if (currentReliefs.includes(chip)) {
       currentReliefs = currentReliefs.filter(c => c !== chip);
@@ -2847,15 +3370,15 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
     { key: 'winning_probability', name: t('winningProbability') || 'Winning Probability' },
     { key: 'argument_planning', name: 'Argument Planning' },
     { key: 'settlement_rec', name: 'Settlement Rec' },
-    { key: 'final_strategy', name: 'Final Strategy' }
+    { key: 'final_strategy', name: 'Final Strategy' },
   ];
 
   const missingItems = useMemo(() => {
     const missing = [];
-    if (!caseFacts.trim()) missing.push("Facts");
-    if (timelineList.length === 0) missing.push("Timeline");
-    if (evidenceList.length === 0) missing.push("Evidence");
-    if (witnessList.length === 0) missing.push("Witness");
+    if (!caseFacts.trim()) missing.push('Facts');
+    if (timelineList.length === 0) missing.push('Timeline');
+    if (evidenceList.length === 0) missing.push('Evidence');
+    if (witnessList.length === 0) missing.push('Witness');
     return missing;
   }, [caseFacts, timelineList, evidenceList, witnessList]);
 
@@ -2864,12 +3387,26 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
       <>
         {/* Choose Strategy Source selection */}
         <div className="space-y-2.5">
-          <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">{t('chooseInputSource') || "Choose Input Source"}</label>
+          <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">
+            {t('chooseInputSource') || 'Choose Input Source'}
+          </label>
           <div className="flex flex-col gap-2 p-1.5 bg-slate-100/50 dark:bg-[#131c31] rounded-2xl border dark:border-zinc-800">
             {[
-              { id: 'EXISTING_CASE', name: t('existingCase') || 'Existing Case', desc: t('existingCaseDesc') || 'Auto-load case from files' },
-              { id: 'UPLOAD_DOCUMENTS', name: t('uploadDocuments') || 'Upload Documents', desc: t('uploadDocumentsDesc') || 'AI auto-extracts case files' },
-              { id: 'MANUAL_SCENARIO', name: t('manualStrategy') || 'Manual Strategy', desc: t('manualStrategyDesc') || 'Manually specify case profile' }
+              {
+                id: 'EXISTING_CASE',
+                name: t('existingCase') || 'Existing Case',
+                desc: t('existingCaseDesc') || 'Auto-load case from files',
+              },
+              {
+                id: 'UPLOAD_DOCUMENTS',
+                name: t('uploadDocuments') || 'Upload Documents',
+                desc: t('uploadDocumentsDesc') || 'AI auto-extracts case files',
+              },
+              {
+                id: 'MANUAL_SCENARIO',
+                name: t('manualStrategy') || 'Manual Strategy',
+                desc: t('manualStrategyDesc') || 'Manually specify case profile',
+              },
             ].map(src => {
               const active = strategySource === src.id;
               return (
@@ -2883,11 +3420,23 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                   }`}
                 >
                   <div className="leading-tight">
-                    <p className={`text-[10px] font-black uppercase tracking-wide ${active ? 'text-indigo-650 dark:text-indigo-400' : 'text-slate-707 dark:text-slate-300'}`}>{src.name}</p>
-                    <p className={`text-[8px] mt-0.5 ${active ? 'text-indigo-650/80 dark:text-indigo-400/80 font-bold' : 'text-slate-400 dark:text-zinc-500'}`}>{src.desc}</p>
+                    <p
+                      className={`text-[10px] font-black uppercase tracking-wide ${active ? 'text-indigo-650 dark:text-indigo-400' : 'text-slate-707 dark:text-slate-300'}`}
+                    >
+                      {src.name}
+                    </p>
+                    <p
+                      className={`text-[8px] mt-0.5 ${active ? 'text-indigo-650/80 dark:text-indigo-400/80 font-bold' : 'text-slate-400 dark:text-zinc-500'}`}
+                    >
+                      {src.desc}
+                    </p>
                   </div>
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${active ? 'border-indigo-600 dark:border-indigo-500' : 'border-slate-300 dark:border-zinc-700'}`}>
-                    {active && <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-500" />}
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${active ? 'border-indigo-600 dark:border-indigo-500' : 'border-slate-300 dark:border-zinc-700'}`}
+                  >
+                    {active && (
+                      <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-500" />
+                    )}
                   </div>
                 </button>
               );
@@ -2899,17 +3448,26 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         <div className="space-y-4 shrink-0 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
           {strategySource === 'EXISTING_CASE' ? (
             <div className="space-y-3">
-              <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">{t('activeCaseSwitching') || "Active Case Switching"}</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">
+                {t('activeCaseSwitching') || 'Active Case Switching'}
+              </label>
               <div className="space-y-2">
                 <select
                   value={linkedCaseId || ''}
                   onChange={e => handleCaseSelect(e.target.value)}
-                  className={`w-full border rounded-xl px-3 py-2.5 text-xs font-bold outline-none cursor-pointer appearance-none ${isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-850'
-                    }`}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-xs font-bold outline-none cursor-pointer appearance-none ${
+                    isDark
+                      ? 'bg-[#131c31] border-zinc-800 text-white'
+                      : 'bg-slate-50 border-slate-200 text-slate-850'
+                  }`}
                 >
-                  <option value="">{t('selectCaseFilePlaceholder') || "-- Select Case File --"}</option>
+                  <option value="">
+                    {t('selectCaseFilePlaceholder') || '-- Select Case File --'}
+                  </option>
                   {localProjects.map(p => (
-                    <option key={p._id} value={p._id}>{p.name}</option>
+                    <option key={p._id} value={p._id}>
+                      {p.name}
+                    </option>
                   ))}
                 </select>
 
@@ -2918,7 +3476,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 border border-dashed rounded-xl text-[10px] font-black uppercase tracking-wider text-indigo-500 hover:bg-indigo-500/5 transition-all"
                 >
                   <PlusCircle size={13} />
-                  <span>{t('createNewScenario') || "Create New Scenario"}</span>
+                  <span>{t('createNewScenario') || 'Create New Scenario'}</span>
                 </button>
               </div>
 
@@ -2927,8 +3485,12 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                 <div className="flex items-center gap-2">
                   <Folder size={14} className="text-indigo-500 shrink-0" />
                   <div className="leading-none">
-                    <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase">{t('useActiveCase') || "Use Active Case"}</p>
-                    <p className="text-[8px] text-slate-400 mt-0.5">{t('autoFillCaseFields') || "Auto-fill all case fields"}</p>
+                    <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase">
+                      {t('useActiveCase') || 'Use Active Case'}
+                    </p>
+                    <p className="text-[8px] text-slate-400 mt-0.5">
+                      {t('autoFillCaseFields') || 'Auto-fill all case fields'}
+                    </p>
                   </div>
                 </div>
                 <div
@@ -2946,64 +3508,85 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
           ) : strategySource === 'UPLOAD_DOCUMENTS' ? (
             <div className="p-6 text-center border rounded-2xl bg-indigo-500/[0.01] border-indigo-500/10 space-y-2">
               <p className="text-xs font-bold text-slate-705 dark:text-slate-355">
-                Use the Multimodal Legal Workspace below to upload documents, record voice notes, or import WhatsApp backups.
+                Use the Multimodal Legal Workspace below to upload documents, record voice notes, or
+                import WhatsApp backups.
               </p>
             </div>
           ) : (
             /* Manual Mode intent-driven input fields directly in sidebar */
             <div className="space-y-4 text-xs font-semibold">
-              <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">{t('legalStrategyConfig') || "Legal Strategy Config"}</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">
+                {t('legalStrategyConfig') || 'Legal Strategy Config'}
+              </label>
 
               {/* Primary Input 1: Strategy Goal / Practice Area */}
               <div className="space-y-1">
-                <span className="text-[8px] uppercase font-black text-slate-400">{t('strategyGoalPracticeArea') || "Strategy Goal / Practice Area"}</span>
+                <span className="text-[8px] uppercase font-black text-slate-400">
+                  {t('strategyGoalPracticeArea') || 'Strategy Goal / Practice Area'}
+                </span>
                 <input
                   type="text"
                   value={caseTitle}
                   onChange={e => setCaseTitle(e.target.value)}
                   placeholder="e.g. Cyber Crime Bail, Injunction Request"
                   className={`w-full border rounded-xl px-3 py-2.5 text-xs font-bold outline-none ${
-                    isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    isDark
+                      ? 'bg-[#131c31] border-zinc-800 text-white'
+                      : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
                 />
               </div>
 
               {/* Primary Input 2: Large description textarea */}
               <div className="space-y-1">
-                <span className="text-[8px] uppercase font-black text-slate-400">Legal Problem / Fact Scenario</span>
+                <span className="text-[8px] uppercase font-black text-slate-400">
+                  Legal Problem / Fact Scenario
+                </span>
                 <textarea
                   rows={6}
                   value={caseFacts}
                   onChange={e => setCaseFacts(e.target.value)}
                   placeholder="Describe the legal issue, facts, objectives, or situation in detail..."
                   className={`w-full border rounded-xl px-3 py-2 text-xs font-bold outline-none resize-none ${
-                    isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    isDark
+                      ? 'bg-[#131c31] border-zinc-800 text-white'
+                      : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
                 />
               </div>
 
               {/* Primary Input 3: Objective dropdown */}
               <div className="space-y-1">
-                <span className="text-[8px] uppercase font-black text-slate-404">Litigation Strategy Objective</span>
+                <span className="text-[8px] uppercase font-black text-slate-404">
+                  Litigation Strategy Objective
+                </span>
                 <select
                   value={manualObjective}
                   onChange={e => setManualObjective(e.target.value)}
                   className={`w-full border rounded-xl px-3 py-2.5 text-xs font-bold outline-none cursor-pointer ${
-                    isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    isDark
+                      ? 'bg-[#131c31] border-zinc-800 text-white'
+                      : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
                 >
                   <option value="Define Trial Strategy">Define Trial Strategy</option>
                   <option value="Assess Litigation Risk">Assess Litigation Risk</option>
-                  <option value="Formulate Settlement Positions">Formulate Settlement Positions</option>
+                  <option value="Formulate Settlement Positions">
+                    Formulate Settlement Positions
+                  </option>
                   <option value="Prepare Cross Examination">Prepare Cross Examination</option>
-                  <option value="Analyze Evidence Admissibility">Analyze Evidence Admissibility</option>
+                  <option value="Analyze Evidence Admissibility">
+                    Analyze Evidence Admissibility
+                  </option>
                   <option value="Predict Judicial Outcome">Predict Judicial Outcome</option>
                 </select>
               </div>
 
               {/* Primary Input 4: Optional supporting document upload */}
               <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
-                <span className="text-[8px] uppercase font-black text-slate-400">Optional Supporting Documents</span>
+                <span className="text-[8px] uppercase font-black text-slate-400">
+                  Optional Supporting Documents
+                </span>
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -3012,7 +3595,9 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                   className="border border-dashed border-slate-300 dark:border-zinc-800 hover:border-indigo-500 rounded-xl p-3 text-center cursor-pointer transition-all flex flex-col items-center gap-1.5 bg-slate-500/3"
                 >
                   <Upload className="text-slate-404" size={16} />
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Drag & drop or click to upload</span>
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">
+                    Drag & drop or click to upload
+                  </span>
                   <input
                     id="manual-strategy-doc-uploader"
                     type="file"
@@ -3026,13 +3611,18 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                 {uploadedFiles.length > 0 && (
                   <div className="space-y-1.5 max-h-24 overflow-y-auto custom-scrollbar">
                     {uploadedFiles.map(file => (
-                      <div key={file.id} className="flex items-center justify-between p-1.5 border rounded-lg bg-slate-50 dark:bg-zinc-800/50 dark:border-zinc-800 text-[10px] font-bold">
+                      <div
+                        key={file.id}
+                        className="flex items-center justify-between p-1.5 border rounded-lg bg-slate-50 dark:bg-zinc-800/50 dark:border-zinc-800 text-[10px] font-bold"
+                      >
                         <div className="flex items-center gap-1.5 min-w-0">
                           <FileText size={11} className="text-indigo-500 shrink-0" />
-                          <span className="truncate text-slate-800 dark:text-slate-300">{file.name}</span>
+                          <span className="truncate text-slate-800 dark:text-slate-300">
+                            {file.name}
+                          </span>
                         </div>
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             setUploadedFiles(prev => prev.filter(f => f.id !== file.id));
                           }}
@@ -3060,39 +3650,51 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                 {sidebarAdvancedOpen && (
                   <div className="space-y-3 pt-2 text-xs font-semibold animate-fadeIn">
                     <div className="space-y-1">
-                      <span className="text-[8px] uppercase font-black text-slate-404">Client Name</span>
+                      <span className="text-[8px] uppercase font-black text-slate-404">
+                        Client Name
+                      </span>
                       <input
                         type="text"
                         value={clientName}
                         onChange={e => setClientName(e.target.value)}
                         placeholder="Client Name"
                         className={`w-full border rounded-xl px-3 py-2 text-xs font-bold outline-none ${
-                          isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-205 text-slate-800'
+                          isDark
+                            ? 'bg-[#131c31] border-zinc-800 text-white'
+                            : 'bg-slate-50 border-slate-205 text-slate-800'
                         }`}
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[8px] uppercase font-black text-slate-404">Opponent Name</span>
+                      <span className="text-[8px] uppercase font-black text-slate-404">
+                        Opponent Name
+                      </span>
                       <input
                         type="text"
                         value={opponentName}
                         onChange={e => setOpponentName(e.target.value)}
                         placeholder="Opponent Name"
                         className={`w-full border rounded-xl px-3 py-2 text-xs font-bold outline-none ${
-                          isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-205 text-slate-800'
+                          isDark
+                            ? 'bg-[#131c31] border-zinc-800 text-white'
+                            : 'bg-slate-50 border-slate-205 text-slate-800'
                         }`}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <span className="text-[8px] uppercase font-black text-slate-404">Matter Court</span>
+                        <span className="text-[8px] uppercase font-black text-slate-404">
+                          Matter Court
+                        </span>
                         <select
                           value={matterType}
                           onChange={e => setMatterType(e.target.value)}
                           className={`w-full border rounded-xl px-2 py-2 text-xs font-bold outline-none cursor-pointer ${
-                            isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-205 text-slate-800'
+                            isDark
+                              ? 'bg-[#131c31] border-zinc-800 text-white'
+                              : 'bg-slate-50 border-slate-205 text-slate-800'
                           }`}
                         >
                           <option value="Civil">Civil</option>
@@ -3105,12 +3707,16 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[8px] uppercase font-black text-slate-404">Current Stage</span>
+                        <span className="text-[8px] uppercase font-black text-slate-404">
+                          Current Stage
+                        </span>
                         <select
                           value={caseStage}
                           onChange={e => setCaseStage(e.target.value)}
                           className={`w-full border rounded-xl px-2 py-2 text-xs font-bold outline-none cursor-pointer ${
-                            isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-205 text-slate-800'
+                            isDark
+                              ? 'bg-[#131c31] border-zinc-800 text-white'
+                              : 'bg-slate-50 border-slate-205 text-slate-800'
                           }`}
                         >
                           <option value="Pre-litigation">Pre-litigation</option>
@@ -3122,40 +3728,52 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[8px] uppercase font-black text-slate-404">Court {t('jurisdiction') || 'Jurisdiction'}</span>
+                      <span className="text-[8px] uppercase font-black text-slate-404">
+                        Court {t('jurisdiction') || 'Jurisdiction'}
+                      </span>
                       <input
                         type="text"
                         value={courtName}
                         onChange={e => setCourtName(e.target.value)}
                         placeholder="e.g. High Court of Delhi"
                         className={`w-full border rounded-xl px-3 py-2 text-xs font-bold outline-none ${
-                          isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'
+                          isDark
+                            ? 'bg-[#131c31] border-zinc-800 text-white'
+                            : 'bg-slate-50 border-slate-200'
                         }`}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <span className="text-[8px] uppercase font-black text-slate-404">Hearing Date</span>
+                        <span className="text-[8px] uppercase font-black text-slate-404">
+                          Hearing Date
+                        </span>
                         <input
                           type="text"
                           value={hearingDate}
                           onChange={e => setHearingDate(e.target.value)}
                           placeholder="e.g. Oct 12, 2026"
                           className={`w-full border rounded-xl px-2 py-2 text-xs font-bold outline-none ${
-                            isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-202'
+                            isDark
+                              ? 'bg-[#131c31] border-zinc-800 text-white'
+                              : 'bg-slate-50 border-slate-202'
                           }`}
                         />
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[8px] uppercase font-black text-slate-404">Advocate</span>
+                        <span className="text-[8px] uppercase font-black text-slate-404">
+                          Advocate
+                        </span>
                         <input
                           type="text"
                           value={assignedAdvocate}
                           onChange={e => setAssignedAdvocate(e.target.value)}
                           placeholder="Advocate Name"
                           className={`w-full border rounded-xl px-2 py-2 text-xs font-bold outline-none ${
-                            isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'
+                            isDark
+                              ? 'bg-[#131c31] border-zinc-800 text-white'
+                              : 'bg-slate-50 border-slate-200'
                           }`}
                         />
                       </div>
@@ -3174,26 +3792,39 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
             workspaceName="StrategyEngine"
             onContextChange={stableContextChange}
             theme={isDark ? 'dark' : 'light'}
-            layout={strategySource === 'EXISTING_CASE' ? 'case' : strategySource === 'UPLOAD_DOCUMENTS' ? 'upload' : 'manual'}
+            layout={
+              strategySource === 'EXISTING_CASE'
+                ? 'case'
+                : strategySource === 'UPLOAD_DOCUMENTS'
+                  ? 'upload'
+                  : 'manual'
+            }
           />
         </div>
 
         {/* Search Strategy Templates Select Box */}
         <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-zinc-800/80">
-          <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">{t('searchStrategyTemplates') || "Search Strategy Templates"}</label>
+          <label className="text-[9px] font-black uppercase tracking-widest text-indigo-500">
+            {t('searchStrategyTemplates') || 'Search Strategy Templates'}
+          </label>
           <div className="relative">
             <select
-              onChange={(e) => {
+              onChange={e => {
                 if (e.target.value) {
                   handleQuickToolSelect(e.target.value);
                 }
               }}
-              className={`w-full border rounded-xl px-3 py-2.5 text-xs font-bold outline-none cursor-pointer appearance-none ${isDark ? 'bg-[#131c31] border-zinc-800 text-white' : 'bg-slate-50 border-slate-202 text-slate-850'
-                }`}
+              className={`w-full border rounded-xl px-3 py-2.5 text-xs font-bold outline-none cursor-pointer appearance-none ${
+                isDark
+                  ? 'bg-[#131c31] border-zinc-800 text-white'
+                  : 'bg-slate-50 border-slate-202 text-slate-850'
+              }`}
             >
-              <option value="">{t('loadPresetTemplate') || "-- Load Preset Template --"}</option>
+              <option value="">{t('loadPresetTemplate') || '-- Load Preset Template --'}</option>
               {allTools.map(t => (
-                <option key={t.id} value={t.id}>{t.name} ({t.category})</option>
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.category})
+                </option>
               ))}
             </select>
           </div>
@@ -3203,7 +3834,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
   };
 
   // Stable ref callback assignment to prevent rendering infinite loops
-  contextChangeRef.current = (ctx) => {
+  contextChangeRef.current = ctx => {
     setMultimodalContext(ctx);
 
     if (ctx && ctx.stagedFiles && ctx.stagedFiles.length > 0) {
@@ -3216,7 +3847,7 @@ Schema: [{"name": "{t('witnessNameLabel') || 'Witness Name'}", "role": "Role des
         // Guard state update to prevent rendering loop if text is identical
         const trimmedOcr = ocrText.trim();
         if (caseFacts !== trimmedOcr) {
-          setCaseFacts(prev => prev.trim() ? prev : trimmedOcr);
+          setCaseFacts(prev => (prev.trim() ? prev : trimmedOcr));
 
           // Auto-extract timeline/evidence/witnesses from OCR if lists are empty
           // Use a short debounced AI extraction call
@@ -3235,39 +3866,71 @@ Document Text:
 ${trimmedOcr.slice(0, 6000)}
 
 Return ONLY valid JSON. No markdown wrapper.`;
-                const resp = await generateChatResponse([], extractPrompt, 
+                const resp = await generateChatResponse(
+                  [],
+                  extractPrompt,
                   'You are a legal document analyzer. Extract structured case data from documents. Return ONLY valid JSON.',
-                  [], 'English', null, 'legal');
+                  [],
+                  'English',
+                  null,
+                  'legal'
+                );
                 const rawText = resp?.reply || (typeof resp === 'string' ? resp : '');
                 // Parse JSON from response
                 let extracted = null;
                 try {
-                  const jMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) || rawText.match(/(\{[\s\S]*\})/);
+                  const jMatch =
+                    rawText.match(/```json\s*([\s\S]*?)\s*```/) || rawText.match(/(\{[\s\S]*\})/);
                   if (jMatch) extracted = JSON.parse(jMatch[1] || jMatch[0]);
                   else extracted = JSON.parse(rawText.trim());
                 } catch (_) {}
                 if (extracted) {
                   if (Array.isArray(extracted.timeline) && extracted.timeline.length > 0) {
-                    setTimelineList(prev => prev.length > 0 ? prev : extracted.timeline.map((t, i) => ({
-                      id: `ocr_tl_${i}`, date: t.date || '', event: t.event || '', description: t.description || ''
-                    })));
+                    setTimelineList(prev =>
+                      prev.length > 0
+                        ? prev
+                        : extracted.timeline.map((t, i) => ({
+                            id: `ocr_tl_${i}`,
+                            date: t.date || '',
+                            event: t.event || '',
+                            description: t.description || '',
+                          }))
+                    );
                   }
                   if (Array.isArray(extracted.evidence) && extracted.evidence.length > 0) {
-                    setEvidenceList(prev => prev.length > 0 ? prev : extracted.evidence.map((e, i) => ({
-                      id: `ocr_ev_${i}`, title: e.title || e.name || '', type: e.type || 'Document', description: e.description || ''
-                    })));
+                    setEvidenceList(prev =>
+                      prev.length > 0
+                        ? prev
+                        : extracted.evidence.map((e, i) => ({
+                            id: `ocr_ev_${i}`,
+                            title: e.title || e.name || '',
+                            type: e.type || 'Document',
+                            description: e.description || '',
+                          }))
+                    );
                   }
                   if (Array.isArray(extracted.witnesses) && extracted.witnesses.length > 0) {
-                    setWitnessList(prev => prev.length > 0 ? prev : extracted.witnesses.map((w, i) => ({
-                      id: `ocr_wit_${i}`, name: w.name || '', role: w.role || '', testimony: w.testimony || ''
-                    })));
+                    setWitnessList(prev =>
+                      prev.length > 0
+                        ? prev
+                        : extracted.witnesses.map((w, i) => ({
+                            id: `ocr_wit_${i}`,
+                            name: w.name || '',
+                            role: w.role || '',
+                            testimony: w.testimony || '',
+                          }))
+                    );
                   }
                   if (extracted.parties) {
                     const plaintiff = extracted.parties.plaintiff;
                     const defendant = extracted.parties.defendant;
                     // Guard: AI may return object/array — always coerce to string
-                    const plaintiffStr = plaintiff ? (typeof plaintiff === 'string' ? plaintiff : String(plaintiff)).trim() : '';
-                    const defendantStr = defendant ? (typeof defendant === 'string' ? defendant : String(defendant)).trim() : '';
+                    const plaintiffStr = plaintiff
+                      ? (typeof plaintiff === 'string' ? plaintiff : String(plaintiff)).trim()
+                      : '';
+                    const defendantStr = defendant
+                      ? (typeof defendant === 'string' ? defendant : String(defendant)).trim()
+                      : '';
                     if (plaintiffStr && !clientName.trim()) setClientName(plaintiffStr);
                     if (defendantStr && !opponentName.trim()) setOpponentName(defendantStr);
                   }
@@ -3284,29 +3947,34 @@ Return ONLY valid JSON. No markdown wrapper.`;
     if (ctx && ctx.manualNotes && ctx.manualNotes.trim()) {
       const trimmedNotes = ctx.manualNotes.trim();
       if (caseFacts !== trimmedNotes) {
-        setCaseFacts(prev => prev.trim() ? prev : trimmedNotes);
+        setCaseFacts(prev => (prev.trim() ? prev : trimmedNotes));
       }
     }
   };
 
   return (
     <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-slate-50 dark:bg-transparent overflow-hidden select-none">
-
       {/* Mobile/Tablet Off-canvas Sidebar Drawer Overlay */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-[9999] lg:hidden flex">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setMobileSidebarOpen(false)}
           />
           {/* Drawer Panel */}
-          <div className={`relative w-[300px] sm:w-[340px] h-full flex flex-col p-5 space-y-5 overflow-y-auto custom-scrollbar shadow-2xl transition-transform duration-300 animate-slideInLeft ${
-            isDark ? 'bg-[#0c1224] border-r border-slate-800' : 'bg-white border-r border-slate-205'
-          }`}>
+          <div
+            className={`relative w-[300px] sm:w-[340px] h-full flex flex-col p-5 space-y-5 overflow-y-auto custom-scrollbar shadow-2xl transition-transform duration-300 animate-slideInLeft ${
+              isDark
+                ? 'bg-[#0c1224] border-r border-slate-800'
+                : 'bg-white border-r border-slate-205'
+            }`}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-zinc-800/80">
-              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Strategy Controls</span>
-              <button 
+              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                Strategy Controls
+              </span>
+              <button
                 onClick={() => setMobileSidebarOpen(false)}
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full text-slate-400"
               >
@@ -3319,7 +3987,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
       )}
 
       {/* Header bar - minimal vertical footprint */}
-      <div className={`flex flex-col px-4 sm:px-6 py-3 border-b shrink-0 gap-1.5 ${isDark ? 'border-slate-800 bg-[#0B1020]/90' : 'border-slate-200 bg-white'} backdrop-blur-xl`}>
+      <div
+        className={`flex flex-col px-4 sm:px-6 py-3 border-b shrink-0 gap-1.5 ${isDark ? 'border-slate-800 bg-[#0B1020]/90' : 'border-slate-200 bg-white'} backdrop-blur-xl`}
+      >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 w-full">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Hamburger menu for mobile/tablet */}
@@ -3333,49 +4003,76 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
             <button
               onClick={onBack}
-              className={`w-[68px] h-10 flex items-center justify-center gap-1.5 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors shrink-0 ${isDark ? 'bg-[#1A2540] border-slate-800 text-slate-300 hover:bg-[#202E50]' : 'bg-slate-50 border-slate-205 text-slate-700 hover:bg-slate-100'
-                }`}
+              className={`w-[68px] h-10 flex items-center justify-center gap-1.5 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors shrink-0 ${
+                isDark
+                  ? 'bg-[#1A2540] border-slate-800 text-slate-300 hover:bg-[#202E50]'
+                  : 'bg-slate-50 border-slate-205 text-slate-700 hover:bg-slate-100'
+              }`}
             >
               <ChevronLeft size={11} />
-              <span>{t('back') || "Back"}</span>
+              <span>{t('back') || 'Back'}</span>
             </button>
 
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className={`text-base sm:text-[20px] font-black leading-none tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h1
+                  className={`text-base sm:text-[20px] font-black leading-none tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}
+                >
                   Strategy Engine
                 </h1>
                 {isSyncing && (
-                  <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-wider animate-pulse bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">Syncing</span>
+                  <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-wider animate-pulse bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">
+                    Syncing
+                  </span>
                 )}
               </div>
-              <p className={`text-[10px] sm:text-[11px] font-medium leading-none mt-1 truncate hidden sm:block ${isDark ? 'text-slate-400' : 'text-slate-505'}`}>
-                {t('strategyEngineSubtitle') || 'AI-powered litigation simulation, opponent prediction, judicial risk analysis, evidence evaluation and courtroom strategy planning.'}
+              <p
+                className={`text-[10px] sm:text-[11px] font-medium leading-none mt-1 truncate hidden sm:block ${isDark ? 'text-slate-400' : 'text-slate-505'}`}
+              >
+                {t('strategyEngineSubtitle') ||
+                  'AI-powered litigation simulation, opponent prediction, judicial risk analysis, evidence evaluation and courtroom strategy planning.'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center flex-wrap gap-2.5 lg:shrink-0">
-            <LanguageToggle lang={toolkitLanguage === 'Hindi' ? 'hi' : 'en'} onChange={(l) => setToolkitLanguage(l === 'hi' ? 'Hindi' : 'English')} />
+            <LanguageToggle
+              lang={toolkitLanguage === 'Hindi' ? 'hi' : 'en'}
+              onChange={l => setToolkitLanguage(l === 'hi' ? 'Hindi' : 'English')}
+            />
             <div className="hidden xl:flex flex-col text-right text-[10px] text-slate-400 font-semibold mr-1">
-              <span>{t('recentStrategyCount') || 'Recent Strategy count:'} <strong>{historyData.length}</strong></span>
-              <span>{t('lastSimulation') || 'Last Simulation:'} <strong>{historyData[0]?.timestamp || 'Never'}</strong></span>
+              <span>
+                {t('recentStrategyCount') || 'Recent Strategy count:'}{' '}
+                <strong>{historyData.length}</strong>
+              </span>
+              <span>
+                {t('lastSimulation') || 'Last Simulation:'}{' '}
+                <strong>{historyData[0]?.timestamp || 'Never'}</strong>
+              </span>
             </div>
             <button
               onClick={() => setIsNotesDrawerOpen(true)}
-              className={`h-11 px-4 flex items-center gap-1.5 border rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0 ${isDark ? 'bg-[#1A2540] border-slate-800 text-amber-400 hover:bg-[#202E50]' : 'bg-amber-50 border-amber-250/20 text-amber-700 hover:bg-amber-100'
-                }`}
+              className={`h-11 px-4 flex items-center gap-1.5 border rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0 ${
+                isDark
+                  ? 'bg-[#1A2540] border-slate-800 text-amber-400 hover:bg-[#202E50]'
+                  : 'bg-amber-50 border-amber-250/20 text-amber-700 hover:bg-amber-100'
+              }`}
             >
               <BookOpen size={14} className="shrink-0" />
               <span>{t('advocateNotes') || 'Advocate Notes'}</span>
             </button>
             <button
               onClick={() => setHistoryVisible(true)}
-              className={`h-11 px-4 flex items-center gap-1.5 border rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0 ${isDark ? 'bg-[#1A2540] border-slate-800 text-indigo-400 hover:bg-[#202E50]' : 'bg-indigo-50 border-indigo-200/30 text-indigo-650 hover:bg-indigo-100'
-                }`}
+              className={`h-11 px-4 flex items-center gap-1.5 border rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0 ${
+                isDark
+                  ? 'bg-[#1A2540] border-slate-800 text-indigo-400 hover:bg-[#202E50]'
+                  : 'bg-indigo-50 border-indigo-200/30 text-indigo-650 hover:bg-indigo-100'
+              }`}
             >
               <History size={14} className="shrink-0" />
-              <span>{t('history') || 'History'} ({historyData.length})</span>
+              <span>
+                {t('history') || 'History'} ({historyData.length})
+              </span>
             </button>
           </div>
         </div>
@@ -3383,29 +4080,33 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
       <div className="flex-1 flex w-full min-h-0 overflow-hidden">
         {/* LEFT SIDEBAR: fixed control panel */}
-        <div className={`hidden lg:flex w-[340px] flex-col border-r shrink-0 overflow-y-auto custom-scrollbar p-4 space-y-5 ${isDark ? 'border-slate-800 bg-[#0c1224]' : 'border-slate-200 bg-white'}`}>
+        <div
+          className={`hidden lg:flex w-[340px] flex-col border-r shrink-0 overflow-y-auto custom-scrollbar p-4 space-y-5 ${isDark ? 'border-slate-800 bg-[#0c1224]' : 'border-slate-200 bg-white'}`}
+        >
           {renderSidebarContent()}
         </div>
 
         {/* RIGHT AREA: Litigation Command workspace */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar px-3 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
           <div className="max-w-5xl w-full mx-auto space-y-4 sm:space-y-5 select-text">
-
             {/* Simple Visual Stepper */}
             <div className="w-full overflow-x-auto custom-scrollbar-horizontal pb-2 md:pb-0">
-              <div className={`p-4 border rounded-3xl flex items-center justify-between md:justify-around shadow-sm min-w-[500px] md:min-w-0 ${isDark ? 'bg-[#131c31]/20 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
+              <div
+                className={`p-4 border rounded-3xl flex items-center justify-between md:justify-around shadow-sm min-w-[500px] md:min-w-0 ${
+                  isDark ? 'bg-[#131c31]/20 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              >
                 {[
                   { key: 'INPUT', name: 'Input Config' },
                   { key: 'ANALYSIS', name: 'AI Analysis' },
-                  { key: 'REPORT', name: 'Strategy Report' }
+                  { key: 'REPORT', name: 'Strategy Report' },
                 ].map((step, idx) => {
                   // Determine step state
                   let stepState = 'upcoming';
                   if (step.key === 'INPUT') {
-                    stepState = (!strategyResult && !isAuditing) ? 'current' : 'completed';
+                    stepState = !strategyResult && !isAuditing ? 'current' : 'completed';
                   } else if (step.key === 'ANALYSIS') {
-                    stepState = isAuditing ? 'current' : (strategyResult ? 'completed' : 'upcoming');
+                    stepState = isAuditing ? 'current' : strategyResult ? 'completed' : 'upcoming';
                   } else if (step.key === 'REPORT') {
                     stepState = strategyResult ? 'current' : 'upcoming';
                   }
@@ -3413,15 +4114,22 @@ Return ONLY valid JSON. No markdown wrapper.`;
                   // Determine next step's state for the connector color
                   let nextStepState = 'upcoming';
                   if (idx === 0) {
-                    nextStepState = isAuditing ? 'current' : (strategyResult ? 'completed' : 'upcoming');
+                    nextStepState = isAuditing
+                      ? 'current'
+                      : strategyResult
+                        ? 'completed'
+                        : 'upcoming';
                   } else if (idx === 1) {
                     nextStepState = strategyResult ? 'current' : 'upcoming';
                   }
 
                   // Connector color mapping
-                  const connectorColor = nextStepState === 'completed'
-                    ? 'text-emerald-500 font-black'
-                    : (nextStepState === 'current' ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-slate-300 dark:text-zinc-700');
+                  const connectorColor =
+                    nextStepState === 'completed'
+                      ? 'text-emerald-500 font-black'
+                      : nextStepState === 'current'
+                        ? 'text-indigo-600 dark:text-indigo-400 font-black'
+                        : 'text-slate-300 dark:text-zinc-700';
 
                   return (
                     <div key={step.key} className="flex items-center gap-2 shrink-0">
@@ -3454,7 +4162,11 @@ Return ONLY valid JSON. No markdown wrapper.`;
                         </>
                       )}
                       {idx < 2 && (
-                        <span className={`text-[12px] ml-4 transition-all duration-350 shrink-0 ${connectorColor}`}>➔</span>
+                        <span
+                          className={`text-[12px] ml-4 transition-all duration-350 shrink-0 ${connectorColor}`}
+                        >
+                          ➔
+                        </span>
                       )}
                     </div>
                   );
@@ -3464,40 +4176,69 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
             {/* Case Summary Panel */}
             {strategySource !== 'MANUAL_SCENARIO' && (
-              <div className={`border rounded-3xl p-4 shadow-sm space-y-3.5 transition-all duration-300 ${isDark ? 'bg-[#131c31]/30 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
+              <div
+                className={`border rounded-3xl p-4 shadow-sm space-y-3.5 transition-all duration-300 ${
+                  isDark ? 'bg-[#131c31]/30 border-slate-800' : 'bg-white border-slate-200'
+                }`}
+              >
                 <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800/80">
                   <div className="flex items-center gap-2">
                     <Briefcase size={14} className="text-indigo-505" />
-                    <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-white">Active Case Summary</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                      Active Case Summary
+                    </h3>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${caseTitle ? 'bg-emerald-500 animate-pulse' : 'bg-slate-405'}`} />
-                    <span className="text-[8px] font-black text-slate-400 uppercase">AI Readiness: {caseTitle ? 'Ready' : 'Incomplete'}</span>
+                    <span
+                      className={`w-2 h-2 rounded-full ${caseTitle ? 'bg-emerald-500 animate-pulse' : 'bg-slate-405'}`}
+                    />
+                    <span className="text-[8px] font-black text-slate-400 uppercase">
+                      AI Readiness: {caseTitle ? 'Ready' : 'Incomplete'}
+                    </span>
                   </div>
                 </div>
 
                 {/* 5 clean fields */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs font-semibold">
                   <div className="space-y-0.5">
-                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">{t('caseTitleParties') || 'Case Title / Parties'}</span>
-                    <p className="font-extrabold text-slate-800 dark:text-slate-200 truncate">{caseTitle || 'Custom Scenario'}</p>
+                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">
+                      {t('caseTitleParties') || 'Case Title / Parties'}
+                    </span>
+                    <p className="font-extrabold text-slate-800 dark:text-slate-200 truncate">
+                      {caseTitle || 'Custom Scenario'}
+                    </p>
                   </div>
                   <div className="space-y-0.5">
-                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">{t('courtCategory') || 'Court Category'}</span>
-                    <p className="font-extrabold text-indigo-500 truncate">{matterType || 'Civil'}</p>
+                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">
+                      {t('courtCategory') || 'Court Category'}
+                    </span>
+                    <p className="font-extrabold text-indigo-500 truncate">
+                      {matterType || 'Civil'}
+                    </p>
                   </div>
                   <div className="space-y-0.5">
-                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">{t('jurisdiction') || 'Jurisdiction'}</span>
-                    <p className="font-bold text-slate-705 dark:text-slate-300 truncate">{courtName || 'N/A'}</p>
+                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">
+                      {t('jurisdiction') || 'Jurisdiction'}
+                    </span>
+                    <p className="font-bold text-slate-705 dark:text-slate-300 truncate">
+                      {courtName || 'N/A'}
+                    </p>
                   </div>
                   <div className="space-y-0.5">
-                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">{t('litigationStage') || 'Litigation Stage'}</span>
-                    <span className="inline-block px-1.5 py-0.5 bg-amber-500/10 text-amber-600 rounded text-[7.5px] font-black uppercase w-fit">{caseStage || 'Pre-trial'}</span>
+                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">
+                      {t('litigationStage') || 'Litigation Stage'}
+                    </span>
+                    <span className="inline-block px-1.5 py-0.5 bg-amber-500/10 text-amber-600 rounded text-[7.5px] font-black uppercase w-fit">
+                      {caseStage || 'Pre-trial'}
+                    </span>
                   </div>
                   <div className="space-y-0.5">
-                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">{t('evidenceDossiersTitle') || 'Evidence dossiers'}</span>
-                    <p className="font-bold text-violet-500">{evidenceList.length} {t('items') || "Items"}</p>
+                    <span className="text-[8px] uppercase font-black text-slate-400 tracking-wide">
+                      {t('evidenceDossiersTitle') || 'Evidence dossiers'}
+                    </span>
+                    <p className="font-bold text-violet-500">
+                      {evidenceList.length} {t('items') || 'Items'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -3506,35 +4247,59 @@ Return ONLY valid JSON. No markdown wrapper.`;
             {/* SCENARIO BUILDER: Single collapsible accordions */}
             {strategySource !== 'MANUAL_SCENARIO' && (
               <div className="space-y-2">
-
                 {/* Accordion 1: Case Facts */}
-                <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === 'facts'
-                    ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
-                    : 'border border-slate-200 dark:border-zinc-800'
-                  }`}>
+                <div
+                  className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                    activeAccordion === 'facts'
+                      ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
+                      : 'border border-slate-200 dark:border-zinc-800'
+                  }`}
+                >
                   <div
                     onClick={() => toggleAccordion('facts')}
-                    className={`px-4 py-3 flex items-center justify-between cursor-pointer ${activeAccordion === 'facts'
-                        ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50/50')
-                        : (isDark ? 'bg-black/10' : 'bg-slate-50')
-                      }`}
+                    className={`px-4 py-3 flex items-center justify-between cursor-pointer ${
+                      activeAccordion === 'facts'
+                        ? isDark
+                          ? 'bg-indigo-500/10'
+                          : 'bg-indigo-50/50'
+                        : isDark
+                          ? 'bg-black/10'
+                          : 'bg-slate-50'
+                    }`}
                   >
                     <div className="flex items-center gap-2">
-                      <FileText size={14} className={activeAccordion === 'facts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'facts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-805 dark:text-white'}`}>{t('caseFactsClaims') || 'Case Facts & Claims'}</span>
+                      <FileText
+                        size={14}
+                        className={
+                          activeAccordion === 'facts'
+                            ? 'text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-400'
+                        }
+                      />
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'facts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-805 dark:text-white'}`}
+                      >
+                        {t('caseFactsClaims') || 'Case Facts & Claims'}
+                      </span>
                     </div>
-                    {activeAccordion === 'facts' ? <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                    {activeAccordion === 'facts' ? (
+                      <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    ) : (
+                      <ChevronDown size={14} className="text-slate-400" />
+                    )}
                   </div>
                   {activeAccordion === 'facts' && (
                     <div className={`p-4 space-y-3.5 ${isDark ? 'bg-[#0B1020]/20' : 'bg-white'}`}>
                       <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-wider">
                         <span>{t('factsStatementBrief') || 'Facts statement brief'}</span>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setCaseFacts('')} className="hover:text-red-500">{t('clear') || "Clear"}</button>
+                          <button onClick={() => setCaseFacts('')} className="hover:text-red-500">
+                            {t('clear') || 'Clear'}
+                          </button>
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(caseFacts);
-                              toast.success(t('copiedToClipboard') || "Copied to clipboard!");
+                              toast.success(t('copiedToClipboard') || 'Copied to clipboard!');
                             }}
                             className="hover:text-indigo-500"
                           >
@@ -3545,7 +4310,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                       {!caseFacts.trim() && (
                         <div className="p-3 border rounded-xl bg-amber-500/5 border-amber-500/10 text-[10.5px] font-bold text-amber-600">
-                          ⚠️ {t('caseFactsEmptyWarning') || 'Case facts currently empty. Enter details or use active cases to populate strategy targets.'}
+                          ⚠️{' '}
+                          {t('caseFactsEmptyWarning') ||
+                            'Case facts currently empty. Enter details or use active cases to populate strategy targets.'}
                         </div>
                       )}
 
@@ -3553,42 +4320,73 @@ Return ONLY valid JSON. No markdown wrapper.`;
                         rows={5}
                         value={caseFacts}
                         onChange={e => setCaseFacts(e.target.value)}
-                        placeholder={t('factsStatementBriefPlaceholder') || 'Enter detailed facts of the case, breach details, transaction issues...'}
-                        className={`w-full border rounded-xl px-3 py-2 text-xs font-semibold outline-none resize-none ${isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'
-                          }`}
+                        placeholder={
+                          t('factsStatementBriefPlaceholder') ||
+                          'Enter detailed facts of the case, breach details, transaction issues...'
+                        }
+                        className={`w-full border rounded-xl px-3 py-2 text-xs font-semibold outline-none resize-none ${
+                          isDark
+                            ? 'bg-black/25 border-zinc-800 text-white'
+                            : 'bg-slate-50 border-slate-200'
+                        }`}
                       />
                     </div>
                   )}
                 </div>
 
                 {/* Accordion 2: {t('evidenceDossier') || 'Evidence Dossier'} */}
-                <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === 'evidence'
-                    ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
-                    : 'border border-slate-200 dark:border-zinc-800'
-                  }`}>
+                <div
+                  className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                    activeAccordion === 'evidence'
+                      ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
+                      : 'border border-slate-200 dark:border-zinc-800'
+                  }`}
+                >
                   <div
                     onClick={() => toggleAccordion('evidence')}
-                    className={`px-4 py-3 flex items-center justify-between cursor-pointer ${activeAccordion === 'evidence'
-                        ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50/50')
-                        : (isDark ? 'bg-black/10' : 'bg-slate-50')
-                      }`}
+                    className={`px-4 py-3 flex items-center justify-between cursor-pointer ${
+                      activeAccordion === 'evidence'
+                        ? isDark
+                          ? 'bg-indigo-500/10'
+                          : 'bg-indigo-50/50'
+                        : isDark
+                          ? 'bg-black/10'
+                          : 'bg-slate-50'
+                    }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Database size={14} className={activeAccordion === 'evidence' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'evidence' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-805 dark:text-white'}`}>{t('evidenceDossier') || 'Evidence Dossier'}</span>
+                      <Database
+                        size={14}
+                        className={
+                          activeAccordion === 'evidence'
+                            ? 'text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-400'
+                        }
+                      />
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'evidence' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-805 dark:text-white'}`}
+                      >
+                        {t('evidenceDossier') || 'Evidence Dossier'}
+                      </span>
                     </div>
-                    {activeAccordion === 'evidence' ? <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                    {activeAccordion === 'evidence' ? (
+                      <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    ) : (
+                      <ChevronDown size={14} className="text-slate-400" />
+                    )}
                   </div>
                   {activeAccordion === 'evidence' && (
                     <div className={`p-4 space-y-4 ${isDark ? 'bg-[#0B1020]/20' : 'bg-white'}`}>
                       <div className="flex justify-between items-center">
-                        <span className="text-[8px] font-black text-slate-405 uppercase">Deposition Evidence Cards</span>
+                        <span className="text-[8px] font-black text-slate-405 uppercase">
+                          Deposition Evidence Cards
+                        </span>
                         <button
                           onClick={() => runAIFieldExtraction('evidence')}
                           className="flex items-center gap-1 px-2.5 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-555 rounded-lg text-[8px] font-black uppercase transition-all"
                         >
                           <Sparkles size={9} />
-                          <span>{t('autofillDossier') || "Autofill Dossier"}</span>
+                          <span>{t('autofillDossier') || 'Autofill Dossier'}</span>
                         </button>
                       </div>
 
@@ -3596,11 +4394,18 @@ Return ONLY valid JSON. No markdown wrapper.`;
                       {evidenceList.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {evidenceList.map(e => (
-                            <div key={e.id} className="p-3 border rounded-xl bg-slate-500/3 flex flex-col justify-between space-y-2">
+                            <div
+                              key={e.id}
+                              className="p-3 border rounded-xl bg-slate-500/3 flex flex-col justify-between space-y-2"
+                            >
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <span className="text-[8px] font-black text-slate-400 uppercase">{e.type}</span>
-                                  <h4 className="text-xs font-black text-slate-850 dark:text-white mt-0.5">{e.name}</h4>
+                                  <span className="text-[8px] font-black text-slate-400 uppercase">
+                                    {e.type}
+                                  </span>
+                                  <h4 className="text-xs font-black text-slate-850 dark:text-white mt-0.5">
+                                    {e.name}
+                                  </h4>
                                 </div>
                                 <button
                                   onClick={() => handleRemoveEvidence(e.id)}
@@ -3612,33 +4417,61 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                               {/* Badges */}
                               <div className="flex flex-wrap gap-1 items-center pt-2 border-t border-slate-100 dark:border-white/5">
-                                <span className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${e.admissibility === 'High' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
-                                  }`}>Admis: {e.admissibility}</span>
-                                <span className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${e.strength === 'Strong' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-505'
-                                  }`}>Strength: {e.strength}</span>
-                                <span className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${e.risk === 'Low' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-505'
-                                  }`}>Risk: {e.risk}</span>
+                                <span
+                                  className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${
+                                    e.admissibility === 'High'
+                                      ? 'bg-emerald-500/10 text-emerald-500'
+                                      : 'bg-amber-500/10 text-amber-500'
+                                  }`}
+                                >
+                                  Admis: {e.admissibility}
+                                </span>
+                                <span
+                                  className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${
+                                    e.strength === 'Strong'
+                                      ? 'bg-emerald-500/10 text-emerald-500'
+                                      : 'bg-red-500/10 text-red-505'
+                                  }`}
+                                >
+                                  Strength: {e.strength}
+                                </span>
+                                <span
+                                  className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${
+                                    e.risk === 'Low'
+                                      ? 'bg-emerald-500/10 text-emerald-500'
+                                      : 'bg-red-500/10 text-red-505'
+                                  }`}
+                                >
+                                  Risk: {e.risk}
+                                </span>
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
                         <div className="p-3 border rounded-xl bg-slate-500/5 text-center text-slate-405 font-bold">
-                          {t('noEvidenceLoggedYet') || 'No evidence logged yet. Use AI Autofill or add manually below.'}
+                          {t('noEvidenceLoggedYet') ||
+                            'No evidence logged yet. Use AI Autofill or add manually below.'}
                         </div>
                       )}
 
                       {/* Inline form */}
                       <div className="p-3 border rounded-xl bg-slate-500/3 space-y-3.5">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">{t('addCustomEvidenceItem') || 'Add custom evidence item'}</span>
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">
+                          {t('addCustomEvidenceItem') || 'Add custom evidence item'}
+                        </span>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                           <div className="space-y-1">
-                            <span className="text-[8px] uppercase text-slate-405">{t('evidenceTitleName') || 'Evidence Title / Name'}</span>
+                            <span className="text-[8px] uppercase text-slate-405">
+                              {t('evidenceTitleName') || 'Evidence Title / Name'}
+                            </span>
                             <input
                               type="text"
                               value={newEv.name}
                               onChange={e => setNewEv({ ...newEv, name: e.target.value })}
-                              placeholder={t('evidenceTitlePlaceholder') || 'e.g. Agreement sheet copy'}
+                              placeholder={
+                                t('evidenceTitlePlaceholder') || 'e.g. Agreement sheet copy'
+                              }
                               className={`w-full border rounded-lg px-2.5 py-1.5 text-xs font-semibold outline-none ${isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-205'}`}
                             />
                           </div>
@@ -3657,10 +4490,14 @@ Return ONLY valid JSON. No markdown wrapper.`;
                               </select>
                             </div>
                             <div className="space-y-1">
-                              <span className="text-[8px] uppercase text-slate-455">Admissibility</span>
+                              <span className="text-[8px] uppercase text-slate-455">
+                                Admissibility
+                              </span>
                               <select
                                 value={newEv.admissibility}
-                                onChange={e => setNewEv({ ...newEv, admissibility: e.target.value })}
+                                onChange={e =>
+                                  setNewEv({ ...newEv, admissibility: e.target.value })
+                                }
                                 className={`w-full border rounded-lg px-1.5 py-1.5 text-[10.5px] outline-none font-bold ${isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-205'}`}
                               >
                                 <option value="High">High</option>
@@ -3673,7 +4510,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <div className="space-y-1">
-                            <span className="text-[8px] uppercase text-slate-455">Strength weight</span>
+                            <span className="text-[8px] uppercase text-slate-455">
+                              Strength weight
+                            </span>
                             <select
                               value={newEv.strength}
                               onChange={e => setNewEv({ ...newEv, strength: e.target.value })}
@@ -3697,7 +4536,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
                             </select>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-[8px] uppercase text-slate-400">Procedural Risk</span>
+                            <span className="text-[8px] uppercase text-slate-400">
+                              Procedural Risk
+                            </span>
                             <select
                               value={newEv.risk}
                               onChange={e => setNewEv({ ...newEv, risk: e.target.value })}
@@ -3725,32 +4566,62 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                 {/* {t('witnessPoolTitle') || 'Witness Pool'} (Only shown if witnesses detected) */}
                 {witnessList.length > 0 && (
-                  <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === 'witnesses'
-                      ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
-                      : 'border border-slate-200 dark:border-zinc-800'
-                    }`}>
+                  <div
+                    className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                      activeAccordion === 'witnesses'
+                        ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
+                        : 'border border-slate-200 dark:border-zinc-800'
+                    }`}
+                  >
                     <div
                       onClick={() => toggleAccordion('witnesses')}
-                      className={`px-4 py-3 flex items-center justify-between cursor-pointer ${activeAccordion === 'witnesses'
-                          ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50/50')
-                          : (isDark ? 'bg-black/10' : 'bg-slate-50')
-                        }`}
+                      className={`px-4 py-3 flex items-center justify-between cursor-pointer ${
+                        activeAccordion === 'witnesses'
+                          ? isDark
+                            ? 'bg-indigo-500/10'
+                            : 'bg-indigo-50/50'
+                          : isDark
+                            ? 'bg-black/10'
+                            : 'bg-slate-50'
+                      }`}
                     >
                       <div className="flex items-center gap-2">
-                        <UserCheck size={14} className={activeAccordion === 'witnesses' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'witnesses' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-805 dark:text-white'}`}>{t('witnessPoolTitle') || 'Witness Pool'}</span>
+                        <UserCheck
+                          size={14}
+                          className={
+                            activeAccordion === 'witnesses'
+                              ? 'text-indigo-600 dark:text-indigo-400'
+                              : 'text-slate-400'
+                          }
+                        />
+                        <span
+                          className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'witnesses' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-805 dark:text-white'}`}
+                        >
+                          {t('witnessPoolTitle') || 'Witness Pool'}
+                        </span>
                       </div>
-                      {activeAccordion === 'witnesses' ? <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                      {activeAccordion === 'witnesses' ? (
+                        <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" />
+                      ) : (
+                        <ChevronDown size={14} className="text-slate-400" />
+                      )}
                     </div>
                     {activeAccordion === 'witnesses' && (
                       <div className={`p-4 space-y-3 ${isDark ? 'bg-[#0B1020]/20' : 'bg-white'}`}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                           {witnessList.map(w => (
-                            <div key={w.id} className="p-3 border rounded-xl bg-slate-500/3 flex flex-col justify-between space-y-2">
+                            <div
+                              key={w.id}
+                              className="p-3 border rounded-xl bg-slate-500/3 flex flex-col justify-between space-y-2"
+                            >
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <h4 className="text-xs font-black text-slate-850 dark:text-white">{w.name}</h4>
-                                  <span className="text-[8px] font-bold text-slate-404">{w.role}</span>
+                                  <h4 className="text-xs font-black text-slate-850 dark:text-white">
+                                    {w.name}
+                                  </h4>
+                                  <span className="text-[8px] font-bold text-slate-404">
+                                    {w.role}
+                                  </span>
                                 </div>
                                 <button
                                   onClick={() => handleRemoveWitness(w.id)}
@@ -3761,9 +4632,18 @@ Return ONLY valid JSON. No markdown wrapper.`;
                               </div>
 
                               <div className="flex flex-wrap gap-1 items-center pt-2 border-t border-slate-100 dark:border-white/5">
-                                <span className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${w.supports === 'Plaintiff' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
-                                  }`}>Supports: {w.supports}</span>
-                                <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-550 rounded text-[7px] font-black uppercase">Credibility: {w.credibilityScore}%</span>
+                                <span
+                                  className={`px-2 py-0.5 text-[7px] font-black uppercase rounded ${
+                                    w.supports === 'Plaintiff'
+                                      ? 'bg-emerald-500/10 text-emerald-500'
+                                      : 'bg-red-500/10 text-red-500'
+                                  }`}
+                                >
+                                  Supports: {w.supports}
+                                </span>
+                                <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-550 rounded text-[7px] font-black uppercase">
+                                  Credibility: {w.credibilityScore}%
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -3777,12 +4657,19 @@ Return ONLY valid JSON. No markdown wrapper.`;
                 <div className="pt-2 text-center">
                   <button
                     onClick={() => setShowAdvanced(!showAdvanced)}
-                    className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider mx-auto transition-all ${showAdvanced
+                    className={`flex items-center gap-1.5 px-4 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider mx-auto transition-all ${
+                      showAdvanced
                         ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-650'
-                        : (isDark ? 'bg-[#131c31] border-zinc-800 text-slate-404 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100')
-                      }`}
+                        : isDark
+                          ? 'bg-[#131c31] border-zinc-800 text-slate-404 hover:text-white'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
                   >
-                    <span>{showAdvanced ? (t('hideAdvancedParameters') || 'Hide Advanced Parameters') : (t('showAdvancedParameters') || 'Show Advanced Parameters')}</span>
+                    <span>
+                      {showAdvanced
+                        ? t('hideAdvancedParameters') || 'Hide Advanced Parameters'
+                        : t('showAdvancedParameters') || 'Show Advanced Parameters'}
+                    </span>
                     {showAdvanced ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   </button>
                 </div>
@@ -3790,29 +4677,54 @@ Return ONLY valid JSON. No markdown wrapper.`;
                 {/* Advanced Collapsible Accordions Container */}
                 {showAdvanced && (
                   <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800/50">
-
                     {/* Timeline Accordion */}
-                    <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === 'timeline'
-                        ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
-                        : 'border border-slate-200 dark:border-zinc-800'
-                      }`}>
+                    <div
+                      className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                        activeAccordion === 'timeline'
+                          ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
+                          : 'border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
                       <div
                         onClick={() => toggleAccordion('timeline')}
-                        className={`px-4 py-3 flex items-center justify-between cursor-pointer ${activeAccordion === 'timeline'
-                            ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50/50')
-                            : (isDark ? 'bg-black/10' : 'bg-slate-50')
-                          }`}
+                        className={`px-4 py-3 flex items-center justify-between cursor-pointer ${
+                          activeAccordion === 'timeline'
+                            ? isDark
+                              ? 'bg-indigo-500/10'
+                              : 'bg-indigo-50/50'
+                            : isDark
+                              ? 'bg-black/10'
+                              : 'bg-slate-50'
+                        }`}
                       >
                         <div className="flex items-center gap-2">
-                          <Clock size={14} className={activeAccordion === 'timeline' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
-                          <span className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'timeline' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}>{t('milestonesChronologyTitle') || 'Milestones Chronology'}</span>
+                          <Clock
+                            size={14}
+                            className={
+                              activeAccordion === 'timeline'
+                                ? 'text-indigo-600 dark:text-indigo-400'
+                                : 'text-slate-400'
+                            }
+                          />
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'timeline' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}
+                          >
+                            {t('milestonesChronologyTitle') || 'Milestones Chronology'}
+                          </span>
                         </div>
-                        {activeAccordion === 'timeline' ? <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                        {activeAccordion === 'timeline' ? (
+                          <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" />
+                        ) : (
+                          <ChevronDown size={14} className="text-slate-400" />
+                        )}
                       </div>
                       {activeAccordion === 'timeline' && (
                         <div className={`p-4 space-y-4 ${isDark ? 'bg-[#0B1020]/20' : 'bg-white'}`}>
                           <div className="flex justify-between items-center">
-                            <span className="text-[8px] font-black text-slate-405 uppercase">{t('chronologicalMilestonesChain') || 'Chronological Milestones Chain'}</span>
+                            <span className="text-[8px] font-black text-slate-405 uppercase">
+                              {t('chronologicalMilestonesChain') ||
+                                'Chronological Milestones Chain'}
+                            </span>
                             <button
                               onClick={() => runAIFieldExtraction('timeline')}
                               className="flex items-center gap-1 px-2.5 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-655 rounded-lg text-[8px] font-black uppercase transition-all"
@@ -3829,10 +4741,19 @@ Return ONLY valid JSON. No markdown wrapper.`;
                                   <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full border border-indigo-500 bg-white dark:bg-zinc-900" />
                                   <div className="text-xs">
                                     <div className="flex justify-between items-baseline gap-2">
-                                      <span className="font-black text-indigo-500 text-[10px]">{t.date}</span>
-                                      <button onClick={() => handleRemoveTimeline(t.id)} className="text-red-500 hover:text-red-650 shrink-0">✕</button>
+                                      <span className="font-black text-indigo-500 text-[10px]">
+                                        {t.date}
+                                      </span>
+                                      <button
+                                        onClick={() => handleRemoveTimeline(t.id)}
+                                        className="text-red-500 hover:text-red-650 shrink-0"
+                                      >
+                                        ✕
+                                      </button>
                                     </div>
-                                    <h4 className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{t.title}</h4>
+                                    <h4 className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">
+                                      {t.title}
+                                    </h4>
                                   </div>
                                 </div>
                               ))}
@@ -3845,24 +4766,47 @@ Return ONLY valid JSON. No markdown wrapper.`;
                         </div>
                       )}
                     </div>
-                               {/* Manual Witness Mapping (only shown in advanced if list is empty) */}
+                    {/* Manual Witness Mapping (only shown in advanced if list is empty) */}
                     {witnessList.length === 0 && (
-                      <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === 'witnesses'
-                          ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
-                          : 'border border-slate-200 dark:border-zinc-800'
-                        }`}>
+                      <div
+                        className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                          activeAccordion === 'witnesses'
+                            ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
+                            : 'border border-slate-200 dark:border-zinc-800'
+                        }`}
+                      >
                         <div
                           onClick={() => toggleAccordion('witnesses')}
-                          className={`px-4 py-3 flex items-center justify-between cursor-pointer ${activeAccordion === 'witnesses'
-                              ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50/50')
-                              : (isDark ? 'bg-black/10' : 'bg-slate-50')
-                            }`}
+                          className={`px-4 py-3 flex items-center justify-between cursor-pointer ${
+                            activeAccordion === 'witnesses'
+                              ? isDark
+                                ? 'bg-indigo-500/10'
+                                : 'bg-indigo-50/50'
+                              : isDark
+                                ? 'bg-black/10'
+                                : 'bg-slate-50'
+                          }`}
                         >
                           <div className="flex items-center gap-2">
-                            <UserCheck size={14} className={activeAccordion === 'witnesses' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
-                            <span className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'witnesses' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}>{t('witnessRegistryAddManually') || 'Witness Registry (Add manually)'}</span>
+                            <UserCheck
+                              size={14}
+                              className={
+                                activeAccordion === 'witnesses'
+                                  ? 'text-indigo-600 dark:text-indigo-400'
+                                  : 'text-slate-400'
+                              }
+                            />
+                            <span
+                              className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'witnesses' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}
+                            >
+                              {t('witnessRegistryAddManually') || 'Witness Registry (Add manually)'}
+                            </span>
                           </div>
-                          {activeAccordion === 'witnesses' ? <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                          {activeAccordion === 'witnesses' ? (
+                            <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" />
+                          ) : (
+                            <ChevronDown size={14} className="text-slate-400" />
+                          )}
                         </div>
                         {activeAccordion === 'witnesses' && (
                           <div className={`p-4 space-y-3.5 ${isDark ? 'bg-black/5' : 'bg-white'}`}>
@@ -3873,30 +4817,62 @@ Return ONLY valid JSON. No markdown wrapper.`;
                     )}
 
                     {/* Relief sought and previous orders */}
-                    <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${activeAccordion === 'relief'
-                        ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
-                        : 'border border-slate-200 dark:border-zinc-800'
-                      }`}>
+                    <div
+                      className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                        activeAccordion === 'relief'
+                          ? 'border-2 border-indigo-500 shadow-lg dark:border-indigo-400'
+                          : 'border border-slate-200 dark:border-zinc-800'
+                      }`}
+                    >
                       <div
                         onClick={() => toggleAccordion('relief')}
-                        className={`px-4 py-3 flex items-center justify-between cursor-pointer ${activeAccordion === 'relief'
-                            ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50/50')
-                            : (isDark ? 'bg-black/10' : 'bg-slate-50')
-                          }`}
+                        className={`px-4 py-3 flex items-center justify-between cursor-pointer ${
+                          activeAccordion === 'relief'
+                            ? isDark
+                              ? 'bg-indigo-500/10'
+                              : 'bg-indigo-50/50'
+                            : isDark
+                              ? 'bg-black/10'
+                              : 'bg-slate-50'
+                        }`}
                       >
                         <div className="flex items-center gap-2">
-                          <Scale size={14} className={activeAccordion === 'relief' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
-                          <span className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'relief' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}>{t('reliefPreviousOrders') || 'Relief & Previous Orders'}</span>
+                          <Scale
+                            size={14}
+                            className={
+                              activeAccordion === 'relief'
+                                ? 'text-indigo-600 dark:text-indigo-400'
+                                : 'text-slate-400'
+                            }
+                          />
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-wider ${activeAccordion === 'relief' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}
+                          >
+                            {t('reliefPreviousOrders') || 'Relief & Previous Orders'}
+                          </span>
                         </div>
-                        {activeAccordion === 'relief' ? <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                        {activeAccordion === 'relief' ? (
+                          <ChevronUp size={14} className="text-indigo-600 dark:text-indigo-400" />
+                        ) : (
+                          <ChevronDown size={14} className="text-slate-400" />
+                        )}
                       </div>
                       {activeAccordion === 'relief' && (
                         <div className={`p-4 space-y-3.5 ${isDark ? 'bg-black/5' : 'bg-white'}`}>
                           {/* Relief */}
                           <div className="space-y-1.5">
-                            <span className="text-[8px] font-black text-slate-404 uppercase">{t('reliefCategoryPreset') || 'Relief Category preset'}</span>
+                            <span className="text-[8px] font-black text-slate-404 uppercase">
+                              {t('reliefCategoryPreset') || 'Relief Category preset'}
+                            </span>
                             <div className="flex flex-wrap gap-1.5">
-                              {['Compensation damages', 'Specific performance', 'Permanent Injunction', 'Declaration decree', 'Declaration nullity', 'Stay execution order'].map(chip => {
+                              {[
+                                'Compensation damages',
+                                'Specific performance',
+                                'Permanent Injunction',
+                                'Declaration decree',
+                                'Declaration nullity',
+                                'Stay execution order',
+                              ].map(chip => {
                                 const active = scenarioRelief.includes(chip);
                                 return (
                                   <button
@@ -3917,10 +4893,16 @@ Return ONLY valid JSON. No markdown wrapper.`;
                           </div>
 
                           <div className="space-y-1 text-xs">
-                            <span className="text-[8px] font-black text-slate-400 uppercase">{t('reliefSoughtDetailsSuggested') || 'Relief Sought Details (AI suggested / editable)'}</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase">
+                              {t('reliefSoughtDetailsSuggested') ||
+                                'Relief Sought Details (AI suggested / editable)'}
+                            </span>
                             <input
                               type="text"
-                              placeholder={t('aiWillSuggestRelief') || 'AI will suggest relief details, or you can edit...'}
+                              placeholder={
+                                t('aiWillSuggestRelief') ||
+                                'AI will suggest relief details, or you can edit...'
+                              }
                               value={scenarioRelief}
                               onChange={e => setScenarioRelief(e.target.value)}
                               className={`w-full border rounded-xl px-3 py-2 outline-none font-bold ${isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-808'}`}
@@ -3929,12 +4911,17 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                           {/* Previous Court Orders */}
                           <div className="space-y-1 text-xs pt-2 border-t border-slate-100 dark:border-white/5">
-                            <span className="text-[8px] font-black text-slate-400 uppercase">{t('previousCourtOrdersIfAny') || 'Previous Court Orders (if any)'}</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase">
+                              {t('previousCourtOrdersIfAny') || 'Previous Court Orders (if any)'}
+                            </span>
                             <textarea
                               rows={3}
                               value={scenarioOrders}
                               onChange={e => setScenarioOrders(e.target.value)}
-                              placeholder={t('enterPreviousStaysPlaceholder') || 'Enter previous stays, notices, or caveat decrees details...'}
+                              placeholder={
+                                t('enterPreviousStaysPlaceholder') ||
+                                'Enter previous stays, notices, or caveat decrees details...'
+                              }
                               className={`w-full border rounded-xl px-3 py-2 outline-none resize-none font-bold ${isDark ? 'bg-black/25 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`}
                             />
                           </div>
@@ -3947,45 +4934,60 @@ Return ONLY valid JSON. No markdown wrapper.`;
             )}
 
             {/* REDESIGNED {t('strategyReadiness') || 'Strategy Readiness'} Metrics Card */}
-            <div className={`border rounded-3xl p-5 shadow-sm space-y-4 ${isDark ? 'bg-[#131c31]/30 border-slate-800' : 'bg-white border-slate-200'
-              }`}>
+            <div
+              className={`border rounded-3xl p-5 shadow-sm space-y-4 ${
+                isDark ? 'bg-[#131c31]/30 border-slate-800' : 'bg-white border-slate-200'
+              }`}
+            >
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800/80">
                 <div className="flex items-center gap-2">
                   <Shield size={16} className="text-indigo-505 font-extrabold" />
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">{t('strategyReadiness') || 'Strategy Readiness'}</h3>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                    {t('strategyReadiness') || 'Strategy Readiness'}
+                  </h3>
                 </div>
-                <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase ${
-                  strategyReadinessCalculated.overall === 100
-                    ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-450'
-                    : (strategyReadinessCalculated.overall > 0
-                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-red-500/10 text-red-500')
-                  }`}>
+                <span
+                  className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase ${
+                    strategyReadinessCalculated.overall === 100
+                      ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-450'
+                      : strategyReadinessCalculated.overall > 0
+                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                        : 'bg-red-500/10 text-red-500'
+                  }`}
+                >
                   {strategyReadinessCalculated.overall}% Ready
                 </span>
               </div>
 
               {/* Progress bar */}
               <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden shrink-0">
-                <div className={`h-full transition-all duration-500 ${
-                  strategyReadinessCalculated.overall === 100
-                    ? 'bg-emerald-500'
-                    : (strategyReadinessCalculated.overall > 0
-                      ? 'bg-indigo-600 dark:bg-indigo-500'
-                      : 'bg-red-500')
-                  }`} style={{ width: `${strategyReadinessCalculated.overall}%` }} />
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    strategyReadinessCalculated.overall === 100
+                      ? 'bg-emerald-500'
+                      : strategyReadinessCalculated.overall > 0
+                        ? 'bg-indigo-600 dark:bg-indigo-500'
+                        : 'bg-red-500'
+                  }`}
+                  style={{ width: `${strategyReadinessCalculated.overall}%` }}
+                />
               </div>
 
               {/* Dynamic missing items checklist display */}
               {strategySource === 'MANUAL_SCENARIO' ? (
                 <div className="text-[10px] font-black text-indigo-500 uppercase tracking-wider">
-                  {caseFacts.trim().length > 15 ? '✓ Strategy description ready for analysis' : '• Enter description of the legal issue below'}
+                  {caseFacts.trim().length > 15
+                    ? '✓ Strategy description ready for analysis'
+                    : '• Enter description of the legal issue below'}
                 </div>
               ) : missingItems.length > 0 ? (
                 <div className="text-[10px] font-extrabold text-slate-404 uppercase tracking-wide flex items-center gap-2 flex-wrap">
                   <span>Missing Parameters:</span>
                   {missingItems.map(item => (
-                    <span key={item} className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded border border-red-500/10 font-bold lowercase tracking-wider">
+                    <span
+                      key={item}
+                      className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded border border-red-500/10 font-bold lowercase tracking-wider"
+                    >
                       • {item}
                     </span>
                   ))}
@@ -4002,8 +5004,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
               <button
                 disabled={isAuditing}
                 onClick={() => runLitigationSimulation('FULL_SIMULATION')}
-                className={`px-12 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20 w-full max-w-lg flex items-center justify-center gap-2 ${isAuditing ? 'opacity-65 cursor-not-allowed' : ''
-                  }`}
+                className={`px-12 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20 w-full max-w-lg flex items-center justify-center gap-2 ${
+                  isAuditing ? 'opacity-65 cursor-not-allowed' : ''
+                }`}
               >
                 {isAuditing ? (
                   <>
@@ -4017,17 +5020,24 @@ Return ONLY valid JSON. No markdown wrapper.`;
                   </>
                 )}
               </button>
-              <p className="text-[8.5px] font-black uppercase text-slate-400 tracking-wider">{t('estimatedProcessingTime12Sec') || 'Estimated Processing Time: 12 Sec'}</p>
+              <p className="text-[8.5px] font-black uppercase text-slate-400 tracking-wider">
+                {t('estimatedProcessingTime12Sec') || 'Estimated Processing Time: 12 Sec'}
+              </p>
             </div>
 
             {/* AI Simulation run loading steps (directly below the button) */}
             {isAuditing && (
               <div ref={loadingRef} className="text-center py-6 animate-fadeIn">
-                <div className={`w-full max-w-md mx-auto p-4 sm:p-6 border rounded-3xl shadow-xl text-left space-y-4 transition-all duration-300 ${isDark ? 'bg-[#131c31] border-zinc-800' : 'bg-white border-slate-200'
-                  }`}>
+                <div
+                  className={`w-full max-w-md mx-auto p-4 sm:p-6 border rounded-3xl shadow-xl text-left space-y-4 transition-all duration-300 ${
+                    isDark ? 'bg-[#131c31] border-zinc-800' : 'bg-white border-slate-200'
+                  }`}
+                >
                   <div className="flex items-center gap-3 border-b pb-3 border-slate-100 dark:border-zinc-800/80 min-w-0">
                     <span className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shrink-0" />
-                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest animate-pulse break-words">Running Litigation Audit Simulation...</span>
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest animate-pulse break-words">
+                      Running Litigation Audit Simulation...
+                    </span>
                   </div>
 
                   <div className="space-y-2 text-[11px] font-bold">
@@ -4037,7 +5047,7 @@ Return ONLY valid JSON. No markdown wrapper.`;
                       { step: 2, text: 'Searching precedents...' },
                       { step: 3, text: 'Predicting litigation outcome...' },
                       { step: 4, text: 'Building courtroom strategy...' },
-                      { step: 5, text: 'Generating final report...' }
+                      { step: 5, text: 'Generating final report...' },
                     ].map((item, idx) => {
                       const isDone = activeSimulationStep > item.step;
                       const isCurrent = activeSimulationStep === item.step;
@@ -4050,7 +5060,15 @@ Return ONLY valid JSON. No markdown wrapper.`;
                           ) : (
                             <span className="text-slate-300 dark:text-zinc-700 text-sm">○</span>
                           )}
-                          <span className={isDone ? 'text-slate-400 dark:text-zinc-500 line-through font-semibold' : isCurrent ? 'text-indigo-650 dark:text-indigo-400 font-black' : 'text-slate-400 font-semibold'}>
+                          <span
+                            className={
+                              isDone
+                                ? 'text-slate-400 dark:text-zinc-500 line-through font-semibold'
+                                : isCurrent
+                                  ? 'text-indigo-650 dark:text-indigo-400 font-black'
+                                  : 'text-slate-400 font-semibold'
+                            }
+                          >
                             {item.text}
                           </span>
                         </div>
@@ -4064,21 +5082,28 @@ Return ONLY valid JSON. No markdown wrapper.`;
             {/* {t('aiStrategyReport') || 'AI STRATEGY REPORT'} (PREMIUM PROFESSIONAL LEGAL CARD IN SAME LOCATION) */}
             {strategyResult && (
               <div ref={reportRef} className="space-y-6 pt-4 report-animate-fadeIn">
-                <div className={`p-8 sm:p-12 border-t-8 border-indigo-600 rounded-[32px] shadow-2xl space-y-8 select-text ${isDark ? 'bg-[#131c31] border-zinc-800' : 'bg-white border-slate-205'
-                  } transition-all duration-500 ease-in-out`}>
-
+                <div
+                  className={`p-8 sm:p-12 border-t-8 border-indigo-600 rounded-[32px] shadow-2xl space-y-8 select-text ${
+                    isDark ? 'bg-[#131c31] border-zinc-800' : 'bg-white border-slate-205'
+                  } transition-all duration-500 ease-in-out`}
+                >
                   {/* Official Legal Document Header */}
                   <div className="text-center border-b pb-6 border-slate-200 dark:border-zinc-800/80">
                     <div className="flex justify-center items-center gap-2 mb-2 text-indigo-600 dark:text-indigo-400">
                       <Scale size={32} />
-                      <span className="font-extrabold text-sm uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">{t('litigationCommandSubtitle') || 'AI Legal™ Intelligence Command'}</span>
+                      <span className="font-extrabold text-sm uppercase tracking-[0.2em] text-slate-800 dark:text-slate-200">
+                        {t('litigationCommandSubtitle') || 'AI Legal™ Intelligence Command'}
+                      </span>
                     </div>
                     <div className="font-mono text-[9px] uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                      {t('confidentialLegalReportPrivileged') || 'Confidential Legal Report // Privileged Attorney Work Product'}
+                      {t('confidentialLegalReportPrivileged') ||
+                        'Confidential Legal Report // Privileged Attorney Work Product'}
                     </div>
                     <div className="font-serif text-[18px] sm:text-[22px] font-black text-slate-800 dark:text-slate-100 tracking-wide mt-4 py-2 border-y border-dashed border-slate-200 dark:border-zinc-800/80">
-                      =================================<br />
-                      {t('aiStrategyReport') || 'AI STRATEGY REPORT'}<br />
+                      =================================
+                      <br />
+                      {t('aiStrategyReport') || 'AI STRATEGY REPORT'}
+                      <br />
                       =================================
                     </div>
                   </div>
@@ -4086,28 +5111,48 @@ Return ONLY valid JSON. No markdown wrapper.`;
                   {/* Case Metadata Section */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-black/20 p-5 rounded-2xl border dark:border-zinc-850">
                     <div>
-                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">Matter Title</p>
-                      <p className="font-black text-slate-800 dark:text-slate-200">{caseTitle || 'Custom Courtroom Strategy'}</p>
+                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">
+                        Matter Title
+                      </p>
+                      <p className="font-black text-slate-800 dark:text-slate-200">
+                        {caseTitle || 'Custom Courtroom Strategy'}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">Court / {t('jurisdiction') || 'Jurisdiction'}</p>
-                      <p className="font-black text-slate-800 dark:text-slate-200">{courtName || 'Not Specified'}</p>
+                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">
+                        Court / {t('jurisdiction') || 'Jurisdiction'}
+                      </p>
+                      <p className="font-black text-slate-800 dark:text-slate-200">
+                        {courtName || 'Not Specified'}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">Client Petitioner</p>
-                      <p className="font-black text-slate-800 dark:text-slate-200">{clientName || 'Not Specified'}</p>
+                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">
+                        Client Petitioner
+                      </p>
+                      <p className="font-black text-slate-800 dark:text-slate-200">
+                        {clientName || 'Not Specified'}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">Opposing Party</p>
-                      <p className="font-black text-slate-800 dark:text-slate-200">{opponentName || 'Not Specified'}</p>
+                      <p className="text-slate-400 uppercase tracking-wider font-extrabold text-[8px] mb-1">
+                        Opposing Party
+                      </p>
+                      <p className="font-black text-slate-800 dark:text-slate-200">
+                        {opponentName || 'Not Specified'}
+                      </p>
                     </div>
                   </div>
 
                   {/* {t('executiveSummary') || 'Executive Summary'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('executiveSummary') || 'Executive Summary'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('executiveSummary') || 'Executive Summary'}
+                    </h3>
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
-                      {strategyResult.finalOpinion?.reasoning || strategyResult.strategies?.primary?.description || "No summary details generated."}
+                      {strategyResult.finalOpinion?.reasoning ||
+                        strategyResult.strategies?.primary?.description ||
+                        'No summary details generated.'}
                     </p>
                   </div>
 
@@ -4116,23 +5161,37 @@ Return ONLY valid JSON. No markdown wrapper.`;
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-2">
                       <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-wider">
                         <span>{t('winningProbability') || 'Winning Probability'}</span>
-                        <span className="text-emerald-500 text-sm font-black">{stats.winningProbability}%</span>
+                        <span className="text-emerald-500 text-sm font-black">
+                          {stats.winningProbability}%
+                        </span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-505 transition-all duration-505" style={{ width: `${stats.winningProbability}%` }} />
+                        <div
+                          className="h-full bg-emerald-505 transition-all duration-505"
+                          style={{ width: `${stats.winningProbability}%` }}
+                        />
                       </div>
-                      <p className="text-[9px] font-bold text-slate-400">Predicted outcome probability based on facts & precedents.</p>
+                      <p className="text-[9px] font-bold text-slate-400">
+                        Predicted outcome probability based on facts & precedents.
+                      </p>
                     </div>
 
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-2">
                       <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-wider">
                         <span>{t('caseStrengthScore') || 'Case Strength Score'}</span>
-                        <span className="text-indigo-500 text-sm font-black">{stats.overallStrategyScore}/100</span>
+                        <span className="text-indigo-500 text-sm font-black">
+                          {stats.overallStrategyScore}/100
+                        </span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${stats.overallStrategyScore}%` }} />
+                        <div
+                          className="h-full bg-indigo-500 transition-all duration-500"
+                          style={{ width: `${stats.overallStrategyScore}%` }}
+                        />
                       </div>
-                      <p className="text-[9px] font-bold text-slate-400">Calculated strength using evidence admissibility & weight.</p>
+                      <p className="text-[9px] font-bold text-slate-400">
+                        Calculated strength using evidence admissibility & weight.
+                      </p>
                     </div>
                   </div>
 
@@ -4140,119 +5199,206 @@ Return ONLY valid JSON. No markdown wrapper.`;
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* {t('strengthsTitle') || 'Strengths'} */}
                     <div className="space-y-3">
-                      <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('strengthsTitle') || 'Strengths'}</h3>
+                      <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                        {t('strengthsTitle') || 'Strengths'}
+                      </h3>
                       <div className="space-y-2">
                         {strategyResult.evidenceStrategy?.strong?.map((item, idx) => (
-                          <div key={idx} className="flex gap-2.5 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-xs font-semibold text-slate-800 dark:text-slate-205">
-                            <span className="text-emerald-500 text-sm font-extrabold shrink-0">✓</span>
+                          <div
+                            key={idx}
+                            className="flex gap-2.5 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-xs font-semibold text-slate-800 dark:text-slate-205"
+                          >
+                            <span className="text-emerald-500 text-sm font-extrabold shrink-0">
+                              ✓
+                            </span>
                             <div>
-                              <strong className="font-extrabold text-emerald-600 dark:text-emerald-400">{item.evidence || item}</strong>
-                              {item.reason && <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{item.reason}</p>}
+                              <strong className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                                {item.evidence || item}
+                              </strong>
+                              {item.reason && (
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                                  {item.reason}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
-                        {(!strategyResult.evidenceStrategy?.strong || strategyResult.evidenceStrategy.strong.length === 0) && (
-                          <p className="text-xs text-slate-400 italic font-semibold">No significant strengths identified.</p>
+                        {(!strategyResult.evidenceStrategy?.strong ||
+                          strategyResult.evidenceStrategy.strong.length === 0) && (
+                          <p className="text-xs text-slate-400 italic font-semibold">
+                            No significant strengths identified.
+                          </p>
                         )}
                       </div>
                     </div>
 
                     {/* {t('weaknessesTitle') || 'Weaknesses'} */}
                     <div className="space-y-3">
-                      <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('weaknessesTitle') || 'Weaknesses'}</h3>
+                      <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                        {t('weaknessesTitle') || 'Weaknesses'}
+                      </h3>
                       <div className="space-y-2">
                         {strategyResult.evidenceStrategy?.weak?.map((item, idx) => (
-                          <div key={idx} className="flex gap-2.5 p-3 rounded-2xl bg-red-500/5 border border-red-500/10 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          <div
+                            key={idx}
+                            className="flex gap-2.5 p-3 rounded-2xl bg-red-500/5 border border-red-500/10 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                          >
                             <span className="text-red-500 text-sm font-extrabold shrink-0">✗</span>
                             <div>
-                              <strong className="font-extrabold text-red-600 dark:text-red-400">{item.evidence || item}</strong>
-                              {item.reason && <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{item.reason}</p>}
+                              <strong className="font-extrabold text-red-600 dark:text-red-400">
+                                {item.evidence || item}
+                              </strong>
+                              {item.reason && (
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                                  {item.reason}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
                         {strategyResult.judgePerspective?.weakAreas?.map((item, idx) => (
-                          <div key={idx} className="flex gap-2.5 p-3 rounded-2xl bg-red-500/5 border border-red-500/10 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          <div
+                            key={idx}
+                            className="flex gap-2.5 p-3 rounded-2xl bg-red-500/5 border border-red-500/10 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                          >
                             <span className="text-red-500 text-sm font-extrabold shrink-0">✗</span>
                             <div>
-                              <strong className="font-extrabold text-red-600 dark:text-red-400">{item}</strong>
+                              <strong className="font-extrabold text-red-600 dark:text-red-400">
+                                {item}
+                              </strong>
                             </div>
                           </div>
                         ))}
-                        {(!strategyResult.evidenceStrategy?.weak || strategyResult.evidenceStrategy.weak.length === 0) && (!strategyResult.judgePerspective?.weakAreas || strategyResult.judgePerspective.weakAreas.length === 0) && (
-                          <p className="text-xs text-slate-400 italic font-semibold">No significant weaknesses identified.</p>
-                        )}
+                        {(!strategyResult.evidenceStrategy?.weak ||
+                          strategyResult.evidenceStrategy.weak.length === 0) &&
+                          (!strategyResult.judgePerspective?.weakAreas ||
+                            strategyResult.judgePerspective.weakAreas.length === 0) && (
+                            <p className="text-xs text-slate-400 italic font-semibold">
+                              No significant weaknesses identified.
+                            </p>
+                          )}
                       </div>
                     </div>
                   </div>
 
                   {/* {t('keyLegalIssuesTitle') || 'Key Legal Issues'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('keyLegalIssuesTitle') || 'Key Legal Issues'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('keyLegalIssuesTitle') || 'Key Legal Issues'}
+                    </h3>
                     <div className="space-y-2">
                       {strategyResult.judgePerspective?.likelyQuestions?.map((issue, idx) => (
-                        <div key={idx} className="flex gap-3 p-3.5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                          <span className="w-5 h-5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 rounded-full flex items-center justify-center font-black text-[10px] shrink-0">{idx + 1}</span>
+                        <div
+                          key={idx}
+                          className="flex gap-3 p-3.5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                        >
+                          <span className="w-5 h-5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 rounded-full flex items-center justify-center font-black text-[10px] shrink-0">
+                            {idx + 1}
+                          </span>
                           <p className="leading-normal">{issue}</p>
                         </div>
                       ))}
-                      {(!strategyResult.judgePerspective?.likelyQuestions || strategyResult.judgePerspective.likelyQuestions.length === 0) && (
-                        <p className="text-xs text-slate-400 italic font-semibold">No key legal issues flagged.</p>
+                      {(!strategyResult.judgePerspective?.likelyQuestions ||
+                        strategyResult.judgePerspective.likelyQuestions.length === 0) && (
+                        <p className="text-xs text-slate-400 italic font-semibold">
+                          No key legal issues flagged.
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* {t('opponentAnalysisTitle') || 'Opponent Analysis'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-655 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('opponentAnalysisTitle') || 'Opponent Analysis'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-655 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('opponentAnalysisTitle') || 'Opponent Analysis'}
+                    </h3>
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-3 text-xs font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
-                      <p><strong>Likely Opposition Defense:</strong> {strategyResult.opponentStrategy?.likelyDefence || 'Not Specified'}</p>
+                      <p>
+                        <strong>Likely Opposition Defense:</strong>{' '}
+                        {strategyResult.opponentStrategy?.likelyDefence || 'Not Specified'}
+                      </p>
                       {strategyResult.opponentStrategy?.likelyObjections?.length > 0 && (
                         <div className="space-y-1.5 mt-2">
-                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Anticipated Procedural Objections</p>
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                            Anticipated Procedural Objections
+                          </p>
                           <ul className="list-disc pl-4 space-y-1 font-semibold text-slate-650 dark:text-slate-400">
-                            {strategyResult.opponentStrategy.likelyObjections.map((obj, i) => <li key={i}>{obj}</li>)}
+                            {strategyResult.opponentStrategy.likelyObjections.map((obj, i) => (
+                              <li key={i}>{obj}</li>
+                            ))}
                           </ul>
                         </div>
                       )}
                       {strategyResult.opponentStrategy?.delayStrategy && (
-                        <p className="mt-2 text-red-500 font-bold">⚠️ <strong>Opponent Delay Tactic:</strong> {strategyResult.opponentStrategy.delayStrategy}</p>
+                        <p className="mt-2 text-red-500 font-bold">
+                          ⚠️ <strong>Opponent Delay Tactic:</strong>{' '}
+                          {strategyResult.opponentStrategy.delayStrategy}
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* {t('relevantPrecedentsTitle') || 'Relevant Precedents'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('relevantPrecedentsTitle') || 'Relevant Precedents'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('relevantPrecedentsTitle') || 'Relevant Precedents'}
+                    </h3>
                     <div className="space-y-3">
                       {strategyResult.precedents?.map((p, idx) => (
-                        <div key={idx} className="p-4 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80">
+                        <div
+                          key={idx}
+                          className="p-4 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80"
+                        >
                           <div className="flex flex-wrap justify-between items-center gap-2">
-                            <span className="font-black text-xs text-slate-800 dark:text-white">{p.citation}</span>
-                            <span className="text-[9px] font-black bg-indigo-500/10 text-indigo-500 px-2 py-0.5 rounded">{p.court}</span>
+                            <span className="font-black text-xs text-slate-800 dark:text-white">
+                              {p.citation}
+                            </span>
+                            <span className="text-[9px] font-black bg-indigo-500/10 text-indigo-500 px-2 py-0.5 rounded">
+                              {p.court}
+                            </span>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-404 mt-2 font-semibold leading-normal">{p.summary}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-404 mt-2 font-semibold leading-normal">
+                            {p.summary}
+                          </p>
                           <div className="flex justify-between items-center mt-3 text-[10px] font-bold text-slate-400">
-                            <span>Similarity Score: <strong className="text-indigo-500">{p.similarityScore}%</strong></span>
-                            <span>Type: <strong>{p.type || 'Binding Precedent'}</strong></span>
+                            <span>
+                              Similarity Score:{' '}
+                              <strong className="text-indigo-500">{p.similarityScore}%</strong>
+                            </span>
+                            <span>
+                              Type: <strong>{p.type || 'Binding Precedent'}</strong>
+                            </span>
                           </div>
                         </div>
                       ))}
                       {(!strategyResult.precedents || strategyResult.precedents.length === 0) && (
-                        <p className="text-xs text-slate-400 italic font-semibold">No precedent citations linked.</p>
+                        <p className="text-xs text-slate-400 italic font-semibold">
+                          No precedent citations linked.
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* {t('evidenceEvaluationTitle') || 'Evidence Evaluation'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('evidenceEvaluationTitle') || 'Evidence Evaluation'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('evidenceEvaluationTitle') || 'Evidence Evaluation'}
+                    </h3>
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-4">
                       {/* Admissible Evidence list */}
                       <div className="space-y-2">
-                        <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest block">Admissible & Strong Proofs</span>
+                        <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest block">
+                          Admissible & Strong Proofs
+                        </span>
                         {strategyResult.evidenceStrategy?.strong?.map((e, idx) => (
-                          <div key={idx} className="p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/85 text-xs font-semibold text-slate-750 dark:text-slate-300">
-                            <strong>{e.evidence || e}</strong>: <span className="font-medium text-slate-500">{e.reason || 'Sufficient probative weight'}</span>
+                          <div
+                            key={idx}
+                            className="p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/85 text-xs font-semibold text-slate-750 dark:text-slate-300"
+                          >
+                            <strong>{e.evidence || e}</strong>:{' '}
+                            <span className="font-medium text-slate-500">
+                              {e.reason || 'Sufficient probative weight'}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -4260,10 +5406,18 @@ Return ONLY valid JSON. No markdown wrapper.`;
                       {/* Priority Actions for missing proofs */}
                       {strategyResult.evidenceStrategy?.missing?.length > 0 && (
                         <div className="space-y-2 pt-2 border-t dark:border-zinc-800">
-                          <span className="text-[8.5px] font-black text-amber-500 uppercase tracking-widest block">Priority Document Gathering</span>
+                          <span className="text-[8.5px] font-black text-amber-500 uppercase tracking-widest block">
+                            Priority Document Gathering
+                          </span>
                           {strategyResult.evidenceStrategy.missing.map((e, idx) => (
-                            <div key={idx} className="p-3 border border-amber-500/10 bg-amber-500/5 rounded-xl text-xs font-semibold text-slate-705 dark:text-slate-300">
-                              <strong>{e.evidence || e}</strong>: <span className="font-medium text-slate-500">{e.reason || 'Crucial for standard compliance proof'}</span>
+                            <div
+                              key={idx}
+                              className="p-3 border border-amber-500/10 bg-amber-500/5 rounded-xl text-xs font-semibold text-slate-705 dark:text-slate-300"
+                            >
+                              <strong>{e.evidence || e}</strong>:{' '}
+                              <span className="font-medium text-slate-500">
+                                {e.reason || 'Crucial for standard compliance proof'}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -4273,17 +5427,24 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                   {/* {t('recommendedArgumentsTitle') || 'Recommended Arguments'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('recommendedArgumentsTitle') || 'Recommended Arguments'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('recommendedArgumentsTitle') || 'Recommended Arguments'}
+                    </h3>
                     <div className="space-y-3">
                       {strategyResult.finalArguments?.arguments?.map((arg, idx) => (
-                        <div key={idx} className="flex gap-3 p-4 border border-dashed rounded-2xl bg-slate-500/3 text-xs font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
+                        <div
+                          key={idx}
+                          className="flex gap-3 p-4 border border-dashed rounded-2xl bg-slate-500/3 text-xs font-semibold text-slate-700 dark:text-slate-300 leading-relaxed"
+                        >
                           <span className="text-indigo-505 font-black text-sm shrink-0">“</span>
                           <p>{arg}</p>
                         </div>
                       ))}
                       {strategyResult.finalArguments?.prayer && (
                         <div className="p-4 border-l-4 border-emerald-500 rounded-r-2xl bg-emerald-500/5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                          <p className="text-[8px] font-black uppercase text-emerald-500 tracking-widest mb-1">Final Submission Prayer</p>
+                          <p className="text-[8px] font-black uppercase text-emerald-500 tracking-widest mb-1">
+                            Final Submission Prayer
+                          </p>
                           <p>“{strategyResult.finalArguments.prayer}”</p>
                         </div>
                       )}
@@ -4292,52 +5453,90 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                   {/* {t('crossExaminationStrategyTitle') || 'Cross Examination Strategy'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('crossExaminationStrategyTitle') || 'Cross Examination Strategy'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('crossExaminationStrategyTitle') || 'Cross Examination Strategy'}
+                    </h3>
                     <div className="space-y-3">
                       {strategyResult.crossExamPlanner?.map((plan, idx) => (
-                        <div key={idx} className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-3 text-xs">
+                        <div
+                          key={idx}
+                          className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-3 text-xs"
+                        >
                           <div className="border-b pb-2 border-slate-200 dark:border-zinc-800/80">
-                            <span className="font-black text-slate-800 dark:text-white uppercase tracking-wider">Target Witness: {plan.witness}</span>
+                            <span className="font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                              Target Witness: {plan.witness}
+                            </span>
                           </div>
                           {plan.mainQuestions?.length > 0 && (
                             <div className="space-y-1.5">
-                              <span className="text-[8.5px] font-black text-indigo-500 uppercase tracking-widest block">Cross-Exam Line of Questioning</span>
+                              <span className="text-[8.5px] font-black text-indigo-500 uppercase tracking-widest block">
+                                Cross-Exam Line of Questioning
+                              </span>
                               <ul className="list-disc pl-4 space-y-1 font-semibold text-slate-600 dark:text-slate-350">
-                                {plan.mainQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                                {plan.mainQuestions.map((q, i) => (
+                                  <li key={i}>{q}</li>
+                                ))}
                               </ul>
                             </div>
                           )}
                           {plan.traps?.length > 0 && (
                             <div className="p-3 border rounded-xl bg-red-500/5 border-red-500/10 text-red-600 dark:text-red-400 font-bold">
-                              <span className="text-[8px] font-black uppercase tracking-wider block mb-1">Traps / Impeachment Targets</span>
+                              <span className="text-[8px] font-black uppercase tracking-wider block mb-1">
+                                Traps / Impeachment Targets
+                              </span>
                               <p>{plan.traps.join(' // ')}</p>
                             </div>
                           )}
                         </div>
                       ))}
-                      {(!strategyResult.crossExamPlanner || strategyResult.crossExamPlanner.length === 0) && (
-                        <p className="text-xs text-slate-400 italic font-semibold">No cross-examination planner drafted.</p>
+                      {(!strategyResult.crossExamPlanner ||
+                        strategyResult.crossExamPlanner.length === 0) && (
+                        <p className="text-xs text-slate-400 italic font-semibold">
+                          No cross-examination planner drafted.
+                        </p>
                       )}
                     </div>
                   </div>
 
                   {/* {t('riskAssessmentTitle') || 'Risk Assessment'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('riskAssessmentTitle') || 'Risk Assessment'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('riskAssessmentTitle') || 'Risk Assessment'}
+                    </h3>
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-4">
                       {(() => {
                         const risks = strategyResult.risks || {};
                         const riskCategories = [
-                          { label: 'Evidence Admissibility Risk', val: risks.evidence || 30, col: 'bg-indigo-500' },
-                          { label: 'Procedural Delay Risk', val: risks.procedural || 20, col: 'bg-amber-500' },
-                          { label: 'Financial Exposure Risk', val: risks.financial || 40, col: 'bg-red-500' },
-                          { label: 'Strategic Counter Risk', val: risks.strategic || 10, col: 'bg-violet-500' }
+                          {
+                            label: 'Evidence Admissibility Risk',
+                            val: risks.evidence || 30,
+                            col: 'bg-indigo-500',
+                          },
+                          {
+                            label: 'Procedural Delay Risk',
+                            val: risks.procedural || 20,
+                            col: 'bg-amber-500',
+                          },
+                          {
+                            label: 'Financial Exposure Risk',
+                            val: risks.financial || 40,
+                            col: 'bg-red-500',
+                          },
+                          {
+                            label: 'Strategic Counter Risk',
+                            val: risks.strategic || 10,
+                            col: 'bg-violet-500',
+                          },
                         ];
                         return (
                           <div className="space-y-3">
                             <div className="flex justify-between items-center">
-                              <span className="text-[10px] font-black uppercase text-slate-400">Overall Litigation Risk Score</span>
-                              <span className="text-xs font-black text-red-500">{risks.riskPercentage || 30}% Risk Exposure</span>
+                              <span className="text-[10px] font-black uppercase text-slate-400">
+                                Overall Litigation Risk Score
+                              </span>
+                              <span className="text-xs font-black text-red-500">
+                                {risks.riskPercentage || 30}% Risk Exposure
+                              </span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
@@ -4348,7 +5547,10 @@ Return ONLY valid JSON. No markdown wrapper.`;
                                     <span>{rc.val}%</span>
                                   </div>
                                   <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                                    <div className={`h-full ${rc.col}`} style={{ width: `${rc.val}%` }} />
+                                    <div
+                                      className={`h-full ${rc.col}`}
+                                      style={{ width: `${rc.val}%` }}
+                                    />
                                   </div>
                                 </div>
                               ))}
@@ -4361,25 +5563,47 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                   {/* {t('settlementRecommendationTitle') || 'Settlement Recommendation'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('settlementRecommendationTitle') || 'Settlement Recommendation'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('settlementRecommendationTitle') || 'Settlement Recommendation'}
+                    </h3>
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-4">
                       <div className="text-xs font-semibold leading-relaxed text-slate-650 dark:text-slate-350">
-                        <p><strong>Mediation Suitability:</strong> {strategyResult.settlement?.mediationPossibility || 'Highly suitable for Section 89 mediation'}</p>
-                        <p className="mt-1"><strong>Strategy Option:</strong> {strategyResult.settlement?.negotiationStrategy || 'Waiver of interest if settled within 30 days.'}</p>
+                        <p>
+                          <strong>Mediation Suitability:</strong>{' '}
+                          {strategyResult.settlement?.mediationPossibility ||
+                            'Highly suitable for Section 89 mediation'}
+                        </p>
+                        <p className="mt-1">
+                          <strong>Strategy Option:</strong>{' '}
+                          {strategyResult.settlement?.negotiationStrategy ||
+                            'Waiver of interest if settled within 30 days.'}
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                         <div className="p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/80 text-center">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Opening Claim Offer</span>
-                          <p className="text-xs font-black text-indigo-500 mt-1">{strategyResult.negotiationPositions?.opening || 'Principal + Costs'}</p>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">
+                            Opening Claim Offer
+                          </span>
+                          <p className="text-xs font-black text-indigo-500 mt-1">
+                            {strategyResult.negotiationPositions?.opening || 'Principal + Costs'}
+                          </p>
                         </div>
                         <div className="p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/80 text-center">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Realistic Target Settlement</span>
-                          <p className="text-xs font-black text-emerald-500 mt-1">{strategyResult.negotiationPositions?.middle || 'Principal amount only'}</p>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">
+                            Realistic Target Settlement
+                          </span>
+                          <p className="text-xs font-black text-emerald-500 mt-1">
+                            {strategyResult.negotiationPositions?.middle || 'Principal amount only'}
+                          </p>
                         </div>
                         <div className="p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/80 text-center">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Fallback Bottom Line</span>
-                          <p className="text-xs font-black text-red-505 mt-1">{strategyResult.negotiationPositions?.final || '75% Principal recovery'}</p>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">
+                            Fallback Bottom Line
+                          </span>
+                          <p className="text-xs font-black text-red-505 mt-1">
+                            {strategyResult.negotiationPositions?.final || '75% Principal recovery'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -4387,22 +5611,40 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                   {/* {t('litigationRoadmapTitle') || 'Litigation Roadmap'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('litigationRoadmapTitle') || 'Litigation Roadmap'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('litigationRoadmapTitle') || 'Litigation Roadmap'}
+                    </h3>
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-4">
                       <div className="relative border-l border-slate-200 dark:border-zinc-800 pl-4 ml-2 space-y-4">
                         {strategyResult.winningRoadmap?.map((stage, idx) => (
                           <div key={idx} className="relative">
-                            <div className={`absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full border-2 bg-white dark:bg-zinc-900 ${stage.status === 'Completed' ? 'border-emerald-500 bg-emerald-500' :
-                                stage.status === 'In Progress' ? 'border-indigo-500 bg-indigo-500 animate-pulse' :
-                                  'border-slate-300 dark:border-zinc-700'
-                              }`} />
+                            <div
+                              className={`absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full border-2 bg-white dark:bg-zinc-900 ${
+                                stage.status === 'Completed'
+                                  ? 'border-emerald-500 bg-emerald-500'
+                                  : stage.status === 'In Progress'
+                                    ? 'border-indigo-500 bg-indigo-500 animate-pulse'
+                                    : 'border-slate-300 dark:border-zinc-700'
+                              }`}
+                            />
                             <div className="text-xs">
-                              <span className={`text-[8.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${stage.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' :
-                                  stage.status === 'In Progress' ? 'bg-indigo-500/10 text-indigo-500' :
-                                    'bg-slate-200/50 dark:bg-zinc-800 text-slate-400'
-                                }`}>{stage.status}</span>
-                              <h4 className="font-black text-slate-800 dark:text-slate-200 mt-1">{stage.stage}</h4>
-                              <p className="text-slate-500 dark:text-slate-400 font-semibold text-[10.5px] mt-0.5 leading-normal">{stage.description}</p>
+                              <span
+                                className={`text-[8.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                                  stage.status === 'Completed'
+                                    ? 'bg-emerald-500/10 text-emerald-500'
+                                    : stage.status === 'In Progress'
+                                      ? 'bg-indigo-500/10 text-indigo-500'
+                                      : 'bg-slate-200/50 dark:bg-zinc-800 text-slate-400'
+                                }`}
+                              >
+                                {stage.status}
+                              </span>
+                              <h4 className="font-black text-slate-800 dark:text-slate-200 mt-1">
+                                {stage.stage}
+                              </h4>
+                              <p className="text-slate-500 dark:text-slate-400 font-semibold text-[10.5px] mt-0.5 leading-normal">
+                                {stage.description}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -4412,23 +5654,36 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
                   {/* {t('immediateNextStepsTitle') || 'Immediate Next Steps'} */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">{t('immediateNextStepsTitle') || 'Immediate Next Steps'}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-indigo-650 dark:text-indigo-400 border-b pb-1 border-slate-200 dark:border-zinc-800/80">
+                      {t('immediateNextStepsTitle') || 'Immediate Next Steps'}
+                    </h3>
                     <div className="p-5 border rounded-2xl bg-slate-50 dark:bg-black/10 dark:border-zinc-800/80 space-y-3">
                       {strategyResult.aiRecommendations?.doFirst?.map((act, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/85 text-xs font-semibold text-slate-805 dark:text-slate-200 shadow-sm">
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/85 text-xs font-semibold text-slate-805 dark:text-slate-200 shadow-sm"
+                        >
                           <CheckCircle2 className="text-indigo-500 shrink-0" size={16} />
                           <span>{act}</span>
                         </div>
                       ))}
                       {strategyResult.aiRecommendations?.doNext?.map((act, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/85 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-sm opacity-90">
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 p-3 border rounded-xl bg-white dark:bg-zinc-900 dark:border-zinc-800/85 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-sm opacity-90"
+                        >
                           <CheckCircle2 className="text-slate-400 shrink-0" size={16} />
                           <span>{act}</span>
                         </div>
                       ))}
-                      {(!strategyResult.aiRecommendations?.doFirst || strategyResult.aiRecommendations.doFirst.length === 0) && (!strategyResult.aiRecommendations?.doNext || strategyResult.aiRecommendations.doNext.length === 0) && (
-                        <p className="text-xs text-slate-400 italic font-semibold">No immediate next steps listed.</p>
-                      )}
+                      {(!strategyResult.aiRecommendations?.doFirst ||
+                        strategyResult.aiRecommendations.doFirst.length === 0) &&
+                        (!strategyResult.aiRecommendations?.doNext ||
+                          strategyResult.aiRecommendations.doNext.length === 0) && (
+                          <p className="text-xs text-slate-400 italic font-semibold">
+                            No immediate next steps listed.
+                          </p>
+                        )}
                     </div>
                   </div>
 
@@ -4456,24 +5711,29 @@ Return ONLY valid JSON. No markdown wrapper.`;
                       <span>Regenerate</span>
                     </button>
                   </div>
-
                 </div>
               </div>
             )}
-
           </div>
         </div>
-
       </div>
 
       {/* MODAL: Simulation History */}
       {historyVisible && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setHistoryVisible(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            onClick={() => setHistoryVisible(false)}
+          />
           <div className="relative bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-850 rounded-[32px] w-[95vw] sm:max-w-lg max-h-[85%] flex flex-col overflow-hidden shadow-2xl p-4 sm:p-6 animate-fadeIn">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4 shrink-0">
-              <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">{t('simulationHistoryLogs') || 'Simulation History Logs'}</h3>
-              <button onClick={() => setHistoryVisible(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full">
+              <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                {t('simulationHistoryLogs') || 'Simulation History Logs'}
+              </h3>
+              <button
+                onClick={() => setHistoryVisible(false)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"
+              >
                 <X size={20} className="text-slate-400" />
               </button>
             </div>
@@ -4483,7 +5743,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
               <Search size={14} className="text-slate-400 mr-2" />
               <input
                 type="text"
-                placeholder={t('searchPastSimulationStrategies') || 'Search past simulation strategies...'}
+                placeholder={
+                  t('searchPastSimulationStrategies') || 'Search past simulation strategies...'
+                }
                 className="w-full bg-transparent border-none text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-0"
                 value={historySearch}
                 onChange={e => setHistorySearch(e.target.value)}
@@ -4491,47 +5753,61 @@ Return ONLY valid JSON. No markdown wrapper.`;
             </div>
 
             <div className="flex-1 overflow-y-auto mt-4 space-y-3 custom-scrollbar">
-              {historyData.filter(h =>
-                h.title?.toLowerCase().includes(historySearch.toLowerCase()) ||
-                h.caseFacts?.toLowerCase().includes(historySearch.toLowerCase())
-              ).map((item, idx) => (
-                <div key={item.id || idx} className="p-4 bg-slate-50 dark:bg-[#1A2540] border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-sm flex flex-col justify-between">
-                  <div className="flex justify-between items-start gap-1">
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-black text-slate-800 dark:text-white truncate">{item.title}</h4>
-                      <p className="text-[10px] text-slate-400 mt-1 line-clamp-2">{item.caseFacts}</p>
-                      <span className="text-[8px] text-indigo-500 font-extrabold uppercase mt-1.5 block">{item.timestamp}</span>
+              {historyData
+                .filter(
+                  h =>
+                    h.title?.toLowerCase().includes(historySearch.toLowerCase()) ||
+                    h.caseFacts?.toLowerCase().includes(historySearch.toLowerCase())
+                )
+                .map((item, idx) => (
+                  <div
+                    key={item.id || idx}
+                    className="p-4 bg-slate-50 dark:bg-[#1A2540] border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-sm flex flex-col justify-between"
+                  >
+                    <div className="flex justify-between items-start gap-1">
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-black text-slate-800 dark:text-white truncate">
+                          {item.title}
+                        </h4>
+                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-2">
+                          {item.caseFacts}
+                        </p>
+                        <span className="text-[8px] text-indigo-500 font-extrabold uppercase mt-1.5 block">
+                          {item.timestamp}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => deleteHistoryItem(item.id)}
+                        className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg text-red-500 shrink-0"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => deleteHistoryItem(item.id)}
-                      className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg text-red-500 shrink-0"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
 
-                  <div className="border-t border-slate-100 dark:border-white/5 pt-3 mt-3 flex justify-between items-center">
-                    <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-550 rounded text-[9px] font-black uppercase">
-                      Score: {item.stats?.overallStrategyScore}%
-                    </span>
-                    <button
-                      onClick={() => {
-                        setRawStrategyResultAndSync(item.activeStrategy || item);
-                        setHistoryVisible(false);
-                        toast.success((t('loadedStrategy') || "Loaded strategy: ") + item.title);
-                      }}
-                      className="px-3 py-1 bg-indigo-650 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
-                    >
-                      {t('loadStrategyButton') || 'Load Strategy'}
-                    </button>
+                    <div className="border-t border-slate-100 dark:border-white/5 pt-3 mt-3 flex justify-between items-center">
+                      <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-550 rounded text-[9px] font-black uppercase">
+                        Score: {item.stats?.overallStrategyScore}%
+                      </span>
+                      <button
+                        onClick={() => {
+                          setRawStrategyResultAndSync(item.activeStrategy || item);
+                          setHistoryVisible(false);
+                          toast.success((t('loadedStrategy') || 'Loaded strategy: ') + item.title);
+                        }}
+                        className="px-3 py-1 bg-indigo-650 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
+                      >
+                        {t('loadStrategyButton') || 'Load Strategy'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
               {historyData.length === 0 && (
                 <div className="text-center py-10 space-y-2">
                   <Folder size={32} className="mx-auto text-slate-350 dark:text-zinc-700" />
-                  <p className="text-xs font-semibold text-slate-400">{t('noStrategySimulationsArchived') || 'No strategy simulations archived.'}</p>
+                  <p className="text-xs font-semibold text-slate-400">
+                    {t('noStrategySimulationsArchived') || 'No strategy simulations archived.'}
+                  </p>
                 </div>
               )}
             </div>
@@ -4542,20 +5818,28 @@ Return ONLY valid JSON. No markdown wrapper.`;
       {/* MODAL: Create New Scenario/Case */}
       {newCaseModalOpen && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setNewCaseModalOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            onClick={() => setNewCaseModalOpen(false)}
+          />
           <div className="relative bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-850 rounded-[32px] w-[95vw] sm:max-w-md max-h-[85%] flex flex-col overflow-hidden shadow-2xl p-4 sm:p-6 animate-fadeIn">
-
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4 shrink-0">
-              <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">New Scenario Case file</h3>
-              <button onClick={() => setNewCaseModalOpen(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full">
+              <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                New Scenario Case file
+              </h3>
+              <button
+                onClick={() => setNewCaseModalOpen(false)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"
+              >
                 <X size={20} className="text-slate-400" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto mt-4 space-y-4 pr-1 custom-scrollbar text-xs font-semibold">
-
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Client / Petitioner Name *</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                  Client / Petitioner Name *
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Ramesh Gupta"
@@ -4566,7 +5850,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Opposing Party Name</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                  Opposing Party Name
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Suresh Verma"
@@ -4578,10 +5864,14 @@ Return ONLY valid JSON. No markdown wrapper.`;
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Matter Type</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                    Matter Type
+                  </label>
                   <select
                     value={newCaseForm.matterType}
-                    onChange={e => setNewCaseForm(prev => ({ ...prev, matterType: e.target.value }))}
+                    onChange={e =>
+                      setNewCaseForm(prev => ({ ...prev, matterType: e.target.value }))
+                    }
                     className={`w-full border rounded-xl px-3 py-2 outline-none ${isDark ? 'bg-black/20 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
                   >
                     <option value="Civil">Civil</option>
@@ -4595,7 +5885,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Stage</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                    Stage
+                  </label>
                   <select
                     value={newCaseForm.stage}
                     onChange={e => setNewCaseForm(prev => ({ ...prev, stage: e.target.value }))}
@@ -4610,7 +5902,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Court {t('jurisdiction') || 'Jurisdiction'}</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                  Court {t('jurisdiction') || 'Jurisdiction'}
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Supreme Court of India"
@@ -4621,7 +5915,9 @@ Return ONLY valid JSON. No markdown wrapper.`;
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">Brief Case Facts Summary</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                  Brief Case Facts Summary
+                </label>
                 <textarea
                   rows={3}
                   placeholder="Type a brief synopsis of the dispute..."
@@ -4630,7 +5926,6 @@ Return ONLY valid JSON. No markdown wrapper.`;
                   className={`w-full border rounded-xl px-3 py-2 outline-none resize-none ${isDark ? 'bg-black/20 border-zinc-800 text-white' : 'bg-slate-50 border-slate-200'}`}
                 />
               </div>
-
             </div>
 
             <div className="border-t border-slate-100 dark:border-white/5 pt-4 mt-4 shrink-0 flex gap-2">
@@ -4647,294 +5942,370 @@ Return ONLY valid JSON. No markdown wrapper.`;
                 Create Scenario
               </button>
             </div>
-
           </div>
         </div>
       )}
 
       {/* Advocate Notes Drawer Overlay */}
-      {isNotesDrawerOpen && (() => {
-        const fmtTime = (iso) => {
-          if (!iso) return '';
-          const d = new Date(iso);
-          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        };
-        const fmtDate = (iso) => {
-          if (!iso) return '';
-          const d = new Date(iso);
-          return d.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
-        };
+      {isNotesDrawerOpen &&
+        (() => {
+          const fmtTime = iso => {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          };
+          const fmtDate = iso => {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+          };
 
-        const saveStatusLabel = () => {
-          if (notesSaveStatus === 'saving') return <span className="text-amber-400 animate-pulse">Saving...</span>;
-          if (notesSaveStatus === 'saved' && lastSavedAt) return <span className="text-emerald-400">✓ Saved at {fmtTime(lastSavedAt.toISOString())}</span>;
-          if (notesSaveStatus === 'error') return <span className="text-rose-400">Save failed</span>;
-          if (currentNoteText.trim()) return <span className="text-slate-400">Unsaved changes</span>;
-          return <span className="text-slate-500">No changes</span>;
-        };
+          const saveStatusLabel = () => {
+            if (notesSaveStatus === 'saving')
+              return <span className="text-amber-400 animate-pulse">Saving...</span>;
+            if (notesSaveStatus === 'saved' && lastSavedAt)
+              return (
+                <span className="text-emerald-400">
+                  ✓ Saved at {fmtTime(lastSavedAt.toISOString())}
+                </span>
+              );
+            if (notesSaveStatus === 'error')
+              return <span className="text-rose-400">Save failed</span>;
+            if (currentNoteText.trim())
+              return <span className="text-slate-400">Unsaved changes</span>;
+            return <span className="text-slate-500">No changes</span>;
+          };
 
-        const editingNote = editingNoteId ? advocateNotes.find(n => n.id === editingNoteId) : null;
-        const savedText = editingNote?.text || '';
+          const editingNote = editingNoteId
+            ? advocateNotes.find(n => n.id === editingNoteId)
+            : null;
+          const savedText = editingNote?.text || '';
 
-        let filtered = advocateNotes.filter(n =>
-          !noteSearch || n.text.toLowerCase().includes(noteSearch.toLowerCase())
-        );
-        filtered = notesSortOrder === 'newest'
-          ? [...filtered].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-          : [...filtered].sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+          let filtered = advocateNotes.filter(
+            n => !noteSearch || n.text.toLowerCase().includes(noteSearch.toLowerCase())
+          );
+          filtered =
+            notesSortOrder === 'newest'
+              ? [...filtered].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+              : [...filtered].sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
 
-        return (
-          <div className="fixed inset-0 z-[150000] flex justify-end">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleNotesDrawerClose} />
-            <div className={`relative w-full max-w-[440px] h-full flex flex-col shadow-2xl transition-all duration-300 ${isDark ? 'bg-[#0b0f1a] border-l border-slate-800 text-white' : 'bg-white border-l border-slate-200 text-slate-900'}`}>
-
-              {/* Header */}
-              <div className={`flex items-center justify-between px-5 py-4 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className="flex items-center gap-2.5">
-                  <BookOpen size={16} className="text-amber-400" />
-                  <h3 className="text-sm font-black uppercase tracking-wider">Advocate Notes</h3>
-                  {advocateNotes.length > 0 && (
-                    <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${isDark ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700'}`}>
-                      {advocateNotes.length}
-                    </span>
-                  )}
-                </div>
-                <button onClick={handleNotesDrawerClose} className={`p-1.5 rounded-full transition-colors ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}>
-                  <X size={16} className="text-slate-400" />
-                </button>
-              </div>
-
-              {/* Scrollable body */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-
-                {/* ─── Note Editor ─────────────────────────────────── */}
-                <div className={`px-5 py-4 border-b ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {editingNoteId ? (t('editNote') || 'Edit Note') : (t('newNote') || 'New Note')}
-                    </span>
-                    <span className="text-[9px]">{saveStatusLabel()}</span>
-                  </div>
-
-                  <textarea
-                    rows={8}
-                    value={currentNoteText}
-                    onChange={e => {
-                      setCurrentNoteText(e.target.value);
-                      setNotesSaveStatus('idle');
-                    }}
-                    placeholder="Type your strategic thoughts, timelines, checklists, or trial preparation reminders..."
-                    className={`w-full border rounded-xl px-3 py-2.5 outline-none resize-none font-semibold text-xs leading-relaxed transition-colors ${isDark
-                      ? 'bg-slate-900/60 border-slate-700 text-white placeholder-slate-500 focus:border-amber-500/50'
-                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:border-amber-400'
-                    }`}
-                  />
-                  <div className="flex items-center justify-between mt-1 mb-3">
-                    <span className="text-[9px] text-slate-500">{currentNoteText.length} characters</span>
-                    {editingNoteId && (
-                      <span className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>v{editingNote?.version || 1} · {fmtDate(editingNote?.updatedAt)}</span>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleSaveNote()}
-                      disabled={!currentNoteText.trim() || notesSaveStatus === 'saving'}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${
-                        !currentNoteText.trim() || notesSaveStatus === 'saving'
-                          ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                          : 'bg-amber-500 hover:bg-amber-600 text-white'
-                      }`}
-                    >
-                      {notesSaveStatus === 'saving' ? (
-                        <><RefreshCw size={11} className="animate-spin" /> Saving...</>
-                      ) : (
-                        <><Save size={11} /> {editingNoteId ? (t('updateNote') || 'Update Note') : (t('saveNote') || 'Save Note')}</>
-                      )}
-                    </button>
-                    {editingNoteId && (
-                      <button
-                        onClick={handleNewNote}
-                        className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-colors ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                        title="New note"
+          return (
+            <div className="fixed inset-0 z-[150000] flex justify-end">
+              <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={handleNotesDrawerClose}
+              />
+              <div
+                className={`relative w-full max-w-[440px] h-full flex flex-col shadow-2xl transition-all duration-300 ${isDark ? 'bg-[#0b0f1a] border-l border-slate-800 text-white' : 'bg-white border-l border-slate-200 text-slate-900'}`}
+              >
+                {/* Header */}
+                <div
+                  className={`flex items-center justify-between px-5 py-4 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <BookOpen size={16} className="text-amber-400" />
+                    <h3 className="text-sm font-black uppercase tracking-wider">Advocate Notes</h3>
+                    {advocateNotes.length > 0 && (
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${isDark ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700'}`}
                       >
-                        <Plus size={11} />
-                      </button>
+                        {advocateNotes.length}
+                      </span>
                     )}
                   </div>
+                  <button
+                    onClick={handleNotesDrawerClose}
+                    className={`p-1.5 rounded-full transition-colors ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
+                  >
+                    <X size={16} className="text-slate-400" />
+                  </button>
                 </div>
 
-                {/* ─── Search + Sort ───────────────────────────────── */}
-                {advocateNotes.length > 0 && (
-                  <div className={`px-5 py-3 border-b flex gap-2 items-center ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}>
-                    <div className={`flex-1 flex items-center gap-1.5 border rounded-lg px-2 py-1.5 ${isDark ? 'bg-slate-900/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                      <Search size={11} className="text-slate-400 shrink-0" />
-                      <input
-                        type="text"
-                        value={noteSearch}
-                        onChange={e => setNoteSearch(e.target.value)}
-                        placeholder="Search notes..."
-                        className="flex-1 bg-transparent outline-none text-[11px] font-semibold text-inherit placeholder-slate-400"
-                      />
+                {/* Scrollable body */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {/* ─── Note Editor ─────────────────────────────────── */}
+                  <div
+                    className={`px-5 py-4 border-b ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
+                      >
+                        {editingNoteId ? t('editNote') || 'Edit Note' : t('newNote') || 'New Note'}
+                      </span>
+                      <span className="text-[9px]">{saveStatusLabel()}</span>
                     </div>
-                    <button
-                      onClick={() => setNotesSortOrder(p => p === 'newest' ? 'oldest' : 'newest')}
-                      className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-colors ${isDark ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
-                    >
-                      {notesSortOrder === 'newest' ? '↓ Newest' : '↑ Oldest'}
-                    </button>
+
+                    <textarea
+                      rows={8}
+                      value={currentNoteText}
+                      onChange={e => {
+                        setCurrentNoteText(e.target.value);
+                        setNotesSaveStatus('idle');
+                      }}
+                      placeholder="Type your strategic thoughts, timelines, checklists, or trial preparation reminders..."
+                      className={`w-full border rounded-xl px-3 py-2.5 outline-none resize-none font-semibold text-xs leading-relaxed transition-colors ${
+                        isDark
+                          ? 'bg-slate-900/60 border-slate-700 text-white placeholder-slate-500 focus:border-amber-500/50'
+                          : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:border-amber-400'
+                      }`}
+                    />
+                    <div className="flex items-center justify-between mt-1 mb-3">
+                      <span className="text-[9px] text-slate-500">
+                        {currentNoteText.length} characters
+                      </span>
+                      {editingNoteId && (
+                        <span
+                          className={`text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                        >
+                          v{editingNote?.version || 1} · {fmtDate(editingNote?.updatedAt)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveNote()}
+                        disabled={!currentNoteText.trim() || notesSaveStatus === 'saving'}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${
+                          !currentNoteText.trim() || notesSaveStatus === 'saving'
+                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                            : 'bg-amber-500 hover:bg-amber-600 text-white'
+                        }`}
+                      >
+                        {notesSaveStatus === 'saving' ? (
+                          <>
+                            <RefreshCw size={11} className="animate-spin" /> Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save size={11} />{' '}
+                            {editingNoteId
+                              ? t('updateNote') || 'Update Note'
+                              : t('saveNote') || 'Save Note'}
+                          </>
+                        )}
+                      </button>
+                      {editingNoteId && (
+                        <button
+                          onClick={handleNewNote}
+                          className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-colors ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                          title="New note"
+                        >
+                          <Plus size={11} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                )}
 
-                {/* ─── Saved Notes List ────────────────────────────── */}
-                <div className="px-5 py-4 space-y-3">
-                  {filtered.length === 0 ? (
-                    <div className={`flex flex-col items-center justify-center py-10 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      <BookOpen size={32} className="mb-3 opacity-30" />
-                      <p className="text-[11px] font-bold">No Advocate Notes have been created for this case.</p>
-                      <p className="text-[10px] mt-1 opacity-70">Start by typing in the editor above.</p>
+                  {/* ─── Search + Sort ───────────────────────────────── */}
+                  {advocateNotes.length > 0 && (
+                    <div
+                      className={`px-5 py-3 border-b flex gap-2 items-center ${isDark ? 'border-slate-800/60' : 'border-slate-100'}`}
+                    >
+                      <div
+                        className={`flex-1 flex items-center gap-1.5 border rounded-lg px-2 py-1.5 ${isDark ? 'bg-slate-900/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+                      >
+                        <Search size={11} className="text-slate-400 shrink-0" />
+                        <input
+                          type="text"
+                          value={noteSearch}
+                          onChange={e => setNoteSearch(e.target.value)}
+                          placeholder="Search notes..."
+                          className="flex-1 bg-transparent outline-none text-[11px] font-semibold text-inherit placeholder-slate-400"
+                        />
+                      </div>
+                      <button
+                        onClick={() =>
+                          setNotesSortOrder(p => (p === 'newest' ? 'oldest' : 'newest'))
+                        }
+                        className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-colors ${isDark ? 'border-slate-700 text-slate-400 hover:bg-slate-800' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                      >
+                        {notesSortOrder === 'newest' ? '↓ Newest' : '↑ Oldest'}
+                      </button>
                     </div>
-                  ) : (
-                    <>
-                      <p className={`text-[9px] font-black uppercase tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        Saved Notes ({filtered.length})
-                      </p>
-                      {filtered.map(note => {
-                        const isExpanded = expandedNoteId === note.id;
-                        const isEditing = editingNoteId === note.id;
-                        const previewLines = note.text.split('\n').slice(0, 2).join('\n');
-                        const hasMore = note.text.split('\n').length > 2 || note.text.length > 120;
+                  )}
 
-                        return (
-                          <div
-                            key={note.id}
-                            className={`border rounded-xl overflow-hidden transition-all duration-200 ${
-                              isEditing
-                                ? isDark ? 'border-amber-500/40 bg-amber-950/20' : 'border-amber-400/50 bg-amber-50'
-                                : isDark ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'
-                            }`}
-                          >
-                            <div className="p-3">
-                              <div className="flex items-start justify-between gap-2 mb-1.5">
-                                <p className={`text-[10px] font-semibold leading-relaxed flex-1 whitespace-pre-wrap ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                                  {isExpanded ? note.text : (previewLines + (hasMore ? '...' : ''))}
-                                </p>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <button
-                                    onClick={() => handleEditNote(note)}
-                                    className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
-                                    title="Edit note"
+                  {/* ─── Saved Notes List ────────────────────────────── */}
+                  <div className="px-5 py-4 space-y-3">
+                    {filtered.length === 0 ? (
+                      <div
+                        className={`flex flex-col items-center justify-center py-10 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                      >
+                        <BookOpen size={32} className="mb-3 opacity-30" />
+                        <p className="text-[11px] font-bold">
+                          No Advocate Notes have been created for this case.
+                        </p>
+                        <p className="text-[10px] mt-1 opacity-70">
+                          Start by typing in the editor above.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <p
+                          className={`text-[9px] font-black uppercase tracking-widest mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                        >
+                          Saved Notes ({filtered.length})
+                        </p>
+                        {filtered.map(note => {
+                          const isExpanded = expandedNoteId === note.id;
+                          const isEditing = editingNoteId === note.id;
+                          const previewLines = note.text.split('\n').slice(0, 2).join('\n');
+                          const hasMore =
+                            note.text.split('\n').length > 2 || note.text.length > 120;
+
+                          return (
+                            <div
+                              key={note.id}
+                              className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+                                isEditing
+                                  ? isDark
+                                    ? 'border-amber-500/40 bg-amber-950/20'
+                                    : 'border-amber-400/50 bg-amber-50'
+                                  : isDark
+                                    ? 'border-slate-800 bg-slate-900/40'
+                                    : 'border-slate-200 bg-slate-50'
+                              }`}
+                            >
+                              <div className="p-3">
+                                <div className="flex items-start justify-between gap-2 mb-1.5">
+                                  <p
+                                    className={`text-[10px] font-semibold leading-relaxed flex-1 whitespace-pre-wrap ${isDark ? 'text-slate-200' : 'text-slate-700'}`}
                                   >
-                                    <Check size={11} />
-                                  </button>
-                                  <button
-                                    onClick={() => setShowDeleteConfirm(note.id)}
-                                    className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-rose-900/40 text-rose-400' : 'hover:bg-rose-50 text-rose-500'}`}
-                                    title="Delete note"
-                                  >
-                                    <Trash2 size={11} />
-                                  </button>
-                                  {hasMore && (
+                                    {isExpanded ? note.text : previewLines + (hasMore ? '...' : '')}
+                                  </p>
+                                  <div className="flex items-center gap-1 shrink-0">
                                     <button
-                                      onClick={() => setExpandedNoteId(p => p === note.id ? null : note.id)}
+                                      onClick={() => handleEditNote(note)}
                                       className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
-                                      title={isExpanded ? 'Collapse' : 'Expand'}
+                                      title="Edit note"
                                     >
-                                      {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                                      <Check size={11} />
                                     </button>
+                                    <button
+                                      onClick={() => setShowDeleteConfirm(note.id)}
+                                      className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-rose-900/40 text-rose-400' : 'hover:bg-rose-50 text-rose-500'}`}
+                                      title="Delete note"
+                                    >
+                                      <Trash2 size={11} />
+                                    </button>
+                                    {hasMore && (
+                                      <button
+                                        onClick={() =>
+                                          setExpandedNoteId(p => (p === note.id ? null : note.id))
+                                        }
+                                        className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                                        title={isExpanded ? 'Collapse' : 'Expand'}
+                                      >
+                                        {isExpanded ? (
+                                          <ChevronUp size={11} />
+                                        ) : (
+                                          <ChevronDown size={11} />
+                                        )}
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                                <div
+                                  className={`flex flex-wrap gap-x-3 gap-y-0.5 text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                                >
+                                  <span>By {note.author}</span>
+                                  <span>Created {fmtDate(note.createdAt)}</span>
+                                  {note.updatedAt !== note.createdAt && (
+                                    <span>Updated {fmtDate(note.updatedAt)}</span>
+                                  )}
+                                  <span>v{note.version}</span>
+                                  {isEditing && (
+                                    <span className="text-amber-400 font-black">● Editing</span>
                                   )}
                                 </div>
                               </div>
-                              <div className={`flex flex-wrap gap-x-3 gap-y-0.5 text-[9px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                <span>By {note.author}</span>
-                                <span>Created {fmtDate(note.createdAt)}</span>
-                                {note.updatedAt !== note.createdAt && (
-                                  <span>Updated {fmtDate(note.updatedAt)}</span>
-                                )}
-                                <span>v{note.version}</span>
-                                {isEditing && (
-                                  <span className="text-amber-400 font-black">● Editing</span>
-                                )}
-                              </div>
-                            </div>
 
-                            {showDeleteConfirm === note.id && (
-                              <div className={`px-3 py-2.5 border-t text-[10px] ${isDark ? 'border-rose-900/40 bg-rose-950/30' : 'border-rose-100 bg-rose-50'}`}>
-                                <p className={`font-bold mb-2 ${isDark ? 'text-rose-300' : 'text-rose-700'}`}>Delete this note?</p>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => setShowDeleteConfirm(null)}
-                                    className={`flex-1 py-1.5 rounded-lg border font-black uppercase text-[9px] ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-500'}`}
+                              {showDeleteConfirm === note.id && (
+                                <div
+                                  className={`px-3 py-2.5 border-t text-[10px] ${isDark ? 'border-rose-900/40 bg-rose-950/30' : 'border-rose-100 bg-rose-50'}`}
+                                >
+                                  <p
+                                    className={`font-bold mb-2 ${isDark ? 'text-rose-300' : 'text-rose-700'}`}
                                   >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteNote(note.id)}
-                                    className="flex-1 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-black uppercase text-[9px] transition-colors"
-                                  >
-                                    Delete
-                                  </button>
+                                    Delete this note?
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => setShowDeleteConfirm(null)}
+                                      className={`flex-1 py-1.5 rounded-lg border font-black uppercase text-[9px] ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-500'}`}
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteNote(note.id)}
+                                      className="flex-1 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-black uppercase text-[9px] transition-colors"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Unsaved Changes Guard */}
-              {pendingNotesClose && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10">
-                  <div className={`mx-5 rounded-2xl p-5 shadow-2xl border ${isDark ? 'bg-[#0f172a] border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <AlertTriangle size={14} className="text-amber-400 shrink-0" />
-                      <h4 className="text-sm font-black">Unsaved Advocate Notes</h4>
-                    </div>
-                    <p className={`text-[11px] font-semibold mb-4 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                      You have unsaved Advocate Notes. Do you want to save before leaving?
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={async () => {
-                          await handleSaveNote();
-                          setIsNotesDrawerOpen(false);
-                          setPendingNotesClose(false);
-                        }}
-                        className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase transition-colors"
-                      >
-                        Save &amp; Close
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCurrentNoteText('');
-                          setEditingNoteId(null);
-                          setNotesSaveStatus('idle');
-                          setIsNotesDrawerOpen(false);
-                          setPendingNotesClose(false);
-                        }}
-                        className={`w-full py-2 rounded-xl text-[10px] font-black uppercase border transition-colors ${isDark ? 'border-slate-700 text-rose-400 hover:bg-rose-900/20' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}
-                      >
-                        Discard Changes
-                      </button>
-                      <button
-                        onClick={() => setPendingNotesClose(false)}
-                        className={`w-full py-2 rounded-xl text-[10px] font-black uppercase border transition-colors ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-500'}`}
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 </div>
-              )}
 
+                {/* Unsaved Changes Guard */}
+                {pendingNotesClose && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10">
+                    <div
+                      className={`mx-5 rounded-2xl p-5 shadow-2xl border ${isDark ? 'bg-[#0f172a] border-slate-700' : 'bg-white border-slate-200'}`}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertTriangle size={14} className="text-amber-400 shrink-0" />
+                        <h4 className="text-sm font-black">Unsaved Advocate Notes</h4>
+                      </div>
+                      <p
+                        className={`text-[11px] font-semibold mb-4 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}
+                      >
+                        You have unsaved Advocate Notes. Do you want to save before leaving?
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={async () => {
+                            await handleSaveNote();
+                            setIsNotesDrawerOpen(false);
+                            setPendingNotesClose(false);
+                          }}
+                          className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase transition-colors"
+                        >
+                          Save &amp; Close
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentNoteText('');
+                            setEditingNoteId(null);
+                            setNotesSaveStatus('idle');
+                            setIsNotesDrawerOpen(false);
+                            setPendingNotesClose(false);
+                          }}
+                          className={`w-full py-2 rounded-xl text-[10px] font-black uppercase border transition-colors ${isDark ? 'border-slate-700 text-rose-400 hover:bg-rose-900/20' : 'border-slate-200 text-rose-600 hover:bg-rose-50'}`}
+                        >
+                          Discard Changes
+                        </button>
+                        <button
+                          onClick={() => setPendingNotesClose(false)}
+                          className={`w-full py-2 rounded-xl text-[10px] font-black uppercase border transition-colors ${isDark ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-500'}`}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })()}
-
+          );
+        })()}
     </div>
   );
 };

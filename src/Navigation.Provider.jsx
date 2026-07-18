@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { Routes, Route, Outlet, Navigate, BrowserRouter, useNavigate, useLocation, Link, useParams } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Outlet,
+  Navigate,
+  BrowserRouter,
+  useNavigate,
+  useLocation,
+  Link,
+  useParams,
+} from 'react-router-dom';
 
 import Landing from './landingpage/Landing';
 import Sidebar from './Components/SideBar/Sidebar.jsx';
@@ -34,27 +44,61 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 
 const Chat = lazy(() => import('./pages/Chat'));
-const AiLegalContentRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.AiLegalContentRoute })));
-const LegalChatScreenRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.LegalChatScreenRoute })));
-const DraftMakerRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.DraftMakerRoute })));
-const EvidenceAnalysisRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.EvidenceAnalysisRoute })));
-const StrategyEngineRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.StrategyEngineRoute })));
-const ContractReviewRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.ContractReviewRoute })));
-const CasePredictorRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.CasePredictorRoute })));
-const ArgumentBuilderRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.ArgumentBuilderRoute })));
-const LegalPrecedentsRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.LegalPrecedentsRoute })));
-const ComplianceRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.ComplianceRoute })));
+const AiLegalContentRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.AiLegalContentRoute }))
+);
+const LegalChatScreenRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.LegalChatScreenRoute }))
+);
+const DraftMakerRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.DraftMakerRoute }))
+);
+const EvidenceAnalysisRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.EvidenceAnalysisRoute }))
+);
+const StrategyEngineRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.StrategyEngineRoute }))
+);
+const ContractReviewRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.ContractReviewRoute }))
+);
+const CasePredictorRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.CasePredictorRoute }))
+);
+const ArgumentBuilderRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.ArgumentBuilderRoute }))
+);
+const LegalPrecedentsRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.LegalPrecedentsRoute }))
+);
+const ComplianceRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.ComplianceRoute }))
+);
 const HearingsRoute = lazy(() => import('./pages/Chat').then(m => ({ default: m.HearingsRoute })));
 
-const AiBase = lazy(() => import('./Tools/AI_Base/AI_Base').catch(() => ({ default: () => <div className="flex h-full items-center justify-center text-subtext">AI Base Module not found.</div> })));
+const AiBase = lazy(() =>
+  import('./Tools/AI_Base/AI_Base').catch(() => ({
+    default: () => (
+      <div className="flex h-full items-center justify-center text-subtext">
+        AI Base Module not found.
+      </div>
+    ),
+  }))
+);
 const SecurityAndGuidelines = lazy(() => import('./landingpage/SecurityAndGuidelines'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 const isAuthenticated = () => {
   const tokenStr = localStorage.getItem('token');
   const userToken = getUserData()?.token;
-  return !!tokenStr && tokenStr !== 'undefined' && tokenStr !== 'null' && 
-         !!userToken && userToken !== 'undefined' && userToken !== 'null';
+  return (
+    !!tokenStr &&
+    tokenStr !== 'undefined' &&
+    tokenStr !== 'null' &&
+    !!userToken &&
+    userToken !== 'undefined' &&
+    userToken !== 'null'
+  );
 };
 
 // ------------------------------
@@ -83,7 +127,7 @@ const GuestRoute = ({ children }) => {
 
 const AuthenticatRoute = ({ children }) => {
   return children;
-}
+};
 
 // ------------------------------
 // Dashboard Layout (Auth pages)
@@ -121,7 +165,7 @@ const useScrollNavbar = () => {
   const scrollThreshold = 15;
 
   useEffect(() => {
-    const handleScroll = (e) => {
+    const handleScroll = e => {
       if (isLocked.current) return;
 
       const target = e.target;
@@ -151,7 +195,9 @@ const useScrollNavbar = () => {
               setVisible(true);
               isLocked.current = true;
               clearTimeout(lockTimeout.current);
-              lockTimeout.current = setTimeout(() => { isLocked.current = false; }, 300);
+              lockTimeout.current = setTimeout(() => {
+                isLocked.current = false;
+              }, 300);
             }
             lastScrollY.current.set(targetKey, currentScrollY);
             ticking.current = false;
@@ -167,7 +213,9 @@ const useScrollNavbar = () => {
                 setVisible(false);
                 isLocked.current = true;
                 clearTimeout(lockTimeout.current);
-                lockTimeout.current = setTimeout(() => { isLocked.current = false; }, 300);
+                lockTimeout.current = setTimeout(() => {
+                  isLocked.current = false;
+                }, 300);
               }
             } else {
               // scroll up
@@ -176,7 +224,9 @@ const useScrollNavbar = () => {
                 setVisible(true);
                 isLocked.current = true;
                 clearTimeout(lockTimeout.current);
-                lockTimeout.current = setTimeout(() => { isLocked.current = false; }, 300);
+                lockTimeout.current = setTimeout(() => {
+                  isLocked.current = false;
+                }, 300);
               }
             }
             lastScrollY.current.set(targetKey, currentScrollY);
@@ -189,9 +239,10 @@ const useScrollNavbar = () => {
 
     // Use capture: true to catch scroll events from child containers like #chat-container
     // NOTE: No `visible` in deps — visibleRef keeps the handler fresh without re-registration
-    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
-    return () => window.removeEventListener("scroll", handleScroll, { capture: true, passive: true });
-  }, []);  
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+    return () =>
+      window.removeEventListener('scroll', handleScroll, { capture: true, passive: true });
+  }, []);
 
   return visible;
 };
@@ -206,7 +257,7 @@ const DashboardLayout = () => {
     legalView,
   } = useUserStore();
   const isSidebarOpen = tglState.sidebarOpen;
-  const setIsSidebarOpen = (val) => setToggle('sidebarOpen', val);
+  const setIsSidebarOpen = val => setToggle('sidebarOpen', val);
 
   const location = useLocation();
   const isFullScreen = false;
@@ -214,16 +265,17 @@ const DashboardLayout = () => {
   // Re-evaluate user and token based on Zustand state changes or fallback to localStorage
   const user = currentUser || getUserData() || { name: 'Guest' };
   const token = currentUser?.token || getUserData()?.token;
-  
+
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const isLegalWorkspace = currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/cases';
+  const isLegalWorkspace =
+    currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/cases';
   const isMobile = window.innerWidth < 768;
   const searchParams = new URLSearchParams(location.search);
-  const tool = searchParams.get("tool");
-  const hideNavbarTools = ["legal_my_case", "legal_precedents", "my-case", "legal-precedents"];
+  const tool = searchParams.get('tool');
+  const hideNavbarTools = ['legal_my_case', 'legal_precedents', 'my-case', 'legal-precedents'];
 
   // Jaha navbar NAHI chahiye
   const isHiddenTool =
@@ -240,7 +292,7 @@ const DashboardLayout = () => {
   useEffect(() => {
     const handleResize = () => {
       const isMobileViewport = window.innerWidth < 1024;
-      const hValue = (allowNavbar && isMobileViewport) ? '64px' : '0px';
+      const hValue = allowNavbar && isMobileViewport ? '64px' : '0px';
       document.documentElement.style.setProperty('--mobile-nav-h', hValue);
     };
     handleResize();
@@ -259,8 +311,13 @@ const DashboardLayout = () => {
         {/* Light mode gradient */}
         <div className="absolute inset-0 bg-white dark:opacity-0 transition-opacity duration-500" />
         {/* Dark mode deep black space */}
-        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500"
-          style={{ background: 'radial-gradient(ellipse at 15% 20%, rgba(139,92,246,0.08) 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(59,130,246,0.06) 0%, transparent 55%), #000000' }} />
+        <div
+          className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500"
+          style={{
+            background:
+              'radial-gradient(ellipse at 15% 20%, rgba(139,92,246,0.08) 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(59,130,246,0.06) 0%, transparent 55%), #000000',
+          }}
+        />
         {/* Dark mode neural background */}
         {/* Neural background removed as per user request */}
         {/* Light mode orbs */}
@@ -290,12 +347,11 @@ const DashboardLayout = () => {
       )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-transparent h-full relative">
-
         {/* ─── FINAL RENDER (Navbar) ─── */}
         {allowNavbar && !isFullScreen && !isSidebarOpen && !tglState.focusMode && (
           <div
             className={`navbar fixed top-0 left-0 right-0 z-[1001] transition-transform duration-300 ${isLegalWorkspace ? 'lg:left-0' : 'lg:left-[280px]'}
-              ${showOnScroll ? "translate-y-0" : "-translate-y-full"}`}
+              ${showOnScroll ? 'translate-y-0' : '-translate-y-full'}`}
           >
             <div className="flex items-center justify-between lg:justify-end px-6 py-3 bg-transparent shrink-0">
               <motion.button
@@ -324,7 +380,15 @@ const DashboardLayout = () => {
                         className="w-10 h-10 flex items-center justify-center bg-transparent rounded-xl border border-transparent text-primary overflow-hidden"
                       >
                         {user?.avatar ? (
-                          <img src={user.avatar} alt="P" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/account.png'; }} />
+                          <img
+                            src={user.avatar}
+                            alt="P"
+                            className="w-full h-full object-cover"
+                            onError={e => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = '/account.png';
+                            }}
+                          />
                         ) : (
                           <User size={20} />
                         )}
@@ -348,7 +412,7 @@ const DashboardLayout = () => {
         <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
         {/* Outlet for pages */}
         <main
-          className={`flex-1 ${(location.pathname.includes('/chat') || location.pathname.includes('/case')) ? 'overflow-hidden' : 'overflow-y-auto'} relative w-full scroll-smooth p-0 scrollbar-hide transition-all duration-300 ease-in-out`}
+          className={`flex-1 ${location.pathname.includes('/chat') || location.pathname.includes('/case') ? 'overflow-hidden' : 'overflow-y-auto'} relative w-full scroll-smooth p-0 scrollbar-hide transition-all duration-300 ease-in-out`}
           style={{ paddingTop: 'var(--mobile-nav-h, 0px)' }}
         >
           <Outlet />
@@ -407,17 +471,19 @@ const SSOInterceptor = ({ children }) => {
       window.history.replaceState({}, '', currentPathname);
 
       const existingToken = localStorage.getItem('token');
-      const hasValidToken = !!existingToken && existingToken !== 'undefined' && existingToken !== 'null';
+      const hasValidToken =
+        !!existingToken && existingToken !== 'undefined' && existingToken !== 'null';
 
       if (!hasValidToken) {
         setIsVerifying(true);
-        axios.post(apis.ssoHandoff, { sso_token: ssoToken, from: fromApp })
+        axios
+          .post(apis.ssoHandoff, { sso_token: ssoToken, from: fromApp })
           .then(res => {
             const { token, user } = res.data;
             setUserData(user);
             setUser(user);
-            localStorage.setItem("userId", user.id);
-            localStorage.setItem("token", token);
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('token', token);
             // After successful handoff, just let them be on the dashboard!
             if (currentPathname === '/' || currentPathname === '/login') {
               navigate('/dashboard/chat', { replace: true });
@@ -442,7 +508,9 @@ const SSOInterceptor = ({ children }) => {
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#020617] backdrop-blur-xl">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin shadow-[0_0_15px_rgba(139,92,246,0.5)]"></div>
-          <p className="text-white text-xs font-black uppercase tracking-widest animate-pulse">Synchronizing Session...</p>
+          <p className="text-white text-xs font-black uppercase tracking-widest animate-pulse">
+            Synchronizing Session...
+          </p>
         </div>
       </div>
     );
@@ -466,7 +534,8 @@ const NavigateProvider = () => {
         containerStyle={{ zIndex: 99999 }}
         toastOptions={{
           duration: 2500, // Reduced from default to meet user request for 2-3 sec auto-close
-          className: '!bg-white dark:!bg-[#1E2438] !text-slate-800 dark:!text-white !border !border-slate-100 dark:!border-white/10 !shadow-lg',
+          className:
+            '!bg-white dark:!bg-[#1E2438] !text-slate-800 dark:!text-white !border !border-slate-100 dark:!border-white/10 !shadow-lg',
         }}
       />
       <CreditUpsellPopup />
@@ -475,9 +544,35 @@ const NavigateProvider = () => {
         <Route path={AppRoute.LANDING} element={<HomeRedirect />} />
 
         {/* Dynamic Guest / Public Routes wrapped in Suspense */}
-        <Route element={<Suspense fallback={<div className="flex items-center justify-center h-screen w-full"><Loader /></div>}><Outlet /></Suspense>}>
-          <Route path={AppRoute.LOGIN} element={<GuestRoute><Login /></GuestRoute>} />
-          <Route path={AppRoute.SIGNUP} element={<GuestRoute><Signup /></GuestRoute>} />
+        <Route
+          element={
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-screen w-full">
+                  <Loader />
+                </div>
+              }
+            >
+              <Outlet />
+            </Suspense>
+          }
+        >
+          <Route
+            path={AppRoute.LOGIN}
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path={AppRoute.SIGNUP}
+            element={
+              <GuestRoute>
+                <Signup />
+              </GuestRoute>
+            }
+          />
           <Route path={AppRoute.E_Verification} element={<VerificationForm />} />
           <Route path={AppRoute.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={AppRoute.RESET_PASSWORD} element={<ResetPassword />} />
@@ -485,62 +580,202 @@ const NavigateProvider = () => {
 
         <Route path={AppRoute.PRIVACY_POLICY} element={<Landing />} />
         <Route path={AppRoute.TERMS_OF_SERVICE} element={<Landing />} />
-        <Route path="/terms-of-service" element={<Navigate to={AppRoute.TERMS_OF_SERVICE} replace />} />
+        <Route
+          path="/terms-of-service"
+          element={<Navigate to={AppRoute.TERMS_OF_SERVICE} replace />}
+        />
         <Route path={AppRoute.COOKIE_POLICY} element={<Landing />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/share/:shareId" element={<SharedChat />} />
 
         {/* Dashboard (Protected) */}
-        <Route
-          path={AppRoute.DASHBOARD}
-          element={<DashboardLayout />}
-        >
+        <Route path={AppRoute.DASHBOARD} element={<DashboardLayout />}>
           <Route index element={<Navigate to="chat/new" replace state={{ forceGlobal: true }} />} />
-          <Route path="chat" element={<Navigate to="new" replace state={{ forceGlobal: true }} />} />
-          <Route element={
-            <Suspense fallback={<div className="flex items-center justify-center h-screen w-full"><Loader /></div>}>
-              <Chat />
-            </Suspense>
-          }>
+          <Route
+            path="chat"
+            element={<Navigate to="new" replace state={{ forceGlobal: true }} />}
+          />
+          <Route
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-screen w-full">
+                    <Loader />
+                  </div>
+                }
+              >
+                <Chat />
+              </Suspense>
+            }
+          >
             <Route path="chat/new" element={null} />
             <Route path="chat/:sessionId" element={null} />
             <Route path="cases" element={<Navigate to="/dashboard/legal" replace />} />
             <Route path="cases/:caseId/chat" element={null} />
-            
+
             {/* AI Legal Nested Routes */}
-            <Route path="legal" element={<CardErrorBoundary cardName="Legal Toolkit Dashboard" toolModule="LEGAL_TOOLKIT"><AiLegalContentRoute /></CardErrorBoundary>} />
-            <Route path="legal/chat" element={<CardErrorBoundary cardName="Legal AI Assistant" toolModule="LEGAL_TOOLKIT"><LegalChatScreenRoute /></CardErrorBoundary>} />
+            <Route
+              path="legal"
+              element={
+                <CardErrorBoundary cardName="Legal Toolkit Dashboard" toolModule="LEGAL_TOOLKIT">
+                  <AiLegalContentRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/chat"
+              element={
+                <CardErrorBoundary cardName="Legal AI Assistant" toolModule="LEGAL_TOOLKIT">
+                  <LegalChatScreenRoute />
+                </CardErrorBoundary>
+              }
+            />
             <Route path="legal/cases/:caseId/chat" element={null} />
-            <Route path="legal/draft" element={<CardErrorBoundary cardName="Legal Document Draft Maker" toolModule="LEGAL_TOOLKIT"><DraftMakerRoute /></CardErrorBoundary>} />
-            <Route path="legal/evidence" element={<CardErrorBoundary cardName="Evidence Analysis Toolkit" toolModule="LEGAL_TOOLKIT"><EvidenceAnalysisRoute /></CardErrorBoundary>} />
-            <Route path="legal/strategy" element={<CardErrorBoundary cardName="Litigation Strategy Engine" toolModule="LEGAL_TOOLKIT"><StrategyEngineRoute /></CardErrorBoundary>} />
-            <Route path="legal/contracts" element={<CardErrorBoundary cardName="Contract Compliance Review" toolModule="LEGAL_TOOLKIT"><ContractReviewRoute /></CardErrorBoundary>} />
-            <Route path="legal/predictor" element={<CardErrorBoundary cardName="Case Predictor Analytics" toolModule="LEGAL_TOOLKIT"><CasePredictorRoute /></CardErrorBoundary>} />
-            <Route path="legal/arguments" element={<CardErrorBoundary cardName="Court Argument Builder" toolModule="LEGAL_TOOLKIT"><ArgumentBuilderRoute /></CardErrorBoundary>} />
-            <Route path="legal/precedents" element={<CardErrorBoundary cardName="Legal Precedents Database" toolModule="LEGAL_TOOLKIT"><LegalPrecedentsRoute /></CardErrorBoundary>} />
-            <Route path="legal/compliance" element={<CardErrorBoundary cardName="Regulatory Compliance Check" toolModule="LEGAL_TOOLKIT"><ComplianceRoute /></CardErrorBoundary>} />
-            <Route path="legal/hearings" element={<CardErrorBoundary cardName="Hearings Timeline Manager" toolModule="LEGAL_TOOLKIT"><HearingsRoute /></CardErrorBoundary>} />
+            <Route
+              path="legal/draft"
+              element={
+                <CardErrorBoundary cardName="Legal Document Draft Maker" toolModule="LEGAL_TOOLKIT">
+                  <DraftMakerRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/evidence"
+              element={
+                <CardErrorBoundary cardName="Evidence Analysis Toolkit" toolModule="LEGAL_TOOLKIT">
+                  <EvidenceAnalysisRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/strategy"
+              element={
+                <CardErrorBoundary cardName="Litigation Strategy Engine" toolModule="LEGAL_TOOLKIT">
+                  <StrategyEngineRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/contracts"
+              element={
+                <CardErrorBoundary cardName="Contract Compliance Review" toolModule="LEGAL_TOOLKIT">
+                  <ContractReviewRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/predictor"
+              element={
+                <CardErrorBoundary cardName="Case Predictor Analytics" toolModule="LEGAL_TOOLKIT">
+                  <CasePredictorRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/arguments"
+              element={
+                <CardErrorBoundary cardName="Court Argument Builder" toolModule="LEGAL_TOOLKIT">
+                  <ArgumentBuilderRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/precedents"
+              element={
+                <CardErrorBoundary cardName="Legal Precedents Database" toolModule="LEGAL_TOOLKIT">
+                  <LegalPrecedentsRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/compliance"
+              element={
+                <CardErrorBoundary
+                  cardName="Regulatory Compliance Check"
+                  toolModule="LEGAL_TOOLKIT"
+                >
+                  <ComplianceRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="legal/hearings"
+              element={
+                <CardErrorBoundary cardName="Hearings Timeline Manager" toolModule="LEGAL_TOOLKIT">
+                  <HearingsRoute />
+                </CardErrorBoundary>
+              }
+            />
           </Route>
           <Route path="case/:caseId" element={<NavigateToCaseChat />} />
-          <Route path="social-agent" element={<ProtectedRoute><CardErrorBoundary cardName="AI Social Media Dashboard" toolModule="AI_SOCIAL_MEDIA"><SocialAgentPage /></CardErrorBoundary></ProtectedRoute>} />
-          <Route path="ai-personal-assistant" element={<ProtectedRoute><CardErrorBoundary cardName="AI Personal Assistant Dashboard" toolModule="AI_PERSONAL_ASSISTANT"><AiPersonalAssistantDashboard /></CardErrorBoundary></ProtectedRoute>} />
-          <Route path="ai-base" element={<ProtectedRoute><CardErrorBoundary cardName="AI Base Module" toolModule="AI_BASE"><Suspense fallback={<div className="flex h-full items-center justify-center">Loading AI Base...</div>}><AiBase /></Suspense></CardErrorBoundary></ProtectedRoute>} />
+          <Route
+            path="social-agent"
+            element={
+              <ProtectedRoute>
+                <CardErrorBoundary
+                  cardName="AI Social Media Dashboard"
+                  toolModule="AI_SOCIAL_MEDIA"
+                >
+                  <SocialAgentPage />
+                </CardErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="ai-personal-assistant"
+            element={
+              <ProtectedRoute>
+                <CardErrorBoundary
+                  cardName="AI Personal Assistant Dashboard"
+                  toolModule="AI_PERSONAL_ASSISTANT"
+                >
+                  <AiPersonalAssistantDashboard />
+                </CardErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="ai-base"
+            element={
+              <ProtectedRoute>
+                <CardErrorBoundary cardName="AI Base Module" toolModule="AI_BASE">
+                  <Suspense
+                    fallback={
+                      <div className="flex h-full items-center justify-center">
+                        Loading AI Base...
+                      </div>
+                    }
+                  >
+                    <AiBase />
+                  </Suspense>
+                </CardErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="admin" element={
-            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-              <AdminDashboard />
-            </Suspense>
-          } />
-          <Route path="security" element={
-            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-              <SecurityAndGuidelines />
-            </Suspense>
-          } />
+          <Route
+            path="admin"
+            element={
+              <Suspense
+                fallback={<div className="flex items-center justify-center h-full">Loading...</div>}
+              >
+                <AdminDashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="security"
+            element={
+              <Suspense
+                fallback={<div className="flex items-center justify-center h-full">Loading...</div>}
+              >
+                <SecurityAndGuidelines />
+              </Suspense>
+            }
+          />
         </Route>
 
-
         {/* Vendor Dashboard Routes (Public for MVP/Testing) */}
-
 
         {/* Catch All */}
         <Route path="*" element={<Navigate to={AppRoute.LANDING} replace />} />

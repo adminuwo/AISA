@@ -13,14 +13,13 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     navigate(AppRoute.DASHBOARD);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
-
       {/* Background */}
       <div className="absolute inset-0 bg-[#0f0c29]">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#24243e] to-[#0f0c29] opacity-80" />
@@ -29,7 +28,6 @@ const Auth = () => {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-
         {/* Logo + Title */}
         <div className="mb-8 text-center">
           <div className="inline-block p-1 rounded-full bg-white/10 backdrop-blur-xl shadow-xl shadow-purple-900/40 mb-4 overflow-hidden border border-white/20">
@@ -48,7 +46,6 @@ const Auth = () => {
         {/* Card */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
-
             {isSignup && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 ml-1">Full Name</label>
@@ -57,7 +54,7 @@ const Auth = () => {
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={e => setName(e.target.value)}
                     placeholder="John Doe"
                     className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                     required
@@ -74,7 +71,7 @@ const Auth = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   required
@@ -90,7 +87,7 @@ const Auth = () => {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   required
@@ -112,14 +109,20 @@ const Auth = () => {
             {isSignup ? (
               <>
                 Already have an account?{' '}
-                <Link to={AppRoute.LOGIN} className="text-violet-400 hover:text-violet-300 font-medium">
+                <Link
+                  to={AppRoute.LOGIN}
+                  className="text-violet-400 hover:text-violet-300 font-medium"
+                >
                   Sign In
                 </Link>
               </>
             ) : (
               <>
                 Don't have an account?{' '}
-                <Link to={AppRoute.SIGNUP} className="text-violet-400 hover:text-violet-300 font-medium">
+                <Link
+                  to={AppRoute.SIGNUP}
+                  className="text-violet-400 hover:text-violet-300 font-medium"
+                >
                   Create Account
                 </Link>
               </>
@@ -134,7 +137,6 @@ const Auth = () => {
         >
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </Link>
-
       </div>
     </div>
   );

@@ -57,9 +57,10 @@ const CopyOutputButton = ({ text, label = 'Copy output', className = '', size = 
         p-1.5 rounded-lg
         transition-all duration-150 ease-in-out
         border border-transparent
-        ${copied
-          ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-700/30'
-          : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+        ${
+          copied
+            ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-700/30'
+            : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'
         }
         ${className}
       `}
@@ -67,7 +68,10 @@ const CopyOutputButton = ({ text, label = 'Copy output', className = '', size = 
       aria-label={label}
     >
       {copied ? (
-        <Check size={iconSize} className="text-emerald-500 transition-transform duration-150 scale-110" />
+        <Check
+          size={iconSize}
+          className="text-emerald-500 transition-transform duration-150 scale-110"
+        />
       ) : (
         <Copy size={iconSize} className="transition-transform duration-150" />
       )}

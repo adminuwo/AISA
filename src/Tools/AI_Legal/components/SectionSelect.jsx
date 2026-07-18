@@ -13,7 +13,7 @@ const SectionSelect = ({
   const [query, setQuery] = useState('');
   const [highlighted, setHighlighted] = useState(0);
   const [selected, setSelected] = useState([]);
-  
+
   const inputRef = useRef(null);
   const listRef = useRef(null);
   const containerRef = useRef(null);
@@ -24,22 +24,28 @@ const SectionSelect = ({
       setSelected([]);
       return;
     }
-    const parts = value.split(',').map(s => s.trim()).filter(Boolean);
+    const parts = value
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
     const parsed = parts.map(part => {
       const cleanedPart = part.toLowerCase();
-      
+
       // Look for a match in CRIMINAL_SECTIONS
       const match = CRIMINAL_SECTIONS.find(sec => {
         const idMatch = cleanedPart === sec.id.toLowerCase();
-        const ipcMatch = cleanedPart === sec.ipc.toLowerCase() ||
-                         cleanedPart === `ipc ${sec.ipc.toLowerCase()}` ||
-                         cleanedPart === `ipc section ${sec.ipc.toLowerCase()}`;
-        const bnsMatch = sec.bns && (
-                         cleanedPart === sec.bns.toLowerCase() ||
-                         cleanedPart === `bns ${sec.bns.toLowerCase()}` ||
-                         cleanedPart === `bns section ${sec.bns.toLowerCase()}`);
-        const fullTitleMatch = cleanedPart.includes(`ipc section ${sec.ipc.toLowerCase()}`) ||
-                               cleanedPart.includes(`ipc ${sec.ipc.toLowerCase()}`);
+        const ipcMatch =
+          cleanedPart === sec.ipc.toLowerCase() ||
+          cleanedPart === `ipc ${sec.ipc.toLowerCase()}` ||
+          cleanedPart === `ipc section ${sec.ipc.toLowerCase()}`;
+        const bnsMatch =
+          sec.bns &&
+          (cleanedPart === sec.bns.toLowerCase() ||
+            cleanedPart === `bns ${sec.bns.toLowerCase()}` ||
+            cleanedPart === `bns section ${sec.bns.toLowerCase()}`);
+        const fullTitleMatch =
+          cleanedPart.includes(`ipc section ${sec.ipc.toLowerCase()}`) ||
+          cleanedPart.includes(`ipc ${sec.ipc.toLowerCase()}`);
         return idMatch || ipcMatch || bnsMatch || fullTitleMatch;
       });
 
@@ -51,7 +57,7 @@ const SectionSelect = ({
           id: `custom_${part}`,
           ipc: part,
           title: '',
-          isCustom: true
+          isCustom: true,
         };
       }
     });
@@ -74,18 +80,20 @@ const SectionSelect = ({
   const filtered = query.trim()
     ? CRIMINAL_SECTIONS.filter(sec => {
         const q = query.toLowerCase();
-        return sec.ipc.toLowerCase().includes(q) ||
-               (sec.bns && sec.bns.toLowerCase().includes(q)) ||
-               sec.title.toLowerCase().includes(q) ||
-               (sec.bnsTitle && sec.bnsTitle.toLowerCase().includes(q)) ||
-               `ipc ${sec.ipc}`.toLowerCase().includes(q) ||
-               `bns ${sec.bns}`.toLowerCase().includes(q);
+        return (
+          sec.ipc.toLowerCase().includes(q) ||
+          (sec.bns && sec.bns.toLowerCase().includes(q)) ||
+          sec.title.toLowerCase().includes(q) ||
+          (sec.bnsTitle && sec.bnsTitle.toLowerCase().includes(q)) ||
+          `ipc ${sec.ipc}`.toLowerCase().includes(q) ||
+          `bns ${sec.bns}`.toLowerCase().includes(q)
+        );
       })
     : CRIMINAL_SECTIONS;
 
   // Close dropdown on click outside
   useEffect(() => {
-    const handler = (e) => {
+    const handler = e => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
         setQuery('');
@@ -111,39 +119,52 @@ const SectionSelect = ({
     }
   }, [highlighted]);
 
-  const triggerChange = useCallback((newSelected) => {
-    const str = newSelected.map(sec => {
-      if (sec.isCustom) return sec.ipc;
-      return `IPC Section ${sec.ipc} – ${sec.title}`;
-    }).join(', ');
-    onChange(str);
-  }, [onChange]);
+  const triggerChange = useCallback(
+    newSelected => {
+      const str = newSelected
+        .map(sec => {
+          if (sec.isCustom) return sec.ipc;
+          return `IPC Section ${sec.ipc} – ${sec.title}`;
+        })
+        .join(', ');
+      onChange(str);
+    },
+    [onChange]
+  );
 
-  const handleToggle = useCallback((sec) => {
-    const isSelected = selected.some(s => s.isCustom ? s.ipc === sec.ipc : s.id === sec.id);
-    let next;
-    if (isSelected) {
-      next = selected.filter(s => s.isCustom ? s.ipc !== sec.ipc : s.id !== sec.id);
-    } else {
-      next = [...selected, sec];
-    }
-    setSelected(next);
-    triggerChange(next);
-  }, [selected, triggerChange]);
+  const handleToggle = useCallback(
+    sec => {
+      const isSelected = selected.some(s => (s.isCustom ? s.ipc === sec.ipc : s.id === sec.id));
+      let next;
+      if (isSelected) {
+        next = selected.filter(s => (s.isCustom ? s.ipc !== sec.ipc : s.id !== sec.id));
+      } else {
+        next = [...selected, sec];
+      }
+      setSelected(next);
+      triggerChange(next);
+    },
+    [selected, triggerChange]
+  );
 
-  const handleRemove = useCallback((sec, e) => {
-    e.stopPropagation();
-    const next = selected.filter(s => s.isCustom ? s.ipc !== sec.ipc : s.id !== sec.id);
-    setSelected(next);
-    triggerChange(next);
-  }, [selected, triggerChange]);
+  const handleRemove = useCallback(
+    (sec, e) => {
+      e.stopPropagation();
+      const next = selected.filter(s => (s.isCustom ? s.ipc !== sec.ipc : s.id !== sec.id));
+      setSelected(next);
+      triggerChange(next);
+    },
+    [selected, triggerChange]
+  );
 
   const handleAddCustom = useCallback(() => {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return;
-    
+
     // Check if already selected
-    const isAlreadySelected = selected.some(s => s.ipc.toLowerCase() === trimmedQuery.toLowerCase());
+    const isAlreadySelected = selected.some(
+      s => s.ipc.toLowerCase() === trimmedQuery.toLowerCase()
+    );
     if (isAlreadySelected) {
       setQuery('');
       return;
@@ -153,7 +174,7 @@ const SectionSelect = ({
       id: `custom_${trimmedQuery}`,
       ipc: trimmedQuery,
       title: '',
-      isCustom: true
+      isCustom: true,
     };
 
     const next = [...selected, customSec];
@@ -163,18 +184,21 @@ const SectionSelect = ({
     setHighlighted(0);
   }, [query, selected, triggerChange]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = e => {
     if (!open) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         setOpen(true);
       }
       return;
     }
-    
-    const showCustomOption = query.trim() && !CRIMINAL_SECTIONS.some(s => 
-      s.ipc.toLowerCase() === query.trim().toLowerCase() ||
-      (s.bns && s.bns.toLowerCase() === query.trim().toLowerCase())
-    );
+
+    const showCustomOption =
+      query.trim() &&
+      !CRIMINAL_SECTIONS.some(
+        s =>
+          s.ipc.toLowerCase() === query.trim().toLowerCase() ||
+          (s.bns && s.bns.toLowerCase() === query.trim().toLowerCase())
+      );
     const maxIndex = filtered.length + (showCustomOption ? 1 : 0) - 1;
 
     switch (e.key) {
@@ -203,20 +227,21 @@ const SectionSelect = ({
     }
   };
 
-  const getDisplayLabel = (sec) => {
+  const getDisplayLabel = sec => {
     if (sec.isCustom) return sec.ipc;
     if (sec.bns) return `IPC ${sec.ipc} (BNS ${sec.bns}) – ${sec.title}`;
     return `IPC ${sec.ipc} – ${sec.title}`;
   };
 
-  const getChipLabel = (sec) => {
+  const getChipLabel = sec => {
     if (sec.isCustom) return sec.ipc;
     return `IPC ${sec.ipc}`;
   };
 
-  const borderClass = filled || selected.length > 0
-    ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/50 dark:bg-emerald-950/10'
-    : 'border-slate-200 dark:border-white/8 bg-white dark:bg-[#141E35]';
+  const borderClass =
+    filled || selected.length > 0
+      ? 'border-emerald-300 dark:border-emerald-700/50 bg-emerald-50/50 dark:bg-emerald-950/10'
+      : 'border-slate-200 dark:border-white/8 bg-white dark:bg-[#141E35]';
 
   return (
     <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
@@ -224,11 +249,13 @@ const SectionSelect = ({
       <div
         onClick={() => setOpen(o => !o)}
         className={`w-full min-h-[46px] flex flex-wrap items-center gap-1.5 border rounded-xl px-3.5 py-2.5 text-sm outline-none cursor-pointer transition-all ${
-          open ? 'ring-2 ring-indigo-500/20 border-indigo-500 bg-white dark:bg-[#1A2540]' : borderClass
+          open
+            ? 'ring-2 ring-indigo-500/20 border-indigo-500 bg-white dark:bg-[#1A2540]'
+            : borderClass
         }`}
       >
         <Scale size={15} className="text-slate-400 shrink-0 mr-1" />
-        
+
         {selected.length === 0 ? (
           <span className="text-slate-400 select-none flex-1 truncate">{placeholder}</span>
         ) : (
@@ -241,7 +268,7 @@ const SectionSelect = ({
                 <span>✓ {getChipLabel(sec)}</span>
                 <button
                   type="button"
-                  onClick={(e) => handleRemove(sec, e)}
+                  onClick={e => handleRemove(sec, e)}
                   className="p-0.5 hover:bg-indigo-150 dark:hover:bg-indigo-900/60 rounded-full shrink-0 transition-colors"
                   aria-label={`Remove ${getChipLabel(sec)}`}
                 >
@@ -271,14 +298,20 @@ const SectionSelect = ({
               ref={inputRef}
               type="text"
               value={query}
-              onChange={e => { setQuery(e.target.value); setHighlighted(0); }}
+              onChange={e => {
+                setQuery(e.target.value);
+                setHighlighted(0);
+              }}
               placeholder="Search section number or name (e.g., 302, Theft)..."
               className="flex-1 text-xs font-medium text-slate-800 dark:text-white bg-transparent border-none outline-none placeholder:text-slate-400"
             />
             {query && (
               <button
                 type="button"
-                onClick={() => { setQuery(''); setHighlighted(0); }}
+                onClick={() => {
+                  setQuery('');
+                  setHighlighted(0);
+                }}
                 className="p-0.5 hover:bg-slate-100 dark:hover:bg-zinc-700 rounded-full"
               >
                 <X size={11} className="text-slate-400" />
@@ -293,7 +326,9 @@ const SectionSelect = ({
             style={{ maxHeight: '230px' }}
           >
             {filtered.map((sec, idx) => {
-              const isSelected = selected.some(s => s.isCustom ? s.ipc === sec.ipc : s.id === sec.id);
+              const isSelected = selected.some(s =>
+                s.isCustom ? s.ipc === sec.ipc : s.id === sec.id
+              );
               const isHovered = idx === highlighted;
               return (
                 <button
@@ -305,8 +340,8 @@ const SectionSelect = ({
                     isSelected
                       ? 'bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-bold'
                       : isHovered
-                      ? 'bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-white'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                        ? 'bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-white'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <span className="text-xs font-semibold flex-1 truncate pr-2">
@@ -314,15 +349,17 @@ const SectionSelect = ({
                   </span>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {isSelected && <Check size={14} className="text-indigo-600 dark:text-indigo-400" />}
-                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                      isSelected
-                        ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
-                        : 'border-slate-300 dark:border-zinc-600 bg-transparent'
-                    }`}>
-                      {isSelected && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                      )}
+                    {isSelected && (
+                      <Check size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    )}
+                    <div
+                      className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'border-indigo-600 dark:border-indigo-400 bg-indigo-600 dark:bg-indigo-400'
+                          : 'border-slate-300 dark:border-zinc-600 bg-transparent'
+                      }`}
+                    >
+                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                     </div>
                   </div>
                 </button>
@@ -330,34 +367,38 @@ const SectionSelect = ({
             })}
 
             {/* Custom option when search doesn't match list exactly */}
-            {query.trim() && !CRIMINAL_SECTIONS.some(s => 
-              s.ipc.toLowerCase() === query.trim().toLowerCase() ||
-              (s.bns && s.bns.toLowerCase() === query.trim().toLowerCase())
-            ) && (
-              <button
-                type="button"
-                onClick={handleAddCustom}
-                onMouseEnter={() => setHighlighted(filtered.length)}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
-                  highlighted === filtered.length
-                    ? 'bg-indigo-50/85 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold'
-                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5'
-                }`}
-              >
-                <span className="text-xs font-bold truncate flex-1 pr-2 flex items-center gap-1">
-                  <Plus size={12} /> Add Custom Section: "{query.trim()}"
-                </span>
+            {query.trim() &&
+              !CRIMINAL_SECTIONS.some(
+                s =>
+                  s.ipc.toLowerCase() === query.trim().toLowerCase() ||
+                  (s.bns && s.bns.toLowerCase() === query.trim().toLowerCase())
+              ) && (
+                <button
+                  type="button"
+                  onClick={handleAddCustom}
+                  onMouseEnter={() => setHighlighted(filtered.length)}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
+                    highlighted === filtered.length
+                      ? 'bg-indigo-50/85 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold'
+                      : 'text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <span className="text-xs font-bold truncate flex-1 pr-2 flex items-center gap-1">
+                    <Plus size={12} /> Add Custom Section: "{query.trim()}"
+                  </span>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-4 h-4 rounded-full border border-dashed border-indigo-500 bg-transparent" />
-                </div>
-              </button>
-            )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-4 h-4 rounded-full border border-dashed border-indigo-500 bg-transparent" />
+                  </div>
+                </button>
+              )}
 
             {filtered.length === 0 && !query.trim() && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Scale size={24} className="text-slate-300 dark:text-zinc-700 mb-2" />
-                <p className="text-xs font-bold text-slate-400">No sections found. Type to add custom.</p>
+                <p className="text-xs font-bold text-slate-400">
+                  No sections found. Type to add custom.
+                </p>
               </div>
             )}
           </div>
@@ -370,7 +411,11 @@ const SectionSelect = ({
             {selected.length > 0 && (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setSelected([]); triggerChange([]); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  setSelected([]);
+                  triggerChange([]);
+                }}
                 className="text-[10px] text-indigo-500 hover:underline font-bold"
               >
                 Clear All ({selected.length})

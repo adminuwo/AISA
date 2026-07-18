@@ -6,9 +6,33 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus as highlighterTheme } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
-  Globe, MessageCircle, Bot, User, Sparkles, ExternalLink, Calendar, Rocket, ChevronDown,
-  X, Download, FileSpreadsheet, Presentation, FileText, File as FileIcon,
-  Sun, Moon, Minus, Plus, RotateCcw, Copy, Search, ImagePlus, Video, Wand2, Scale, TrendingUp
+  Globe,
+  MessageCircle,
+  Bot,
+  User,
+  Sparkles,
+  ExternalLink,
+  Calendar,
+  Rocket,
+  ChevronDown,
+  X,
+  Download,
+  FileSpreadsheet,
+  Presentation,
+  FileText,
+  File as FileIcon,
+  Sun,
+  Moon,
+  Minus,
+  Plus,
+  RotateCcw,
+  Copy,
+  Search,
+  ImagePlus,
+  Video,
+  Wand2,
+  Scale,
+  TrendingUp,
 } from 'lucide-react';
 import Loader from '../Components/Loader/Loader';
 import { getModeIcon, getModeName, MODES } from '../utils/modeDetection';
@@ -22,7 +46,9 @@ import ActionCard from '../Components/ActionCard';
 import { useTheme } from '../context/ThemeContext';
 
 // Lazy load video player to optimize initial bundle size
-const CustomVideoPlayer = React.lazy(() => import('../Tools/AI_Video_Generator/CustomVideoPlayer').catch(() => ({ default: () => null })));
+const CustomVideoPlayer = React.lazy(() =>
+  import('../Tools/AI_Video_Generator/CustomVideoPlayer').catch(() => ({ default: () => null }))
+);
 
 const ImageViewer = ({ src, alt }) => {
   const [scale, setScale] = useState(1);
@@ -34,35 +60,38 @@ const ImageViewer = ({ src, alt }) => {
 
   const handleZoomIn = () => setScale(s => Math.min(s + 0.5, 5));
   const handleZoomOut = () => setScale(s => Math.max(s - 0.5, 1));
-  const handleReset = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+  const handleReset = () => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
 
-  const handleWheel = (e) => {
+  const handleWheel = e => {
     e.preventDefault();
     e.stopPropagation();
     const delta = e.deltaY > 0 ? -0.2 : 0.2;
     setScale(s => Math.min(Math.max(1, s + delta), 5));
   };
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = e => {
     if (scale > 1) {
       setIsDragging(true);
       setStartPos({ x: e.clientX - position.x, y: e.clientY - position.y });
     }
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = e => {
     if (isDragging && scale > 1) {
       e.preventDefault();
       setPosition({
         x: e.clientX - startPos.x,
-        y: e.clientY - startPos.y
+        y: e.clientY - startPos.y,
       });
     }
   };
 
   const handleMouseUp = () => setIsDragging(false);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = e => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
         e.touches[0].pageX - e.touches[1].pageX,
@@ -73,12 +102,12 @@ const ImageViewer = ({ src, alt }) => {
       setIsDragging(true);
       setStartPos({
         x: e.touches[0].clientX - position.x,
-        y: e.touches[0].clientY - position.y
+        y: e.touches[0].clientY - position.y,
       });
     }
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = e => {
     if (e.touches.length === 2 && lastTouchDistance) {
       const dist = Math.hypot(
         e.touches[0].pageX - e.touches[1].pageX,
@@ -91,7 +120,7 @@ const ImageViewer = ({ src, alt }) => {
       e.preventDefault();
       setPosition({
         x: e.touches[0].clientX - startPos.x,
-        y: e.touches[0].clientY - position.y
+        y: e.touches[0].clientY - position.y,
       });
     }
   };
@@ -109,13 +138,31 @@ const ImageViewer = ({ src, alt }) => {
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-black/90 select-none">
       <div
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 border border-white/10 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
-        <button onClick={handleZoomOut} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"><Minus className="w-5 h-5" /></button>
-        <span className="text-white text-sm font-bold font-mono min-w-[3rem] text-center">{Math.round(scale * 100)}%</span>
-        <button onClick={handleZoomIn} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"><Plus className="w-5 h-5" /></button>
+        <button
+          onClick={handleZoomOut}
+          className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+        >
+          <Minus className="w-5 h-5" />
+        </button>
+        <span className="text-white text-sm font-bold font-mono min-w-[3rem] text-center">
+          {Math.round(scale * 100)}%
+        </span>
+        <button
+          onClick={handleZoomIn}
+          className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
         <div className="w-px h-6 bg-white/20 mx-2"></div>
-        <button onClick={handleReset} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors" title="Reset"><RotateCcw className="w-4 h-4" /></button>
+        <button
+          onClick={handleReset}
+          className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+          title="Reset"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
       </div>
 
       <div
@@ -136,28 +183,30 @@ const ImageViewer = ({ src, alt }) => {
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-            cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+            cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
           }}
           className="max-w-full max-h-full object-contain pointer-events-auto"
           draggable={false}
-          onLoad={() => console.log("Viewer image loaded successfully:", src)}
-          onError={(e) => {
-            console.error("Viewer image load failed:", src);
+          onLoad={() => console.log('Viewer image loaded successfully:', src)}
+          onError={e => {
+            console.error('Viewer image load failed:', src);
             if (src && !e.target.dataset.retried) {
-              e.target.dataset.retried = "true";
+              e.target.dataset.retried = 'true';
               const isSignedUrl = src?.includes('X-Goog-Signature');
               const retryUrl = isSignedUrl
                 ? src
                 : src + (src.includes('?') ? '&' : '?') + 'retry=' + Date.now();
-              console.log("Retrying viewer image:", retryUrl);
+              console.log('Retrying viewer image:', retryUrl);
               e.target.src = retryUrl;
             } else {
               e.target.src = `https://placehold.co/800x600/333/eee?text=Image+Loading+Failed%0AClick+to+Retry`;
               e.target.style.cursor = 'pointer';
-              e.target.onclick = (event) => {
+              e.target.onclick = event => {
                 event.stopPropagation();
                 const isSignedUrl = src?.includes('X-Goog-Signature');
-                e.target.src = isSignedUrl ? src : src + (src.includes('?') ? '&' : '?') + 'reload=' + Date.now();
+                e.target.src = isSignedUrl
+                  ? src
+                  : src + (src.includes('?') ? '&' : '?') + 'reload=' + Date.now();
               };
             }
           }}
@@ -167,28 +216,88 @@ const ImageViewer = ({ src, alt }) => {
   );
 };
 
-const getModeInfo = (mode) => {
+const getModeInfo = mode => {
   switch (mode) {
     case MODES.DEEP_SEARCH:
-      return { label: "AI Deep Search", icon: Search, color: "text-sky-500", bg: "bg-sky-500/10", border: "border-sky-500/20" };
+      return {
+        label: 'AI Deep Search',
+        icon: Search,
+        color: 'text-sky-500',
+        bg: 'bg-sky-500/10',
+        border: 'border-sky-500/20',
+      };
     case MODES.WEB_SEARCH:
-      return { label: "AI Web Search", icon: Globe, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20" };
+      return {
+        label: 'AI Web Search',
+        icon: Globe,
+        color: 'text-cyan-500',
+        bg: 'bg-cyan-500/10',
+        border: 'border-cyan-500/20',
+      };
     case MODES.IMAGE_GENERATION:
-      return { label: "AI Image Generation", icon: ImagePlus, color: "text-violet-500", bg: "bg-violet-500/10", border: "border-violet-500/20" };
+      return {
+        label: 'AI Image Generation',
+        icon: ImagePlus,
+        color: 'text-violet-500',
+        bg: 'bg-violet-500/10',
+        border: 'border-violet-500/20',
+      };
     case MODES.VIDEO_GENERATION:
-      return { label: "AI Video Generation", icon: Video, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20" };
+      return {
+        label: 'AI Video Generation',
+        icon: Video,
+        color: 'text-orange-500',
+        bg: 'bg-orange-500/10',
+        border: 'border-orange-500/20',
+      };
     case MODES.IMAGE_EDIT:
-      return { label: "AI Magic Edit", icon: Wand2, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" };
+      return {
+        label: 'AI Magic Edit',
+        icon: Wand2,
+        color: 'text-rose-500',
+        bg: 'bg-rose-500/10',
+        border: 'border-rose-500/20',
+      };
     case MODES.CODING_HELP:
-      return { label: "AI Code Writer", icon: Code, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20" };
+      return {
+        label: 'AI Code Writer',
+        icon: Code,
+        color: 'text-indigo-500',
+        bg: 'bg-indigo-500/10',
+        border: 'border-indigo-500/20',
+      };
     case MODES.DOCUMENT_CONVERT:
-      return { label: "AI Doc Convert", icon: FileText, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" };
+      return {
+        label: 'AI Doc Convert',
+        icon: FileText,
+        color: 'text-blue-500',
+        bg: 'bg-blue-500/10',
+        border: 'border-blue-500/20',
+      };
     case MODES.FILE_ANALYSIS:
-      return { label: "AI File Analysis", icon: Search, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" };
+      return {
+        label: 'AI File Analysis',
+        icon: Search,
+        color: 'text-blue-500',
+        bg: 'bg-blue-500/10',
+        border: 'border-blue-500/20',
+      };
     case MODES.LEGAL_TOOLKIT:
-      return { label: "AI Legal™", icon: Scale, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-600/10 dark:bg-indigo-400/10", border: "border-indigo-600/20 dark:border-indigo-400/20" };
+      return {
+        label: 'AI Legal™',
+        icon: Scale,
+        color: 'text-indigo-600 dark:text-indigo-400',
+        bg: 'bg-indigo-600/10 dark:bg-indigo-400/10',
+        border: 'border-indigo-600/20 dark:border-indigo-400/20',
+      };
     case MODES.CASHFLOW:
-      return { label: "AI CashFlow", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" };
+      return {
+        label: 'AI CashFlow',
+        icon: TrendingUp,
+        color: 'text-emerald-500',
+        bg: 'bg-emerald-500/10',
+        border: 'border-emerald-500/20',
+      };
     default:
       return null;
   }
@@ -205,10 +314,11 @@ const SharedChat = () => {
   const [viewingDoc, setViewingDoc] = useState(null);
   const [isDownloadingUrl, setIsDownloadingUrl] = useState(null);
 
-  const handleCopyImage = async (imageUrl) => {
+  const handleCopyImage = async imageUrl => {
     if (!imageUrl) return;
 
-    const isSecureContext = window.isSecureContext ||
+    const isSecureContext =
+      window.isSecureContext ||
       window.location.protocol === 'https:' ||
       window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1';
@@ -227,8 +337,13 @@ const SharedChat = () => {
               canvas.width = img.naturalWidth;
               canvas.height = img.naturalHeight;
               canvas.getContext('2d').drawImage(img, 0, 0);
-              canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas blob failed')), 'image/png');
-            } catch (e) { reject(e); }
+              canvas.toBlob(
+                b => (b ? resolve(b) : reject(new Error('Canvas blob failed'))),
+                'image/png'
+              );
+            } catch (e) {
+              reject(e);
+            }
           };
           img.onerror = () => reject(new Error('Image load failed'));
           img.src = proxiedUrl;
@@ -247,7 +362,9 @@ const SharedChat = () => {
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(imageUrl);
-        toast.success('Image link copied! Open it and right-click → Save/Copy. 🔗', { duration: 4000 });
+        toast.success('Image link copied! Open it and right-click → Save/Copy. 🔗', {
+          duration: 4000,
+        });
         return;
       }
     } catch (err) {
@@ -264,7 +381,9 @@ const SharedChat = () => {
       const success = document.execCommand('copy');
       document.body.removeChild(textArea);
       if (success) {
-        toast.success('Image link copied! Open it and right-click → Save/Copy. 🔗', { duration: 4000 });
+        toast.success('Image link copied! Open it and right-click → Save/Copy. 🔗', {
+          duration: 4000,
+        });
         return;
       }
     } catch (err) {
@@ -276,7 +395,9 @@ const SharedChat = () => {
         <span className="flex flex-col gap-1.5">
           <span className="font-bold text-xs">📋 Browser Copy Blocked</span>
           <span className="text-[10px] opacity-80 leading-tight">
-            This site runs on HTTP — browser blocks clipboard access. Your image has been opened in a new tab. Please right-click → <strong>Copy Image</strong> or <strong>Save Image As</strong>.
+            This site runs on HTTP — browser blocks clipboard access. Your image has been opened in
+            a new tab. Please right-click → <strong>Copy Image</strong> or{' '}
+            <strong>Save Image As</strong>.
           </span>
         </span>
       ),
@@ -288,7 +409,7 @@ const SharedChat = () => {
   const handleDownload = async (url, filename) => {
     if (isDownloadingUrl === url) return;
     setIsDownloadingUrl(url);
-    const downloadToast = toast.loading("Preparing download...");
+    const downloadToast = toast.loading('Preparing download...');
     const downloadUrl = `${apis.imageProxy}?url=${encodeURIComponent(url)}`;
 
     try {
@@ -303,10 +424,10 @@ const SharedChat = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-      toast.success("Download started!", { id: downloadToast });
+      toast.success('Download started!', { id: downloadToast });
     } catch (error) {
       console.error('Download failed even with proxy:', error);
-      toast.error("Download failed", { id: downloadToast });
+      toast.error('Download failed', { id: downloadToast });
       window.open(url, '_blank');
     } finally {
       setIsDownloadingUrl(null);
@@ -320,8 +441,8 @@ const SharedChat = () => {
         const data = await chatStorageService.getSharedSession(shareId);
         setSession(data);
       } catch (err) {
-        console.error("Shared chat fetch error:", err);
-        setError("This shared chat link is invalid or has been removed.");
+        console.error('Shared chat fetch error:', err);
+        setError('This shared chat link is invalid or has been removed.');
       } finally {
         setLoading(false);
       }
@@ -334,21 +455,26 @@ const SharedChat = () => {
 
   const handleDuplicate = async () => {
     try {
-      const shareToast = toast.loading("Duplicating conversation...");
+      const shareToast = toast.loading('Duplicating conversation...');
       const response = await chatStorageService.duplicateSharedSession(shareId, currentUser?.id);
       if (response.success) {
-        toast.success("Conversation copied! Redirecting...", { id: shareToast });
+        toast.success('Conversation copied! Redirecting...', { id: shareToast });
         navigate(`/dashboard/chat/${response.sessionId}`);
       } else {
-        throw new Error("Failed to duplicate");
+        throw new Error('Failed to duplicate');
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to copy conversation. Please log in first.");
+      toast.error('Failed to copy conversation. Please log in first.');
     }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a]"><Loader /></div>;
+  if (loading)
+    return (
+      <div className="h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a]">
+        <Loader />
+      </div>
+    );
 
   if (error) {
     return (
@@ -373,8 +499,13 @@ const SharedChat = () => {
       {/* ─── Animated Atmospheric Background ─── */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-white dark:opacity-0 transition-opacity duration-500" />
-        <div className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500"
-          style={{ background: 'radial-gradient(ellipse at 15% 20%, rgba(139,92,246,0.08) 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(59,130,246,0.06) 0%, transparent 55%), #000000' }} />
+        <div
+          className="absolute inset-0 opacity-0 dark:opacity-100 transition-opacity duration-500"
+          style={{
+            background:
+              'radial-gradient(ellipse at 15% 20%, rgba(139,92,246,0.08) 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, rgba(59,130,246,0.06) 0%, transparent 55%), #000000',
+          }}
+        />
         <motion.div
           animate={{ y: [0, 30, 0], x: [0, 20, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
@@ -401,10 +532,12 @@ const SharedChat = () => {
             </div>
             <div className="flex flex-col">
               <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-md">
-                {session?.title || "Shared Conversation"}
+                {session?.title || 'Shared Conversation'}
               </h1>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Shared via AISA™</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  Shared via AISA™
+                </span>
                 <span className="text-[10px] text-zinc-400">•</span>
                 <span className="text-[10px] text-zinc-400 flex items-center gap-1 font-medium">
                   <Calendar size={10} />
@@ -467,12 +600,16 @@ const SharedChat = () => {
                 <div className="flex-1 min-w-0 chatgpt-text select-text">
                   {/* Mode Badge - Integrated Tool Indicator */}
                   {msg.role === 'user' && msg.mode && getModeInfo(msg.mode) && (
-                    <div className={`inline-flex !flex-row !items-center w-fit gap-2 px-3 py-1 rounded-full border shadow-sm ${getModeInfo(msg.mode).bg} ${getModeInfo(msg.mode).border} ${getModeInfo(msg.mode).color} mt-1.5 mb-3`}>
+                    <div
+                      className={`inline-flex !flex-row !items-center w-fit gap-2 px-3 py-1 rounded-full border shadow-sm ${getModeInfo(msg.mode).bg} ${getModeInfo(msg.mode).border} ${getModeInfo(msg.mode).color} mt-1.5 mb-3`}
+                    >
                       {(() => {
                         const Icon = getModeInfo(msg.mode).icon;
                         return <Icon size={12} className="shrink-0" strokeWidth={3} />;
                       })()}
-                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap leading-none">{getModeInfo(msg.mode).label}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap leading-none">
+                        {getModeInfo(msg.mode).label}
+                      </span>
                     </div>
                   )}
 
@@ -480,101 +617,127 @@ const SharedChat = () => {
                   {msg.role === 'model' && (msg.mode === MODES.WEB_SEARCH || msg.isRealTime) && (
                     <div className="flex items-center gap-2 mb-4 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full w-fit">
                       <Globe className="w-3.5 h-3.5 text-primary animate-pulse" />
-                      <span className="text-[9px] font-black text-primary uppercase tracking-widest leading-none">Web Search Mode</span>
+                      <span className="text-[9px] font-black text-primary uppercase tracking-widest leading-none">
+                        Web Search Mode
+                      </span>
                     </div>
                   )}
 
                   {/* Attachment Display */}
                   {((msg.attachments && msg.attachments.length > 0) || msg.attachment) && (
                     <div className="flex flex-col gap-3 mb-3 mt-1">
-                      {(msg.attachments || (msg.attachment ? [msg.attachment] : [])).map((att, attIdx) => (
-                        <div key={attIdx} className="w-full">
-                          {att.type === 'image' || att.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                            <div
-                              className="relative group/image overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-[320px]"
-                              onClick={() => setViewingDoc(att)}
-                            >
-                              <img
-                                src={att.url}
-                                alt="Attachment"
-                                className="w-full h-auto max-h-[400px] object-contain bg-black/5"
-                                loading="lazy"
-                              />
-                            </div>
-                          ) : (
-                            <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors backdrop-blur-md ${msg.role === 'user' ? 'bg-transparent border-white/20 hover:bg-white/10 shadow-none' : 'bg-secondary/30 border-border hover:bg-secondary/50'}`}>
+                      {(msg.attachments || (msg.attachment ? [msg.attachment] : [])).map(
+                        (att, attIdx) => (
+                          <div key={attIdx} className="w-full">
+                            {att.type === 'image' ||
+                            att.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                               <div
-                                className="flex-1 flex items-center gap-3 min-w-0 cursor-pointer p-0.5 rounded-lg"
+                                className="relative group/image overflow-hidden rounded-xl border border-white/20 shadow-lg transition-all hover:scale-[1.01] cursor-pointer max-w-[320px]"
                                 onClick={() => setViewingDoc(att)}
                               >
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${(() => {
-                                  const name = (att.name || '').toLowerCase();
-                                  if (msg.role === 'user') return 'bg-white shadow-sm';
-                                  if (name.endsWith('.pdf')) return 'bg-red-50 dark:bg-red-900/20';
-                                  if (name.match(/\.(doc|docx)$/)) return 'bg-blue-50 dark:bg-blue-900/20';
-                                  if (name.match(/\.(xls|xlsx|csv)$/)) return 'bg-emerald-50 dark:bg-emerald-900/20';
-                                  if (name.match(/\.(ppt|pptx)$/)) return 'bg-blue-50 dark:bg-blue-900/20';
-                                  return 'bg-secondary';
-                                })()}`}>
-                                  {(() => {
-                                    const name = (att.name || '').toLowerCase();
-                                    const baseClass = "w-5 h-5";
-                                    if (name.match(/\.(xls|xlsx|csv)$/)) return <FileSpreadsheet className={baseClass} />;
-                                    if (name.match(/\.(ppt|pptx)$/)) return <Presentation className={baseClass} />;
-                                    if (name.endsWith('.pdf')) return <FileText className={baseClass} />;
-                                    if (name.match(/\.(doc|docx)$/)) return <FileIcon className={baseClass} />;
-                                    return <FileIcon className={baseClass} />;
-                                  })()}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-xs truncate text-slate-800 dark:text-zinc-200 mb-0.5">{att.name || 'File'}</p>
-                                  <p className="text-[9px] text-zinc-400 uppercase tracking-wider font-semibold">
+                                <img
+                                  src={att.url}
+                                  alt="Attachment"
+                                  className="w-full h-auto max-h-[400px] object-contain bg-black/5"
+                                  loading="lazy"
+                                />
+                              </div>
+                            ) : (
+                              <div
+                                className={`flex items-center gap-3 p-3 rounded-xl border transition-colors backdrop-blur-md ${msg.role === 'user' ? 'bg-transparent border-white/20 hover:bg-white/10 shadow-none' : 'bg-secondary/30 border-border hover:bg-secondary/50'}`}
+                              >
+                                <div
+                                  className="flex-1 flex items-center gap-3 min-w-0 cursor-pointer p-0.5 rounded-lg"
+                                  onClick={() => setViewingDoc(att)}
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${(() => {
+                                      const name = (att.name || '').toLowerCase();
+                                      if (msg.role === 'user') return 'bg-white shadow-sm';
+                                      if (name.endsWith('.pdf'))
+                                        return 'bg-red-50 dark:bg-red-900/20';
+                                      if (name.match(/\.(doc|docx)$/))
+                                        return 'bg-blue-50 dark:bg-blue-900/20';
+                                      if (name.match(/\.(xls|xlsx|csv)$/))
+                                        return 'bg-emerald-50 dark:bg-emerald-900/20';
+                                      if (name.match(/\.(ppt|pptx)$/))
+                                        return 'bg-blue-50 dark:bg-blue-900/20';
+                                      return 'bg-secondary';
+                                    })()}`}
+                                  >
                                     {(() => {
                                       const name = (att.name || '').toLowerCase();
-                                      if (name.endsWith('.pdf')) return 'PDF';
-                                      if (name.match(/\.(doc|docx)$/)) return 'Word';
-                                      if (name.match(/\.(xls|xlsx|csv)$/)) return 'Excel';
-                                      if (name.match(/\.(ppt|pptx)$/)) return 'Powerpoint';
-                                      return 'Document';
+                                      const baseClass = 'w-5 h-5';
+                                      if (name.match(/\.(xls|xlsx|csv)$/))
+                                        return <FileSpreadsheet className={baseClass} />;
+                                      if (name.match(/\.(ppt|pptx)$/))
+                                        return <Presentation className={baseClass} />;
+                                      if (name.endsWith('.pdf'))
+                                        return <FileText className={baseClass} />;
+                                      if (name.match(/\.(doc|docx)$/))
+                                        return <FileIcon className={baseClass} />;
+                                      return <FileIcon className={baseClass} />;
                                     })()}
-                                  </p>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-xs truncate text-slate-800 dark:text-zinc-200 mb-0.5">
+                                      {att.name || 'File'}
+                                    </p>
+                                    <p className="text-[9px] text-zinc-400 uppercase tracking-wider font-semibold">
+                                      {(() => {
+                                        const name = (att.name || '').toLowerCase();
+                                        if (name.endsWith('.pdf')) return 'PDF';
+                                        if (name.match(/\.(doc|docx)$/)) return 'Word';
+                                        if (name.match(/\.(xls|xlsx|csv)$/)) return 'Excel';
+                                        if (name.match(/\.(ppt|pptx)$/)) return 'Powerpoint';
+                                        return 'Document';
+                                      })()}
+                                    </p>
+                                  </div>
                                 </div>
+                                <a
+                                  href={att.url}
+                                  download
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <Download size={14} />
+                                </a>
                               </div>
-                              <a
-                                href={att.url}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <Download size={14} />
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
 
                   {/* Chat Bubble Container */}
                   {(msg.content || msg.text) && (
-                    <div className={`chat-bubble-text break-words overflow-wrap-anywhere ${msg.role === 'model' ? 'prose prose-sm max-w-none' : ''}`}>
+                    <div
+                      className={`chat-bubble-text break-words overflow-wrap-anywhere ${msg.role === 'model' ? 'prose prose-sm max-w-none' : ''}`}
+                    >
                       <div className="flex flex-col">
-                        <div className={`collapsible-container ${msg.content && msg.content.length > 350 && expandedMessages[idx] === false ? 'collapsed-message' : ''}`}>
+                        <div
+                          className={`collapsible-container ${msg.content && msg.content.length > 350 && expandedMessages[idx] === false ? 'collapsed-message' : ''}`}
+                        >
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
                               a: ({ href, children }) => {
-                                const text = children?.toString() || "";
+                                const text = children?.toString() || '';
                                 if (href && href.startsWith('action:')) {
                                   const isLocked = text.includes('🔒') || text.includes('Unlock');
 
                                   if (text.startsWith('ActionCard|')) {
                                     const parts = text.split('|');
-                                    const title = parts[1] || "";
-                                    const desc = parts[2] || "";
-                                    const actionLabel = (parts[3] || "Open").replace(/^Action:\s*/i, '');
+                                    const title = parts[1] || '';
+                                    const desc = parts[2] || '';
+                                    const actionLabel = (parts[3] || 'Open').replace(
+                                      /^Action:\s*/i,
+                                      ''
+                                    );
 
                                     return (
                                       <ActionCard
@@ -583,9 +746,11 @@ const SharedChat = () => {
                                         action={actionLabel}
                                         link={href}
                                         isLocked={isLocked}
-                                        onClick={(e) => {
+                                        onClick={e => {
                                           e.preventDefault();
-                                          toast.error("Sign up or log in to AISA to use this interactive AI Legal tool.");
+                                          toast.error(
+                                            'Sign up or log in to AISA to use this interactive AI Legal tool.'
+                                          );
                                         }}
                                       />
                                     );
@@ -593,9 +758,11 @@ const SharedChat = () => {
 
                                   return (
                                     <button
-                                      onClick={(e) => {
+                                      onClick={e => {
                                         e.preventDefault();
-                                        toast.error("Sign up or log in to AISA to use this interactive AI Legal tool.");
+                                        toast.error(
+                                          'Sign up or log in to AISA to use this interactive AI Legal tool.'
+                                        );
                                       }}
                                       className={`inline-flex mt-2 items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 ${isLocked ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20' : 'bg-gradient-to-r from-primary/10 to-primary-dark/10 border border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40'}`}
                                     >
@@ -608,39 +775,71 @@ const SharedChat = () => {
                                 return (
                                   <a
                                     href={href}
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       if (isInternal) {
                                         e.preventDefault();
                                         navigate(href);
                                       }
                                     }}
                                     className="text-primary hover:underline font-bold cursor-pointer"
-                                    target={isInternal ? "_self" : "_blank"}
-                                    rel={isInternal ? "" : "noopener noreferrer"}
+                                    target={isInternal ? '_self' : '_blank'}
+                                    rel={isInternal ? '' : 'noopener noreferrer'}
                                   >
                                     {children}
                                   </a>
                                 );
                               },
                               p: ({ children }) => <p>{children}</p>,
-                              ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5">{children}</ul>,
-                              ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5">{children}</ol>,
+                              ul: ({ children }) => (
+                                <ul className="list-disc pl-5 space-y-1.5">{children}</ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="list-decimal pl-5 space-y-1.5">{children}</ol>
+                              ),
                               li: ({ children }) => <li>{children}</li>,
-                              h1: ({ children }) => <h1 className="font-bold tracking-tight">{children}</h1>,
-                              h2: ({ children }) => <h2 className="font-bold tracking-tight">{children}</h2>,
-                              h3: ({ children }) => <h3 className="font-bold tracking-tight">{children}</h3>,
+                              h1: ({ children }) => (
+                                <h1 className="font-bold tracking-tight">{children}</h1>
+                              ),
+                              h2: ({ children }) => (
+                                <h2 className="font-bold tracking-tight">{children}</h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="font-bold tracking-tight">{children}</h3>
+                              ),
                               strong: ({ children }) => <strong>{children}</strong>,
                               table: ({ children }) => (
                                 <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg bg-surface/30 backdrop-blur-sm">
-                                  <table className="w-full border-collapse text-sm">{children}</table>
+                                  <table className="w-full border-collapse text-sm">
+                                    {children}
+                                  </table>
                                 </div>
                               ),
-                              thead: ({ children }) => <thead className="bg-primary/10 border-b border-border/50">{children}</thead>,
-                              tbody: ({ children }) => <tbody className="divide-y divide-border/30">{children}</tbody>,
-                              tr: ({ children }) => <tr className="transition-colors hover:bg-white/3">{children}</tr>,
-                              th: ({ children }) => <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-primary">{children}</th>,
-                              td: ({ children }) => <td className="px-4 py-3 text-sm text-maintext leading-relaxed">{children}</td>,
-                              mark: ({ children }) => <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">{children}</mark>,
+                              thead: ({ children }) => (
+                                <thead className="bg-primary/10 border-b border-border/50">
+                                  {children}
+                                </thead>
+                              ),
+                              tbody: ({ children }) => (
+                                <tbody className="divide-y divide-border/30">{children}</tbody>
+                              ),
+                              tr: ({ children }) => (
+                                <tr className="transition-colors hover:bg-white/3">{children}</tr>
+                              ),
+                              th: ({ children }) => (
+                                <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-primary">
+                                  {children}
+                                </th>
+                              ),
+                              td: ({ children }) => (
+                                <td className="px-4 py-3 text-sm text-maintext leading-relaxed">
+                                  {children}
+                                </td>
+                              ),
+                              mark: ({ children }) => (
+                                <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">
+                                  {children}
+                                </mark>
+                              ),
                               code({ node, inline, className, children, ...props }) {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const lang = match ? match[1] : '';
@@ -655,12 +854,14 @@ const SharedChat = () => {
                                           <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
                                           <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#6272a4]">{lang || 'plain text'}</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#6272a4]">
+                                          {lang || 'plain text'}
+                                        </span>
                                       </div>
                                       <button
                                         onClick={() => {
                                           copyText(codeValue);
-                                          toast.success("Code copied!");
+                                          toast.success('Code copied!');
                                         }}
                                         className="flex items-center gap-1.5 text-[11px] font-bold text-[#6272a4] hover:text-[#f8f8f2] transition-all bg-white/5 hover:bg-white/10 px-3 py-1 rounded-lg border border-transparent hover:border-white/10 active:scale-95"
                                       >
@@ -683,11 +884,12 @@ const SharedChat = () => {
                                           borderRadius: 0,
                                           border: 'none',
                                           color: '#f8f8f2',
-                                          fontFamily: '"Fira Code", "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace',
+                                          fontFamily:
+                                            '"Fira Code", "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace',
                                           overflowX: 'auto',
                                           overflowY: 'auto',
                                           maxHeight: '600px',
-                                          WebkitOverflowScrolling: 'touch'
+                                          WebkitOverflowScrolling: 'touch',
                                         }}
                                         codeTagProps={{
                                           style: {
@@ -695,8 +897,8 @@ const SharedChat = () => {
                                             background: 'transparent',
                                             color: 'inherit',
                                             display: 'block',
-                                            minWidth: 'max-content'
-                                          }
+                                            minWidth: 'max-content',
+                                          },
                                         }}
                                         {...props}
                                       >
@@ -705,7 +907,10 @@ const SharedChat = () => {
                                     </div>
                                   </div>
                                 ) : (
-                                  <code className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-primary font-bold mx-0.5 text-xs translate-y-[-1px] inline-block" {...props}>
+                                  <code
+                                    className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-primary font-bold mx-0.5 text-xs translate-y-[-1px] inline-block"
+                                    {...props}
+                                  >
                                     {children}
                                   </code>
                                 );
@@ -715,35 +920,42 @@ const SharedChat = () => {
                                   <div className="relative my-4 group/img-container max-w-full">
                                     <div
                                       className="relative group/image overflow-hidden aspect-auto max-w-[500px] cursor-zoom-in w-fit rounded-xl border border-zinc-200 dark:border-zinc-800"
-                                      onClick={() => setViewingDoc({ url: props.src, type: 'image', name: props.alt || 'AI Image' })}
+                                      onClick={() =>
+                                        setViewingDoc({
+                                          url: props.src,
+                                          type: 'image',
+                                          name: props.alt || 'AI Image',
+                                        })
+                                      }
                                     >
                                       {msg.role === 'model' && (
                                         <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-100 sm:opacity-0 sm:group-hover/img-container:opacity-100 transition-opacity duration-500 ease-in-out">
                                           <div className="flex items-center gap-2">
                                             <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">AISA™ Generated Asset</span>
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">
+                                              AISA™ Generated Asset
+                                            </span>
                                           </div>
                                         </div>
                                       )}
-                                      <ImageViewer
-                                        src={props.src}
-                                        alt={props.alt || "AI Image"}
-                                      />
+                                      <ImageViewer src={props.src} alt={props.alt || 'AI Image'} />
                                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/img-container:opacity-100 transition-opacity duration-500 ease-in-out pointer-events-none" />
                                     </div>
                                     <button
-                                      onClick={(e) => {
+                                      onClick={e => {
                                         e.stopPropagation();
                                         handleDownload(props.src, `AISA_gen_${Date.now()}.png`);
                                       }}
                                       className="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-105 active:scale-95"
                                     >
                                       <Download className="w-4 h-4" />
-                                      <span className="text-[10px] font-bold uppercase">Download</span>
+                                      <span className="text-[10px] font-bold uppercase">
+                                        Download
+                                      </span>
                                     </button>
                                   </div>
                                 );
-                              }
+                              },
                             }}
                           >
                             {msg.content}
@@ -754,12 +966,17 @@ const SharedChat = () => {
                         {(msg.content || msg.text) && (msg.content || msg.text).length > 350 && (
                           <div className="flex justify-start w-full mt-2">
                             <button
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
-                                setExpandedMessages(prev => ({ ...prev, [idx]: prev[idx] === false }));
+                                setExpandedMessages(prev => ({
+                                  ...prev,
+                                  [idx]: prev[idx] === false,
+                                }));
                               }}
                               className="read-more-btn"
-                              title={expandedMessages[idx] !== false ? 'Show less' : 'Read full response'}
+                              title={
+                                expandedMessages[idx] !== false ? 'Show less' : 'Read full response'
+                              }
                               aria-expanded={expandedMessages[idx] !== false}
                             >
                               <span className="read-more-btn__text">
@@ -773,8 +990,6 @@ const SharedChat = () => {
                             </button>
                           </div>
                         )}
-
-
                       </div>
                     </div>
                   )}
@@ -782,7 +997,11 @@ const SharedChat = () => {
                   {/* Video Url Rendering */}
                   {msg.videoUrl && (
                     <div className="relative mt-4 mb-2 w-fit max-w-full">
-                      <React.Suspense fallback={<div className="w-full aspect-video bg-black/20 animate-pulse rounded-xl" />}>
+                      <React.Suspense
+                        fallback={
+                          <div className="w-full aspect-video bg-black/20 animate-pulse rounded-xl" />
+                        }
+                      >
                         <CustomVideoPlayer src={msg.videoUrl} compact={true} />
                       </React.Suspense>
                     </div>
@@ -793,7 +1012,12 @@ const SharedChat = () => {
                     <div
                       className="relative group/generated mt-4 mb-2 overflow-hidden rounded-2xl transition-all duration-500 ease-in-out border border-transparent hover:border-primary/25 hover:shadow-lg hover:shadow-primary/10 cursor-zoom-in w-fit max-w-sm"
                       onClick={() => {
-                        if (!viewingDoc) setViewingDoc({ url: msg.imageUrl, type: 'image', name: 'Generated Image' });
+                        if (!viewingDoc)
+                          setViewingDoc({
+                            url: msg.imageUrl,
+                            type: 'image',
+                            name: 'Generated Image',
+                          });
                       }}
                     >
                       <img
@@ -804,7 +1028,7 @@ const SharedChat = () => {
                       />
                       <div className="absolute bottom-5 right-4 flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover/generated:opacity-100 transition-all duration-500 ease-in-out scale-100 sm:scale-90 sm:group-hover/generated:scale-100">
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             handleCopyImage(msg.imageUrl);
                           }}
@@ -815,7 +1039,7 @@ const SharedChat = () => {
                         </button>
                         <button
                           disabled={isDownloadingUrl === msg.imageUrl}
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             handleDownload(msg.imageUrl, 'AISA-generated.png');
                           }}
@@ -841,7 +1065,13 @@ const SharedChat = () => {
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {msg.sources.map((source, sIdx) => (
-                          <a key={sIdx} href={source.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-primary/10 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-medium text-maintext transition-all truncate max-w-[140px]">
+                          <a
+                            key={sIdx}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-primary/10 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs font-medium text-maintext transition-all truncate max-w-[140px]"
+                          >
                             {source.title}
                           </a>
                         ))}
@@ -860,7 +1090,6 @@ const SharedChat = () => {
                       </span>
                     </div>
                   )}
-
                 </div>
               </div>
             </div>
@@ -901,18 +1130,28 @@ const SharedChat = () => {
               <X size={20} />
             </button>
           </div>
-          <div className="max-w-full max-h-full flex items-center justify-center w-full h-full" onClick={() => setViewingDoc(null)}>
-            <div className="max-w-[90vw] max-h-[85vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
+          <div
+            className="max-w-full max-h-full flex items-center justify-center w-full h-full"
+            onClick={() => setViewingDoc(null)}
+          >
+            <div
+              className="max-w-[90vw] max-h-[85vh] flex items-center justify-center"
+              onClick={e => e.stopPropagation()}
+            >
               {viewingDoc.type === 'video' || viewingDoc.url?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
-                <video src={viewingDoc.url} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+                <video
+                  src={viewingDoc.url}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[85vh] rounded-lg shadow-2xl"
+                />
               ) : (
-                <ImageViewer src={viewingDoc.url} alt={viewingDoc.name || "Preview"} />
+                <ImageViewer src={viewingDoc.url} alt={viewingDoc.name || 'Preview'} />
               )}
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

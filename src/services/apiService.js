@@ -1,6 +1,6 @@
 // Generic API service for Dashboard, Automations, Agents, Admin, and Auth
-import axios from "axios";
-import { API } from "../types.js";
+import axios from 'axios';
+import { API } from '../types.js';
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -13,10 +13,10 @@ const apiClient = axios.create({
 
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
-  (config) => {
+  config => {
     let token = null;
     const user = localStorage.getItem('user');
-    if (user && user !== "undefined" && user !== "null") {
+    if (user && user !== 'undefined' && user !== 'null') {
       try {
         const userData = JSON.parse(user);
         token = userData?.token;
@@ -24,28 +24,36 @@ apiClient.interceptors.request.use(
         console.error('[apiService] Request interceptor user parse error:', e);
       }
     }
-    if (!token || token === "undefined" || token === "null") {
-      token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+    if (!token || token === 'undefined' || token === 'null') {
+      token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     }
-    if (token && token !== "undefined" && token !== "null") {
+    if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  error => Promise.reject(error)
 );
 
 // Response interceptor for handling errors
 apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  response => response,
+  error => {
     if (error.response?.status === 401) {
       const isMock = localStorage.getItem('token') === 'mock_token';
       if (!isMock) {
         // Do not redirect if we are on a public dashboard, chat, or case page
-        const publicPaths = ['/dashboard/chat', '/dashboard/legal', '/dashboard/cases', '/dashboard/case', '/dashboard', '/'];
-        const isPublicPath = publicPaths.some(path => 
-          window.location.pathname === path || window.location.pathname.startsWith(path + '/')
+        const publicPaths = [
+          '/dashboard/chat',
+          '/dashboard/legal',
+          '/dashboard/cases',
+          '/dashboard/case',
+          '/dashboard',
+          '/',
+        ];
+        const isPublicPath = publicPaths.some(
+          path =>
+            window.location.pathname === path || window.location.pathname.startsWith(path + '/')
         );
         if (!isPublicPath) {
           localStorage.removeItem('user');
@@ -62,15 +70,18 @@ apiClient.interceptors.response.use(
 
       // New quota system codes
       if (code === 'QUOTA_EXCEEDED' || code === 'PLAN_RESTRICTED' || code === 'PLAN_EXPIRED') {
-        window.dispatchEvent(new CustomEvent('quota_exceeded', {
-          detail: {
-            code,
-            toolName,
-            customMessage: backendMessage || 'You have reached your plan limit. Please upgrade to continue.',
-            used: error.response?.data?.used,
-            limit: error.response?.data?.limit,
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('quota_exceeded', {
+            detail: {
+              code,
+              toolName,
+              customMessage:
+                backendMessage || 'You have reached your plan limit. Please upgrade to continue.',
+              used: error.response?.data?.used,
+              limit: error.response?.data?.limit,
+            },
+          })
+        );
       }
 
       // Legacy credit system codes (kept for backward compat)
@@ -81,16 +92,24 @@ apiClient.interceptors.response.use(
         window.dispatchEvent(new CustomEvent('out_of_credits'));
       }
 
-      if (code === 'PREMIUM_ONLY' || code === 'CALENDAR_LIMIT_REACHED' || code === 'UPGRADE_REQUIRED') {
+      if (
+        code === 'PREMIUM_ONLY' ||
+        code === 'CALENDAR_LIMIT_REACHED' ||
+        code === 'UPGRADE_REQUIRED'
+      ) {
         let derivedToolName = toolName;
-        if (code === 'CALENDAR_LIMIT_REACHED') derivedToolName = 'AI Ads Agent (Unlimited Strategy)';
+        if (code === 'CALENDAR_LIMIT_REACHED')
+          derivedToolName = 'AI Ads Agent (Unlimited Strategy)';
         else if (code === 'UPGRADE_REQUIRED') derivedToolName = 'AI Ads Agent (Unlimited Scraping)';
-        window.dispatchEvent(new CustomEvent('premium_required', {
-          detail: {
-            toolName: derivedToolName,
-            customMessage: backendMessage || 'This feature requires a paid plan. Please upgrade to continue.'
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('premium_required', {
+            detail: {
+              toolName: derivedToolName,
+              customMessage:
+                backendMessage || 'This feature requires a paid plan. Please upgrade to continue.',
+            },
+          })
+        );
       }
     }
 
@@ -115,17 +134,25 @@ export const apiService = {
       const response = await apiClient.get('/admin/finance/invoices', { params });
       return response.data;
     } catch (error) {
-      console.error('[apiService] getFinanceInvoices failed:', error?.response?.data || error.message);
+      console.error(
+        '[apiService] getFinanceInvoices failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },
 
   async getMonthlyReport(month, year) {
     try {
-      const response = await apiClient.get('/admin/finance/monthly-report', { params: { month, year } });
+      const response = await apiClient.get('/admin/finance/monthly-report', {
+        params: { month, year },
+      });
       return response.data;
     } catch (error) {
-      console.error('[apiService] getMonthlyReport failed:', error?.response?.data || error.message);
+      console.error(
+        '[apiService] getMonthlyReport failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },
@@ -138,7 +165,10 @@ export const apiService = {
       });
       return response;
     } catch (error) {
-      console.error('[apiService] exportFinanceCSV failed:', error?.response?.data || error.message);
+      console.error(
+        '[apiService] exportFinanceCSV failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },
@@ -150,7 +180,10 @@ export const apiService = {
       });
       return response;
     } catch (error) {
-      console.error('[apiService] downloadInvoicePDF failed:', error?.response?.data || error.message);
+      console.error(
+        '[apiService] downloadInvoicePDF failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },
@@ -167,16 +200,27 @@ export const apiService = {
   // --- AI Tools ---
   async generateImage(prompt, aspectRatio = '1:1', modelId = 'imagen-3.0-generate-001') {
     try {
-      console.log("[Frontend] Generating image for prompt:", prompt, "Ratio:", aspectRatio, "Model:", modelId);
+      console.log(
+        '[Frontend] Generating image for prompt:',
+        prompt,
+        'Ratio:',
+        aspectRatio,
+        'Model:',
+        modelId
+      );
       // Increased timeout to 60s for image generation
-      const response = await apiClient.post('/image/generate', { prompt, aspectRatio, modelId }, { timeout: 180000 });
-      console.log("[Frontend] Image generation success:", response.data);
+      const response = await apiClient.post(
+        '/image/generate',
+        { prompt, aspectRatio, modelId },
+        { timeout: 180000 }
+      );
+      console.log('[Frontend] Image generation success:', response.data);
       return response.data;
     } catch (error) {
-      console.error("Failed to generate image:", error);
+      console.error('Failed to generate image:', error);
       if (error.response) {
-        console.error("Error Status:", error.response.status);
-        console.error("Error Data:", error.response.data);
+        console.error('Error Status:', error.response.status);
+        console.error('Error Data:', error.response.data);
       }
       throw error;
     }
@@ -184,7 +228,7 @@ export const apiService = {
 
   async editImage(prompt, imageFileOrBlob = null) {
     try {
-      console.log("[Frontend] Editing image for prompt:", prompt);
+      console.log('[Frontend] Editing image for prompt:', prompt);
       const formData = new FormData();
       formData.append('prompt', prompt);
       if (imageFileOrBlob) {
@@ -192,36 +236,53 @@ export const apiService = {
         formData.append('image', imageFileOrBlob);
       }
       const response = await apiClient.post('/edit-image', formData, {
-        timeout: 90000
+        timeout: 90000,
       });
-      console.log("[Frontend] Image editing success:", response.data);
+      console.log('[Frontend] Image editing success:', response.data);
       return response.data;
     } catch (error) {
-      console.error("Failed to edit image:", error);
+      console.error('Failed to edit image:', error);
       throw error;
     }
   },
 
-  async generateVideo(prompt, duration = 5, quality = 'medium', aspectRatio = '16:9', modelId = 'veo-3.1-fast-generate-001', resolution = '1080p') {
+  async generateVideo(
+    prompt,
+    duration = 5,
+    quality = 'medium',
+    aspectRatio = '16:9',
+    modelId = 'veo-3.1-fast-generate-001',
+    resolution = '1080p'
+  ) {
     try {
-      console.log(`[Frontend] Generating video for prompt: ${prompt}, Ratio: ${aspectRatio}, Model: ${modelId}, Res: ${resolution}`);
+      console.log(
+        `[Frontend] Generating video for prompt: ${prompt}, Ratio: ${aspectRatio}, Model: ${modelId}, Res: ${resolution}`
+      );
       // Increased timeout to 900s (15 minutes) for video generation as it regularly takes > 5 minutes
-      const response = await apiClient.post('/video/generate', { prompt, duration, quality, aspectRatio, modelId, resolution }, { timeout: 900000 });
-      console.log("[Frontend] Video generation success:", response.data);
+      const response = await apiClient.post(
+        '/video/generate',
+        { prompt, duration, quality, aspectRatio, modelId, resolution },
+        { timeout: 900000 }
+      );
+      console.log('[Frontend] Video generation success:', response.data);
       return response.data;
     } catch (error) {
-      console.error("Failed to generate video:", error);
+      console.error('Failed to generate video:', error);
       throw error;
     }
   },
 
   async downloadVideo(videoUrl) {
     try {
-      console.log("[Frontend] Downloading video from proxy:", videoUrl);
-      const response = await apiClient.post('/video/download', { videoUrl }, { responseType: 'blob' });
+      console.log('[Frontend] Downloading video from proxy:', videoUrl);
+      const response = await apiClient.post(
+        '/video/download',
+        { videoUrl },
+        { responseType: 'blob' }
+      );
       return response.data;
     } catch (error) {
-      console.error("Failed to download video proxy:", error);
+      console.error('Failed to download video proxy:', error);
       throw error;
     }
   },
@@ -232,7 +293,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/workspace/${userId || 'current'}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch social agent workspace:", error);
+      console.error('Failed to fetch social agent workspace:', error);
       return { success: false };
     }
   },
@@ -242,17 +303,19 @@ export const apiService = {
       const response = await apiClient.get('/social-agent/workspaces/all');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch all workspaces:", error);
+      console.error('Failed to fetch all workspaces:', error);
       return { success: false, workspaces: [] };
     }
   },
 
   async generateFromCalendar(workspaceId, calendarRowId) {
     try {
-      const response = await apiClient.post(`/social-agent/content/generate/${calendarRowId}`, { workspaceId });
+      const response = await apiClient.post(`/social-agent/content/generate/${calendarRowId}`, {
+        workspaceId,
+      });
       return response.data;
     } catch (error) {
-      console.error("Failed to generate from calendar:", error);
+      console.error('Failed to generate from calendar:', error);
       throw error;
     }
   },
@@ -262,7 +325,7 @@ export const apiService = {
       const response = await apiClient.post('/social-agent/workspace', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to create social agent workspace:", error);
+      console.error('Failed to create social agent workspace:', error);
       throw error;
     }
   },
@@ -272,20 +335,19 @@ export const apiService = {
       const response = await apiClient.delete(`/social-agent/workspace/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete workspace:", error);
+      console.error('Failed to delete workspace:', error);
       throw error;
     }
   },
 
-
   async uploadSocialAgentBrand(formData) {
     try {
       const response = await apiClient.post('/social-agent/brand/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to upload brand assets:", error);
+      console.error('Failed to upload brand assets:', error);
       throw error;
     }
   },
@@ -316,22 +378,21 @@ export const apiService = {
       if (workspaceId) formData.append('workspaceId', workspaceId);
 
       const response = await apiClient.post('/brand/quick-analysis', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     } catch (error) {
-      console.error("Quick Analysis failed:", error);
+      console.error('Quick Analysis failed:', error);
       return { success: false };
     }
   },
-
 
   async getSocialAgentBrand(workspaceId) {
     try {
       const response = await apiClient.get(`/social-agent/brand/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch brand profile:", error);
+      console.error('Failed to fetch brand profile:', error);
       return { success: false };
     }
   },
@@ -339,11 +400,11 @@ export const apiService = {
   async uploadSocialAgentCalendar(formData) {
     try {
       const response = await apiClient.post('/social-agent/calendar/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to upload content calendar:", error);
+      console.error('Failed to upload content calendar:', error);
       throw error;
     }
   },
@@ -353,7 +414,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/calendar/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch calendar entries:", error);
+      console.error('Failed to fetch calendar entries:', error);
       return { success: false, entries: [] };
     }
   },
@@ -363,7 +424,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/usage/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch plan usage:", error);
+      console.error('Failed to fetch plan usage:', error);
       return { success: false };
     }
   },
@@ -373,7 +434,7 @@ export const apiService = {
       const response = await apiClient.get('/social-agent/calendar/brands');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch calendar brands:", error);
+      console.error('Failed to fetch calendar brands:', error);
       return { success: false, brands: [] };
     }
   },
@@ -383,7 +444,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/calendar/pipelines/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch pipelines:", error);
+      console.error('Failed to fetch pipelines:', error);
       return { success: false, pipelines: [] };
     }
   },
@@ -393,7 +454,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/calendar/pipeline-rows/${calendarId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch pipeline rows:", error);
+      console.error('Failed to fetch pipeline rows:', error);
       return { success: false, rows: [] };
     }
   },
@@ -404,7 +465,7 @@ export const apiService = {
       const response = await apiClient.patch('/social-agent/finish-onboarding', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to complete onboarding:", error);
+      console.error('Failed to complete onboarding:', error);
       throw error;
     }
   },
@@ -414,7 +475,7 @@ export const apiService = {
       const response = await apiClient.get('/auth/sync-profile');
       return response.data;
     } catch (error) {
-      console.error("Failed to sync profile:", error);
+      console.error('Failed to sync profile:', error);
       throw error;
     }
   },
@@ -424,7 +485,7 @@ export const apiService = {
       const response = await apiClient.post('/social-agent/generate', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to trigger generation:", error);
+      console.error('Failed to trigger generation:', error);
       throw error;
     }
   },
@@ -434,7 +495,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/jobs/${jobId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch job status:", error);
+      console.error('Failed to fetch job status:', error);
       return { success: false, status: error.response?.status };
     }
   },
@@ -455,16 +516,27 @@ export const apiService = {
    * GPT-4 Prompt Engineering → Vertex AI Imagen 3/4 → GCS → Asset
    * Returns { jobId } immediately; poll getSocialAgentJobStatus for result.
    */
-  async generateVisualPost(workspaceId, calendarEntryId, modelId = 'imagen-3.0-generate-001', postFormat = 'single', aspectRatio = '1:1', carouselCount = 3) {
+  async generateVisualPost(
+    workspaceId,
+    calendarEntryId,
+    modelId = 'imagen-3.0-generate-001',
+    postFormat = 'single',
+    aspectRatio = '1:1',
+    carouselCount = 3
+  ) {
     try {
-      const response = await apiClient.post('/social-agent/generate/visual-post', {
-        workspaceId,
-        calendarEntryId,
-        modelId,
-        postFormat, // 'single' | 'carousel'
-        aspectRatio, // '1:1' | '4:3' | '16:9' | '9:16'
-        carouselCount
-      }, { timeout: 180000 }); // 3-min timeout — pipeline can take up to 90s
+      const response = await apiClient.post(
+        '/social-agent/generate/visual-post',
+        {
+          workspaceId,
+          calendarEntryId,
+          modelId,
+          postFormat, // 'single' | 'carousel'
+          aspectRatio, // '1:1' | '4:3' | '16:9' | '9:16'
+          carouselCount,
+        },
+        { timeout: 180000 }
+      ); // 3-min timeout — pipeline can take up to 90s
       return response.data;
     } catch (error) {
       const msg = error.response?.data?.error || error.message || 'Visual post generation failed';
@@ -475,10 +547,13 @@ export const apiService = {
 
   async getSocialHashtagInsights(workspaceId, topic) {
     try {
-      const response = await apiClient.post('/social-agent/hashtag-insights', { workspaceId, topic });
+      const response = await apiClient.post('/social-agent/hashtag-insights', {
+        workspaceId,
+        topic,
+      });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch hashtag insights:", error);
+      console.error('Failed to fetch hashtag insights:', error);
       throw error;
     }
   },
@@ -488,7 +563,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/posts/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch posts:", error);
+      console.error('Failed to fetch posts:', error);
       return { success: false, posts: [] };
     }
   },
@@ -498,7 +573,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/posts/detail/${postId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch post detail:", error);
+      console.error('Failed to fetch post detail:', error);
       return { success: false };
     }
   },
@@ -508,7 +583,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent/assets/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch assets library:", error);
+      console.error('Failed to fetch assets library:', error);
       return { success: false, assets: [] };
     }
   },
@@ -518,7 +593,7 @@ export const apiService = {
       const response = await apiClient.delete(`/social-agent/assets/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete all brand assets:", error);
+      console.error('Failed to delete all brand assets:', error);
       return { success: false, error: error.message };
     }
   },
@@ -528,7 +603,7 @@ export const apiService = {
       const response = await apiClient.post('/social-agent/assets/generate', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to generate one-off asset:", error);
+      console.error('Failed to generate one-off asset:', error);
       throw error;
     }
   },
@@ -538,7 +613,7 @@ export const apiService = {
       const response = await apiClient.post('/social-agent/generate/regenerate', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to regenerate post:", error);
+      console.error('Failed to regenerate post:', error);
       throw error;
     }
   },
@@ -548,19 +623,21 @@ export const apiService = {
       const response = await apiClient.delete(`/social-agent/posts/${postId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete post:", error);
+      console.error('Failed to delete post:', error);
       throw error;
     }
   },
 
-
   // Phase 3: Review & Schedule
   async submitPostForReview(postId, data) {
     try {
-      const response = await apiClient.patch(`/social-agent-review/posts/${postId}/send-for-review`, data);
+      const response = await apiClient.patch(
+        `/social-agent-review/posts/${postId}/send-for-review`,
+        data
+      );
       return response.data;
     } catch (error) {
-      console.error("Failed to submit for review:", error);
+      console.error('Failed to submit for review:', error);
       throw error;
     }
   },
@@ -570,7 +647,7 @@ export const apiService = {
       const response = await apiClient.patch(`/social-agent-review/posts/${postId}/approve`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to approve post:", error);
+      console.error('Failed to approve post:', error);
       throw error;
     }
   },
@@ -580,7 +657,7 @@ export const apiService = {
       const response = await apiClient.patch(`/social-agent-review/posts/${postId}/reject`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to reject post:", error);
+      console.error('Failed to reject post:', error);
       throw error;
     }
   },
@@ -590,7 +667,7 @@ export const apiService = {
       const response = await apiClient.post(`/social-agent-review/posts/${postId}/comment`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      console.error('Failed to add comment:', error);
       throw error;
     }
   },
@@ -600,7 +677,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent-review/posts/${postId}/history`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch history:", error);
+      console.error('Failed to fetch history:', error);
       return { success: false, actions: [], comments: [] };
     }
   },
@@ -610,7 +687,7 @@ export const apiService = {
       const response = await apiClient.patch(`/social-agent-review/posts/${postId}/schedule`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to schedule post:", error);
+      console.error('Failed to schedule post:', error);
       throw error;
     }
   },
@@ -620,7 +697,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent-review/review-queue/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch review queue:", error);
+      console.error('Failed to fetch review queue:', error);
       return { success: false, posts: [] };
     }
   },
@@ -630,7 +707,7 @@ export const apiService = {
       const response = await apiClient.get(`/social-agent-review/schedule/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch schedule:", error);
+      console.error('Failed to fetch schedule:', error);
       return { success: false, items: [] };
     }
   },
@@ -641,7 +718,7 @@ export const apiService = {
       const response = await apiClient.post('/ai-ad/configure', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to configure AI Ad Agent:", error);
+      console.error('Failed to configure AI Ad Agent:', error);
       throw error;
     }
   },
@@ -651,7 +728,7 @@ export const apiService = {
       const response = await apiClient.get('/ai-ad/posts');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch AI Ad Agent posts:", error);
+      console.error('Failed to fetch AI Ad Agent posts:', error);
       return { success: false, posts: [] };
     }
   },
@@ -661,8 +738,8 @@ export const apiService = {
       const response = await apiClient.get('/ai-ad/status');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch AI Ad Agent status:", error);
-      return { success: false, status: "none" };
+      console.error('Failed to fetch AI Ad Agent status:', error);
+      return { success: false, status: 'none' };
     }
   },
 
@@ -680,10 +757,12 @@ export const apiService = {
           id: 'demo-user-123',
           name: 'Demo User',
           email: credentials.email,
-          avatar: ''
+          avatar: '',
         };
       }
-      throw new Error(error.response?.data?.error || error.message || 'Failed to connect to server');
+      throw new Error(
+        error.response?.data?.error || error.message || 'Failed to connect to server'
+      );
     }
   },
 
@@ -699,7 +778,7 @@ export const apiService = {
         id: 'demo-user-' + Date.now(),
         name: userData.name,
         email: userData.email,
-        avatar: ''
+        avatar: '',
       };
     }
   },
@@ -715,7 +794,7 @@ export const apiService = {
         totalChats: 24,
         activeAgents: 6,
         tokensUsed: 450230,
-        savedTime: '18h 45m'
+        savedTime: '18h 45m',
       };
     }
   },
@@ -739,8 +818,8 @@ export const apiService = {
           id: a._id,
           name: a.name || a.agentName,
           pricing: a.pricing || 'Free',
-          status: a.status || 'Active'
-        }))
+          status: a.status || 'Active',
+        })),
       };
     }
   },
@@ -790,7 +869,9 @@ export const apiService = {
     try {
       const params = { range };
       if (tool) params.tool = tool;
-      const response = await apiClient.get(`/admin/analytics/errors/${encodeURIComponent(mode)}`, { params });
+      const response = await apiClient.get(`/admin/analytics/errors/${encodeURIComponent(mode)}`, {
+        params,
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch error drill-down:', error.message);
@@ -820,12 +901,48 @@ export const apiService = {
       if (stored) return JSON.parse(stored);
 
       const defaults = [
-        { _id: '683d38ce-1', name: 'AIFLOW', description: 'Streamline your AI workflows.', pricing: 'Free', status: 'Inactive' },
-        { _id: '683d38ce-2', name: 'AIMARKET', description: 'AI-driven marketplace insights.', pricing: 'Free', status: 'Inactive' },
-        { _id: '683d38ce-3', name: 'AICONNECT', description: 'Connect all your AI tools.', pricing: 'Free', status: 'Inactive' },
-        { _id: '693d38ce-4', name: 'AIMUSIC', description: 'AI-powered music generation.', pricing: 'Free', status: 'Inactive' },
-        { _id: '693d38ce-5', name: 'AITRANS', description: 'Advanced AI translation services.', pricing: 'Free', status: 'Inactive' },
-        { _id: '683d38ce-6', name: 'AISCRIPT', description: 'AI script writing and automation.', pricing: 'Free', status: 'Inactive' }
+        {
+          _id: '683d38ce-1',
+          name: 'AIFLOW',
+          description: 'Streamline your AI workflows.',
+          pricing: 'Free',
+          status: 'Inactive',
+        },
+        {
+          _id: '683d38ce-2',
+          name: 'AIMARKET',
+          description: 'AI-driven marketplace insights.',
+          pricing: 'Free',
+          status: 'Inactive',
+        },
+        {
+          _id: '683d38ce-3',
+          name: 'AICONNECT',
+          description: 'Connect all your AI tools.',
+          pricing: 'Free',
+          status: 'Inactive',
+        },
+        {
+          _id: '693d38ce-4',
+          name: 'AIMUSIC',
+          description: 'AI-powered music generation.',
+          pricing: 'Free',
+          status: 'Inactive',
+        },
+        {
+          _id: '693d38ce-5',
+          name: 'AITRANS',
+          description: 'Advanced AI translation services.',
+          pricing: 'Free',
+          status: 'Inactive',
+        },
+        {
+          _id: '683d38ce-6',
+          name: 'AISCRIPT',
+          description: 'AI script writing and automation.',
+          pricing: 'Free',
+          status: 'Inactive',
+        },
       ];
 
       localStorage.setItem('mock_agents', JSON.stringify(defaults));
@@ -881,7 +998,7 @@ export const apiService = {
       const response = await apiClient.post(`/agents/submit-review/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to submit review:", error);
+      console.error('Failed to submit review:', error);
       throw error;
     }
   },
@@ -891,7 +1008,7 @@ export const apiService = {
       const response = await apiClient.post(`/agents/approve/${id}`, { message });
       return response.data;
     } catch (error) {
-      console.error("Failed to approve agent:", error);
+      console.error('Failed to approve agent:', error);
       throw error;
     }
   },
@@ -901,7 +1018,7 @@ export const apiService = {
       const response = await apiClient.post(`/agents/reject/${id}`, { reason });
       return response.data;
     } catch (error) {
-      console.error("Failed to reject agent:", error);
+      console.error('Failed to reject agent:', error);
       throw error;
     }
   },
@@ -911,7 +1028,7 @@ export const apiService = {
       const response = await apiClient.get('/revenue/vendor');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch vendor revenue:", error);
+      console.error('Failed to fetch vendor revenue:', error);
       throw error;
     }
   },
@@ -921,11 +1038,11 @@ export const apiService = {
       const response = await apiClient.get('/revenue/admin');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch admin revenue:", error);
+      console.error('Failed to fetch admin revenue:', error);
       // Fallback or rethrow
       return {
         overview: { totalGross: 0, totalVendorPayouts: 0, totalPlatformNet: 0 },
-        appPerformance: []
+        appPerformance: [],
       };
     }
   },
@@ -935,7 +1052,7 @@ export const apiService = {
       const response = await apiClient.get('/revenue/transactions');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch vendor transactions:", error);
+      console.error('Failed to fetch vendor transactions:', error);
       throw error;
     }
   },
@@ -945,7 +1062,7 @@ export const apiService = {
       const response = await apiClient.get('/revenue/admin/transactions');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch admin transactions:", error);
+      console.error('Failed to fetch admin transactions:', error);
       return []; // Return empty array on error
     }
   },
@@ -953,7 +1070,7 @@ export const apiService = {
   async downloadInvoice(transactionId) {
     try {
       const response = await apiClient.get(`/revenue/invoice/${transactionId}`, {
-        responseType: 'blob'
+        responseType: 'blob',
       });
 
       // Create blob link to download
@@ -968,7 +1085,7 @@ export const apiService = {
 
       return true;
     } catch (error) {
-      console.error("Failed to download invoice:", error);
+      console.error('Failed to download invoice:', error);
       throw error;
     }
   },
@@ -978,12 +1095,10 @@ export const apiService = {
       const response = await apiClient.post('/voice/transcribe', { audio: audioBase64, mimeType });
       return response.data;
     } catch (error) {
-      console.error("Audio transcription failed:", error);
+      console.error('Audio transcription failed:', error);
       throw error;
     }
   },
-
-
 
   // --- Notifications ---
   async getNotifications() {
@@ -991,7 +1106,7 @@ export const apiService = {
       const response = await apiClient.get('/notifications');
       return response.data;
     } catch (error) {
-      console.warn("Using mock notifications");
+      console.warn('Using mock notifications');
       return [];
     }
   },
@@ -1001,7 +1116,7 @@ export const apiService = {
       const response = await apiClient.put(`/notifications/${id}/read`);
       return response.data;
     } catch (error) {
-      console.error("Failed to mark notification read:", error);
+      console.error('Failed to mark notification read:', error);
     }
   },
 
@@ -1015,10 +1130,34 @@ export const apiService = {
       if (stored) return JSON.parse(stored);
 
       const defaults = [
-        { id: '1', name: 'Daily Digest', description: 'Summarize unread emails at 9 AM', active: true, type: 'Email' },
-        { id: '2', name: 'Lead Qualifier', description: 'Score incoming leads from CRM', active: false, type: 'CRM' },
-        { id: '3', name: 'Code Reviewer', description: 'Auto-review PRs on GitHub', active: true, type: 'Dev' },
-        { id: '4', name: 'Meeting Notes', description: 'Transcribe and summarize Zoom calls', active: true, type: 'Productivity' }
+        {
+          id: '1',
+          name: 'Daily Digest',
+          description: 'Summarize unread emails at 9 AM',
+          active: true,
+          type: 'Email',
+        },
+        {
+          id: '2',
+          name: 'Lead Qualifier',
+          description: 'Score incoming leads from CRM',
+          active: false,
+          type: 'CRM',
+        },
+        {
+          id: '3',
+          name: 'Code Reviewer',
+          description: 'Auto-review PRs on GitHub',
+          active: true,
+          type: 'Dev',
+        },
+        {
+          id: '4',
+          name: 'Meeting Notes',
+          description: 'Transcribe and summarize Zoom calls',
+          active: true,
+          type: 'Productivity',
+        },
       ];
 
       localStorage.setItem('mock_automations', JSON.stringify(defaults));
@@ -1033,9 +1172,7 @@ export const apiService = {
     } catch (error) {
       const stored = JSON.parse(localStorage.getItem('mock_automations') || '[]');
 
-      const updated = stored.map(a =>
-        a.id === id ? { ...a, active: !a.active } : a
-      );
+      const updated = stored.map(a => (a.id === id ? { ...a, active: !a.active } : a));
 
       localStorage.setItem('mock_automations', JSON.stringify(updated));
 
@@ -1056,7 +1193,7 @@ export const apiService = {
         allowPublicSignup: true,
         defaultModel: 'gemini-2.5-flash',
         maxTokensPerUser: 500000,
-        organizationName: 'ACME Corp'
+        organizationName: 'ACME Corp',
       };
     }
   },
@@ -1076,7 +1213,7 @@ export const apiService = {
       const response = await apiClient.post('/admin/adjust-credits', payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to adjust credits:", error);
+      console.error('Failed to adjust credits:', error);
       throw error;
     }
   },
@@ -1086,7 +1223,7 @@ export const apiService = {
       const response = await apiClient.post('/admin/manual-upgrade', payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to upgrade plan:", error);
+      console.error('Failed to upgrade plan:', error);
       throw error;
     }
   },
@@ -1096,11 +1233,10 @@ export const apiService = {
       const response = await apiClient.post('/admin/send-email', payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to send email to user:", error);
+      console.error('Failed to send email to user:', error);
       throw error;
     }
   },
-
 
   async getAllUsers() {
     try {
@@ -1117,7 +1253,7 @@ export const apiService = {
       const response = await apiClient.put(`/user/${id}/block`, { isBlocked });
       return response.data;
     } catch (error) {
-      console.error("Failed to block/unblock user:", error);
+      console.error('Failed to block/unblock user:', error);
       throw error;
     }
   },
@@ -1127,7 +1263,7 @@ export const apiService = {
       await apiClient.delete(`/user/${id}`);
       return true;
     } catch (error) {
-      console.error("Failed to delete user:", error);
+      console.error('Failed to delete user:', error);
       throw error;
     }
   },
@@ -1138,9 +1274,9 @@ export const apiService = {
       const response = await apiClient.post('/reports/submit', reportData);
       return response.data;
     } catch (error) {
-      console.warn("Backend report submission failed, using mock:", error.message);
+      console.warn('Backend report submission failed, using mock:', error.message);
       // Mock successful response for demo
-      return { success: true, message: "Report submitted successfully (mock)" };
+      return { success: true, message: 'Report submitted successfully (mock)' };
     }
   },
 
@@ -1149,7 +1285,7 @@ export const apiService = {
       const response = await apiClient.get('/reports');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch reports:", error);
+      console.error('Failed to fetch reports:', error);
       return [];
     }
   },
@@ -1160,7 +1296,7 @@ export const apiService = {
       const response = await apiClient.get('/pricing/packages');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch packages:", error);
+      console.error('Failed to fetch packages:', error);
       throw error;
     }
   },
@@ -1170,7 +1306,7 @@ export const apiService = {
       const response = await apiClient.post('/admin/packages', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to create package:", error);
+      console.error('Failed to create package:', error);
       throw error;
     }
   },
@@ -1180,7 +1316,7 @@ export const apiService = {
       const response = await apiClient.put(`/admin/packages/${id}`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to update package:", error);
+      console.error('Failed to update package:', error);
       throw error;
     }
   },
@@ -1190,7 +1326,7 @@ export const apiService = {
       const response = await apiClient.delete(`/admin/packages/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete package:", error);
+      console.error('Failed to delete package:', error);
       throw error;
     }
   },
@@ -1212,7 +1348,7 @@ export const apiService = {
       const response = await apiClient.get('/pricing/plans');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch plans:", error);
+      console.error('Failed to fetch plans:', error);
       throw error;
     }
   },
@@ -1222,7 +1358,7 @@ export const apiService = {
       const response = await apiClient.get('/pricing/feature-costs');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch public feature costs:", error);
+      console.error('Failed to fetch public feature costs:', error);
       return { success: false, features: [] };
     }
   },
@@ -1232,7 +1368,7 @@ export const apiService = {
       const response = await apiClient.post('/admin/plans', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to create plan:", error);
+      console.error('Failed to create plan:', error);
       throw error;
     }
   },
@@ -1242,7 +1378,7 @@ export const apiService = {
       const response = await apiClient.put(`/admin/plans/${id}`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to update plan:", error);
+      console.error('Failed to update plan:', error);
       throw error;
     }
   },
@@ -1252,7 +1388,7 @@ export const apiService = {
       const response = await apiClient.delete(`/admin/plans/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete plan:", error);
+      console.error('Failed to delete plan:', error);
       throw error;
     }
   },
@@ -1283,11 +1419,11 @@ export const apiService = {
       const formData = new FormData();
       formData.append('file', file);
       const response = await apiClient.post('/admin/parse-legal-doc', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to parse document:", error);
+      console.error('Failed to parse document:', error);
       throw error;
     }
   },
@@ -1297,7 +1433,7 @@ export const apiService = {
       const response = await apiClient.put(`/reports/${id}/resolve`, { status, resolutionNote });
       return response.data;
     } catch (error) {
-      console.error("Failed to resolve report:", error);
+      console.error('Failed to resolve report:', error);
       throw error;
     }
   },
@@ -1307,7 +1443,7 @@ export const apiService = {
       const response = await apiClient.post(`/reports/${ticketId}/reply`, { message });
       return response.data;
     } catch (error) {
-      console.error("Failed to send reply:", error);
+      console.error('Failed to send reply:', error);
       throw error;
     }
   },
@@ -1318,7 +1454,7 @@ export const apiService = {
       const response = await apiClient.get('/personal-assistant/tasks', { params });
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch tasks:", error);
+      console.error('Failed to fetch tasks:', error);
       return [];
     }
   },
@@ -1328,7 +1464,7 @@ export const apiService = {
       const response = await apiClient.post('/personal-assistant/tasks', data);
       return response.data;
     } catch (error) {
-      console.error("Failed to create task:", error);
+      console.error('Failed to create task:', error);
       throw error;
     }
   },
@@ -1338,7 +1474,7 @@ export const apiService = {
       const response = await apiClient.put(`/personal-assistant/tasks/${id}`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to update task:", error);
+      console.error('Failed to update task:', error);
       throw error;
     }
   },
@@ -1348,7 +1484,7 @@ export const apiService = {
       const response = await apiClient.delete(`/personal-assistant/tasks/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete task:", error);
+      console.error('Failed to delete task:', error);
       throw error;
     }
   },
@@ -1359,7 +1495,7 @@ export const apiService = {
       const response = await apiClient.get('aibase/knowledge/documents');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch knowledge documents:", error);
+      console.error('Failed to fetch knowledge documents:', error);
       throw error;
     }
   },
@@ -1368,16 +1504,16 @@ export const apiService = {
     try {
       const response = await apiClient.post('aibase/knowledge/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (progressEvent) => {
+        onUploadProgress: progressEvent => {
           if (onProgress) {
             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             onProgress(percentCompleted);
           }
-        }
+        },
       });
       return response.data;
     } catch (error) {
-      console.error("Failed to upload knowledge document:", error);
+      console.error('Failed to upload knowledge document:', error);
       throw error;
     }
   },
@@ -1387,7 +1523,7 @@ export const apiService = {
       const response = await apiClient.post('aibase/knowledge/upload-url', payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to upload knowledge URL:", error);
+      console.error('Failed to upload knowledge URL:', error);
       throw error;
     }
   },
@@ -1397,7 +1533,7 @@ export const apiService = {
       const response = await apiClient.get('aibase/knowledge/list');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch knowledge list:", error);
+      console.error('Failed to fetch knowledge list:', error);
       throw error;
     }
   },
@@ -1407,7 +1543,7 @@ export const apiService = {
       const response = await apiClient.post(`aibase/knowledge/reindex/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to reindex document:", error);
+      console.error('Failed to reindex document:', error);
       throw error;
     }
   },
@@ -1418,18 +1554,20 @@ export const apiService = {
       const response = await apiClient.get('aibase/knowledge/sources');
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch knowledge sources:", error);
+      console.error('Failed to fetch knowledge sources:', error);
       throw error;
     }
   },
 
   async recrawlSource(payload) {
     try {
-      const path = payload.id ? `aibase/knowledge/recrawl/${payload.id}` : 'aibase/knowledge/recrawl';
+      const path = payload.id
+        ? `aibase/knowledge/recrawl/${payload.id}`
+        : 'aibase/knowledge/recrawl';
       const response = await apiClient.post(path, payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to recrawl source:", error);
+      console.error('Failed to recrawl source:', error);
       throw error;
     }
   },
@@ -1439,7 +1577,7 @@ export const apiService = {
       const response = await apiClient.patch(`aibase/knowledge/sources/${id}`, payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to update knowledge source:", error);
+      console.error('Failed to update knowledge source:', error);
       throw error;
     }
   },
@@ -1449,7 +1587,7 @@ export const apiService = {
       const response = await apiClient.delete(`aibase/knowledge/sources/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete knowledge source:", error);
+      console.error('Failed to delete knowledge source:', error);
       throw error;
     }
   },
@@ -1459,7 +1597,7 @@ export const apiService = {
       const response = await apiClient.delete(`aibase/knowledge/delete/${id}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete knowledge document:", error);
+      console.error('Failed to delete knowledge document:', error);
       throw error;
     }
   },
@@ -1469,12 +1607,10 @@ export const apiService = {
       const response = await apiClient.post('aibase/chat', payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to generate AIBASE chat response:", error);
+      console.error('Failed to generate AIBASE chat response:', error);
       throw error;
     }
   },
-
-
 
   // ── Credits & Subscription (Quota System) ──────────────────────────────────────────────
   async getQuotaStatus() {
@@ -1487,7 +1623,15 @@ export const apiService = {
       return {
         success: false,
         planKey: 'free',
-        limits: { chat: 100, chatScope: 'total', images: 0, carousels: 0, videos: 0, editImage: false, cashflow: false },
+        limits: {
+          chat: 100,
+          chatScope: 'total',
+          images: 0,
+          carousels: 0,
+          videos: 0,
+          editImage: false,
+          cashflow: false,
+        },
         usage: { chat: 0, images: 0, carousels: 0, videos: 0 },
       };
     }
@@ -1517,7 +1661,7 @@ export const apiService = {
   // --- Projects Cache Layer ---
   async getProjects() {
     if (window.__projectsCache) {
-      console.log("[SPA Cache] Returning cached projects list");
+      console.log('[SPA Cache] Returning cached projects list');
       return window.__projectsCache;
     }
     if (window.__projectsPromise) {
@@ -1528,18 +1672,20 @@ export const apiService = {
       const isMock = localStorage.getItem('token') === 'mock_token';
       if (isMock) {
         const stored = localStorage.getItem('mock_projects');
-        const data = stored ? JSON.parse(stored) : [
-          {
-            _id: 'mock_case_1',
-            name: 'Supreme Court Civil Dispute',
-            isLegalCase: true,
-            caseFacts: 'This is a mock legal case involving land disputation.',
-            legalStrategy: [],
-            evidence: [],
-            hearings: [],
-            citations: []
-          }
-        ];
+        const data = stored
+          ? JSON.parse(stored)
+          : [
+              {
+                _id: 'mock_case_1',
+                name: 'Supreme Court Civil Dispute',
+                isLegalCase: true,
+                caseFacts: 'This is a mock legal case involving land disputation.',
+                legalStrategy: [],
+                evidence: [],
+                hearings: [],
+                citations: [],
+              },
+            ];
         window.__projectsCache = data;
         return data;
       }
@@ -1548,7 +1694,7 @@ export const apiService = {
         window.__projectsCache = response.data;
         return response.data;
       } catch (error) {
-        console.error("Failed to fetch projects:", error);
+        console.error('Failed to fetch projects:', error);
         return [];
       } finally {
         window.__projectsPromise = null;
@@ -1573,14 +1719,14 @@ export const apiService = {
         window.__singleProjectCache[projectId] = project;
         return project;
       }
-      throw new Error("Project not found");
+      throw new Error('Project not found');
     }
     try {
       const response = await apiClient.get(`/projects/${projectId}`);
       window.__singleProjectCache[projectId] = response.data;
       return response.data;
     } catch (error) {
-      console.error("Failed to fetch project:", error);
+      console.error('Failed to fetch project:', error);
       throw error;
     }
   },
@@ -1602,7 +1748,7 @@ export const apiService = {
         legalStrategy: [],
         evidence: [],
         hearings: [],
-        citations: []
+        citations: [],
       };
       stored.push(newProj);
       localStorage.setItem('mock_projects', JSON.stringify(stored));
@@ -1612,7 +1758,7 @@ export const apiService = {
       const response = await apiClient.post('/projects', payload);
       return response.data;
     } catch (error) {
-      console.error("Failed to create project:", error);
+      console.error('Failed to create project:', error);
       throw error;
     }
   },
@@ -1641,7 +1787,7 @@ export const apiService = {
       const response = await apiClient.put(`/projects/${projectId}`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to update project:", error);
+      console.error('Failed to update project:', error);
       throw error;
     }
   },
@@ -1663,7 +1809,7 @@ export const apiService = {
       const response = await apiClient.delete(`/projects/${projectId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete project:", error);
+      console.error('Failed to delete project:', error);
       throw error;
     }
   },
@@ -1683,13 +1829,13 @@ export const apiService = {
         localStorage.setItem('mock_projects', JSON.stringify(stored));
         return stored[index];
       }
-      throw new Error("Project not found");
+      throw new Error('Project not found');
     }
     try {
       const response = await apiClient.put(`/projects/${id}`, { name });
       return response.data;
     } catch (error) {
-      console.error("Failed to rename project:", error);
+      console.error('Failed to rename project:', error);
       throw error;
     }
   },
@@ -1699,7 +1845,7 @@ export const apiService = {
       const response = await apiClient.get('/admin/feature-credits');
       return response.data;
     } catch (error) {
-      console.error("Failed to load feature credits:", error);
+      console.error('Failed to load feature credits:', error);
       throw error;
     }
   },
@@ -1709,18 +1855,21 @@ export const apiService = {
       const response = await apiClient.put(`/admin/feature-credits/${id}`, data);
       return response.data;
     } catch (error) {
-      console.error("Failed to update feature credit:", error);
+      console.error('Failed to update feature credit:', error);
       throw error;
     }
   },
 
-
   async generateSocialAgentCalendar(workspaceId) {
     try {
-      const response = await apiClient.post('/social-agent/generate/calendar', { workspaceId }, { timeout: 300000 });
+      const response = await apiClient.post(
+        '/social-agent/generate/calendar',
+        { workspaceId },
+        { timeout: 300000 }
+      );
       return response.data;
     } catch (error) {
-      console.error("AI Calendar Generation failed:", error);
+      console.error('AI Calendar Generation failed:', error);
       throw error;
     }
   },
@@ -1730,17 +1879,20 @@ export const apiService = {
       const response = await apiClient.post('/social-agent/generate/hashtags', { workspaceId });
       return response.data;
     } catch (error) {
-      console.error("AI Hashtag Generation failed:", error);
+      console.error('AI Hashtag Generation failed:', error);
       throw error;
     }
   },
 
-  async generateSocialAgentImagePrompt(workspaceId, userIdea = "") {
+  async generateSocialAgentImagePrompt(workspaceId, userIdea = '') {
     try {
-      const response = await apiClient.post('/social-agent/generate/image-prompt', { workspaceId, userIdea });
+      const response = await apiClient.post('/social-agent/generate/image-prompt', {
+        workspaceId,
+        userIdea,
+      });
       return response.data;
     } catch (error) {
-      console.error("AI Image Prompt Generation failed:", error);
+      console.error('AI Image Prompt Generation failed:', error);
       throw error;
     }
   },
@@ -1749,12 +1901,12 @@ export const apiService = {
     try {
       const response = await apiClient.get('/social-agent/export/calendar', {
         params: { workspaceId },
-        responseType: 'blob'
+        responseType: 'blob',
       });
       return response.data;
     } catch (error) {
-      console.error("Calendar export failed:", error);
-      throw new Error("Unable to generate Excel. Make sure you have generated content first.");
+      console.error('Calendar export failed:', error);
+      throw new Error('Unable to generate Excel. Make sure you have generated content first.');
     }
   },
 
@@ -1763,7 +1915,7 @@ export const apiService = {
       const response = await apiClient.delete(`/social-agent/calendar/entry/${entryId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete calendar entry:", error);
+      console.error('Failed to delete calendar entry:', error);
       throw error;
     }
   },
@@ -1773,7 +1925,7 @@ export const apiService = {
       const response = await apiClient.delete(`/social-agent/calendar/clear/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to clear calendar:", error);
+      console.error('Failed to clear calendar:', error);
       throw error;
     }
   },
@@ -1783,7 +1935,7 @@ export const apiService = {
       const response = await apiClient.patch('/social-agent/onboarding/reset');
       return response.data;
     } catch (error) {
-      console.error("Failed to reset onboarding:", error);
+      console.error('Failed to reset onboarding:', error);
       throw error;
     }
   },
@@ -1793,60 +1945,73 @@ export const apiService = {
       const response = await apiClient.delete(`/social-agent/workspace/${workspaceId}`);
       return response.data;
     } catch (error) {
-      console.error("Failed to delete brand workspace:", error);
+      console.error('Failed to delete brand workspace:', error);
       throw error;
     }
   },
-
 
   async searchPrecedents(query, projectId = null, language = 'English') {
     try {
       const response = await apiClient.post('/precedents/search', { query, projectId, language });
       return response.data;
     } catch (error) {
-      console.error("Failed to search precedents:", error);
+      console.error('Failed to search precedents:', error);
       throw error;
     }
   },
 
   async analyzePrecedent(actionType, precedentData, projectId = null, language = 'English') {
     try {
-      const response = await apiClient.post('/precedents/analyze', { actionType, precedentData, projectId, language });
+      const response = await apiClient.post('/precedents/analyze', {
+        actionType,
+        precedentData,
+        projectId,
+        language,
+      });
       return response.data;
     } catch (error) {
-      console.error("Failed to analyze precedent:", error);
+      console.error('Failed to analyze precedent:', error);
       throw error;
     }
   },
 
   async reanalyzePrecedent(precedentData, projectId = null, language = 'English') {
     try {
-      const response = await apiClient.post('/precedents/reanalyze', { precedentData, projectId, language });
+      const response = await apiClient.post('/precedents/reanalyze', {
+        precedentData,
+        projectId,
+        language,
+      });
       return response.data;
     } catch (error) {
-      console.error("Failed to re-analyze precedent:", error);
+      console.error('Failed to re-analyze precedent:', error);
       throw error;
     }
   },
 
   async generatePrecedentPDF(precedentData, language = 'English') {
     try {
-      const response = await apiClient.post('/precedents/generate-pdf', { precedentData, language }, {
-        responseType: 'blob'
-      });
+      const response = await apiClient.post(
+        '/precedents/generate-pdf',
+        { precedentData, language },
+        {
+          responseType: 'blob',
+        }
+      );
       return response.data;
     } catch (error) {
-      console.error("Failed to generate PDF:", error);
+      console.error('Failed to generate PDF:', error);
       throw error;
     }
   },
-
 
   async analyzeProject(projectId, rawText = null) {
     try {
       console.log(`[Frontend] Running AI analysis for project: ${projectId}`);
       const response = await apiClient.post(`/projects/${projectId}/analyze`, { rawText });
-      console.log(`[Frontend] Analysis complete. Strength: ${response.data?.intelligence?.strengthScore}`);
+      console.log(
+        `[Frontend] Analysis complete. Strength: ${response.data?.intelligence?.strengthScore}`
+      );
       return response.data;
     } catch (error) {
       console.error('[Frontend] analyzeProject failed:', error?.response?.data || error.message);
@@ -1862,16 +2027,14 @@ export const apiService = {
         intelligence: {
           strengthScore: 78,
           winProbability: 82,
-          risks: ["Limitation period threshold", "Witness admissibility challenge"],
-          opportunities: ["Precedent case aligns perfectly", "Inconsistency in FIR timeline"]
+          risks: ['Limitation period threshold', 'Witness admissibility challenge'],
+          opportunities: ['Precedent case aligns perfectly', 'Inconsistency in FIR timeline'],
         },
         tasks: [
-          { id: "task1", title: "Submit Section 65B Certificate", done: false },
-          { id: "task2", title: "File response to injunction application", done: true }
+          { id: 'task1', title: 'Submit Section 65B Certificate', done: false },
+          { id: 'task2', title: 'File response to injunction application', done: true },
         ],
-        evidence: [
-          { id: "ev1", name: "Land Sale Deed", admissibility: "High", risk: "Low" }
-        ]
+        evidence: [{ id: 'ev1', name: 'Land Sale Deed', admissibility: 'High', risk: 'Low' }],
       };
     }
     try {
@@ -1908,7 +2071,7 @@ export const apiService = {
   async getAdminInvoices(search = '', page = 1) {
     try {
       const response = await apiClient.get('/admin/billing/invoices', {
-        params: { search, page, limit: 15 }
+        params: { search, page, limit: 15 },
       });
       return response.data;
     } catch (error) {
@@ -1940,7 +2103,9 @@ export const apiService = {
 
   async getMonthlyReport(month, year) {
     try {
-      const response = await apiClient.get('/admin/finance/monthly-report', { params: { month, year } });
+      const response = await apiClient.get('/admin/finance/monthly-report', {
+        params: { month, year },
+      });
       return response.data;
     } catch (error) {
       console.error('getMonthlyReport failed:', error);
@@ -1950,7 +2115,10 @@ export const apiService = {
 
   async exportFinanceCSV(params = {}) {
     try {
-      const response = await apiClient.get('/admin/finance/export-csv', { params, responseType: 'blob' });
+      const response = await apiClient.get('/admin/finance/export-csv', {
+        params,
+        responseType: 'blob',
+      });
       return response.data;
     } catch (error) {
       console.error('exportFinanceCSV failed:', error);
@@ -1960,7 +2128,9 @@ export const apiService = {
 
   async syncRazorpayPayments(daysBack = 90) {
     try {
-      const response = await apiClient.post('/admin/finance/sync-razorpay', null, { params: { daysBack } });
+      const response = await apiClient.post('/admin/finance/sync-razorpay', null, {
+        params: { daysBack },
+      });
       return response.data;
     } catch (error) {
       console.error('syncRazorpayPayments failed:', error);
@@ -1971,7 +2141,7 @@ export const apiService = {
   async downloadInvoice(subscriptionId) {
     try {
       const response = await apiClient.get(`/payment/invoice/${subscriptionId}`, {
-        responseType: 'blob'
+        responseType: 'blob',
       });
       return response.data;
     } catch (error) {
@@ -2086,14 +2256,20 @@ export const apiService = {
       const response = await apiClient.get(`/incidents/${incidentId}`);
       return response.data;
     } catch (error) {
-      console.error('[Frontend] getIncidentDetails failed:', error?.response?.data || error.message);
+      console.error(
+        '[Frontend] getIncidentDetails failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },
 
   async assignIncident(incidentId, developerId, developerName) {
     try {
-      const response = await apiClient.post(`/incidents/${incidentId}/assign`, { developerId, developerName });
+      const response = await apiClient.post(`/incidents/${incidentId}/assign`, {
+        developerId,
+        developerName,
+      });
       return response.data;
     } catch (error) {
       console.error('[Frontend] assignIncident failed:', error?.response?.data || error.message);
@@ -2116,7 +2292,10 @@ export const apiService = {
       const response = await apiClient.post(`/incidents/${incidentId}/status`, { status, notes });
       return response.data;
     } catch (error) {
-      console.error('[Frontend] updateIncidentStatus failed:', error?.response?.data || error.message);
+      console.error(
+        '[Frontend] updateIncidentStatus failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },
@@ -2126,7 +2305,10 @@ export const apiService = {
       const response = await apiClient.get(`/incidents/session-replay/${sessionId}`);
       return response.data;
     } catch (error) {
-      console.error('[Frontend] getSessionReplayDetails failed:', error?.response?.data || error.message);
+      console.error(
+        '[Frontend] getSessionReplayDetails failed:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },

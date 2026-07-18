@@ -9,13 +9,7 @@ import { exportToPDF } from '../Tools/AI_Legal/utils/exportToPDF';
  * - msg: the message object containing at least `id` and `content`.
  * - outputLang, setOutputLang, getDisplayText, translateText: language utilities from useOutputLanguage.
  */
-const OutputActionToolbar = ({
-  msg,
-  outputLang,
-  setOutputLang,
-  getDisplayText,
-  translateText,
-}) => {
+const OutputActionToolbar = ({ msg, outputLang, setOutputLang, getDisplayText, translateText }) => {
   const [copied, setCopied] = useState(false);
   const [activeDownloadMenu, setActiveDownloadMenu] = useState(false);
   const [activeShareMenu, setActiveShareMenu] = useState(false);
@@ -45,16 +39,20 @@ const OutputActionToolbar = ({
           [isHi ? 'उत्पन्न तिथि' : 'Date Generated']: new Date().toLocaleString(),
         },
       });
-      toast.success(isHi ? 'PDF सफलतापूर्वक निर्यात किया गया' : 'PDF exported successfully', { id: toastId });
+      toast.success(isHi ? 'PDF सफलतापूर्वक निर्यात किया गया' : 'PDF exported successfully', {
+        id: toastId,
+      });
     } catch (e) {
       console.error(e);
       toast.error(isHi ? 'PDF निर्यात विफल' : 'Failed to export PDF', { id: toastId });
     }
   };
 
-  const downloadFile = (type) => {
+  const downloadFile = type => {
     const resolved = getDisplayText(msg.content);
-    const blob = new Blob([resolved], { type: type === 'doc' ? 'application/msword' : 'text/plain;charset=utf-8' });
+    const blob = new Blob([resolved], {
+      type: type === 'doc' ? 'application/msword' : 'text/plain;charset=utf-8',
+    });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     const ext = type === 'doc' ? '.doc' : '.txt';
@@ -66,7 +64,9 @@ const OutputActionToolbar = ({
   const handleShareEmail = () => {
     const resolved = getDisplayText(msg.content);
     const isHi = outputLang === 'hi';
-    window.open(`mailto:?subject=${encodeURIComponent(isHi ? "एआई कानूनी रिपोर्ट" : "AI Legal Report")}&body=${encodeURIComponent(resolved.slice(0, 2000) + '\n\n...[Report Truncated]')}`);
+    window.open(
+      `mailto:?subject=${encodeURIComponent(isHi ? 'एआई कानूनी रिपोर्ट' : 'AI Legal Report')}&body=${encodeURIComponent(resolved.slice(0, 2000) + '\n\n...[Report Truncated]')}`
+    );
   };
 
   const handleShareLink = () => {
@@ -104,19 +104,31 @@ const OutputActionToolbar = ({
 
   return (
     <div className="legal-research-action-bar border-t border-slate-100 dark:border-white/5 mt-3 pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-      <button onClick={handleCopy} className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors" title="Copy Response">
+      <button
+        onClick={handleCopy}
+        className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors"
+        title="Copy Response"
+      >
         {copied ? <Check size={13} /> : <Copy size={13} />}
         <span>Copy Response</span>
       </button>
       <span className="text-slate-200 dark:text-white/10 select-none">|</span>
-      <button onClick={handleExportPDF} className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors" title="Export PDF">
+      <button
+        onClick={handleExportPDF}
+        className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors"
+        title="Export PDF"
+      >
         <FileText size={13} />
         <span>Export PDF</span>
       </button>
       <span className="text-slate-200 dark:text-white/10 select-none">|</span>
       {/* Download Menu */}
       <div className="relative">
-        <button onClick={() => setActiveDownloadMenu((prev) => !prev)} className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors" title="Download options">
+        <button
+          onClick={() => setActiveDownloadMenu(prev => !prev)}
+          className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors"
+          title="Download options"
+        >
           <Download size={13} />
           <span>Download</span>
         </button>
@@ -124,9 +136,33 @@ const OutputActionToolbar = ({
           <>
             <div className="fixed inset-0 z-10" onClick={() => setActiveDownloadMenu(false)} />
             <div className="absolute left-0 bottom-full mb-2 z-20 w-32 rounded-lg bg-white dark:bg-[#1e293b] border border-slate-200/80 dark:border-white/10 shadow-xl p-1 flex flex-col gap-0.5">
-              <button onClick={() => { downloadFile('txt'); setActiveDownloadMenu(false); }} className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">TXT Format</button>
-              <button onClick={() => { downloadFile('doc'); setActiveDownloadMenu(false); }} className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">DOCX Format</button>
-              <button onClick={() => { handleExportPDF(); setActiveDownloadMenu(false); }} className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">PDF Format</button>
+              <button
+                onClick={() => {
+                  downloadFile('txt');
+                  setActiveDownloadMenu(false);
+                }}
+                className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors"
+              >
+                TXT Format
+              </button>
+              <button
+                onClick={() => {
+                  downloadFile('doc');
+                  setActiveDownloadMenu(false);
+                }}
+                className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors"
+              >
+                DOCX Format
+              </button>
+              <button
+                onClick={() => {
+                  handleExportPDF();
+                  setActiveDownloadMenu(false);
+                }}
+                className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors"
+              >
+                PDF Format
+              </button>
             </div>
           </>
         )}
@@ -134,7 +170,11 @@ const OutputActionToolbar = ({
       <span className="text-slate-200 dark:text-white/10 select-none">|</span>
       {/* Share Menu */}
       <div className="relative">
-        <button onClick={() => setActiveShareMenu((prev) => !prev)} className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors" title="Share options">
+        <button
+          onClick={() => setActiveShareMenu(prev => !prev)}
+          className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors"
+          title="Share options"
+        >
           <Share2 size={13} />
           <span>Share Report</span>
         </button>
@@ -142,14 +182,42 @@ const OutputActionToolbar = ({
           <>
             <div className="fixed inset-0 z-10" onClick={() => setActiveShareMenu(false)} />
             <div className="absolute left-0 bottom-full mb-2 z-20 w-38 rounded-lg bg-white dark:bg-[#1e293b] border border-slate-200/80 dark:border-white/10 shadow-xl p-1 flex flex-col gap-0.5">
-              <button onClick={() => { handleShareEmail(); setActiveShareMenu(false); }} className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">Email Report</button>
-              <button onClick={() => { handleShareLink(); setActiveShareMenu(false); }} className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">Copy Link</button>
-              <button onClick={() => { handleExportPDF(); setActiveShareMenu(false); }} className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors">Download PDF</button>
+              <button
+                onClick={() => {
+                  handleShareEmail();
+                  setActiveShareMenu(false);
+                }}
+                className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors"
+              >
+                Email Report
+              </button>
+              <button
+                onClick={() => {
+                  handleShareLink();
+                  setActiveShareMenu(false);
+                }}
+                className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors"
+              >
+                Copy Link
+              </button>
+              <button
+                onClick={() => {
+                  handleExportPDF();
+                  setActiveShareMenu(false);
+                }}
+                className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md transition-colors"
+              >
+                Download PDF
+              </button>
             </div>
           </>
         )}
       </div>
-      <button onClick={handlePrint} className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors" title="Print Report">
+      <button
+        onClick={handlePrint}
+        className="legal-research-action-btn flex items-center gap-1 font-bold hover:text-indigo-600 transition-colors"
+        title="Print Report"
+      >
         <Printer size={13} />
         <span>Print</span>
       </button>

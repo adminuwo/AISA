@@ -18,38 +18,35 @@ const GlobalFloatingNavbar = () => {
   const scrollThreshold = 15;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const {
-    toggles: tglState,
-    setToggle,
-    activeMode: currentMode
-  } = useUserStore();
+  const { toggles: tglState, setToggle, activeMode: currentMode } = useUserStore();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
-  const isLegalWorkspace = currentMode === 'LEGAL_TOOLKIT' || window.location.pathname.startsWith('/dashboard/legal');
+  const isLegalWorkspace =
+    currentMode === 'LEGAL_TOOLKIT' || window.location.pathname.startsWith('/dashboard/legal');
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   const user = getUserData() || { name: 'Guest' };
   const token = user?.token;
 
   // Scroll detection logic
   useEffect(() => {
-    const handleScroll = (e) => {
+    const handleScroll = e => {
       const target = e.target;
-      
+
       // Ignore document/window scrolls as they can be noisy on mobile
       if (target === document || target === document.documentElement || target === window) {
-        return; 
+        return;
       }
-      
+
       // Identify scrollable containers (consistent with Navigation.Provider.jsx)
       const isChat = target.classList && target.classList.contains('chatgpt-container');
       const isMain = target.tagName === 'MAIN';
-      
+
       if (!isChat && !isMain) return;
 
       const targetKey = isChat ? 'chat' : 'main';
@@ -77,8 +74,9 @@ const GlobalFloatingNavbar = () => {
     };
 
     // Use capture: true to catch scroll events from child containers
-    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
-    return () => window.removeEventListener("scroll", handleScroll, { capture: true, passive: true });
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+    return () =>
+      window.removeEventListener('scroll', handleScroll, { capture: true, passive: true });
   }, []);
 
   // Update CSS variable for layout padding (optional but good for consistency)
@@ -92,9 +90,9 @@ const GlobalFloatingNavbar = () => {
     <>
       <motion.nav
         initial={{ y: 0, opacity: 0 }}
-        animate={{ 
+        animate={{
           y: visible ? 0 : -100,
-          opacity: visible ? 1 : 0
+          opacity: visible ? 1 : 0,
         }}
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
         className="fixed top-0 right-0 left-0 lg:left-auto z-[1001] p-3 sm:p-5 pointer-events-none flex justify-between lg:justify-end items-center gap-3"
@@ -102,17 +100,16 @@ const GlobalFloatingNavbar = () => {
         {/* Left Side: Menu button for mobile */}
         {!isLegalWorkspace && (
           <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setToggle('sidebarOpen', true)}
-              className="lg:hidden w-10 h-10 flex items-center justify-center bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl text-primary pointer-events-auto"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setToggle('sidebarOpen', true)}
+            className="lg:hidden w-10 h-10 flex items-center justify-center bg-white/40 dark:bg-black/20 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl text-primary pointer-events-auto"
           >
-              <Menu className="w-6 h-6 stroke-[2.5]" />
+            <Menu className="w-6 h-6 stroke-[2.5]" />
           </motion.button>
         )}
 
         {!isLegalWorkspace && (
           <div className="hidden lg:flex items-center gap-2.5 pointer-events-auto bg-transparent backdrop-blur-md border border-transparent shadow-none rounded-2xl p-1.5 sm:p-2 transition-all duration-300">
-            
             {/* Theme Toggle Button - Hidden on mobile if sidebar is open */}
             {!(tglState.sidebarOpen && window.innerWidth < 1024) && (
               <motion.button
@@ -122,7 +119,11 @@ const GlobalFloatingNavbar = () => {
                 className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-primary/80 dark:text-primary transition-colors"
                 title="Toggle Theme"
               >
-                {theme === 'dark' ? <Sun size={20} strokeWidth={2.5} /> : <Moon size={20} strokeWidth={2.5} />}
+                {theme === 'dark' ? (
+                  <Sun size={20} strokeWidth={2.5} />
+                ) : (
+                  <Moon size={20} strokeWidth={2.5} />
+                )}
               </motion.button>
             )}
 
@@ -136,9 +137,19 @@ const GlobalFloatingNavbar = () => {
                   className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-transparent rounded-xl border border-transparent text-primary overflow-hidden"
                 >
                   {user?.avatar ? (
-                    <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/account.png'; }} />
+                    <img
+                      src={user.avatar}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={e => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/account.png';
+                      }}
+                    />
                   ) : (
-                    <span className="font-bold text-sm uppercase">{user?.name?.charAt(0) || 'U'}</span>
+                    <span className="font-bold text-sm uppercase">
+                      {user?.name?.charAt(0) || 'U'}
+                    </span>
                   )}
                 </motion.button>
               </div>

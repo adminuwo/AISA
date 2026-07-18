@@ -4,13 +4,50 @@ import { apiService } from '../../services/apiService';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Scale, Search, FileText, ChevronRight, Gavel,
-    Calendar, Shield, AlertCircle, Copy, Save,
-    Share2, ExternalLink, Bookmark, CheckCircle2,
-    ArrowLeft, Info, Filter, Zap, BookOpen, ArrowRight, X, Brain,
-    Briefcase, Plus, Folder, Sparkles, MessageSquare, History, FileSearch,
-    ChevronDown, Layout, RefreshCcw, FileDown, MapPin, Landmark,
-    Building2, Library, Clock, TrendingUp, User, Globe, Heart, Award, Trash2
+  Scale,
+  Search,
+  FileText,
+  ChevronRight,
+  Gavel,
+  Calendar,
+  Shield,
+  AlertCircle,
+  Copy,
+  Save,
+  Share2,
+  ExternalLink,
+  Bookmark,
+  CheckCircle2,
+  ArrowLeft,
+  Info,
+  Filter,
+  Zap,
+  BookOpen,
+  ArrowRight,
+  X,
+  Brain,
+  Briefcase,
+  Plus,
+  Folder,
+  Sparkles,
+  MessageSquare,
+  History,
+  FileSearch,
+  ChevronDown,
+  Layout,
+  RefreshCcw,
+  FileDown,
+  MapPin,
+  Landmark,
+  Building2,
+  Library,
+  Clock,
+  TrendingUp,
+  User,
+  Globe,
+  Heart,
+  Award,
+  Trash2,
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -22,1545 +59,1934 @@ import LanguageToggle from './components/shared/LanguageToggle';
 import { useLegalToolCredits } from '../../hooks/useLegalToolCredits';
 
 export const truncateText = (text, maxLength = 120) => {
-    if (!text) return "";
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + "...";
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
 };
 
-const LegalPrecedents = ({ projectId: initialProjectId, onBack, cases = [], onSelectCase, onCreateCase, onUseInArgument, onUpdateCase }) => {
-    const { toolkitLanguage, setToolkitLanguage, tLegal: t } = useLanguage();
-    const currentLang = toolkitLanguage;
-    const [mode, setMode] = useState('CURRENT'); // 'CURRENT' or 'MANUAL'
-    const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId || null); // Use initialProjectId if provided
-    const [query, setQuery] = useState('');
+const LegalPrecedents = ({
+  projectId: initialProjectId,
+  onBack,
+  cases = [],
+  onSelectCase,
+  onCreateCase,
+  onUseInArgument,
+  onUpdateCase,
+}) => {
+  const { toolkitLanguage, setToolkitLanguage, tLegal: t } = useLanguage();
+  const currentLang = toolkitLanguage;
+  const [mode, setMode] = useState('CURRENT'); // 'CURRENT' or 'MANUAL'
+  const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId || null); // Use initialProjectId if provided
+  const [query, setQuery] = useState('');
 
-    useEffect(() => {
-        if (initialProjectId) {
-            setSelectedProjectId(initialProjectId);
-        }
-    }, [initialProjectId]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [results, setResults] = useState([]);
-    const [selectedCaseDetail, setSelectedCaseDetail] = useState(null);
-    const [searchMetadata, setSearchMetadata] = useState(null);
-    const [isActionLoading, setIsActionLoading] = useState({}); // { [precedentId]: { [action]: true } }
-    const [isSavingToCaseOpen, setIsSavingToCaseOpen] = useState(false);
-    const [isCaseListOpen, setIsCaseListOpen] = useState(false);
-    const [isReanalyzing, setIsReanalyzing] = useState(false);
-    const [pendingPrecedentToSave, setPendingPrecedentToSave] = useState(null);
-    const [aiResponses, setAiResponses] = useState({}); // { [precedentId]: { [actionType]: response } }
-    const [isPdfLoading, setIsPdfLoading] = useState(false);
+  useEffect(() => {
+    if (initialProjectId) {
+      setSelectedProjectId(initialProjectId);
+    }
+  }, [initialProjectId]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState([]);
+  const [selectedCaseDetail, setSelectedCaseDetail] = useState(null);
+  const [searchMetadata, setSearchMetadata] = useState(null);
+  const [isActionLoading, setIsActionLoading] = useState({}); // { [precedentId]: { [action]: true } }
+  const [isSavingToCaseOpen, setIsSavingToCaseOpen] = useState(false);
+  const [isCaseListOpen, setIsCaseListOpen] = useState(false);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [pendingPrecedentToSave, setPendingPrecedentToSave] = useState(null);
+  const [aiResponses, setAiResponses] = useState({}); // { [precedentId]: { [actionType]: response } }
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
-    const { handleToolUsage } = useLegalToolCredits();
+  const { handleToolUsage } = useLegalToolCredits();
 
-    // Get the actual case object from the selectedProjectId or fallback to null (never auto-select)
-    const activeCase = cases.find(c => c._id === selectedProjectId);
+  // Get the actual case object from the selectedProjectId or fallback to null (never auto-select)
+  const activeCase = cases.find(c => c._id === selectedProjectId);
 
-    const handleSearch = async (manualQuery = null, forceProjectId = null) => {
-        const targetProjectId = forceProjectId || (mode === 'CURRENT' ? selectedProjectId : null);
-        if (mode === 'CURRENT' && !targetProjectId) return;
+  const handleSearch = async (manualQuery = null, forceProjectId = null) => {
+    const targetProjectId = forceProjectId || (mode === 'CURRENT' ? selectedProjectId : null);
+    if (mode === 'CURRENT' && !targetProjectId) return;
 
-        // Credit Check & Deduction
-        const creditSuccess = await handleToolUsage("Legal Precedents");
-        if (!creditSuccess) return;
+    // Credit Check & Deduction
+    const creditSuccess = await handleToolUsage('Legal Precedents');
+    if (!creditSuccess) return;
 
-        setIsLoading(true);
-        try {
-            const searchQuery = manualQuery || (mode === 'MANUAL' ? query : '');
-            
-            const user = localStorage.getItem('user');
-            const token = user ? JSON.parse(user).token : null;
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    setIsLoading(true);
+    try {
+      const searchQuery = manualQuery || (mode === 'MANUAL' ? query : '');
 
-            const response = await axios.post(`${apis.precedents}/search`, {
-                query: searchQuery,
-                projectId: mode === 'CURRENT' ? targetProjectId : null,
-                language: currentLang
-            }, { headers });
+      const user = localStorage.getItem('user');
+      const token = user ? JSON.parse(user).token : null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            setResults(response.data.precedents || []);
-            setSearchMetadata({
-                mode: response.data.mode,
-                query: response.data.query
-            });
+      const response = await axios.post(
+        `${apis.precedents}/search`,
+        {
+          query: searchQuery,
+          projectId: mode === 'CURRENT' ? targetProjectId : null,
+          language: currentLang,
+        },
+        { headers }
+      );
 
-            if (response.data.precedents?.length === 0) {
-                toast.error(t('noPrecedentsFound'));
-            }
-        } catch (error) {
-            console.error("Search failed:", error);
-            toast.error(t('failedToSave'));
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      setResults(response.data.precedents || []);
+      setSearchMetadata({
+        mode: response.data.mode,
+        query: response.data.query,
+      });
 
-    const onCaseClick = (c) => {
-        setSelectedProjectId(c._id);
-        onSelectCase(c); // Update global context if needed
-        handleSearch(null, c._id);
-    };
+      if (response.data.precedents?.length === 0) {
+        toast.error(t('noPrecedentsFound'));
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      toast.error(t('failedToSave'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const resetSelection = () => {
-        setSelectedProjectId(null);
-        setResults([]);
-        setSearchMetadata(null);
-    };
+  const onCaseClick = c => {
+    setSelectedProjectId(c._id);
+    onSelectCase(c); // Update global context if needed
+    handleSearch(null, c._id);
+  };
 
-    const handleCaseChange = async (newCase) => {
-        setIsCaseListOpen(false);
-        const oldId = selectedProjectId;
-        setSelectedProjectId(newCase._id);
-        onSelectCase(newCase);
+  const resetSelection = () => {
+    setSelectedProjectId(null);
+    setResults([]);
+    setSearchMetadata(null);
+  };
 
-        // Auto Re-Analysis Logic
-        if (selectedCaseDetail) {
-            setIsReanalyzing(true);
-            try {
-                // We use the reanalyze endpoint to get fresh similarity, relevance and reasoning
-                const reanalyzed = await apiService.reanalyzePrecedent(
-                    selectedCaseDetail,
-                    newCase._id,
-                    toolkitLanguage
-                );
+  const handleCaseChange = async newCase => {
+    setIsCaseListOpen(false);
+    const oldId = selectedProjectId;
+    setSelectedProjectId(newCase._id);
+    onSelectCase(newCase);
 
-                // Update the detail view with new analysis
-                setSelectedCaseDetail(reanalyzed);
-
-                // Clear AI responses for the old case context to avoid confusion
-                setAiResponses(prev => ({
-                    ...prev,
-                    [reanalyzed._id || reanalyzed.case_identity?.case_name]: {}
-                }));
-
-                toast.success(`${t('analyzingCase')}: ${newCase.name}`);
-            } catch (error) {
-                console.error("Re-analysis failed:", error);
-                toast.error(t('failedToGenerateSummary'));
-            } finally {
-                setIsReanalyzing(false);
-            }
-        } else if (mode === 'CURRENT') {
-            // In list view, just refresh search
-            handleSearch(null, newCase._id);
-        }
-    };
-
-    useEffect(() => {
-        if (initialProjectId && mode === 'CURRENT') {
-            setSelectedProjectId(initialProjectId);
-            if (!results.length && !isLoading) {
-                handleSearch(null, initialProjectId);
-            }
-        }
-    }, [initialProjectId]);
-
-    useEffect(() => {
-        // If mode switches to manual, results stay but we are in manual mode.
-        // If mode switches to current and no selection, results cleared.
-        if (mode === 'CURRENT' && !selectedProjectId) {
-            setResults([]);
-            setSearchMetadata(null);
-        }
-    }, [mode, selectedProjectId]);
-
-    const copyCitation = (caseItem) => {
-        const { case_identity = {} } = caseItem;
-        const name = case_identity.case_name || caseItem.case_name || "Unknown Case";
-        const court = case_identity.court || caseItem.court || "";
-        const year = case_identity.year || caseItem.year || "";
-        const citation = case_identity.citation || caseItem.citation || "Citation unavailable";
-
-        let textToCopy = `${name}`;
-        if (court) textToCopy += `, ${court}`;
-        if (year) textToCopy += ` (${year})`;
-        if (citation && citation !== "Citation unavailable") textToCopy += `, ${citation}`;
-
-        navigator.clipboard.writeText(textToCopy);
-        toast.success(`✅ ${t('citationCopied')}`, {
-            style: {
-                borderRadius: '12px',
-                background: 'var(--color-card)',
-                color: 'var(--color-maintext)',
-                fontSize: '11px',
-                fontWeight: '900',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em'
-            }
-        });
-    };
-
-    const handleSaveAction = async (caseItem, forceProjectId = null) => {
-        const targetId = forceProjectId || selectedProjectId;
-        if (!targetId) {
-            setPendingPrecedentToSave(caseItem);
-            setIsSavingToCaseOpen(true);
-            return;
-        }
-
-        const targetCase = cases.find(c => c._id === targetId);
-        if (!targetCase) return;
-
-        const id = caseItem._id || caseItem.case_identity?.case_name;
-        const alreadySaved = targetCase.savedPrecedents?.some(p => (p._id || p.case_identity?.case_name) === id);
-
-        if (alreadySaved) {
-            toast.error(t('alreadySaved'));
-            return;
-        }
-
-        setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], save: true } }));
-
-        try {
-            const updatedSaved = [...(targetCase.savedPrecedents || []), caseItem];
-            const updatedCase = { ...targetCase, savedPrecedents: updatedSaved };
-
-            const result = await apiService.updateProject(targetId, updatedCase);
-            if (onUpdateCase) onUpdateCase(result);
-
-            toast.success(`✅ Saved to ${targetCase.name || 'Case'}`, {
-                icon: '💾'
-            });
-        } catch (error) {
-            toast.error(t('failedToSave'));
-            console.error("Save error:", error);
-        } finally {
-            setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], save: false } }));
-        }
-    };
-
-    const handleCiteAction = async (caseItem) => {
-        const id = caseItem._id || caseItem.case_identity?.case_name;
-        setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], cite: true } }));
-
-        try {
-            // Generate structured argument
-            const { case_identity = {}, judgment_basis = {} } = caseItem;
-            const name = case_identity.case_name || "the cited case";
-            const principle = judgment_basis.principles_applied?.[0] || "the established legal principles";
-            const reasoning = judgment_basis.legal_reasoning?.slice(0, 150) || "the court's reasoning";
-
-            const argumentTemplate = `As held in ${name}, the court established that ${principle}. Specifically, it was observed that "${reasoning}...". This principle directly applies to the current matter because...`;
-
-            await new Promise(resolve => setTimeout(resolve, 600));
-            onUseInArgument(argumentTemplate);
-        } finally {
-            setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], cite: false } }));
-        }
-    };
-
-    const handleDownloadPDF = async (precedentData) => {
-        if (!precedentData) return;
-
-        setIsPdfLoading(true);
-        const loadingToast = toast.loading(t('generatingPDF'), {
-            style: { borderRadius: '12px', background: 'var(--color-card)', color: 'var(--color-maintext)', fontSize: '12px' }
-        });
-
-        try {
-            const blob = await apiService.generatePrecedentPDF(precedentData, toolkitLanguage);
-
-            // Create download link
-            const url = window.URL.createObjectURL(new Blob([blob]));
-            const link = document.createElement('a');
-
-            // Generate Filename: CaseName_Court_Year.pdf
-            const caseName = (precedentData.case_identity?.case_name || precedentData.case_name || 'Judgment').replace(/[^a-z0-9]/gi, '_');
-            const court = (precedentData.case_identity?.court || precedentData.court || 'Court').replace(/[^a-z0-9]/gi, '_');
-            const year = precedentData.case_identity?.year || precedentData.year || 'Unknown';
-
-            link.href = url;
-            link.setAttribute('download', `${caseName}_${court}_${year}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            toast.success(t('pdfDownloadedSuccessfully'), { id: loadingToast });
-        } catch (error) {
-            console.error("PDF generation error:", error);
-            toast.error(t('failedToGeneratePdf'), { id: loadingToast });
-        } finally {
-            setIsPdfLoading(false);
-        }
-    };
-
-    const handleSummarizeAction = async (caseItem) => {
-        const id = caseItem._id || caseItem.case_identity?.case_name;
-        
-        // Credit Check & Deduction
-        const creditSuccess = await handleToolUsage("Legal Summarizer");
-        if (!creditSuccess) return;
-
-        setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], summary: true } }));
-
-        try {
-            const result = await apiService.analyzePrecedent('summarize', caseItem, null, toolkitLanguage);
-            setAiResponses(prev => ({
-                ...prev,
-                [id]: { ...prev[id], summarize: result.analysis }
-            }));
-
-            // Auto scroll will be handled by a ref or effect in the component
-            toast.success(t('summaryGeneratedSuccessfully'));
-        } catch (error) {
-            toast.error(t('failedToGenerateSummary'));
-        } finally {
-            setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], summary: false } }));
-        }
-    };
-
-    const handleCompareAction = async (caseItem) => {
-        const id = caseItem._id || caseItem.case_identity?.case_name;
-
-        // Credit Check & Deduction
-        const creditSuccess = await handleToolUsage("Legal Comparison");
-        if (!creditSuccess) return;
-
-        setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], compare: true } }));
-
-        try {
-            const result = await apiService.analyzePrecedent('compare', caseItem, activeCase, toolkitLanguage);
-            setAiResponses(prev => ({
-                ...prev,
-                [id]: { ...prev[id], compare: result.analysis }
-            }));
-
-            toast.success(t('comparisonInsightsGenerated'));
-        } catch (error) {
-            toast.error(t('failedToGenerateComparison'));
-        } finally {
-            setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], compare: false } }));
-        }
-    };
-
-    // --- Sub-renderers ---
-
-    const renderCaseSelection = () => {
-        if (cases.length === 0) return renderEmptyCases();
-
-        return (
-            <div className="precedent-selection-container max-w-6xl mx-auto py-6 sm:py-10 px-4">
-                <div className="text-center mb-6 sm:mb-8">
-                    <div className="w-10 h-10 bg-indigo-500/5 rounded-xl flex items-center justify-center mx-auto mb-3 border border-indigo-500/10">
-                        <Folder size={20} className="text-indigo-400/70" />
-                    </div>
-                    <h2 className="text-sm sm:text-base font-bold text-maintext tracking-tight mb-1">
-                        {t('selectCaseToAnalyze')}
-                    </h2>
-                    <p className="text-[10px] sm:text-xs text-subtext font-medium max-w-xs mx-auto">
-                        {t('chooseCaseDescription')}
-                    </p>
-                </div>
-
-                <div className="case-selection-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {cases.map((c) => (
-                        <motion.div
-                            key={c._id}
-                            whileHover={{ y: -3 }}
-                            className="case-card bg-card border border-border rounded-[20px] p-5 shadow-sm hover:shadow-lg hover:border-indigo-500/50 transition-colors duration-300 cursor-pointer flex flex-col justify-between"
-                            onClick={() => onCaseClick(c)}
-                        >
-                            <div>
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="w-8 h-8 bg-background rounded-lg flex items-center justify-center">
-                                        <Scale size={14} className="text-subtext" />
-                                    </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-background text-maintext/60 border border-border rounded-md">
-                                        {c.caseType || 'General'}
-                                    </span>
-                                </div>
-                                <h3 className="text-sm font-black text-maintext mb-1.5 line-clamp-1">{c.name}</h3>
-                                <p className="text-[10px] text-subtext line-clamp-2 mb-4 font-medium leading-relaxed">
-                                    {(c.summary || c.caseSummary) ? truncateText(c.summary || c.caseSummary, 110) : "No description provided for this case."}
-                                </p>
-                            </div>
-
-                            <div className="case-card-footer flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border">
-                                <span className="text-[9px] text-subtext/60 font-bold uppercase tracking-wider">
-                                    {new Date(c.updatedAt).toLocaleDateString()}
-                                </span>
-                                <button className="analyze-btn flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 bg-indigo-500/5 hover:bg-indigo-500/10 px-3 py-1.5 rounded-full border border-indigo-500/10 transition-all shrink-0">
-                                    {t('analyzePrecedents')} <ArrowRight size={12} />
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
-
-                    <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        onClick={onCreateCase}
-                        className="border-2 border-dashed border-border rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-colors duration-300 min-h-[140px]"
-                    >
-                        <div className="w-10 h-10 rounded-full bg-card flex items-center justify-center">
-                            <Plus size={20} className="text-subtext" />
-                        </div>
-                        <span className="text-[10px] font-black text-subtext uppercase tracking-widest">{t('newCase')}</span>
-                    </motion.div>
-                </div>
-            </div>
+    // Auto Re-Analysis Logic
+    if (selectedCaseDetail) {
+      setIsReanalyzing(true);
+      try {
+        // We use the reanalyze endpoint to get fresh similarity, relevance and reasoning
+        const reanalyzed = await apiService.reanalyzePrecedent(
+          selectedCaseDetail,
+          newCase._id,
+          toolkitLanguage
         );
-    };
 
-    const renderEmptyCases = () => (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-24 h-24 bg-card rounded-full flex items-center justify-center mb-6">
-                <Briefcase size={48} className="text-subtext" />
-            </div>
-            <h3 className="text-2xl font-black text-maintext mb-2">{t('noCasesFound')}</h3>
-            <p className="text-subtext max-w-sm mb-8 font-medium">
-                {t('noCasesDescription')}
-            </p>
-            <button
-                onClick={onCreateCase}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 transition-all"
-            >
-                <Plus size={18} /> {t('createNewCase')}
-            </button>
-        </div>
+        // Update the detail view with new analysis
+        setSelectedCaseDetail(reanalyzed);
+
+        // Clear AI responses for the old case context to avoid confusion
+        setAiResponses(prev => ({
+          ...prev,
+          [reanalyzed._id || reanalyzed.case_identity?.case_name]: {},
+        }));
+
+        toast.success(`${t('analyzingCase')}: ${newCase.name}`);
+      } catch (error) {
+        console.error('Re-analysis failed:', error);
+        toast.error(t('failedToGenerateSummary'));
+      } finally {
+        setIsReanalyzing(false);
+      }
+    } else if (mode === 'CURRENT') {
+      // In list view, just refresh search
+      handleSearch(null, newCase._id);
+    }
+  };
+
+  useEffect(() => {
+    if (initialProjectId && mode === 'CURRENT') {
+      setSelectedProjectId(initialProjectId);
+      if (!results.length && !isLoading) {
+        handleSearch(null, initialProjectId);
+      }
+    }
+  }, [initialProjectId]);
+
+  useEffect(() => {
+    // If mode switches to manual, results stay but we are in manual mode.
+    // If mode switches to current and no selection, results cleared.
+    if (mode === 'CURRENT' && !selectedProjectId) {
+      setResults([]);
+      setSearchMetadata(null);
+    }
+  }, [mode, selectedProjectId]);
+
+  const copyCitation = caseItem => {
+    const { case_identity = {} } = caseItem;
+    const name = case_identity.case_name || caseItem.case_name || 'Unknown Case';
+    const court = case_identity.court || caseItem.court || '';
+    const year = case_identity.year || caseItem.year || '';
+    const citation = case_identity.citation || caseItem.citation || 'Citation unavailable';
+
+    let textToCopy = `${name}`;
+    if (court) textToCopy += `, ${court}`;
+    if (year) textToCopy += ` (${year})`;
+    if (citation && citation !== 'Citation unavailable') textToCopy += `, ${citation}`;
+
+    navigator.clipboard.writeText(textToCopy);
+    toast.success(`✅ ${t('citationCopied')}`, {
+      style: {
+        borderRadius: '12px',
+        background: 'var(--color-card)',
+        color: 'var(--color-maintext)',
+        fontSize: '11px',
+        fontWeight: '900',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+      },
+    });
+  };
+
+  const handleSaveAction = async (caseItem, forceProjectId = null) => {
+    const targetId = forceProjectId || selectedProjectId;
+    if (!targetId) {
+      setPendingPrecedentToSave(caseItem);
+      setIsSavingToCaseOpen(true);
+      return;
+    }
+
+    const targetCase = cases.find(c => c._id === targetId);
+    if (!targetCase) return;
+
+    const id = caseItem._id || caseItem.case_identity?.case_name;
+    const alreadySaved = targetCase.savedPrecedents?.some(
+      p => (p._id || p.case_identity?.case_name) === id
     );
 
-    const renderLoading = () => (
-        <div className="precedent-loading-container flex flex-col items-center justify-center py-20 px-6 text-center">
-            <div className="relative mb-8">
-                <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-600 rounded-full"
-                />
-                <Scale size={28} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600 animate-pulse" />
-            </div>
-            <h3 className="text-xl font-black text-maintext uppercase tracking-[0.2em] animate-pulse">{t('analyzingCase')}</h3>
-            <p className="text-subtext mt-2 font-medium text-sm">{t('crossReferencing')}</p>
-        </div>
-    );
+    if (alreadySaved) {
+      toast.error(t('alreadySaved'));
+      return;
+    }
 
-    const handleLocalBack = () => {
-        if (selectedProjectId) {
-            setSelectedProjectId(null);
-            setResults([]);
-            setSearchMetadata(null);
-        } else {
-            onBack();
-        }
-    };
+    setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], save: true } }));
+
+    try {
+      const updatedSaved = [...(targetCase.savedPrecedents || []), caseItem];
+      const updatedCase = { ...targetCase, savedPrecedents: updatedSaved };
+
+      const result = await apiService.updateProject(targetId, updatedCase);
+      if (onUpdateCase) onUpdateCase(result);
+
+      toast.success(`✅ Saved to ${targetCase.name || 'Case'}`, {
+        icon: '💾',
+      });
+    } catch (error) {
+      toast.error(t('failedToSave'));
+      console.error('Save error:', error);
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], save: false } }));
+    }
+  };
+
+  const handleCiteAction = async caseItem => {
+    const id = caseItem._id || caseItem.case_identity?.case_name;
+    setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], cite: true } }));
+
+    try {
+      // Generate structured argument
+      const { case_identity = {}, judgment_basis = {} } = caseItem;
+      const name = case_identity.case_name || 'the cited case';
+      const principle =
+        judgment_basis.principles_applied?.[0] || 'the established legal principles';
+      const reasoning = judgment_basis.legal_reasoning?.slice(0, 150) || "the court's reasoning";
+
+      const argumentTemplate = `As held in ${name}, the court established that ${principle}. Specifically, it was observed that "${reasoning}...". This principle directly applies to the current matter because...`;
+
+      await new Promise(resolve => setTimeout(resolve, 600));
+      onUseInArgument(argumentTemplate);
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], cite: false } }));
+    }
+  };
+
+  const handleDownloadPDF = async precedentData => {
+    if (!precedentData) return;
+
+    setIsPdfLoading(true);
+    const loadingToast = toast.loading(t('generatingPDF'), {
+      style: {
+        borderRadius: '12px',
+        background: 'var(--color-card)',
+        color: 'var(--color-maintext)',
+        fontSize: '12px',
+      },
+    });
+
+    try {
+      const blob = await apiService.generatePrecedentPDF(precedentData, toolkitLanguage);
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+
+      // Generate Filename: CaseName_Court_Year.pdf
+      const caseName = (
+        precedentData.case_identity?.case_name ||
+        precedentData.case_name ||
+        'Judgment'
+      ).replace(/[^a-z0-9]/gi, '_');
+      const court = (precedentData.case_identity?.court || precedentData.court || 'Court').replace(
+        /[^a-z0-9]/gi,
+        '_'
+      );
+      const year = precedentData.case_identity?.year || precedentData.year || 'Unknown';
+
+      link.href = url;
+      link.setAttribute('download', `${caseName}_${court}_${year}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(t('pdfDownloadedSuccessfully'), { id: loadingToast });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error(t('failedToGeneratePdf'), { id: loadingToast });
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const handleSummarizeAction = async caseItem => {
+    const id = caseItem._id || caseItem.case_identity?.case_name;
+
+    // Credit Check & Deduction
+    const creditSuccess = await handleToolUsage('Legal Summarizer');
+    if (!creditSuccess) return;
+
+    setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], summary: true } }));
+
+    try {
+      const result = await apiService.analyzePrecedent(
+        'summarize',
+        caseItem,
+        null,
+        toolkitLanguage
+      );
+      setAiResponses(prev => ({
+        ...prev,
+        [id]: { ...prev[id], summarize: result.analysis },
+      }));
+
+      // Auto scroll will be handled by a ref or effect in the component
+      toast.success(t('summaryGeneratedSuccessfully'));
+    } catch (error) {
+      toast.error(t('failedToGenerateSummary'));
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], summary: false } }));
+    }
+  };
+
+  const handleCompareAction = async caseItem => {
+    const id = caseItem._id || caseItem.case_identity?.case_name;
+
+    // Credit Check & Deduction
+    const creditSuccess = await handleToolUsage('Legal Comparison');
+    if (!creditSuccess) return;
+
+    setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], compare: true } }));
+
+    try {
+      const result = await apiService.analyzePrecedent(
+        'compare',
+        caseItem,
+        activeCase,
+        toolkitLanguage
+      );
+      setAiResponses(prev => ({
+        ...prev,
+        [id]: { ...prev[id], compare: result.analysis },
+      }));
+
+      toast.success(t('comparisonInsightsGenerated'));
+    } catch (error) {
+      toast.error(t('failedToGenerateComparison'));
+    } finally {
+      setIsActionLoading(prev => ({ ...prev, [id]: { ...prev[id], compare: false } }));
+    }
+  };
+
+  // --- Sub-renderers ---
+
+  const renderCaseSelection = () => {
+    if (cases.length === 0) return renderEmptyCases();
 
     return (
-        <div className="precedent-module-container flex-1 flex flex-col min-h-0 bg-white dark:bg-[#0B1020] rounded-3xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl m-4">
-            {/* Header */}
-            <div className="precedent-header px-4 sm:px-8 py-4 sm:py-6 bg-white/90 dark:bg-[#0B1020]/90 border-b border-slate-200 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md">
-                <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={handleLocalBack}
-                        className="p-2 hover:bg-card rounded-full transition-colors shrink-0 mt-1 sm:mt-0"
-                    >
-                        <ArrowLeft size={20} className="text-subtext" />
-                    </motion.button>
-                    <div className="min-w-0 flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 sm:mb-0">
-                            <h2 className="text-lg sm:text-xl font-black text-maintext break-words">
-                                {t('legalPrecedentsTitle')}
-                            </h2>
-                            {activeCase && mode === 'CURRENT' && (
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-xl w-fit max-w-full shadow-sm">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0" />
-                                    <span className="text-[10px] sm:text-[11px] font-black text-maintext uppercase tracking-widest truncate max-w-[150px] sm:max-w-[250px]">
-                                        {activeCase.name}
-                                    </span>
-                                    <button
-                                        onClick={() => setIsCaseListOpen(true)}
-                                        className="text-[9px] sm:text-[10px] font-bold text-indigo-500 hover:text-indigo-600 ml-2 transition-colors underline underline-offset-4 decoration-indigo-500/20 hover:decoration-indigo-500 shrink-0"
-                                    >
-                                        {t('changeCase')}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                        <p className="text-[10px] sm:text-xs text-subtext font-medium uppercase tracking-wider line-clamp-1">
-                            {t('judgementDiscoveryEngine')}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap select-none">
-                    <LanguageToggle lang={toolkitLanguage === 'Hindi' ? 'hi' : 'en'} onChange={(l) => setToolkitLanguage(l === 'hi' ? 'Hindi' : 'English')} />
-                    <div className="mode-toggle flex bg-slate-50 dark:bg-[#131C31] p-1 rounded-xl border border-slate-200 dark:border-white/5 w-full sm:w-fit overflow-x-auto no-scrollbar">
-                        <button
-                            onClick={() => { setMode('CURRENT'); if (!selectedProjectId) resetSelection(); }}
-                            className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none whitespace-nowrap ${mode === 'CURRENT'
-                                ? 'bg-white dark:bg-[#0B1020] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'text-slate-500 dark:text-[#94A3B8] hover:text-indigo-600 dark:hover:text-[#F8FAFC]'
-                                }`}
-                        >
-                            {mode === 'CURRENT' && <CheckCircle2 size={12} />} {t('currentCaseMode')}
-                        </button>
-                        <button
-                            onClick={() => setMode('MANUAL')}
-                            className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none whitespace-nowrap ${mode === 'MANUAL'
-                                ? 'bg-white dark:bg-[#0B1020] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'text-slate-500 dark:text-[#94A3B8] hover:text-indigo-600 dark:hover:text-[#F8FAFC]'
-                                }`}
-                        >
-                            {mode === 'MANUAL' && <CheckCircle2 size={12} />} {t('manualSearchMode')}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar overscroll-contain touch-pan-y">
-                {isLoading ? renderLoading() : (
-                    <>
-                        {mode === 'CURRENT' && !selectedProjectId ? renderCaseSelection() : (
-                            <div className="p-4 sm:p-8">
-                                {/* Search Bar (Only in Manual Mode) */}
-                                {mode === 'MANUAL' && (
-                                    <div className="max-w-2xl mx-auto mb-8">
-                                        <div className="relative group">
-                                            <div className="absolute inset-0 bg-indigo-500/10 blur-xl rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
-                                            <input
-                                                type="text"
-                                                value={query}
-                                                onChange={(e) => setQuery(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                                placeholder={toolkitLanguage === 'Hindi' ? t('searchHintManual') : "Search case law by topic, section, issue, judge, Act, article, citation, or keyword..."}
-                                                className="w-full relative z-10 bg-white dark:bg-[#1A2540] border-2 border-slate-100 dark:border-white/5 focus:border-indigo-500 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 pl-12 sm:pl-14 pr-24 sm:pr-32 text-xs sm:text-sm font-medium text-slate-700 dark:text-[#F8FAFC] shadow-sm transition-all outline-none"
-                                            />
-                                            <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-subtext group-focus-within:text-indigo-500 transition-colors z-20" size={18} />
-                                            
-                                            {query && (
-                                                <button
-                                                    onClick={() => {
-                                                        setQuery('');
-                                                        resetSelection();
-                                                    }}
-                                                    className="absolute right-24 sm:right-28 top-1/2 -translate-y-1/2 text-subtext hover:text-maintext z-20 transition-all p-1"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            )}
-
-                                            <button
-                                                onClick={() => handleSearch()}
-                                                disabled={isLoading || !query}
-                                                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all z-20"
-                                            >
-                                                {isLoading ? '...' : t('searchBtn')}
-                                            </button>
-                                        </div>
-                                        
-                                        {!searchMetadata && (
-                                            <div className="mt-4">
-                                                <SuggestedSearches onSelect={(s) => { setQuery(s); handleSearch(s); }} t={t} />
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Results or Directory Content */}
-                                {mode === 'MANUAL' ? (
-                                    !searchMetadata ? (
-                                        <div>
-                                            <LegalResearchDirectory onSelectCategory={(cat) => { setQuery(cat); handleSearch(cat); }} t={t} />
-                                        </div>
-                                    ) : (
-                                        results.length > 0 ? (
-                                            <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto mt-6 animate-fade-in">
-                                                {results.map((caseItem, idx) => (
-                                                    <PrecedentCard
-                                                        key={idx}
-                                                        caseItem={caseItem}
-                                                        onClick={() => setSelectedCaseDetail(caseItem)}
-                                                        onCopyCitation={() => copyCitation(caseItem)}
-                                                        isSaved={activeCase?.savedPrecedents?.some(p => (p._id || p.case_identity?.case_name) === (caseItem._id || caseItem.case_identity?.case_name))}
-                                                        t={t}
-                                                    />
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            !isLoading && (
-                                                <div>
-                                                    <EmptySearchState query={searchMetadata.query} onClear={resetSelection} />
-                                                </div>
-                                            )
-                                        )
-                                    )
-                                ) : (
-                                    /* CURRENT case results view */
-                                    results.length > 0 ? (
-                                        <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto animate-fade-in">
-                                            {results.map((caseItem, idx) => (
-                                                <PrecedentCard
-                                                    key={idx}
-                                                    caseItem={caseItem}
-                                                    onClick={() => setSelectedCaseDetail(caseItem)}
-                                                    onCopyCitation={() => copyCitation(caseItem)}
-                                                    isSaved={activeCase?.savedPrecedents?.some(p => (p._id || p.case_identity?.case_name) === (caseItem._id || caseItem.case_identity?.case_name))}
-                                                    t={t}
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        !isLoading && (
-                                            <div className="flex flex-col items-center justify-center py-20 text-center opacity-50 animate-fade-in">
-                                                <BookOpen size={48} className="text-subtext mb-4" />
-                                                <h3 className="text-lg font-bold text-maintext">{t('noPrecedentsFound')}</h3>
-                                                <p className="text-xs text-subtext max-w-xs mt-2 font-medium">
-                                                    {t('noPrecedentsFoundDesc')}
-                                                </p>
-                                            </div>
-                                        )
-                                    )
-                                )}
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
-
-            {/* Case Detail Overlay */}
-            <AnimatePresence>
-                {selectedCaseDetail && (
-                    <CaseDetailView
-                        key="case-detail-view"
-                        caseItem={selectedCaseDetail}
-                        onClose={() => setSelectedCaseDetail(null)}
-                        onCopyCitation={() => copyCitation(selectedCaseDetail)}
-                        onSave={() => handleSaveAction(selectedCaseDetail)}
-                        onCite={() => handleCiteAction(selectedCaseDetail)}
-                        onSummarize={() => handleSummarizeAction(selectedCaseDetail)}
-                        onCompare={() => handleCompareAction(selectedCaseDetail)}
-                        onDownloadPDF={() => handleDownloadPDF(selectedCaseDetail)}
-                        isPdfLoading={isPdfLoading}
-                        isSaved={activeCase?.savedPrecedents?.some(p => (p._id || p.case_identity?.case_name) === (selectedCaseDetail?._id || selectedCaseDetail?.case_identity?.case_name))}
-                        loadingStates={isActionLoading[selectedCaseDetail._id || selectedCaseDetail.case_identity?.case_name] || {}}
-                        aiResponses={aiResponses[selectedCaseDetail._id || selectedCaseDetail.case_identity?.case_name] || {}}
-                        isReanalyzing={isReanalyzing}
-                        t={t}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* Case Selection Modal */}
-            <AnimatePresence>
-                {(isSavingToCaseOpen || isCaseListOpen) && (
-                    <CaseSelectionModal
-                        key="case-selection-modal"
-                        isOpen={true}
-                        onClose={() => {
-                            setIsSavingToCaseOpen(false);
-                            setIsCaseListOpen(false);
-                        }}
-                        onSelect={(c) => {
-                            if (isCaseListOpen) {
-                                handleCaseChange(c);
-                            } else {
-                                handleSaveAction(pendingPrecedentToSave, c._id);
-                                setIsSavingToCaseOpen(false);
-                            }
-                        }}
-                        cases={cases}
-                        currentProjectId={selectedProjectId}
-                        title={isCaseListOpen ? "Switch Active Case" : "Select Case to Save"}
-                        onCreateNew={() => {
-                            setIsSavingToCaseOpen(false);
-                            setIsCaseListOpen(false);
-                            onCreateCase();
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+      <div className="precedent-selection-container max-w-6xl mx-auto py-6 sm:py-10 px-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-10 h-10 bg-indigo-500/5 rounded-xl flex items-center justify-center mx-auto mb-3 border border-indigo-500/10">
+            <Folder size={20} className="text-indigo-400/70" />
+          </div>
+          <h2 className="text-sm sm:text-base font-bold text-maintext tracking-tight mb-1">
+            {t('selectCaseToAnalyze')}
+          </h2>
+          <p className="text-[10px] sm:text-xs text-subtext font-medium max-w-xs mx-auto">
+            {t('chooseCaseDescription')}
+          </p>
         </div>
+
+        <div className="case-selection-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {cases.map(c => (
+            <motion.div
+              key={c._id}
+              whileHover={{ y: -3 }}
+              className="case-card bg-card border border-border rounded-[20px] p-5 shadow-sm hover:shadow-lg hover:border-indigo-500/50 transition-colors duration-300 cursor-pointer flex flex-col justify-between"
+              onClick={() => onCaseClick(c)}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 bg-background rounded-lg flex items-center justify-center">
+                    <Scale size={14} className="text-subtext" />
+                  </div>
+                  <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-background text-maintext/60 border border-border rounded-md">
+                    {c.caseType || 'General'}
+                  </span>
+                </div>
+                <h3 className="text-sm font-black text-maintext mb-1.5 line-clamp-1">{c.name}</h3>
+                <p className="text-[10px] text-subtext line-clamp-2 mb-4 font-medium leading-relaxed">
+                  {c.summary || c.caseSummary
+                    ? truncateText(c.summary || c.caseSummary, 110)
+                    : 'No description provided for this case.'}
+                </p>
+              </div>
+
+              <div className="case-card-footer flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border">
+                <span className="text-[9px] text-subtext/60 font-bold uppercase tracking-wider">
+                  {new Date(c.updatedAt).toLocaleDateString()}
+                </span>
+                <button className="analyze-btn flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 bg-indigo-500/5 hover:bg-indigo-500/10 px-3 py-1.5 rounded-full border border-indigo-500/10 transition-all shrink-0">
+                  {t('analyzePrecedents')} <ArrowRight size={12} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            onClick={onCreateCase}
+            className="border-2 border-dashed border-border rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-colors duration-300 min-h-[140px]"
+          >
+            <div className="w-10 h-10 rounded-full bg-card flex items-center justify-center">
+              <Plus size={20} className="text-subtext" />
+            </div>
+            <span className="text-[10px] font-black text-subtext uppercase tracking-widest">
+              {t('newCase')}
+            </span>
+          </motion.div>
+        </div>
+      </div>
     );
+  };
+
+  const renderEmptyCases = () => (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-24 h-24 bg-card rounded-full flex items-center justify-center mb-6">
+        <Briefcase size={48} className="text-subtext" />
+      </div>
+      <h3 className="text-2xl font-black text-maintext mb-2">{t('noCasesFound')}</h3>
+      <p className="text-subtext max-w-sm mb-8 font-medium">{t('noCasesDescription')}</p>
+      <button
+        onClick={onCreateCase}
+        className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 transition-all"
+      >
+        <Plus size={18} /> {t('createNewCase')}
+      </button>
+    </div>
+  );
+
+  const renderLoading = () => (
+    <div className="precedent-loading-container flex flex-col items-center justify-center py-20 px-6 text-center">
+      <div className="relative mb-8">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          className="w-20 h-20 border-4 border-indigo-500/20 border-t-indigo-600 rounded-full"
+        />
+        <Scale
+          size={28}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600 animate-pulse"
+        />
+      </div>
+      <h3 className="text-xl font-black text-maintext uppercase tracking-[0.2em] animate-pulse">
+        {t('analyzingCase')}
+      </h3>
+      <p className="text-subtext mt-2 font-medium text-sm">{t('crossReferencing')}</p>
+    </div>
+  );
+
+  const handleLocalBack = () => {
+    if (selectedProjectId) {
+      setSelectedProjectId(null);
+      setResults([]);
+      setSearchMetadata(null);
+    } else {
+      onBack();
+    }
+  };
+
+  return (
+    <div className="precedent-module-container flex-1 flex flex-col min-h-0 bg-white dark:bg-[#0B1020] rounded-3xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl m-4">
+      {/* Header */}
+      <div className="precedent-header px-4 sm:px-8 py-4 sm:py-6 bg-white/90 dark:bg-[#0B1020]/90 border-b border-slate-200 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20 backdrop-blur-md">
+        <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleLocalBack}
+            className="p-2 hover:bg-card rounded-full transition-colors shrink-0 mt-1 sm:mt-0"
+          >
+            <ArrowLeft size={20} className="text-subtext" />
+          </motion.button>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1 sm:mb-0">
+              <h2 className="text-lg sm:text-xl font-black text-maintext break-words">
+                {t('legalPrecedentsTitle')}
+              </h2>
+              {activeCase && mode === 'CURRENT' && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-xl w-fit max-w-full shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0" />
+                  <span className="text-[10px] sm:text-[11px] font-black text-maintext uppercase tracking-widest truncate max-w-[150px] sm:max-w-[250px]">
+                    {activeCase.name}
+                  </span>
+                  <button
+                    onClick={() => setIsCaseListOpen(true)}
+                    className="text-[9px] sm:text-[10px] font-bold text-indigo-500 hover:text-indigo-600 ml-2 transition-colors underline underline-offset-4 decoration-indigo-500/20 hover:decoration-indigo-500 shrink-0"
+                  >
+                    {t('changeCase')}
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] sm:text-xs text-subtext font-medium uppercase tracking-wider line-clamp-1">
+              {t('judgementDiscoveryEngine')}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap select-none">
+          <LanguageToggle
+            lang={toolkitLanguage === 'Hindi' ? 'hi' : 'en'}
+            onChange={l => setToolkitLanguage(l === 'hi' ? 'Hindi' : 'English')}
+          />
+          <div className="mode-toggle flex bg-slate-50 dark:bg-[#131C31] p-1 rounded-xl border border-slate-200 dark:border-white/5 w-full sm:w-fit overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => {
+                setMode('CURRENT');
+                if (!selectedProjectId) resetSelection();
+              }}
+              className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none whitespace-nowrap ${
+                mode === 'CURRENT'
+                  ? 'bg-white dark:bg-[#0B1020] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-500 dark:text-[#94A3B8] hover:text-indigo-600 dark:hover:text-[#F8FAFC]'
+              }`}
+            >
+              {mode === 'CURRENT' && <CheckCircle2 size={12} />} {t('currentCaseMode')}
+            </button>
+            <button
+              onClick={() => setMode('MANUAL')}
+              className={`px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none whitespace-nowrap ${
+                mode === 'MANUAL'
+                  ? 'bg-white dark:bg-[#0B1020] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-500 dark:text-[#94A3B8] hover:text-indigo-600 dark:hover:text-[#F8FAFC]'
+              }`}
+            >
+              {mode === 'MANUAL' && <CheckCircle2 size={12} />} {t('manualSearchMode')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar overscroll-contain touch-pan-y">
+        {isLoading ? (
+          renderLoading()
+        ) : (
+          <>
+            {mode === 'CURRENT' && !selectedProjectId ? (
+              renderCaseSelection()
+            ) : (
+              <div className="p-4 sm:p-8">
+                {/* Search Bar (Only in Manual Mode) */}
+                {mode === 'MANUAL' && (
+                  <div className="max-w-2xl mx-auto mb-8">
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-indigo-500/10 blur-xl rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
+                      <input
+                        type="text"
+                        value={query}
+                        onChange={e => setQuery(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                        placeholder={
+                          toolkitLanguage === 'Hindi'
+                            ? t('searchHintManual')
+                            : 'Search case law by topic, section, issue, judge, Act, article, citation, or keyword...'
+                        }
+                        className="w-full relative z-10 bg-white dark:bg-[#1A2540] border-2 border-slate-100 dark:border-white/5 focus:border-indigo-500 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 pl-12 sm:pl-14 pr-24 sm:pr-32 text-xs sm:text-sm font-medium text-slate-700 dark:text-[#F8FAFC] shadow-sm transition-all outline-none"
+                      />
+                      <Search
+                        className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-subtext group-focus-within:text-indigo-500 transition-colors z-20"
+                        size={18}
+                      />
+
+                      {query && (
+                        <button
+                          onClick={() => {
+                            setQuery('');
+                            resetSelection();
+                          }}
+                          className="absolute right-24 sm:right-28 top-1/2 -translate-y-1/2 text-subtext hover:text-maintext z-20 transition-all p-1"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleSearch()}
+                        disabled={isLoading || !query}
+                        className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-all z-20"
+                      >
+                        {isLoading ? '...' : t('searchBtn')}
+                      </button>
+                    </div>
+
+                    {!searchMetadata && (
+                      <div className="mt-4">
+                        <SuggestedSearches
+                          onSelect={s => {
+                            setQuery(s);
+                            handleSearch(s);
+                          }}
+                          t={t}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Results or Directory Content */}
+                {mode === 'MANUAL' ? (
+                  !searchMetadata ? (
+                    <div>
+                      <LegalResearchDirectory
+                        onSelectCategory={cat => {
+                          setQuery(cat);
+                          handleSearch(cat);
+                        }}
+                        t={t}
+                      />
+                    </div>
+                  ) : results.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto mt-6 animate-fade-in">
+                      {results.map((caseItem, idx) => (
+                        <PrecedentCard
+                          key={idx}
+                          caseItem={caseItem}
+                          onClick={() => setSelectedCaseDetail(caseItem)}
+                          onCopyCitation={() => copyCitation(caseItem)}
+                          isSaved={activeCase?.savedPrecedents?.some(
+                            p =>
+                              (p._id || p.case_identity?.case_name) ===
+                              (caseItem._id || caseItem.case_identity?.case_name)
+                          )}
+                          t={t}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    !isLoading && (
+                      <div>
+                        <EmptySearchState query={searchMetadata.query} onClear={resetSelection} />
+                      </div>
+                    )
+                  )
+                ) : /* CURRENT case results view */
+                results.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto animate-fade-in">
+                    {results.map((caseItem, idx) => (
+                      <PrecedentCard
+                        key={idx}
+                        caseItem={caseItem}
+                        onClick={() => setSelectedCaseDetail(caseItem)}
+                        onCopyCitation={() => copyCitation(caseItem)}
+                        isSaved={activeCase?.savedPrecedents?.some(
+                          p =>
+                            (p._id || p.case_identity?.case_name) ===
+                            (caseItem._id || caseItem.case_identity?.case_name)
+                        )}
+                        t={t}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  !isLoading && (
+                    <div className="flex flex-col items-center justify-center py-20 text-center opacity-50 animate-fade-in">
+                      <BookOpen size={48} className="text-subtext mb-4" />
+                      <h3 className="text-lg font-bold text-maintext">{t('noPrecedentsFound')}</h3>
+                      <p className="text-xs text-subtext max-w-xs mt-2 font-medium">
+                        {t('noPrecedentsFoundDesc')}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Case Detail Overlay */}
+      <AnimatePresence>
+        {selectedCaseDetail && (
+          <CaseDetailView
+            key="case-detail-view"
+            caseItem={selectedCaseDetail}
+            onClose={() => setSelectedCaseDetail(null)}
+            onCopyCitation={() => copyCitation(selectedCaseDetail)}
+            onSave={() => handleSaveAction(selectedCaseDetail)}
+            onCite={() => handleCiteAction(selectedCaseDetail)}
+            onSummarize={() => handleSummarizeAction(selectedCaseDetail)}
+            onCompare={() => handleCompareAction(selectedCaseDetail)}
+            onDownloadPDF={() => handleDownloadPDF(selectedCaseDetail)}
+            isPdfLoading={isPdfLoading}
+            isSaved={activeCase?.savedPrecedents?.some(
+              p =>
+                (p._id || p.case_identity?.case_name) ===
+                (selectedCaseDetail?._id || selectedCaseDetail?.case_identity?.case_name)
+            )}
+            loadingStates={
+              isActionLoading[
+                selectedCaseDetail._id || selectedCaseDetail.case_identity?.case_name
+              ] || {}
+            }
+            aiResponses={
+              aiResponses[selectedCaseDetail._id || selectedCaseDetail.case_identity?.case_name] ||
+              {}
+            }
+            isReanalyzing={isReanalyzing}
+            t={t}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Case Selection Modal */}
+      <AnimatePresence>
+        {(isSavingToCaseOpen || isCaseListOpen) && (
+          <CaseSelectionModal
+            key="case-selection-modal"
+            isOpen={true}
+            onClose={() => {
+              setIsSavingToCaseOpen(false);
+              setIsCaseListOpen(false);
+            }}
+            onSelect={c => {
+              if (isCaseListOpen) {
+                handleCaseChange(c);
+              } else {
+                handleSaveAction(pendingPrecedentToSave, c._id);
+                setIsSavingToCaseOpen(false);
+              }
+            }}
+            cases={cases}
+            currentProjectId={selectedProjectId}
+            title={isCaseListOpen ? 'Switch Active Case' : 'Select Case to Save'}
+            onCreateNew={() => {
+              setIsSavingToCaseOpen(false);
+              setIsCaseListOpen(false);
+              onCreateCase();
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 const PrecedentCard = ({ caseItem, onClick, onCopyCitation, t }) => {
-    const { case_identity = {}, similarity = {}, case_context = {}, judgment_basis = {} } = caseItem;
+  const { case_identity = {}, similarity = {}, case_context = {}, judgment_basis = {} } = caseItem;
 
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -4 }}
-            className="precedent-card group bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-lg transition-colors duration-300"
-            onClick={onClick}
-        >
-            <div className="precedent-card-body p-6">
-                <div className="precedent-card-header flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
-                    <div className="flex-1 min-w-0">
-                        <h3 className="text-sm sm:text-base font-black text-maintext leading-snug break-words">
-                            {case_identity.case_name || caseItem.case_name}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[9px] sm:text-[10px] md:text-[11px] text-maintext/90 font-bold uppercase tracking-wider">
-                            <span className="flex items-center gap-1"><Gavel size={12} /> {case_identity.court || caseItem.court}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span className="flex items-center gap-1"><Calendar size={12} /> {case_identity.year || caseItem.year}</span>
-                        </div>
-                    </div>
-                    <div className="shrink-0">
-                        <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[9px] sm:text-[10px] font-black whitespace-nowrap">
-                            {similarity.relevance_score || caseItem.relevance_score || 0}% {t('relevance')}
-                        </div>
-                    </div>
-                </div>
-
-                <p className="precedent-facts text-xs text-maintext leading-relaxed line-clamp-2 mb-4 font-medium italic opacity-90">
-                    "{case_context.facts || caseItem.facts || caseItem.summary}"
-                </p>
-
-                <div className="precedent-reasoning-preview bg-slate-50 dark:bg-[#0B1020]/40 rounded-xl p-4 border border-slate-100 dark:border-white/5 mb-4">
-                    <div className="text-[9px] font-black text-maintext uppercase tracking-widest mb-1.5 flex items-center gap-1.5 opacity-70">
-                        <Shield size={10} /> {t('legalReasoning')}
-                    </div>
-                    <ReasoningSection
-                        content={judgment_basis.legal_reasoning || caseItem.reasoning || caseItem.ratio_decidendi}
-                        t={t}
-                    />
-                </div>
-
-                <div className="precedent-card-footer flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-white/5">
-                    <div className="precedent-tags-container flex flex-wrap gap-1.5">
-                        {caseItem.tags?.slice(0, 3).map((tag, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-slate-50 dark:bg-background text-subtext rounded-md text-[9px] font-bold uppercase tracking-tight border border-slate-100 dark:border-transparent">
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-                    <div className="precedent-actions flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onCopyCitation(); }}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-border rounded-lg text-subtext hover:text-indigo-400 transition-all group/btn"
-                            title="Copy Citation"
-                        >
-                            <Copy size={15} className="group-hover/btn:scale-110 transition-transform" />
-                        </button>
-                        <motion.div
-                            whileHover={{ x: 4 }}
-                            className="flex items-center gap-1 text-[10px] font-black text-maintext uppercase tracking-widest cursor-pointer"
-                        >
-                            {t('intelligenceReport')} <ChevronRight size={14} className="text-indigo-500" />
-                        </motion.div>
-                    </div>
-                </div>
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
+      className="precedent-card group bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-lg transition-colors duration-300"
+      onClick={onClick}
+    >
+      <div className="precedent-card-body p-6">
+        <div className="precedent-card-header flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm sm:text-base font-black text-maintext leading-snug break-words">
+              {case_identity.case_name || caseItem.case_name}
+            </h3>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[9px] sm:text-[10px] md:text-[11px] text-maintext/90 font-bold uppercase tracking-wider">
+              <span className="flex items-center gap-1">
+                <Gavel size={12} /> {case_identity.court || caseItem.court}
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span className="flex items-center gap-1">
+                <Calendar size={12} /> {case_identity.year || caseItem.year}
+              </span>
             </div>
-        </motion.div>
-    );
+          </div>
+          <div className="shrink-0">
+            <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[9px] sm:text-[10px] font-black whitespace-nowrap">
+              {similarity.relevance_score || caseItem.relevance_score || 0}% {t('relevance')}
+            </div>
+          </div>
+        </div>
+
+        <p className="precedent-facts text-xs text-maintext leading-relaxed line-clamp-2 mb-4 font-medium italic opacity-90">
+          "{case_context.facts || caseItem.facts || caseItem.summary}"
+        </p>
+
+        <div className="precedent-reasoning-preview bg-slate-50 dark:bg-[#0B1020]/40 rounded-xl p-4 border border-slate-100 dark:border-white/5 mb-4">
+          <div className="text-[9px] font-black text-maintext uppercase tracking-widest mb-1.5 flex items-center gap-1.5 opacity-70">
+            <Shield size={10} /> {t('legalReasoning')}
+          </div>
+          <ReasoningSection
+            content={
+              judgment_basis.legal_reasoning || caseItem.reasoning || caseItem.ratio_decidendi
+            }
+            t={t}
+          />
+        </div>
+
+        <div className="precedent-card-footer flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-white/5">
+          <div className="precedent-tags-container flex flex-wrap gap-1.5">
+            {caseItem.tags?.slice(0, 3).map((tag, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 bg-slate-50 dark:bg-background text-subtext rounded-md text-[9px] font-bold uppercase tracking-tight border border-slate-100 dark:border-transparent"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="precedent-actions flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onCopyCitation();
+              }}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-border rounded-lg text-subtext hover:text-indigo-400 transition-all group/btn"
+              title="Copy Citation"
+            >
+              <Copy size={15} className="group-hover/btn:scale-110 transition-transform" />
+            </button>
+            <motion.div
+              whileHover={{ x: 4 }}
+              className="flex items-center gap-1 text-[10px] font-black text-maintext uppercase tracking-widest cursor-pointer"
+            >
+              {t('intelligenceReport')} <ChevronRight size={14} className="text-indigo-500" />
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 };
 
 export const CaseDetailView = ({
-    caseItem,
-    onClose,
-    onCopyCitation,
-    onSave,
-    onCite,
-    onSummarize,
-    onCompare,
-    onDownloadPDF,
-    isSaved,
-    loadingStates = {},
-    aiResponses = {},
-    isReanalyzing = false,
-    isPdfLoading = false,
-    t
+  caseItem,
+  onClose,
+  onCopyCitation,
+  onSave,
+  onCite,
+  onSummarize,
+  onCompare,
+  onDownloadPDF,
+  isSaved,
+  loadingStates = {},
+  aiResponses = {},
+  isReanalyzing = false,
+  isPdfLoading = false,
+  t,
 }) => {
-    const {
-        case_identity = {},
-        case_context = {},
-        judgment_outcome = {},
-        judgment_basis = {},
-        similarity = {},
-        key_takeaways = [],
-        tags = []
-    } = caseItem;
+  const {
+    case_identity = {},
+    case_context = {},
+    judgment_outcome = {},
+    judgment_basis = {},
+    similarity = {},
+    key_takeaways = [],
+    tags = [],
+  } = caseItem;
 
-    const setToggle = useUserStore(state => state.setToggle);
-    const responseRef = React.useRef(null);
+  const setToggle = useUserStore(state => state.setToggle);
+  const responseRef = React.useRef(null);
 
-    useEffect(() => {
-        setToggle('focusMode', true);
-        document.body.classList.add('focus-mode');
-        return () => {
-            setToggle('focusMode', false);
-            document.body.classList.remove('focus-mode');
-        };
-    }, [setToggle]);
+  useEffect(() => {
+    setToggle('focusMode', true);
+    document.body.classList.add('focus-mode');
+    return () => {
+      setToggle('focusMode', false);
+      document.body.classList.remove('focus-mode');
+    };
+  }, [setToggle]);
 
-    useEffect(() => {
-        if (aiResponses.summarize || aiResponses.compare) {
-            setTimeout(() => {
-                responseRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-    }, [aiResponses.summarize, aiResponses.compare]);
+  useEffect(() => {
+    if (aiResponses.summarize || aiResponses.compare) {
+      setTimeout(() => {
+        responseRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [aiResponses.summarize, aiResponses.compare]);
 
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="precedent-modal-overlay fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-6 bg-background/80 backdrop-blur-sm"
-        >
-            <div className="absolute inset-0" onClick={onClose} />
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="precedent-modal-overlay fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-6 bg-background/80 backdrop-blur-sm"
+    >
+      <div className="absolute inset-0" onClick={onClose} />
 
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="precedent-detail-modal relative w-full lg:max-w-[1200px] md:max-w-[95%] h-full md:h-[90vh] bg-white dark:bg-[#0B1020] rounded-none md:rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col border border-slate-200 dark:border-white/5"
+      >
+        {/* Header Section */}
+        <div className="precedent-modal-header px-6 sm:px-8 py-5 sm:py-6 bg-white dark:bg-[#131C31]/50 border-b border-slate-200 dark:border-white/5 flex justify-between items-center sticky top-0 z-20 backdrop-blur-md">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+              <Gavel size={20} className="text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-maintext break-words tracking-tight leading-tight mb-0.5 sm:mb-1">
+                {case_identity.case_name || caseItem.case_name}
+              </h2>
+              <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] md:text-[11px] text-subtext font-semibold uppercase tracking-wider">
+                <span className="flex items-center gap-1.5">
+                  <Scale size={12} className="shrink-0" /> {case_identity.court || caseItem.court}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar size={12} className="shrink-0" /> {case_identity.year || caseItem.year}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <FileText size={12} className="shrink-0" />{' '}
+                  {case_identity.citation || caseItem.citation}
+                </span>
+                {(case_identity.district || case_identity.area) && (
+                  <span className="flex items-center gap-1.5 text-indigo-400">
+                    <MapPin size={12} className="shrink-0" />{' '}
+                    {[case_identity.district, case_identity.area].filter(Boolean).join(', ')}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-card rounded-xl transition-all text-subtext hover:text-maintext shrink-0 ml-2"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Loader for Re-analysis */}
+        <AnimatePresence>
+          {isReanalyzing && (
             <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="precedent-detail-modal relative w-full lg:max-w-[1200px] md:max-w-[95%] h-full md:h-[90vh] bg-white dark:bg-[#0B1020] rounded-none md:rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col border border-slate-200 dark:border-white/5"
+              key="reanalyzing-loader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8"
             >
-                {/* Header Section */}
-                <div className="precedent-modal-header px-6 sm:px-8 py-5 sm:py-6 bg-white dark:bg-[#131C31]/50 border-b border-slate-200 dark:border-white/5 flex justify-between items-center sticky top-0 z-20 backdrop-blur-md">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
-                            <Gavel size={20} className="text-white" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <h2 className="text-base sm:text-lg md:text-xl font-bold text-maintext break-words tracking-tight leading-tight mb-0.5 sm:mb-1">
-                                {case_identity.case_name || caseItem.case_name}
-                            </h2>
-                            <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] md:text-[11px] text-subtext font-semibold uppercase tracking-wider">
-                                <span className="flex items-center gap-1.5"><Scale size={12} className="shrink-0" /> {case_identity.court || caseItem.court}</span>
-                                <span className="flex items-center gap-1.5"><Calendar size={12} className="shrink-0" /> {case_identity.year || caseItem.year}</span>
-                                <span className="flex items-center gap-1.5"><FileText size={12} className="shrink-0" /> {case_identity.citation || caseItem.citation}</span>
-                                {(case_identity.district || case_identity.area) && (
-                                    <span className="flex items-center gap-1.5 text-indigo-400"><MapPin size={12} className="shrink-0" /> {[case_identity.district, case_identity.area].filter(Boolean).join(', ')}</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-card rounded-xl transition-all text-subtext hover:text-maintext shrink-0 ml-2"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
-
-                {/* Loader for Re-analysis */}
-                <AnimatePresence>
-                    {isReanalyzing && (
-                        <motion.div
-                            key="reanalyzing-loader"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8"
-                        >
-                            <div className="relative mb-6">
-                                <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-600 rounded-full animate-spin" />
-                                <Brain className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600 animate-pulse" size={24} />
-                            </div>
-                            <h3 className="text-lg font-black text-maintext uppercase tracking-tight mb-2">{t('analyzingCase')}</h3>
-                            <p className="text-xs text-subtext font-medium max-w-xs">
-                                {t('loadingPrecedents')}
-                            </p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Content Grid */}
-                <div className="precedent-modal-body flex-1 overflow-hidden flex flex-col lg:flex-row">
-                    {/* LEFT PANEL - Primary Content (65%) */}
-                    <div className="precedent-modal-main w-full lg:w-[65%] overflow-y-auto custom-scrollbar px-6 sm:px-8 py-6 sm:py-8 space-y-6 min-h-0 overscroll-contain">
-                        {/* Relevance Score (Mobile Only: Top Summary Card) */}
-                        <div className="block md:hidden bg-card p-5 rounded-[20px] border border-border shadow-sm space-y-4 mb-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-black text-maintext uppercase tracking-widest">{t('matchScore')}</span>
-                                <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[11px] font-bold">
-                                    {similarity.relevance_score || caseItem.relevance_score || 0}% {t('relevance')}
-                                </div>
-                            </div>
-                            <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${similarity.relevance_score || caseItem.relevance_score || 0}%` }}
-                                    className="h-full bg-emerald-500 rounded-full"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Case Facts */}
-                        <div className="bg-white dark:bg-[#1A2540] p-6 rounded-[20px] border border-slate-200 dark:border-white/5 shadow-sm">
-                            <Section
-                                title={t('caseFacts')}
-                                content={case_context.facts || caseItem.facts}
-                                icon={<FileText size={18} className="text-indigo-500" />}
-                                limit={300}
-                                t={t}
-                            />
-                        </div>
-
-                        {/* Legal Issue */}
-                        <div className="bg-indigo-500/10 p-6 rounded-[20px] border border-indigo-500/20">
-                            <Section
-                                title={t('coreLegalIssue')}
-                                content={case_context.legal_issue || caseItem.issue}
-                                icon={<AlertCircle size={18} className="text-indigo-400" />}
-                                limit={500}
-                                isIssue
-                                t={t}
-                            />
-                        </div>
-
-                        {/* Reasoning */}
-                        <div className="bg-card p-6 rounded-[20px] border border-border shadow-sm">
-                            <h4 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
-                                <Brain size={18} className="text-indigo-400" /> {t('judgmentReasoning')}
-                            </h4>
-                            <div className="space-y-4">
-                                {formatToBullets(judgment_basis.legal_reasoning || caseItem.reasoning || caseItem.ratio_decidendi).map((point, i) => (
-                                    <div key={i} className="flex gap-3 text-[14px] text-maintext leading-relaxed font-medium">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-2" />
-                                        <p>{point}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Takeaways */}
-                        <div className="bg-card p-6 rounded-[20px] border border-border shadow-sm">
-                            <h4 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
-                                <Zap size={18} className="text-amber-400" /> {t('strategicTakeaways')}
-                            </h4>
-                            <div className="grid grid-cols-1 gap-4">
-                                {(key_takeaways || caseItem.key_takeaways || []).map((item, i) => (
-                                    <div key={i} className="flex gap-3 text-[14px] text-maintext leading-relaxed font-medium">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-2" />
-                                        <span>{item}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT PANEL - Insights (35%) */}
-                    <div className="precedent-modal-sidebar w-full lg:w-[35%] bg-background lg:border-l border-t lg:border-t-0 border-border p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
-
-                        {/* SMART ACTIONS */}
-                        <div className="space-y-4">
-                            <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">{t('smartActions')}</h4>
-                            <div className="flex flex-col gap-2">
-                                <button
-                                    onClick={onSummarize}
-                                    disabled={loadingStates.summary}
-                                    className={`smart-action-btn ${loadingStates.summary ? 'btn-loading' : ''}`}
-                                >
-                                    <Sparkles size={14} className="text-amber-500" />
-                                    <span>{t('summarizeJudgment')}</span>
-                                    <ChevronRight size={14} className="ml-auto opacity-40" />
-                                </button>
-                                <button
-                                    onClick={onCompare}
-                                    disabled={loadingStates.compare}
-                                    className={`smart-action-btn ${loadingStates.compare ? 'btn-loading' : ''}`}
-                                >
-                                    <FileSearch size={14} className="text-indigo-500" />
-                                    <span>{t('compareWithCase')}</span>
-                                    <ChevronRight size={14} className="ml-auto opacity-40" />
-                                </button>
-                                <button
-                                    onClick={onCite}
-                                    disabled={loadingStates.cite}
-                                    className={`smart-action-btn ${loadingStates.cite ? 'btn-loading' : ''}`}
-                                >
-                                    <MessageSquare size={14} className="text-emerald-500" />
-                                    <span>{t('citeInArgument')}</span>
-                                    <ChevronRight size={14} className="ml-auto opacity-40" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* AI Response Section */}
-                        <AnimatePresence mode="wait">
-                            {(loadingStates.summary || loadingStates.compare) ? (
-                                <motion.div
-                                    key="loading-response"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    className="p-6 bg-card rounded-3xl border-2 border-dashed border-indigo-500/20 flex flex-col items-center justify-center text-center gap-3"
-                                >
-                                    <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                                    <div className="space-y-1">
-                                        <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">{t('aisaAiGenerating')}</p>
-                                        <p className="text-[10px] text-subtext">{t('loadingAIResponse')}</p>
-                                    </div>
-                                </motion.div>
-                            ) : (aiResponses.summarize || aiResponses.compare) ? (
-                                <motion.div
-                                    key="ai-response"
-                                    ref={responseRef}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="ai-response-container space-y-6 animate-glow"
-                                >
-                                    {aiResponses.summarize && (
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2 text-amber-400">
-                                                    <Sparkles size={16} />
-                                                    <span className="text-[11px] font-black uppercase tracking-[0.2em]">{t('aiResponse')}</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => onSummarize()}
-                                                    className="p-1.5 hover:bg-amber-500/10 rounded-lg text-amber-400 transition-all"
-                                                    title="Regenerate"
-                                                >
-                                                    <RefreshCcw size={12} />
-                                                </button>
-                                            </div>
-                                            <div className="bg-card p-5 rounded-2xl border border-amber-500/20 shadow-sm text-maintext text-[12px] leading-relaxed markdown-content">
-                                                <ReactMarkdown>{aiResponses.summarize}</ReactMarkdown>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {aiResponses.compare && (
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2 text-indigo-400">
-                                                    <FileSearch size={16} />
-                                                    <span className="text-[11px] font-black uppercase tracking-[0.2em]">{t('aiInsights')}</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => onCompare()}
-                                                    className="p-1.5 hover:bg-indigo-500/10 rounded-lg text-indigo-400 transition-all"
-                                                    title="Regenerate"
-                                                >
-                                                    <RefreshCcw size={12} />
-                                                </button>
-                                            </div>
-                                            <div className="bg-card p-5 rounded-2xl border border-indigo-500/20 shadow-sm text-maintext text-[12px] leading-relaxed markdown-content">
-                                                <ReactMarkdown>{aiResponses.compare}</ReactMarkdown>
-                                            </div>
-                                        </div>
-                                    )}
-                                </motion.div>
-                            ) : null}
-                        </AnimatePresence>
-
-                        {/* Relevance Score (Desktop / Tablet) */}
-                        <div className="hidden md:block bg-card p-6 rounded-[20px] border border-border shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-black text-maintext uppercase tracking-widest">{t('matchScore')}</span>
-                                <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[11px] font-bold">
-                                    {similarity.relevance_score || caseItem.relevance_score || 0}% {t('relevance')}
-                                </div>
-                            </div>
-                            <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${similarity.relevance_score || caseItem.relevance_score || 0}%` }}
-                                    className="h-full bg-emerald-500 rounded-full"
-                                />
-                            </div>
-                            <button className="w-full py-3 bg-indigo-500/10 text-indigo-400 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] hover:bg-indigo-500/20 transition-all">
-                                {t('landmarkJudgement')}
-                            </button>
-                        </div>
-
-                        {/* Final Verdict */}
-                        <div className="bg-card p-6 rounded-[24px] border border-border shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 -z-0 opacity-40" />
-                            <div className="relative z-10">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">{t('finalVerdict')}</h4>
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${judgment_outcome.type?.toLowerCase().includes('allow')
-                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                        }`}>
-                                        {judgment_outcome.type || "Allowed"}
-                                    </span>
-                                </div>
-
-                                <div className="space-y-6">
-                                    <div>
-                                        <p className="text-[14px] font-bold text-maintext leading-relaxed italic mb-1">
-                                            "{judgment_outcome.final_decision || caseItem.decision}"
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-3 pt-4 border-t border-border">
-                                        <div className="text-[10px] font-black text-maintext uppercase tracking-widest mb-2">{t('outcomeVerdict')}</div>
-                                        {formatToBullets(judgment_outcome.court_held || judgment_outcome.final_decision).slice(0, 2).map((point, i) => (
-                                            <div key={i} className="flex gap-2 text-[12px] text-maintext font-medium leading-relaxed">
-                                                <div className="text-emerald-400">•</div>
-                                                <p>{point}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Key Principles */}
-                        <div className="space-y-4">
-                            <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">{t('legalPrinciples')}</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {(judgment_basis.principles_applied || []).map((p, i) => (
-                                    <span key={i} className="px-3 py-1.5 bg-card border border-border text-maintext text-[11px] font-bold rounded-lg shadow-sm hover:border-indigo-400/50 transition-colors cursor-default">
-                                        {p}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Similarity Analysis */}
-                        <div className="space-y-4">
-                            <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">{t('similarityAnalysis')}</h4>
-                            <div className="space-y-2">
-                                {(similarity.matching_factors || []).map((factor, i) => (
-                                    <div key={i} className="flex gap-3 text-[12px] text-maintext font-bold leading-relaxed bg-card p-3 rounded-xl border border-border shadow-sm">
-                                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                                        {factor}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer Action Bar */}
-                <div className="precedent-modal-footer px-6 sm:px-8 py-4 sm:py-5 bg-background border-t border-border flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 sticky bottom-0 z-20">
-                    <button
-                        onClick={onCopyCitation}
-                        className="btn-tertiary-cta md:order-1 order-3 flex items-center justify-center gap-2 px-5 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl w-full md:w-auto md:mr-auto min-h-[48px]"
-                    >
-                        <Copy size={16} /> {t('copyOfficialCitation')}
-                    </button>
-
-                    <button
-                        onClick={onDownloadPDF}
-                        disabled={isPdfLoading}
-                        className={`md:order-2 order-2 flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${isPdfLoading
-                            ? 'bg-card text-subtext cursor-not-allowed border border-border'
-                            : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-[0.98]'
-                            } w-full md:w-auto min-h-[48px]`}
-                    >
-                        {isPdfLoading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-border border-t-indigo-600 rounded-full animate-spin" />
-                                <span>{t('generatingPDF')}</span>
-                            </>
-                        ) : (
-                            <>
-                                <FileDown size={16} />
-                                <span>{t('downloadPDF')}</span>
-                            </>
-                        )}
-                    </button>
-
-                    <button
-                        onClick={onSave}
-                        disabled={loadingStates.save || isSaved}
-                        className={`md:order-3 order-1 btn-secondary-cta flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest ${loadingStates.save ? 'btn-loading' : ''} ${isSaved ? 'btn-success' : ''} ${isSaved ? 'cursor-not-allowed' : ''} w-full md:w-auto min-h-[48px]`}
-                    >
-                        {loadingStates.save ? (
-                            <span>{t('analyzingCase')}...</span>
-                        ) : isSaved ? (
-                            <>
-                                <CheckCircle2 size={16} />
-                                <span>{t('aiResultConfirmed')} ✓</span>
-                            </>
-                        ) : (
-                            <>
-                                <Bookmark size={16} fill="none" />
-                                <span>{t('save')}</span>
-                            </>
-                        )}
-                    </button>
-                </div>
+              <div className="relative mb-6">
+                <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-600 rounded-full animate-spin" />
+                <Brain
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600 animate-pulse"
+                  size={24}
+                />
+              </div>
+              <h3 className="text-lg font-black text-maintext uppercase tracking-tight mb-2">
+                {t('analyzingCase')}
+              </h3>
+              <p className="text-xs text-subtext font-medium max-w-xs">{t('loadingPrecedents')}</p>
             </motion.div>
-        </motion.div>
-    );
+          )}
+        </AnimatePresence>
+
+        {/* Content Grid */}
+        <div className="precedent-modal-body flex-1 overflow-hidden flex flex-col lg:flex-row">
+          {/* LEFT PANEL - Primary Content (65%) */}
+          <div className="precedent-modal-main w-full lg:w-[65%] overflow-y-auto custom-scrollbar px-6 sm:px-8 py-6 sm:py-8 space-y-6 min-h-0 overscroll-contain">
+            {/* Relevance Score (Mobile Only: Top Summary Card) */}
+            <div className="block md:hidden bg-card p-5 rounded-[20px] border border-border shadow-sm space-y-4 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black text-maintext uppercase tracking-widest">
+                  {t('matchScore')}
+                </span>
+                <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[11px] font-bold">
+                  {similarity.relevance_score || caseItem.relevance_score || 0}% {t('relevance')}
+                </div>
+              </div>
+              <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${similarity.relevance_score || caseItem.relevance_score || 0}%`,
+                  }}
+                  className="h-full bg-emerald-500 rounded-full"
+                />
+              </div>
+            </div>
+
+            {/* Case Facts */}
+            <div className="bg-white dark:bg-[#1A2540] p-6 rounded-[20px] border border-slate-200 dark:border-white/5 shadow-sm">
+              <Section
+                title={t('caseFacts')}
+                content={case_context.facts || caseItem.facts}
+                icon={<FileText size={18} className="text-indigo-500" />}
+                limit={300}
+                t={t}
+              />
+            </div>
+
+            {/* Legal Issue */}
+            <div className="bg-indigo-500/10 p-6 rounded-[20px] border border-indigo-500/20">
+              <Section
+                title={t('coreLegalIssue')}
+                content={case_context.legal_issue || caseItem.issue}
+                icon={<AlertCircle size={18} className="text-indigo-400" />}
+                limit={500}
+                isIssue
+                t={t}
+              />
+            </div>
+
+            {/* Reasoning */}
+            <div className="bg-card p-6 rounded-[20px] border border-border shadow-sm">
+              <h4 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
+                <Brain size={18} className="text-indigo-400" /> {t('judgmentReasoning')}
+              </h4>
+              <div className="space-y-4">
+                {formatToBullets(
+                  judgment_basis.legal_reasoning || caseItem.reasoning || caseItem.ratio_decidendi
+                ).map((point, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-3 text-[14px] text-maintext leading-relaxed font-medium"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-2" />
+                    <p>{point}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Takeaways */}
+            <div className="bg-card p-6 rounded-[20px] border border-border shadow-sm">
+              <h4 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2 mb-4">
+                <Zap size={18} className="text-amber-400" /> {t('strategicTakeaways')}
+              </h4>
+              <div className="grid grid-cols-1 gap-4">
+                {(key_takeaways || caseItem.key_takeaways || []).map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-3 text-[14px] text-maintext leading-relaxed font-medium"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-2" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL - Insights (35%) */}
+          <div className="precedent-modal-sidebar w-full lg:w-[35%] bg-background lg:border-l border-t lg:border-t-0 border-border p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
+            {/* SMART ACTIONS */}
+            <div className="space-y-4">
+              <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">
+                {t('smartActions')}
+              </h4>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={onSummarize}
+                  disabled={loadingStates.summary}
+                  className={`smart-action-btn ${loadingStates.summary ? 'btn-loading' : ''}`}
+                >
+                  <Sparkles size={14} className="text-amber-500" />
+                  <span>{t('summarizeJudgment')}</span>
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </button>
+                <button
+                  onClick={onCompare}
+                  disabled={loadingStates.compare}
+                  className={`smart-action-btn ${loadingStates.compare ? 'btn-loading' : ''}`}
+                >
+                  <FileSearch size={14} className="text-indigo-500" />
+                  <span>{t('compareWithCase')}</span>
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </button>
+                <button
+                  onClick={onCite}
+                  disabled={loadingStates.cite}
+                  className={`smart-action-btn ${loadingStates.cite ? 'btn-loading' : ''}`}
+                >
+                  <MessageSquare size={14} className="text-emerald-500" />
+                  <span>{t('citeInArgument')}</span>
+                  <ChevronRight size={14} className="ml-auto opacity-40" />
+                </button>
+              </div>
+            </div>
+
+            {/* AI Response Section */}
+            <AnimatePresence mode="wait">
+              {loadingStates.summary || loadingStates.compare ? (
+                <motion.div
+                  key="loading-response"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="p-6 bg-card rounded-3xl border-2 border-dashed border-indigo-500/20 flex flex-col items-center justify-center text-center gap-3"
+                >
+                  <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">
+                      {t('aisaAiGenerating')}
+                    </p>
+                    <p className="text-[10px] text-subtext">{t('loadingAIResponse')}</p>
+                  </div>
+                </motion.div>
+              ) : aiResponses.summarize || aiResponses.compare ? (
+                <motion.div
+                  key="ai-response"
+                  ref={responseRef}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="ai-response-container space-y-6 animate-glow"
+                >
+                  {aiResponses.summarize && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <Sparkles size={16} />
+                          <span className="text-[11px] font-black uppercase tracking-[0.2em]">
+                            {t('aiResponse')}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => onSummarize()}
+                          className="p-1.5 hover:bg-amber-500/10 rounded-lg text-amber-400 transition-all"
+                          title="Regenerate"
+                        >
+                          <RefreshCcw size={12} />
+                        </button>
+                      </div>
+                      <div className="bg-card p-5 rounded-2xl border border-amber-500/20 shadow-sm text-maintext text-[12px] leading-relaxed markdown-content">
+                        <ReactMarkdown>{aiResponses.summarize}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiResponses.compare && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-indigo-400">
+                          <FileSearch size={16} />
+                          <span className="text-[11px] font-black uppercase tracking-[0.2em]">
+                            {t('aiInsights')}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => onCompare()}
+                          className="p-1.5 hover:bg-indigo-500/10 rounded-lg text-indigo-400 transition-all"
+                          title="Regenerate"
+                        >
+                          <RefreshCcw size={12} />
+                        </button>
+                      </div>
+                      <div className="bg-card p-5 rounded-2xl border border-indigo-500/20 shadow-sm text-maintext text-[12px] leading-relaxed markdown-content">
+                        <ReactMarkdown>{aiResponses.compare}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            {/* Relevance Score (Desktop / Tablet) */}
+            <div className="hidden md:block bg-card p-6 rounded-[20px] border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black text-maintext uppercase tracking-widest">
+                  {t('matchScore')}
+                </span>
+                <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[11px] font-bold">
+                  {similarity.relevance_score || caseItem.relevance_score || 0}% {t('relevance')}
+                </div>
+              </div>
+              <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${similarity.relevance_score || caseItem.relevance_score || 0}%`,
+                  }}
+                  className="h-full bg-emerald-500 rounded-full"
+                />
+              </div>
+              <button className="w-full py-3 bg-indigo-500/10 text-indigo-400 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] hover:bg-indigo-500/20 transition-all">
+                {t('landmarkJudgement')}
+              </button>
+            </div>
+
+            {/* Final Verdict */}
+            <div className="bg-card p-6 rounded-[24px] border border-border shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 -z-0 opacity-40" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">
+                    {t('finalVerdict')}
+                  </h4>
+                  <span
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      judgment_outcome.type?.toLowerCase().includes('allow')
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}
+                  >
+                    {judgment_outcome.type || 'Allowed'}
+                  </span>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-[14px] font-bold text-maintext leading-relaxed italic mb-1">
+                      "{judgment_outcome.final_decision || caseItem.decision}"
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-border">
+                    <div className="text-[10px] font-black text-maintext uppercase tracking-widest mb-2">
+                      {t('outcomeVerdict')}
+                    </div>
+                    {formatToBullets(judgment_outcome.court_held || judgment_outcome.final_decision)
+                      .slice(0, 2)
+                      .map((point, i) => (
+                        <div
+                          key={i}
+                          className="flex gap-2 text-[12px] text-maintext font-medium leading-relaxed"
+                        >
+                          <div className="text-emerald-400">•</div>
+                          <p>{point}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Principles */}
+            <div className="space-y-4">
+              <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">
+                {t('legalPrinciples')}
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {(judgment_basis.principles_applied || []).map((p, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1.5 bg-card border border-border text-maintext text-[11px] font-bold rounded-lg shadow-sm hover:border-indigo-400/50 transition-colors cursor-default"
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Similarity Analysis */}
+            <div className="space-y-4">
+              <h4 className="text-[11px] font-black text-maintext uppercase tracking-[0.2em]">
+                {t('similarityAnalysis')}
+              </h4>
+              <div className="space-y-2">
+                {(similarity.matching_factors || []).map((factor, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-3 text-[12px] text-maintext font-bold leading-relaxed bg-card p-3 rounded-xl border border-border shadow-sm"
+                  >
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    {factor}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Action Bar */}
+        <div className="precedent-modal-footer px-6 sm:px-8 py-4 sm:py-5 bg-background border-t border-border flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 sticky bottom-0 z-20">
+          <button
+            onClick={onCopyCitation}
+            className="btn-tertiary-cta md:order-1 order-3 flex items-center justify-center gap-2 px-5 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl w-full md:w-auto md:mr-auto min-h-[48px]"
+          >
+            <Copy size={16} /> {t('copyOfficialCitation')}
+          </button>
+
+          <button
+            onClick={onDownloadPDF}
+            disabled={isPdfLoading}
+            className={`md:order-2 order-2 flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+              isPdfLoading
+                ? 'bg-card text-subtext cursor-not-allowed border border-border'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-[0.98]'
+            } w-full md:w-auto min-h-[48px]`}
+          >
+            {isPdfLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-border border-t-indigo-600 rounded-full animate-spin" />
+                <span>{t('generatingPDF')}</span>
+              </>
+            ) : (
+              <>
+                <FileDown size={16} />
+                <span>{t('downloadPDF')}</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={onSave}
+            disabled={loadingStates.save || isSaved}
+            className={`md:order-3 order-1 btn-secondary-cta flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest ${loadingStates.save ? 'btn-loading' : ''} ${isSaved ? 'btn-success' : ''} ${isSaved ? 'cursor-not-allowed' : ''} w-full md:w-auto min-h-[48px]`}
+          >
+            {loadingStates.save ? (
+              <span>{t('analyzingCase')}...</span>
+            ) : isSaved ? (
+              <>
+                <CheckCircle2 size={16} />
+                <span>{t('aiResultConfirmed')} ✓</span>
+              </>
+            ) : (
+              <>
+                <Bookmark size={16} fill="none" />
+                <span>{t('save')}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 };
 
-export const formatToBullets = (text) => {
-    if (!text) return [];
-    if (Array.isArray(text)) return text;
-    // Split by common delimiters like "•", "-", numbers followed by period, or just split by period if it's long sentences
-    const points = text.split(/[•\n]|\d+\. /).filter(p => p.trim().length > 10);
-    return points.length > 0 ? points : [text];
+export const formatToBullets = text => {
+  if (!text) return [];
+  if (Array.isArray(text)) return text;
+  // Split by common delimiters like "•", "-", numbers followed by period, or just split by period if it's long sentences
+  const points = text.split(/[•\n]|\d+\. /).filter(p => p.trim().length > 10);
+  return points.length > 0 ? points : [text];
 };
 
 export const Section = ({ title, content, icon, limit = 200, isIssue = false, t }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const shouldTruncate = content?.length > limit;
-    const displayText = isExpanded ? content : content?.slice(0, limit);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shouldTruncate = content?.length > limit;
+  const displayText = isExpanded ? content : content?.slice(0, limit);
 
-    return (
-        <div className="space-y-3">
-            <h4 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2">
-                {icon} {title}
-            </h4>
-            <div className="relative">
-                <p className={`${isIssue ? 'text-[16px] font-bold text-maintext' : 'text-[14px] font-medium text-maintext'} leading-relaxed`}>
-                    {isIssue && !content?.includes('?') ? `"${displayText}?"` : displayText}
-                    {!isExpanded && shouldTruncate && "..."}
-                </p>
-                {shouldTruncate && (
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-2 hover:underline flex items-center gap-1"
-                    >
-                        {isExpanded ? t('showLess') : t('readMore')}
-                    </button>
-                )}
-            </div>
-        </div>
-    );
+  return (
+    <div className="space-y-3">
+      <h4 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2">
+        {icon} {title}
+      </h4>
+      <div className="relative">
+        <p
+          className={`${isIssue ? 'text-[16px] font-bold text-maintext' : 'text-[14px] font-medium text-maintext'} leading-relaxed`}
+        >
+          {isIssue && !content?.includes('?') ? `"${displayText}?"` : displayText}
+          {!isExpanded && shouldTruncate && '...'}
+        </p>
+        {shouldTruncate && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-2 hover:underline flex items-center gap-1"
+          >
+            {isExpanded ? t('showLess') : t('readMore')}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 };
-
-
 
 export const ReasoningSection = ({ content, t }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const limit = 120;
-    const shouldTruncate = content?.length > limit;
-    const displayText = isExpanded ? content : content?.slice(0, limit);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const limit = 120;
+  const shouldTruncate = content?.length > limit;
+  const displayText = isExpanded ? content : content?.slice(0, limit);
 
-    return (
-        <div>
-            <p className={`text-[11px] text-maintext font-bold leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}>
-                {displayText}
-                {!isExpanded && shouldTruncate && "..."}
+  return (
+    <div>
+      <p
+        className={`text-[11px] text-maintext font-bold leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}
+      >
+        {displayText}
+        {!isExpanded && shouldTruncate && '...'}
+      </p>
+      {shouldTruncate && (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mt-2 hover:underline"
+        >
+          {isExpanded ? t('showLess') : t('readMore')}
+        </button>
+      )}
+    </div>
+  );
+};
+
+export const CaseSelectionModal = ({
+  isOpen,
+  onClose,
+  onSelect,
+  cases,
+  currentProjectId,
+  title,
+  onCreateNew,
+}) => {
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-background rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border"
+      >
+        <div className="p-6 border-b border-border flex justify-between items-center bg-card">
+          <div>
+            <h3 className="text-lg font-black text-maintext uppercase tracking-tight">{title}</h3>
+            <p className="text-[10px] text-subtext font-bold uppercase tracking-widest mt-0.5">
+              Select from your existing case files
             </p>
-            {shouldTruncate && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                    className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mt-2 hover:underline"
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-border rounded-full transition-colors text-subtext"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-4 max-h-[450px] overflow-y-auto custom-scrollbar">
+          {cases.length === 0 ? (
+            <div className="py-12 text-center">
+              <Briefcase size={40} className="text-subtext mx-auto mb-3" />
+              <p className="text-sm font-bold text-subtext uppercase tracking-widest">
+                No cases found
+              </p>
+            </div>
+          ) : (
+            cases.map(c => (
+              <button
+                key={c._id}
+                onClick={() => onSelect(c)}
+                className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group text-left mb-2 border ${
+                  c._id === currentProjectId
+                    ? 'bg-indigo-500/10 border-indigo-500/20 shadow-sm'
+                    : 'bg-background border-transparent hover:bg-card hover:border-border'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                    c._id === currentProjectId ? 'bg-card' : 'bg-card group-hover:bg-background'
+                  }`}
                 >
-                    {isExpanded ? t('showLess') : t('readMore')}
-                </button>
-            )}
-        </div>
-    );
-};
-
-export const CaseSelectionModal = ({ isOpen, onClose, onSelect, cases, currentProjectId, title, onCreateNew }) => {
-    return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-background rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border"
-            >
-                <div className="p-6 border-b border-border flex justify-between items-center bg-card">
-                    <div>
-                        <h3 className="text-lg font-black text-maintext uppercase tracking-tight">{title}</h3>
-                        <p className="text-[10px] text-subtext font-bold uppercase tracking-widest mt-0.5">Select from your existing case files</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-border rounded-full transition-colors text-subtext"><X size={20} /></button>
+                  <Briefcase
+                    size={18}
+                    className={
+                      c._id === currentProjectId
+                        ? 'text-indigo-400'
+                        : 'text-subtext group-hover:text-indigo-400'
+                    }
+                  />
                 </div>
-
-                <div className="p-4 max-h-[450px] overflow-y-auto custom-scrollbar">
-                    {cases.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <Briefcase size={40} className="text-subtext mx-auto mb-3" />
-                            <p className="text-sm font-bold text-subtext uppercase tracking-widest">No cases found</p>
-                        </div>
-                    ) : (
-                        cases.map(c => (
-                            <button
-                                key={c._id}
-                                onClick={() => onSelect(c)}
-                                className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all group text-left mb-2 border ${c._id === currentProjectId
-                                    ? 'bg-indigo-500/10 border-indigo-500/20 shadow-sm'
-                                    : 'bg-background border-transparent hover:bg-card hover:border-border'
-                                    }`}
-                            >
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${c._id === currentProjectId ? 'bg-card' : 'bg-card group-hover:bg-background'
-                                    }`}>
-                                    <Briefcase size={18} className={c._id === currentProjectId ? 'text-indigo-400' : 'text-subtext group-hover:text-indigo-400'} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-black truncate ${c._id === currentProjectId ? 'text-indigo-300' : 'text-maintext group-hover:text-indigo-300'}`}>
-                                        {c.name}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-[9px] text-subtext font-bold uppercase tracking-widest">{c.caseType || 'General'}</span>
-                                        {c.updatedAt && (
-                                            <span className="text-[9px] text-subtext/60">• {new Date(c.updatedAt).toLocaleDateString()}</span>
-                                        )}
-                                    </div>
-                                </div>
-                                {c._id === currentProjectId ? (
-                                    <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white">
-                                        <Zap size={12} fill="white" />
-                                    </div>
-                                ) : (
-                                    <ChevronRight size={16} className="text-border group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
-                                )}
-                            </button>
-                        ))
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`text-sm font-black truncate ${c._id === currentProjectId ? 'text-indigo-300' : 'text-maintext group-hover:text-indigo-300'}`}
+                  >
+                    {c.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] text-subtext font-bold uppercase tracking-widest">
+                      {c.caseType || 'General'}
+                    </span>
+                    {c.updatedAt && (
+                      <span className="text-[9px] text-subtext/60">
+                        • {new Date(c.updatedAt).toLocaleDateString()}
+                      </span>
                     )}
+                  </div>
                 </div>
-
-                <div className="p-6 bg-background border-t border-border">
-                    <button
-                        onClick={onCreateNew}
-                        className="w-full py-4 border-2 border-dashed border-border rounded-2xl text-[11px] font-black uppercase tracking-widest text-subtext hover:border-indigo-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2"
-                    >
-                        <Plus size={16} /> Create New Case Workspace
-                    </button>
-                </div>
-            </motion.div>
+                {c._id === currentProjectId ? (
+                  <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                    <Zap size={12} fill="white" />
+                  </div>
+                ) : (
+                  <ChevronRight
+                    size={16}
+                    className="text-border group-hover:text-indigo-400 group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </button>
+            ))
+          )}
         </div>
-    );
+
+        <div className="p-6 bg-background border-t border-border">
+          <button
+            onClick={onCreateNew}
+            className="w-full py-4 border-2 border-dashed border-border rounded-2xl text-[11px] font-black uppercase tracking-widest text-subtext hover:border-indigo-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2"
+          >
+            <Plus size={16} /> Create New Case Workspace
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
 };
 
-export const ResearchStats = ({ t = (x) => x }) => {
-    return (
-        <div className="research-stats-grid">
-            <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
-                <Landmark className="text-indigo-500 dark:text-indigo-400" size={20} />
-                <span className="text-base sm:text-lg font-black text-indigo-500 mt-2">14,230+</span>
-                <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">{t('precedentsFound')}</span>
-            </div>
-            <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
-                <Gavel className="text-emerald-500 dark:text-emerald-400" size={20} />
-                <span className="text-base sm:text-lg font-black text-emerald-500 mt-2">BNS / IPC</span>
-                <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">{t('primaryLawAct')}</span>
-            </div>
-            <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
-                <Brain className="text-pink-500 dark:text-pink-400" size={20} />
-                <span className="text-base sm:text-lg font-black text-pink-500 mt-2">98.5%</span>
-                <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">{t('aiAccuracy')}</span>
-            </div>
-        </div>
-    );
+export const ResearchStats = ({ t = x => x }) => {
+  return (
+    <div className="research-stats-grid">
+      <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
+        <Landmark className="text-indigo-500 dark:text-indigo-400" size={20} />
+        <span className="text-base sm:text-lg font-black text-indigo-500 mt-2">14,230+</span>
+        <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">
+          {t('precedentsFound')}
+        </span>
+      </div>
+      <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
+        <Gavel className="text-emerald-500 dark:text-emerald-400" size={20} />
+        <span className="text-base sm:text-lg font-black text-emerald-500 mt-2">BNS / IPC</span>
+        <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">
+          {t('primaryLawAct')}
+        </span>
+      </div>
+      <div className="bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center">
+        <Brain className="text-pink-500 dark:text-pink-400" size={20} />
+        <span className="text-base sm:text-lg font-black text-pink-500 mt-2">98.5%</span>
+        <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">
+          {t('aiAccuracy')}
+        </span>
+      </div>
+    </div>
+  );
 };
 
 export const CategoryCard = ({ title, count, icon: IconComp, onClick }) => {
-    return (
-        <motion.div
-            whileHover={{ y: -4, boxShadow: '0 10px 20px -5px rgba(0,0,0,0.05)' }}
-            onClick={onClick}
-            className="p-4 bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/30 transition-all flex flex-col justify-between min-h-[110px]"
-        >
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 flex items-center justify-center mb-3">
-                <IconComp size={16} className="text-indigo-500 dark:text-indigo-400" />
+  return (
+    <motion.div
+      whileHover={{ y: -4, boxShadow: '0 10px 20px -5px rgba(0,0,0,0.05)' }}
+      onClick={onClick}
+      className="p-4 bg-white dark:bg-[#1A2540] border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/30 transition-all flex flex-col justify-between min-h-[110px]"
+    >
+      <div className="w-8 h-8 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 flex items-center justify-center mb-3">
+        <IconComp size={16} className="text-indigo-500 dark:text-indigo-400" />
+      </div>
+      <div>
+        <h4 className="text-xs font-black text-maintext leading-snug line-clamp-1">{title}</h4>
+        <p className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">{count}</p>
+      </div>
+    </motion.div>
+  );
+};
+
+export const ResearchCategoryGrid = ({ onSelect, t = x => x }) => {
+  const categories = [
+    {
+      id: 'SC',
+      titleKey: 'supremeCourtResearch',
+      searchTitle: 'Supreme Court Research',
+      icon: Landmark,
+      countKey: 'casesCount_SC',
+      fallbackCount: '14,230 cases',
+    },
+    {
+      id: 'HC',
+      titleKey: 'highCourtJudgments',
+      searchTitle: 'High Court Judgments',
+      icon: Building2,
+      countKey: 'casesCount_HC',
+      fallbackCount: '84,150 cases',
+    },
+    {
+      id: 'Const',
+      titleKey: 'constitutionalLaw',
+      searchTitle: 'Constitutional Law',
+      icon: Scale,
+      countKey: 'casesCount_Const',
+      fallbackCount: '1,890 articles',
+    },
+    {
+      id: 'Crim',
+      titleKey: 'criminalLaw',
+      searchTitle: 'Criminal Law',
+      icon: Gavel,
+      countKey: 'casesCount_Crim',
+      fallbackCount: '24,600 files',
+    },
+    {
+      id: 'Civ',
+      titleKey: 'civilLaw',
+      searchTitle: 'Civil Law',
+      icon: FileText,
+      countKey: 'casesCount_Civ',
+      fallbackCount: '32,110 files',
+    },
+    {
+      id: 'Corp',
+      titleKey: 'corporateLaw',
+      searchTitle: 'Corporate Law',
+      icon: Building2,
+      countKey: 'casesCount_Corp',
+      fallbackCount: '8,420 files',
+    },
+    {
+      id: 'Cyber',
+      titleKey: 'cyberLaw',
+      searchTitle: 'Cyber Law',
+      icon: Shield,
+      countKey: 'casesCount_Cyber',
+      fallbackCount: '1,120 files',
+    },
+    {
+      id: 'Fam',
+      titleKey: 'familyLaw',
+      searchTitle: 'Family Law',
+      icon: Library,
+      countKey: 'casesCount_Fam',
+      fallbackCount: '9,450 files',
+    },
+    {
+      id: 'Prop',
+      titleKey: 'propertyLaw',
+      searchTitle: 'Property Law',
+      icon: Landmark,
+      countKey: 'casesCount_Prop',
+      fallbackCount: '18,300 files',
+    },
+    {
+      id: 'Tax',
+      titleKey: 'taxationLaw',
+      searchTitle: 'Taxation Law',
+      icon: FileText,
+      countKey: 'casesCount_Tax',
+      fallbackCount: '4,520 files',
+    },
+    {
+      id: 'Cons',
+      titleKey: 'consumerProtection',
+      searchTitle: 'Consumer Protection',
+      icon: Library,
+      countKey: 'casesCount_Cons',
+      fallbackCount: '3,110 files',
+    },
+    {
+      id: 'Arb',
+      titleKey: 'arbitrationMediation',
+      searchTitle: 'Arbitration & Mediation',
+      icon: Scale,
+      countKey: 'casesCount_Arb',
+      fallbackCount: '6,450 files',
+    },
+    {
+      id: 'Lab',
+      titleKey: 'labourLaw',
+      searchTitle: 'Labour Law',
+      icon: Briefcase,
+      countKey: 'casesCount_Lab',
+      fallbackCount: '12,400 files',
+    },
+    {
+      id: 'Bank',
+      titleKey: 'bankingLaw',
+      searchTitle: 'Banking Law',
+      icon: Building2,
+      countKey: 'casesCount_Bank',
+      fallbackCount: '9,120 files',
+    },
+    {
+      id: 'Env',
+      titleKey: 'environmentalLaw',
+      searchTitle: 'Environmental Law',
+      icon: Folder,
+      countKey: 'casesCount_Env',
+      fallbackCount: '2,300 files',
+    },
+    {
+      id: 'IP',
+      titleKey: 'intellectualProperty',
+      searchTitle: 'Intellectual Property',
+      icon: Shield,
+      countKey: 'casesCount_IP',
+      fallbackCount: '5,840 files',
+    },
+    {
+      id: 'MAC',
+      titleKey: 'motorAccidentClaims',
+      searchTitle: 'Motor Accident Claims',
+      icon: Gavel,
+      countKey: 'casesCount_MAC',
+      fallbackCount: '14,210 files',
+    },
+    {
+      id: 'Comp',
+      titleKey: 'companyLaw',
+      searchTitle: 'Company Law',
+      icon: Building2,
+      countKey: 'casesCount_Comp',
+      fallbackCount: '7,150 files',
+    },
+    {
+      id: 'Serv',
+      titleKey: 'serviceLaw',
+      searchTitle: 'Service Law',
+      icon: Briefcase,
+      countKey: 'casesCount_Serv',
+      fallbackCount: '11,400 files',
+    },
+    {
+      id: 'Elec',
+      titleKey: 'electionLaw',
+      searchTitle: 'Election Law',
+      icon: Scale,
+      countKey: 'casesCount_Elec',
+      fallbackCount: '1,560 files',
+    },
+    {
+      id: 'HR',
+      titleKey: 'humanRights',
+      searchTitle: 'Human Rights',
+      icon: Library,
+      countKey: 'casesCount_HR',
+      fallbackCount: '4,890 files',
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2">
+        <Layout size={14} className="text-indigo-500 animate-pulse" />{' '}
+        {t('researchDirectoryClassifications')}
+      </h3>
+      <div className="research-category-grid">
+        {categories.map(c => (
+          <CategoryCard
+            key={c.id}
+            title={t(c.titleKey)}
+            count={t(c.countKey) !== c.countKey ? t(c.countKey) : c.fallbackCount}
+            icon={c.icon}
+            onClick={() => onSelect(c.searchTitle)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const FeaturedActs = ({ onSelect, t = x => x }) => {
+  const acts = [
+    { name: 'Constitution of India', nameKey: 'act_constitution', descKey: 'desc_constitution' },
+    { name: 'Bharatiya Nyaya Sanhita (BNS)', nameKey: 'act_bns', descKey: 'desc_bns' },
+    {
+      name: 'Bharatiya Nagarik Suraksha Sanhita (BNSS)',
+      nameKey: 'act_bnss',
+      descKey: 'desc_bnss',
+    },
+    { name: 'Bharatiya Sakshya Adhiniyam (BSA)', nameKey: 'act_bsa', descKey: 'desc_bsa' },
+    { name: 'Code of Civil Procedure (CPC)', nameKey: 'act_cpc', descKey: 'desc_cpc' },
+    { name: 'Indian Evidence Act', nameKey: 'act_evidence', descKey: 'desc_evidence' },
+    { name: 'Indian Contract Act', nameKey: 'act_contract', descKey: 'desc_contract' },
+    { name: 'Transfer of Property Act', nameKey: 'act_property', descKey: 'desc_property' },
+    { name: 'Companies Act', nameKey: 'act_companies', descKey: 'desc_companies' },
+    { name: 'Information Technology (IT) Act', nameKey: 'act_it', descKey: 'desc_it' },
+    { name: 'Consumer Protection Act', nameKey: 'act_consumer', descKey: 'desc_consumer' },
+    { name: 'Income Tax Act', nameKey: 'act_income_tax', descKey: 'desc_income_tax' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-[11px] font-black text-[#94A3B8] uppercase tracking-[0.2em] flex items-center gap-2">
+        <BookOpen size={14} className="text-indigo-500" /> {t('featuredActsStatutes')}
+      </h3>
+      <div className="featured-acts-grid">
+        {acts.map((act, idx) => (
+          <motion.div
+            key={idx}
+            whileHover={{ scale: 1.02 }}
+            onClick={() => onSelect(act.name)}
+            className="p-4 bg-slate-50/50 dark:bg-[#131C31]/50 border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/20 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/5 transition-all text-left"
+          >
+            <h4 className="text-xs font-bold text-maintext line-clamp-1">{act.name}</h4>
+            <p className="text-[9px] text-[#94A3B8] font-medium mt-1 line-clamp-1">
+              {t(act.descKey)}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const PopularCases = ({ onSelect, t = x => x }) => {
+  const casesList = [
+    { name: 'Kesavananda Bharati v. State of Kerala (1973)', topicKey: 'topic_basic_structure' },
+    { name: 'Maneka Gandhi v. Union of India (1978)', topicKey: 'topic_personal_liberty' },
+    { name: 'Vishaka v. State of Rajasthan (1997)', topicKey: 'topic_sexual_harassment' },
+    { name: 'Shayara Bano v. Union of India (2017)', topicKey: 'topic_triple_talaq' },
+    { name: 'Navtej Singh Johar v. Union of India (2018)', topicKey: 'topic_section_377' },
+    { name: 'K.S. Puttaswamy v. Union of India (2017)', topicKey: 'topic_privacy' },
+    { name: 'Olga Tellis v. Bombay Municipal Corporation (1985)', topicKey: 'topic_livelihood' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-[11px] font-black text-[#94A3B8] uppercase tracking-[0.2em] flex items-center gap-2">
+        <Gavel size={14} className="text-indigo-500" /> {t('popularLandmarkCases')}
+      </h3>
+      <div className="popular-cases-grid">
+        {casesList.map((c, idx) => (
+          <motion.div
+            key={idx}
+            whileHover={{ scale: 1.01 }}
+            onClick={() => onSelect(c.name)}
+            className="p-4 bg-slate-50/50 dark:bg-[#131C31]/50 border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/20 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/5 transition-all text-left flex items-start gap-3"
+          >
+            <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Scale size={12} className="text-indigo-500" />
             </div>
             <div>
-                <h4 className="text-xs font-black text-maintext leading-snug line-clamp-1">{title}</h4>
-                <p className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-wider mt-1">{count}</p>
+              <h4 className="text-xs font-bold text-maintext line-clamp-1">{c.name}</h4>
+              <p className="text-[9px] text-indigo-500 font-bold uppercase tracking-wider mt-0.5">
+                {t(c.topicKey)}
+              </p>
             </div>
-        </motion.div>
-    );
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
-export const ResearchCategoryGrid = ({ onSelect, t = (x) => x }) => {
-    const categories = [
-        { id: 'SC', titleKey: 'supremeCourtResearch', searchTitle: 'Supreme Court Research', icon: Landmark, countKey: 'casesCount_SC', fallbackCount: '14,230 cases' },
-        { id: 'HC', titleKey: 'highCourtJudgments', searchTitle: 'High Court Judgments', icon: Building2, countKey: 'casesCount_HC', fallbackCount: '84,150 cases' },
-        { id: 'Const', titleKey: 'constitutionalLaw', searchTitle: 'Constitutional Law', icon: Scale, countKey: 'casesCount_Const', fallbackCount: '1,890 articles' },
-        { id: 'Crim', titleKey: 'criminalLaw', searchTitle: 'Criminal Law', icon: Gavel, countKey: 'casesCount_Crim', fallbackCount: '24,600 files' },
-        { id: 'Civ', titleKey: 'civilLaw', searchTitle: 'Civil Law', icon: FileText, countKey: 'casesCount_Civ', fallbackCount: '32,110 files' },
-        { id: 'Corp', titleKey: 'corporateLaw', searchTitle: 'Corporate Law', icon: Building2, countKey: 'casesCount_Corp', fallbackCount: '8,420 files' },
-        { id: 'Cyber', titleKey: 'cyberLaw', searchTitle: 'Cyber Law', icon: Shield, countKey: 'casesCount_Cyber', fallbackCount: '1,120 files' },
-        { id: 'Fam', titleKey: 'familyLaw', searchTitle: 'Family Law', icon: Library, countKey: 'casesCount_Fam', fallbackCount: '9,450 files' },
-        { id: 'Prop', titleKey: 'propertyLaw', searchTitle: 'Property Law', icon: Landmark, countKey: 'casesCount_Prop', fallbackCount: '18,300 files' },
-        { id: 'Tax', titleKey: 'taxationLaw', searchTitle: 'Taxation Law', icon: FileText, countKey: 'casesCount_Tax', fallbackCount: '4,520 files' },
-        { id: 'Cons', titleKey: 'consumerProtection', searchTitle: 'Consumer Protection', icon: Library, countKey: 'casesCount_Cons', fallbackCount: '3,110 files' },
-        { id: 'Arb', titleKey: 'arbitrationMediation', searchTitle: 'Arbitration & Mediation', icon: Scale, countKey: 'casesCount_Arb', fallbackCount: '6,450 files' },
-        { id: 'Lab', titleKey: 'labourLaw', searchTitle: 'Labour Law', icon: Briefcase, countKey: 'casesCount_Lab', fallbackCount: '12,400 files' },
-        { id: 'Bank', titleKey: 'bankingLaw', searchTitle: 'Banking Law', icon: Building2, countKey: 'casesCount_Bank', fallbackCount: '9,120 files' },
-        { id: 'Env', titleKey: 'environmentalLaw', searchTitle: 'Environmental Law', icon: Folder, countKey: 'casesCount_Env', fallbackCount: '2,300 files' },
-        { id: 'IP', titleKey: 'intellectualProperty', searchTitle: 'Intellectual Property', icon: Shield, countKey: 'casesCount_IP', fallbackCount: '5,840 files' },
-        { id: 'MAC', titleKey: 'motorAccidentClaims', searchTitle: 'Motor Accident Claims', icon: Gavel, countKey: 'casesCount_MAC', fallbackCount: '14,210 files' },
-        { id: 'Comp', titleKey: 'companyLaw', searchTitle: 'Company Law', icon: Building2, countKey: 'casesCount_Comp', fallbackCount: '7,150 files' },
-        { id: 'Serv', titleKey: 'serviceLaw', searchTitle: 'Service Law', icon: Briefcase, countKey: 'casesCount_Serv', fallbackCount: '11,400 files' },
-        { id: 'Elec', titleKey: 'electionLaw', searchTitle: 'Election Law', icon: Scale, countKey: 'casesCount_Elec', fallbackCount: '1,560 files' },
-        { id: 'HR', titleKey: 'humanRights', searchTitle: 'Human Rights', icon: Library, countKey: 'casesCount_HR', fallbackCount: '4,890 files' },
-    ];
+export const RecentJudgments = ({ onSelect, t = x => x }) => {
+  const judgments = [
+    {
+      titleKey: 'latestSCJudgments',
+      searchTitle: 'Latest Supreme Court Judgments (2024)',
+      courtKey: 'supremeCourtOfIndia',
+    },
+    {
+      titleKey: 'latestHCRulings',
+      searchTitle: 'Latest High Court Rulings on Civil Disputes',
+      courtKey: 'delhiHighCourt',
+    },
+    {
+      titleKey: 'recentNCLATDecisions',
+      searchTitle: 'Recent NCLAT Company Law Decisions',
+      courtKey: 'ncltNclat',
+    },
+    {
+      titleKey: 'newestArbitralPrecedents',
+      searchTitle: 'Newest Arbitral Award Precedents',
+      courtKey: 'arbitrationTribunals',
+    },
+  ];
 
-    return (
-        <div className="space-y-4">
-            <h3 className="text-[11px] font-black text-subtext uppercase tracking-[0.2em] flex items-center gap-2">
-                <Layout size={14} className="text-indigo-500 animate-pulse" /> {t('researchDirectoryClassifications')}
-            </h3>
-            <div className="research-category-grid">
-                {categories.map(c => (
-                    <CategoryCard
-                        key={c.id}
-                        title={t(c.titleKey)}
-                        count={t(c.countKey) !== c.countKey ? t(c.countKey) : c.fallbackCount}
-                        icon={c.icon}
-                        onClick={() => onSelect(c.searchTitle)}
-                    />
-                ))}
-            </div>
-        </div>
-    );
+  return (
+    <div className="space-y-4">
+      <h3 className="text-[11px] font-black text-[#94A3B8] uppercase tracking-[0.2em] flex items-center gap-2">
+        <History size={14} className="text-indigo-500" /> {t('recentJudgmentsDecisions')}
+      </h3>
+      <div className="recent-judgments-grid">
+        {judgments.map((j, idx) => (
+          <motion.div
+            key={idx}
+            whileHover={{ scale: 1.02 }}
+            onClick={() => onSelect(j.searchTitle)}
+            className="p-4 bg-slate-50/50 dark:bg-[#131C31]/50 border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/20 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/5 transition-all text-left flex flex-col justify-between min-h-[90px]"
+          >
+            <h4 className="text-xs font-bold text-maintext line-clamp-2 leading-relaxed">
+              {t(j.titleKey)}
+            </h4>
+            <span className="text-[8px] font-black uppercase tracking-wider text-subtext mt-2 block">
+              {t(j.courtKey)}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
-export const FeaturedActs = ({ onSelect, t = (x) => x }) => {
-    const acts = [
-        { name: "Constitution of India", nameKey: 'act_constitution', descKey: 'desc_constitution' },
-        { name: "Bharatiya Nyaya Sanhita (BNS)", nameKey: 'act_bns', descKey: 'desc_bns' },
-        { name: "Bharatiya Nagarik Suraksha Sanhita (BNSS)", nameKey: 'act_bnss', descKey: 'desc_bnss' },
-        { name: "Bharatiya Sakshya Adhiniyam (BSA)", nameKey: 'act_bsa', descKey: 'desc_bsa' },
-        { name: "Code of Civil Procedure (CPC)", nameKey: 'act_cpc', descKey: 'desc_cpc' },
-        { name: "Indian Evidence Act", nameKey: 'act_evidence', descKey: 'desc_evidence' },
-        { name: "Indian Contract Act", nameKey: 'act_contract', descKey: 'desc_contract' },
-        { name: "Transfer of Property Act", nameKey: 'act_property', descKey: 'desc_property' },
-        { name: "Companies Act", nameKey: 'act_companies', descKey: 'desc_companies' },
-        { name: "Information Technology (IT) Act", nameKey: 'act_it', descKey: 'desc_it' },
-        { name: "Consumer Protection Act", nameKey: 'act_consumer', descKey: 'desc_consumer' },
-        { name: "Income Tax Act", nameKey: 'act_income_tax', descKey: 'desc_income_tax' }
-    ];
+export const SuggestedSearches = ({ onSelect, t = x => x }) => {
+  // Always use English strings for search queries, only the label is translated
+  const suggestions = [
+    { labelKey: 'suggestedSearch1', query: 'Section 482 CrPC quashing petition' },
+    { labelKey: 'suggestedSearch2', query: 'Dishonour of cheque Section 138 NI Act' },
+    { labelKey: 'suggestedSearch3', query: 'Admissibility of electronic evidence Section 65B' },
+    { labelKey: 'suggestedSearch4', query: 'Writ of Habeas Corpus personal liberty' },
+  ];
 
-    return (
-        <div className="space-y-4">
-            <h3 className="text-[11px] font-black text-[#94A3B8] uppercase tracking-[0.2em] flex items-center gap-2">
-                <BookOpen size={14} className="text-indigo-500" /> {t('featuredActsStatutes')}
-            </h3>
-            <div className="featured-acts-grid">
-                {acts.map((act, idx) => (
-                    <motion.div
-                        key={idx}
-                        whileHover={{ scale: 1.02 }}
-                        onClick={() => onSelect(act.name)}
-                        className="p-4 bg-slate-50/50 dark:bg-[#131C31]/50 border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/20 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/5 transition-all text-left"
-                    >
-                        <h4 className="text-xs font-bold text-maintext line-clamp-1">{act.name}</h4>
-                        <p className="text-[9px] text-[#94A3B8] font-medium mt-1 line-clamp-1">{t(act.descKey)}</p>
-                    </motion.div>
-                ))}
-            </div>
-        </div>
-    );
+  return (
+    <div className="flex flex-wrap items-center gap-2 justify-center">
+      <span className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8] mr-1">
+        {t('suggestedLabel')}
+      </span>
+      {suggestions.map((s, idx) => (
+        <button
+          key={idx}
+          onClick={() => onSelect(s.query)}
+          className="text-[9px] font-bold text-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/10 transition-colors"
+        >
+          {t(s.labelKey)}
+        </button>
+      ))}
+    </div>
+  );
 };
 
-export const PopularCases = ({ onSelect, t = (x) => x }) => {
-    const casesList = [
-        { name: "Kesavananda Bharati v. State of Kerala (1973)", topicKey: 'topic_basic_structure' },
-        { name: "Maneka Gandhi v. Union of India (1978)", topicKey: 'topic_personal_liberty' },
-        { name: "Vishaka v. State of Rajasthan (1997)", topicKey: 'topic_sexual_harassment' },
-        { name: "Shayara Bano v. Union of India (2017)", topicKey: 'topic_triple_talaq' },
-        { name: "Navtej Singh Johar v. Union of India (2018)", topicKey: 'topic_section_377' },
-        { name: "K.S. Puttaswamy v. Union of India (2017)", topicKey: 'topic_privacy' },
-        { name: "Olga Tellis v. Bombay Municipal Corporation (1985)", topicKey: 'topic_livelihood' }
-    ];
-
-    return (
-        <div className="space-y-4">
-            <h3 className="text-[11px] font-black text-[#94A3B8] uppercase tracking-[0.2em] flex items-center gap-2">
-                <Gavel size={14} className="text-indigo-500" /> {t('popularLandmarkCases')}
-            </h3>
-            <div className="popular-cases-grid">
-                {casesList.map((c, idx) => (
-                    <motion.div
-                        key={idx}
-                        whileHover={{ scale: 1.01 }}
-                        onClick={() => onSelect(c.name)}
-                        className="p-4 bg-slate-50/50 dark:bg-[#131C31]/50 border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/20 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/5 transition-all text-left flex items-start gap-3"
-                    >
-                        <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                            <Scale size={12} className="text-indigo-500" />
-                        </div>
-                        <div>
-                            <h4 className="text-xs font-bold text-maintext line-clamp-1">{c.name}</h4>
-                            <p className="text-[9px] text-indigo-500 font-bold uppercase tracking-wider mt-0.5">{t(c.topicKey)}</p>
-                        </div>
-                    </motion.div>
-                ))}
-            </div>
-        </div>
-    );
+export const EmptySearchState = ({ query, onClear, t = x => x }) => {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center bg-card/25 border border-border rounded-3xl p-8 max-w-lg mx-auto shadow-sm">
+      <div className="w-16 h-16 bg-red-500/5 dark:bg-red-500/10 border border-red-500/10 rounded-2xl flex items-center justify-center mb-6">
+        <AlertCircle size={28} className="text-red-500 animate-bounce" />
+      </div>
+      <h3 className="text-lg font-black text-maintext uppercase tracking-tight">
+        {t('noPrecedentsFound')}
+      </h3>
+      <p className="text-xs text-subtext max-w-sm mt-2 font-medium leading-relaxed">
+        {t('noPrecedentsFoundDesc')} <span className="font-bold text-indigo-500">"{query}"</span>
+      </p>
+      <button
+        onClick={onClear}
+        className="mt-6 text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 bg-indigo-500/5 px-6 py-3 rounded-full border border-indigo-500/10 transition-colors"
+      >
+        {t('clearSearch')}
+      </button>
+    </div>
+  );
 };
 
-export const RecentJudgments = ({ onSelect, t = (x) => x }) => {
-    const judgments = [
-        { titleKey: 'latestSCJudgments', searchTitle: 'Latest Supreme Court Judgments (2024)', courtKey: 'supremeCourtOfIndia' },
-        { titleKey: 'latestHCRulings', searchTitle: 'Latest High Court Rulings on Civil Disputes', courtKey: 'delhiHighCourt' },
-        { titleKey: 'recentNCLATDecisions', searchTitle: 'Recent NCLAT Company Law Decisions', courtKey: 'ncltNclat' },
-        { titleKey: 'newestArbitralPrecedents', searchTitle: 'Newest Arbitral Award Precedents', courtKey: 'arbitrationTribunals' }
-    ];
-
-    return (
-        <div className="space-y-4">
-            <h3 className="text-[11px] font-black text-[#94A3B8] uppercase tracking-[0.2em] flex items-center gap-2">
-                <History size={14} className="text-indigo-500" /> {t('recentJudgmentsDecisions')}
-            </h3>
-            <div className="recent-judgments-grid">
-                {judgments.map((j, idx) => (
-                    <motion.div
-                        key={idx}
-                        whileHover={{ scale: 1.02 }}
-                        onClick={() => onSelect(j.searchTitle)}
-                        className="p-4 bg-slate-50/50 dark:bg-[#131C31]/50 border border-slate-200 dark:border-white/5 rounded-2xl cursor-pointer hover:border-indigo-500/20 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/5 transition-all text-left flex flex-col justify-between min-h-[90px]"
-                    >
-                        <h4 className="text-xs font-bold text-maintext line-clamp-2 leading-relaxed">{t(j.titleKey)}</h4>
-                        <span className="text-[8px] font-black uppercase tracking-wider text-subtext mt-2 block">{t(j.courtKey)}</span>
-                    </motion.div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-export const SuggestedSearches = ({ onSelect, t = (x) => x }) => {
-    // Always use English strings for search queries, only the label is translated
-    const suggestions = [
-        { labelKey: 'suggestedSearch1', query: 'Section 482 CrPC quashing petition' },
-        { labelKey: 'suggestedSearch2', query: 'Dishonour of cheque Section 138 NI Act' },
-        { labelKey: 'suggestedSearch3', query: 'Admissibility of electronic evidence Section 65B' },
-        { labelKey: 'suggestedSearch4', query: 'Writ of Habeas Corpus personal liberty' },
-    ];
-
-    return (
-        <div className="flex flex-wrap items-center gap-2 justify-center">
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8] mr-1">{t('suggestedLabel')}</span>
-            {suggestions.map((s, idx) => (
-                <button
-                    key={idx}
-                    onClick={() => onSelect(s.query)}
-                    className="text-[9px] font-bold text-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/10 transition-colors"
-                >
-                    {t(s.labelKey)}
-                </button>
-            ))}
-        </div>
-    );
-};
-
-export const EmptySearchState = ({ query, onClear, t = (x) => x }) => {
-    return (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-card/25 border border-border rounded-3xl p-8 max-w-lg mx-auto shadow-sm">
-            <div className="w-16 h-16 bg-red-500/5 dark:bg-red-500/10 border border-red-500/10 rounded-2xl flex items-center justify-center mb-6">
-                <AlertCircle size={28} className="text-red-500 animate-bounce" />
-            </div>
-            <h3 className="text-lg font-black text-maintext uppercase tracking-tight">{t('noPrecedentsFound')}</h3>
-            <p className="text-xs text-subtext max-w-sm mt-2 font-medium leading-relaxed">
-                {t('noPrecedentsFoundDesc')} <span className="font-bold text-indigo-500">"{query}"</span>
-            </p>
-            <button
-                onClick={onClear}
-                className="mt-6 text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 bg-indigo-500/5 px-6 py-3 rounded-full border border-indigo-500/10 transition-colors"
-            >
-                {t('clearSearch')}
-            </button>
-        </div>
-    );
-};
-
-export const LegalResearchDirectory = ({ onSelectCategory, t = (x) => x }) => {
-    return (
-        <div className="space-y-10 max-w-6xl mx-auto text-left mt-8">
-            <ResearchStats t={t} />
-            <ResearchCategoryGrid onSelect={onSelectCategory} t={t} />
-            <FeaturedActs onSelect={onSelectCategory} t={t} />
-            <PopularCases onSelect={onSelectCategory} t={t} />
-            <RecentJudgments onSelect={onSelectCategory} t={t} />
-        </div>
-    );
+export const LegalResearchDirectory = ({ onSelectCategory, t = x => x }) => {
+  return (
+    <div className="space-y-10 max-w-6xl mx-auto text-left mt-8">
+      <ResearchStats t={t} />
+      <ResearchCategoryGrid onSelect={onSelectCategory} t={t} />
+      <FeaturedActs onSelect={onSelectCategory} t={t} />
+      <PopularCases onSelect={onSelectCategory} t={t} />
+      <RecentJudgments onSelect={onSelectCategory} t={t} />
+    </div>
+  );
 };
 
 export default LegalPrecedents;

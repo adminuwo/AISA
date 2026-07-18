@@ -4,1067 +4,1148 @@ import { apiService } from '../../../services/apiService.js';
 import { generateChatResponse } from '../../../services/geminiService.js';
 
 const getActiveLanguage = () => {
-    return localStorage.getItem('ai_legal_lang') || 'English';
+  return localStorage.getItem('ai_legal_lang') || 'English';
 };
 
 export const legalService = {
-    // --- Case Management ---
-    _listeners: [],
+  // --- Case Management ---
+  _listeners: [],
 
-    subscribe(callback) {
-        if (typeof callback === 'function') {
-            this._listeners.push(callback);
+  subscribe(callback) {
+    if (typeof callback === 'function') {
+      this._listeners.push(callback);
+    }
+    return () => {
+      this._listeners = this._listeners.filter(cb => cb !== callback);
+    };
+  },
+
+  notifyListeners() {
+    this.getCases()
+      .then(cases => {
+        this._listeners.forEach(cb => {
+          try {
+            cb(cases);
+          } catch (e) {
+            console.error('[LegalService] Listener notification failed', e);
+          }
+        });
+      })
+      .catch(err => console.error('[LegalService] Error notifying listeners', err));
+  },
+
+  async getCases() {
+    try {
+      const projects = await apiService.getProjects();
+      return Array.isArray(projects) ? projects.filter(p => p.isLegalCase) : [];
+    } catch (e) {
+      console.error('[LegalService] Error getting cases from backend', e);
+      return [];
+    }
+  },
+
+  async createCase(caseData) {
+    try {
+      const newCasePayload = {
+        ...caseData,
+        // Backend requires 'name' field — modal sends 'title', so map it
+        name: caseData.name || caseData.title || 'Untitled Case',
+        isLegalCase: true,
+        status: 'Active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const created = await apiService.createProject(newCasePayload);
+      await this.addActivity(
+        `Created case: ${caseData.title || caseData.name || 'Untitled'}`,
+        'case'
+      );
+      this.notifyListeners();
+      return created;
+    } catch (e) {
+      console.error('[LegalService] Error creating case on backend', e);
+      throw e;
+    }
+  },
+
+  async updateCase(id, updates) {
+    try {
+      const response = await apiService.updateProject(id, {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
+      this.notifyListeners();
+      return response;
+    } catch (e) {
+      console.error('[LegalService] Error updating case on backend', e);
+      throw e;
+    }
+  },
+
+  async deleteCase(id) {
+    try {
+      const response = await apiService.deleteProject(id);
+      this.notifyListeners();
+      return response;
+    } catch (e) {
+      console.error('[LegalService] Error deleting case on backend', e);
+      throw e;
+    }
+  },
+
+  // --- Hearing Management ---
+  async getHearings() {
+    try {
+      const cases = await this.getCases();
+      const allHearings = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.hearings)) {
+          c.hearings.forEach(h => {
+            allHearings.push({
+              ...h,
+              caseId: c._id || c.id,
+              caseTitle: c.name || c.title || h.caseTitle,
+            });
+          });
         }
-        return () => {
-            this._listeners = this._listeners.filter(cb => cb !== callback);
+      });
+      return allHearings;
+    } catch (e) {
+      console.error('[LegalService] Error getting hearings', e);
+      return [];
+    }
+  },
+
+  async getHistoryHearings() {
+    const hearings = await this.getHearings();
+    return hearings.filter(
+      h => h.status?.toLowerCase() === 'completed' || h.status?.toLowerCase() === 'adjourned'
+    );
+  },
+
+  async addHearing(hearingData) {
+    try {
+      const cases = await this.getCases();
+      const targetCase = cases.find(
+        c =>
+          c._id === hearingData.caseId ||
+          c.id === hearingData.caseId ||
+          c.name === hearingData.caseTitle ||
+          c.title === hearingData.caseTitle
+      );
+      if (!targetCase) {
+        throw new Error('Target case not found for the hearing');
+      }
+      const newHearing = {
+        ...hearingData,
+        id: Date.now().toString(),
+        status: 'scheduled',
+        aiPrep: Math.floor(Math.random() * 50) + 50,
+      };
+      const existing = targetCase.hearings || [];
+      await apiService.updateProject(targetCase._id, {
+        ...targetCase,
+        hearings: [...existing, newHearing],
+      });
+      await this.addActivity(
+        `Scheduled hearing for: ${targetCase.name || targetCase.title}`,
+        'hearing'
+      );
+      this.notifyListeners();
+      return newHearing;
+    } catch (e) {
+      console.error('[LegalService] Error adding hearing', e);
+      throw e;
+    }
+  },
+
+  async updateHearing(id, updates) {
+    try {
+      const cases = await this.getCases();
+      let targetCase = null;
+      let targetHearing = null;
+      for (const c of cases) {
+        if (Array.isArray(c.hearings)) {
+          const found = c.hearings.find(h => h.id === id);
+          if (found) {
+            targetCase = c;
+            targetHearing = found;
+            break;
+          }
+        }
+      }
+      if (targetCase && targetHearing) {
+        const now = new Date().toISOString();
+        const normalizedStatus = updates.status
+          ? updates.status.toLowerCase()
+          : targetHearing.status;
+        const updatedHearing = {
+          ...targetHearing,
+          ...updates,
+          status: normalizedStatus,
+          updatedAt: now,
+          completedAt: normalizedStatus === 'completed' ? targetHearing.completedAt || now : null,
         };
-    },
-
-    notifyListeners() {
-        this.getCases().then(cases => {
-            this._listeners.forEach(cb => {
-                try {
-                    cb(cases);
-                } catch (e) {
-                    console.error("[LegalService] Listener notification failed", e);
-                }
-            });
-        }).catch(err => console.error("[LegalService] Error notifying listeners", err));
-    },
-
-    async getCases() {
-        try {
-            const projects = await apiService.getProjects();
-            return Array.isArray(projects) ? projects.filter(p => p.isLegalCase) : [];
-        } catch (e) {
-            console.error("[LegalService] Error getting cases from backend", e);
-            return [];
-        }
-    },
-
-    async createCase(caseData) {
-        try {
-            const newCasePayload = { 
-                ...caseData,
-                // Backend requires 'name' field — modal sends 'title', so map it
-                name: caseData.name || caseData.title || 'Untitled Case',
-                isLegalCase: true, 
-                status: 'Active',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            const created = await apiService.createProject(newCasePayload);
-            await this.addActivity(`Created case: ${caseData.title || caseData.name || 'Untitled'}`, 'case');
-            this.notifyListeners();
-            return created;
-        } catch (e) {
-            console.error("[LegalService] Error creating case on backend", e);
-            throw e;
-        }
-    },
-
-    async updateCase(id, updates) {
-        try {
-            const response = await apiService.updateProject(id, {
-                ...updates,
-                updatedAt: new Date().toISOString()
-            });
-            this.notifyListeners();
-            return response;
-        } catch (e) {
-            console.error("[LegalService] Error updating case on backend", e);
-            throw e;
-        }
-    },
-
-    async deleteCase(id) {
-        try {
-            const response = await apiService.deleteProject(id);
-            this.notifyListeners();
-            return response;
-        } catch (e) {
-            console.error("[LegalService] Error deleting case on backend", e);
-            throw e;
-        }
-    },
-
-    // --- Hearing Management ---
-    async getHearings() {
-        try {
-            const cases = await this.getCases();
-            const allHearings = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.hearings)) {
-                    c.hearings.forEach(h => {
-                        allHearings.push({ 
-                            ...h, 
-                            caseId: c._id || c.id,
-                            caseTitle: c.name || c.title || h.caseTitle 
-                        });
-                    });
-                }
-            });
-            return allHearings;
-        } catch (e) {
-            console.error("[LegalService] Error getting hearings", e);
-            return [];
-        }
-    },
-
-    async getHistoryHearings() {
-        const hearings = await this.getHearings();
-        return hearings.filter(h => h.status?.toLowerCase() === 'completed' || h.status?.toLowerCase() === 'adjourned');
-    },
-
-    async addHearing(hearingData) {
-        try {
-            const cases = await this.getCases();
-            const targetCase = cases.find(c => c._id === hearingData.caseId || c.id === hearingData.caseId || c.name === hearingData.caseTitle || c.title === hearingData.caseTitle);
-            if (!targetCase) {
-                throw new Error("Target case not found for the hearing");
-            }
-            const newHearing = { 
-                ...hearingData, 
-                id: Date.now().toString(), 
-                status: 'scheduled', 
-                aiPrep: Math.floor(Math.random() * 50) + 50 
-            };
-            const existing = targetCase.hearings || [];
-            await apiService.updateProject(targetCase._id, {
-                ...targetCase,
-                hearings: [...existing, newHearing]
-            });
-            await this.addActivity(`Scheduled hearing for: ${targetCase.name || targetCase.title}`, 'hearing');
-            this.notifyListeners();
-            return newHearing;
-        } catch (e) {
-            console.error("[LegalService] Error adding hearing", e);
-            throw e;
-        }
-    },
-
-    async updateHearing(id, updates) {
-        try {
-            const cases = await this.getCases();
-            let targetCase = null;
-            let targetHearing = null;
-            for (const c of cases) {
-                if (Array.isArray(c.hearings)) {
-                    const found = c.hearings.find(h => h.id === id);
-                    if (found) {
-                        targetCase = c;
-                        targetHearing = found;
-                        break;
-                    }
-                }
-            }
-            if (targetCase && targetHearing) {
-                const now = new Date().toISOString();
-                const normalizedStatus = updates.status ? updates.status.toLowerCase() : targetHearing.status;
-                const updatedHearing = { 
-                    ...targetHearing, 
-                    ...updates,
-                    status: normalizedStatus,
-                    updatedAt: now,
-                    completedAt: normalizedStatus === 'completed' ? (targetHearing.completedAt || now) : null
-                };
-                const updatedHearings = targetCase.hearings.map(h => h.id === id ? updatedHearing : h);
-                await apiService.updateProject(targetCase._id, {
-                    ...targetCase,
-                    hearings: updatedHearings
-                });
-                this.notifyListeners();
-                return true;
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error updating hearing", e);
-            throw e;
-        }
-    },
-
-    async deleteHearing(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.hearings) && c.hearings.some(h => h.id === id)) {
-                    const updatedHearings = c.hearings.filter(h => h.id !== id);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        hearings: updatedHearings
-                    });
-                    this.notifyListeners();
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error deleting hearing", e);
-            throw e;
-        }
-    },
-
-    async syncHearingStatus(title, status) {
-        if (!title) return false;
-        try {
-            const cases = await this.getCases();
-            const targetCase = cases.find(c => c.name?.trim().toLowerCase() === title.trim().toLowerCase() || c.title?.trim().toLowerCase() === title.trim().toLowerCase());
-            if (targetCase && Array.isArray(targetCase.hearings)) {
-                const normalizedStatus = status.toLowerCase() === 'completed' ? 'completed' : 'scheduled';
-                const now = new Date().toISOString();
-                const updatedHearings = targetCase.hearings.map(h => {
-                    return {
-                        ...h,
-                        status: normalizedStatus,
-                        completedAt: normalizedStatus === 'completed' ? now : null,
-                        updatedAt: now
-                    };
-                });
-                await apiService.updateProject(targetCase._id, {
-                    ...targetCase,
-                    hearings: updatedHearings
-                });
-                this.notifyListeners();
-                return true;
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error syncing hearing status", e);
-            return false;
-        }
-    },
-
-    // --- Reminders ---
-    async getReminders() {
-        try {
-            const cases = await this.getCases();
-            const reminders = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.reminders)) {
-                    reminders.push(...c.reminders);
-                }
-            });
-            return reminders;
-        } catch (e) {
-            console.error("[LegalService] Error getting reminders", e);
-            return [];
-        }
-    },
-
-    async getRemindersForCase(caseId) {
-        try {
-            const cases = await this.getCases();
-            const c = cases.find(item => item._id === caseId || item.id === caseId);
-            return c ? (c.reminders || []) : [];
-        } catch (e) {
-            console.error("[LegalService] Error getting reminders for case", e);
-            return [];
-        }
-    },
-
-    async addReminder(reminder) {
-        try {
-            const cases = await this.getCases();
-            const caseId = reminder.case_id || reminder.caseId;
-            const target = cases.find(item => item._id === caseId || item.id === caseId) || cases[0];
-            if (target) {
-                const newReminder = { ...reminder, id: Date.now().toString(), createdAt: new Date().toISOString() };
-                const existing = target.reminders || [];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    reminders: [newReminder, ...existing]
-                });
-                return newReminder;
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error adding reminder", e);
-            throw e;
-        }
-    },
-
-    async updateReminder(id, updates) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.reminders) && c.reminders.some(r => r.id === id)) {
-                    const updatedReminders = c.reminders.map(r => r.id === id ? { ...r, ...updates } : r);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        reminders: updatedReminders
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error updating reminder", e);
-            throw e;
-        }
-    },
-
-    async deleteReminder(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.reminders) && c.reminders.some(r => r.id === id)) {
-                    const updatedReminders = c.reminders.filter(r => r.id !== id);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        reminders: updatedReminders
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error deleting reminder", e);
-            throw e;
-        }
-    },
-
-    // --- Compliance Center ---
-    async getComplianceData() {
-        try {
-            const cases = await this.getCases();
-            if (cases.length > 0) {
-                return cases[0].compliance || { score: null, riskLevel: null, lastAudit: null, alerts: [], requirements: [] };
-            }
-            return { score: null, riskLevel: null, lastAudit: null, alerts: [], requirements: [] };
-        } catch (e) {
-            console.error("[LegalService] Error getting compliance data", e);
-            return { score: null, riskLevel: null, lastAudit: null, alerts: [], requirements: [] };
-        }
-    },
-
-    async updateComplianceScore(score) {
-        try {
-            const cases = await this.getCases();
-            if (cases.length > 0) {
-                const target = cases[0];
-                const current = target.compliance || { score: null, riskLevel: null, lastAudit: null, alerts: [], requirements: [] };
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    compliance: { ...current, score }
-                });
-                return true;
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error updating compliance score", e);
-            return false;
-        }
-    },
-
-    // --- Activity Logs ---
-    async getRecentActivity() {
-        try {
-            const cases = await this.getCases();
-            const activity = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.activityLog)) {
-                    activity.push(...c.activityLog);
-                }
-            });
-            activity.sort((a, b) => b.timestamp - a.timestamp);
-            return activity.slice(0, 20);
-        } catch (e) {
-            console.error("[LegalService] Error getting activity", e);
-            return [];
-        }
-    },
-
-    async addActivity(title, type) {
-        try {
-            const cases = await this.getCases();
-            if (cases.length > 0) {
-                const target = cases[0];
-                const now = new Date();
-                const newItem = { 
-                    id: Date.now().toString(), 
-                    title, 
-                    time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
-                    timestamp: now.getTime(),
-                    type 
-                };
-                const existing = target.activityLog || [];
-                const updated = [newItem, ...existing].slice(0, 20);
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    activityLog: updated
-                });
-                return updated;
-            }
-            return [];
-        } catch (e) {
-            console.error("[LegalService] Error adding activity", e);
-            return [];
-        }
-    },
-
-    // --- Timeline Events ---
-    async getTimelineEvents(caseId) {
-        try {
-            if (caseId) {
-                // Fetch directly from the project endpoint for freshest data
-                // Bypass the stale list cache by using the single-project endpoint
-                try {
-                    // Invalidate single project cache to always get fresh timeline
-                    if (window.__singleProjectCache) delete window.__singleProjectCache[caseId];
-                    const project = await apiService.getProject(caseId);
-                    return project ? (project.timelineEvents || []) : [];
-                } catch (e) {
-                    // Fallback to list cache if single project fetch fails
-                    const cases = await this.getCases();
-                    const c = cases.find(item => item._id === caseId || item.id === caseId);
-                    return c ? (c.timelineEvents || []) : [];
-                }
-            }
-            const cases = await this.getCases();
-            const allEvents = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.timelineEvents)) {
-                    allEvents.push(...c.timelineEvents);
-                }
-            });
-            return allEvents;
-        } catch (e) {
-            console.error("[LegalService] Error getting timeline events", e);
-            return [];
-        }
-    },
-
-    async saveTimelineEvent(event) {
-        try {
-            const cases = await this.getCases();
-            const caseId = event.caseId || event.case_id;
-            const target = cases.find(item => item._id === caseId || item.id === caseId);
-            if (target) {
-                const now = new Date().toISOString();
-                const normalizedStatus = event.status ? event.status.toLowerCase() : 'scheduled';
-                const newEvent = {
-                    ...event,
-                    status: normalizedStatus,
-                    id: event.id || Date.now().toString(),
-                    timestamp: event.id ? (event.timestamp || now) : now,
-                    updatedAt: now,
-                    completedAt: normalizedStatus === 'completed' ? now : null
-                };
-                const existing = target.timelineEvents || [];
-                const updated = event.id ? existing.map(e => e.id === event.id ? newEvent : e) : [newEvent, ...existing];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    timelineEvents: updated
-                });
-                await this.addActivity(`Timeline Event: ${event.title}`, 'timeline');
-                return newEvent;
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error saving timeline event", e);
-            throw e;
-        }
-    },
-
-    async deleteTimelineEvent(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.timelineEvents) && c.timelineEvents.some(e => e.id === id)) {
-                    const updated = c.timelineEvents.filter(e => e.id !== id);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        timelineEvents: updated
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error deleting timeline event", e);
-            throw e;
-        }
-    },
-
-    // --- Hearing Documents ---
-    async getHearingDocuments(hearingId) {
-        try {
-            const cases = await this.getCases();
-            const docs = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.documents)) {
-                    c.documents.forEach(d => {
-                        if (d.hearingId === hearingId) {
-                            docs.push(d);
-                        }
-                    });
-                }
-            });
-            return docs;
-        } catch (e) {
-            console.error("[LegalService] Error getting hearing documents", e);
-            return [];
-        }
-    },
-
-    async saveHearingDocument(doc) {
-        try {
-            const cases = await this.getCases();
-            const target = cases.find(c => c.hearings && c.hearings.some(h => h.id === doc.hearingId)) || cases[0];
-            if (target) {
-                const newDoc = {
-                    ...doc,
-                    id: doc.id || Date.now().toString(),
-                    uploadDate: new Date().toISOString()
-                };
-                const existing = target.documents || [];
-                const updated = doc.id ? existing.map(d => d.id === doc.id ? newDoc : d) : [newDoc, ...existing];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    documents: updated
-                });
-                await this.addActivity(`Document Uploaded: ${newDoc.name}`, 'document');
-                return newDoc;
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error saving hearing document", e);
-            throw e;
-        }
-    },
-
-    async deleteHearingDocument(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.documents) && c.documents.some(d => d.id === id)) {
-                    const updated = c.documents.filter(d => d.id !== id);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        documents: updated
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error deleting hearing document", e);
-            throw e;
-        }
-    },
-
-    // --- Hearing Reminders ---
-    async getHearingReminder(hearingId) {
-        try {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                const token = user?.token;
-                if (token) {
-                    const response = await axios.get(`${API}/legal/reminders/${hearingId}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (response.data && response.data.success) {
-                        return response.data.reminder;
-                    }
-                }
-            }
-        } catch (error) {
-            console.log('[legalService] getHearingReminder API failed, falling back to case storage.', error?.response?.data || error.message);
-        }
-
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.hearingReminders)) {
-                    const found = c.hearingReminders.find(r => r.hearingId === hearingId);
-                    if (found) return found;
-                }
-            }
-        } catch (e) {
-            console.error("[LegalService] getHearingReminder case lookup failed", e);
-        }
-        return null;
-    },
-
-    async saveHearingReminder(reminder) {
-        let savedReminder = null;
-        let isOnlineSuccess = false;
-        let authError = false;
-
-        try {
-            const userStr = localStorage.getItem('user');
-            let token = null;
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                token = user?.token;
-            }
-
-            if (token) {
-                const response = await axios.post(`${API}/legal/reminders`, reminder, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (response.data && response.data.success) {
-                    savedReminder = response.data.reminder;
-                    isOnlineSuccess = true;
-                }
-            } else {
-                authError = true;
-            }
-        } catch (error) {
-            console.log('[legalService] saveHearingReminder API failed.', error.message);
-            if (error?.response?.status === 401 || error?.response?.status === 403) {
-                authError = true;
-            }
-        }
-
-        if (!savedReminder) {
-            savedReminder = {
-                ...reminder,
-                id: reminder.id || Date.now().toString(),
-                userId: 'current_user_fallback'
-            };
-        }
-
-        try {
-            const cases = await this.getCases();
-            const targetCase = cases.find(c => c.hearings && c.hearings.some(h => h.id === reminder.hearingId)) || cases[0];
-            if (targetCase) {
-                const existing = targetCase.hearingReminders || [];
-                const updated = existing.filter(r => r.hearingId !== reminder.hearingId);
-                updated.push(savedReminder);
-                await apiService.updateProject(targetCase._id, {
-                    ...targetCase,
-                    hearingReminders: updated
-                });
-            }
-        } catch (e) {
-            console.error("[LegalService] Error syncing hearing reminder to project", e);
-        }
-
-        if (authError) {
-            throw new Error('Authentication error. Saved to case database. Please log in again to sync.');
-        }
-
-        if (!isOnlineSuccess) {
-            throw new Error('Network error. Saved to case database.');
-        }
-
-        return savedReminder;
-    },
-
-    async deleteHearingReminder(hearingId) {
-        let isOnlineSuccess = false;
-        try {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                const token = user?.token;
-                if (token) {
-                    const response = await axios.delete(`${API}/legal/reminders/${hearingId}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (response.data && response.data.success) {
-                        isOnlineSuccess = true;
-                    }
-                }
-            }
-        } catch (error) {
-            console.log('[legalService] deleteHearingReminder API failed, falling back to case storage.', error?.response?.data || error.message);
-        }
-
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.hearingReminders) && c.hearingReminders.some(r => r.hearingId === hearingId)) {
-                    const updated = c.hearingReminders.filter(r => r.hearingId !== hearingId);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        hearingReminders: updated
-                    });
-                }
-            }
-        } catch (e) {
-            console.error("[LegalService] Error deleting hearing reminder", e);
-        }
-
-        if (!isOnlineSuccess) {
-            throw new Error('Network error. Deleted from case database.');
-        }
-
+        const updatedHearings = targetCase.hearings.map(h => (h.id === id ? updatedHearing : h));
+        await apiService.updateProject(targetCase._id, {
+          ...targetCase,
+          hearings: updatedHearings,
+        });
+        this.notifyListeners();
         return true;
-    },
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error updating hearing', e);
+      throw e;
+    }
+  },
 
-    // --- Notifications ---
-    async getNotifications() {
+  async deleteHearing(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.hearings) && c.hearings.some(h => h.id === id)) {
+          const updatedHearings = c.hearings.filter(h => h.id !== id);
+          await apiService.updateProject(c._id, {
+            ...c,
+            hearings: updatedHearings,
+          });
+          this.notifyListeners();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error deleting hearing', e);
+      throw e;
+    }
+  },
+
+  async syncHearingStatus(title, status) {
+    if (!title) return false;
+    try {
+      const cases = await this.getCases();
+      const targetCase = cases.find(
+        c =>
+          c.name?.trim().toLowerCase() === title.trim().toLowerCase() ||
+          c.title?.trim().toLowerCase() === title.trim().toLowerCase()
+      );
+      if (targetCase && Array.isArray(targetCase.hearings)) {
+        const normalizedStatus = status.toLowerCase() === 'completed' ? 'completed' : 'scheduled';
+        const now = new Date().toISOString();
+        const updatedHearings = targetCase.hearings.map(h => {
+          return {
+            ...h,
+            status: normalizedStatus,
+            completedAt: normalizedStatus === 'completed' ? now : null,
+            updatedAt: now,
+          };
+        });
+        await apiService.updateProject(targetCase._id, {
+          ...targetCase,
+          hearings: updatedHearings,
+        });
+        this.notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error syncing hearing status', e);
+      return false;
+    }
+  },
+
+  // --- Reminders ---
+  async getReminders() {
+    try {
+      const cases = await this.getCases();
+      const reminders = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.reminders)) {
+          reminders.push(...c.reminders);
+        }
+      });
+      return reminders;
+    } catch (e) {
+      console.error('[LegalService] Error getting reminders', e);
+      return [];
+    }
+  },
+
+  async getRemindersForCase(caseId) {
+    try {
+      const cases = await this.getCases();
+      const c = cases.find(item => item._id === caseId || item.id === caseId);
+      return c ? c.reminders || [] : [];
+    } catch (e) {
+      console.error('[LegalService] Error getting reminders for case', e);
+      return [];
+    }
+  },
+
+  async addReminder(reminder) {
+    try {
+      const cases = await this.getCases();
+      const caseId = reminder.case_id || reminder.caseId;
+      const target = cases.find(item => item._id === caseId || item.id === caseId) || cases[0];
+      if (target) {
+        const newReminder = {
+          ...reminder,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+        };
+        const existing = target.reminders || [];
+        await apiService.updateProject(target._id, {
+          ...target,
+          reminders: [newReminder, ...existing],
+        });
+        return newReminder;
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error adding reminder', e);
+      throw e;
+    }
+  },
+
+  async updateReminder(id, updates) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.reminders) && c.reminders.some(r => r.id === id)) {
+          const updatedReminders = c.reminders.map(r => (r.id === id ? { ...r, ...updates } : r));
+          await apiService.updateProject(c._id, {
+            ...c,
+            reminders: updatedReminders,
+          });
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error updating reminder', e);
+      throw e;
+    }
+  },
+
+  async deleteReminder(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.reminders) && c.reminders.some(r => r.id === id)) {
+          const updatedReminders = c.reminders.filter(r => r.id !== id);
+          await apiService.updateProject(c._id, {
+            ...c,
+            reminders: updatedReminders,
+          });
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error deleting reminder', e);
+      throw e;
+    }
+  },
+
+  // --- Compliance Center ---
+  async getComplianceData() {
+    try {
+      const cases = await this.getCases();
+      if (cases.length > 0) {
+        return (
+          cases[0].compliance || {
+            score: null,
+            riskLevel: null,
+            lastAudit: null,
+            alerts: [],
+            requirements: [],
+          }
+        );
+      }
+      return { score: null, riskLevel: null, lastAudit: null, alerts: [], requirements: [] };
+    } catch (e) {
+      console.error('[LegalService] Error getting compliance data', e);
+      return { score: null, riskLevel: null, lastAudit: null, alerts: [], requirements: [] };
+    }
+  },
+
+  async updateComplianceScore(score) {
+    try {
+      const cases = await this.getCases();
+      if (cases.length > 0) {
+        const target = cases[0];
+        const current = target.compliance || {
+          score: null,
+          riskLevel: null,
+          lastAudit: null,
+          alerts: [],
+          requirements: [],
+        };
+        await apiService.updateProject(target._id, {
+          ...target,
+          compliance: { ...current, score },
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error updating compliance score', e);
+      return false;
+    }
+  },
+
+  // --- Activity Logs ---
+  async getRecentActivity() {
+    try {
+      const cases = await this.getCases();
+      const activity = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.activityLog)) {
+          activity.push(...c.activityLog);
+        }
+      });
+      activity.sort((a, b) => b.timestamp - a.timestamp);
+      return activity.slice(0, 20);
+    } catch (e) {
+      console.error('[LegalService] Error getting activity', e);
+      return [];
+    }
+  },
+
+  async addActivity(title, type) {
+    try {
+      const cases = await this.getCases();
+      if (cases.length > 0) {
+        const target = cases[0];
+        const now = new Date();
+        const newItem = {
+          id: Date.now().toString(),
+          title,
+          time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: now.getTime(),
+          type,
+        };
+        const existing = target.activityLog || [];
+        const updated = [newItem, ...existing].slice(0, 20);
+        await apiService.updateProject(target._id, {
+          ...target,
+          activityLog: updated,
+        });
+        return updated;
+      }
+      return [];
+    } catch (e) {
+      console.error('[LegalService] Error adding activity', e);
+      return [];
+    }
+  },
+
+  // --- Timeline Events ---
+  async getTimelineEvents(caseId) {
+    try {
+      if (caseId) {
+        // Fetch directly from the project endpoint for freshest data
+        // Bypass the stale list cache by using the single-project endpoint
         try {
-            const cases = await this.getCases();
-            const notifications = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.notifications)) {
-                    notifications.push(...c.notifications);
-                }
+          // Invalidate single project cache to always get fresh timeline
+          if (window.__singleProjectCache) delete window.__singleProjectCache[caseId];
+          const project = await apiService.getProject(caseId);
+          return project ? project.timelineEvents || [] : [];
+        } catch (e) {
+          // Fallback to list cache if single project fetch fails
+          const cases = await this.getCases();
+          const c = cases.find(item => item._id === caseId || item.id === caseId);
+          return c ? c.timelineEvents || [] : [];
+        }
+      }
+      const cases = await this.getCases();
+      const allEvents = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.timelineEvents)) {
+          allEvents.push(...c.timelineEvents);
+        }
+      });
+      return allEvents;
+    } catch (e) {
+      console.error('[LegalService] Error getting timeline events', e);
+      return [];
+    }
+  },
+
+  async saveTimelineEvent(event) {
+    try {
+      const cases = await this.getCases();
+      const caseId = event.caseId || event.case_id;
+      const target = cases.find(item => item._id === caseId || item.id === caseId);
+      if (target) {
+        const now = new Date().toISOString();
+        const normalizedStatus = event.status ? event.status.toLowerCase() : 'scheduled';
+        const newEvent = {
+          ...event,
+          status: normalizedStatus,
+          id: event.id || Date.now().toString(),
+          timestamp: event.id ? event.timestamp || now : now,
+          updatedAt: now,
+          completedAt: normalizedStatus === 'completed' ? now : null,
+        };
+        const existing = target.timelineEvents || [];
+        const updated = event.id
+          ? existing.map(e => (e.id === event.id ? newEvent : e))
+          : [newEvent, ...existing];
+        await apiService.updateProject(target._id, {
+          ...target,
+          timelineEvents: updated,
+        });
+        await this.addActivity(`Timeline Event: ${event.title}`, 'timeline');
+        return newEvent;
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error saving timeline event', e);
+      throw e;
+    }
+  },
+
+  async deleteTimelineEvent(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.timelineEvents) && c.timelineEvents.some(e => e.id === id)) {
+          const updated = c.timelineEvents.filter(e => e.id !== id);
+          await apiService.updateProject(c._id, {
+            ...c,
+            timelineEvents: updated,
+          });
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error deleting timeline event', e);
+      throw e;
+    }
+  },
+
+  // --- Hearing Documents ---
+  async getHearingDocuments(hearingId) {
+    try {
+      const cases = await this.getCases();
+      const docs = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.documents)) {
+          c.documents.forEach(d => {
+            if (d.hearingId === hearingId) {
+              docs.push(d);
+            }
+          });
+        }
+      });
+      return docs;
+    } catch (e) {
+      console.error('[LegalService] Error getting hearing documents', e);
+      return [];
+    }
+  },
+
+  async saveHearingDocument(doc) {
+    try {
+      const cases = await this.getCases();
+      const target =
+        cases.find(c => c.hearings && c.hearings.some(h => h.id === doc.hearingId)) || cases[0];
+      if (target) {
+        const newDoc = {
+          ...doc,
+          id: doc.id || Date.now().toString(),
+          uploadDate: new Date().toISOString(),
+        };
+        const existing = target.documents || [];
+        const updated = doc.id
+          ? existing.map(d => (d.id === doc.id ? newDoc : d))
+          : [newDoc, ...existing];
+        await apiService.updateProject(target._id, {
+          ...target,
+          documents: updated,
+        });
+        await this.addActivity(`Document Uploaded: ${newDoc.name}`, 'document');
+        return newDoc;
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error saving hearing document', e);
+      throw e;
+    }
+  },
+
+  async deleteHearingDocument(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.documents) && c.documents.some(d => d.id === id)) {
+          const updated = c.documents.filter(d => d.id !== id);
+          await apiService.updateProject(c._id, {
+            ...c,
+            documents: updated,
+          });
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error deleting hearing document', e);
+      throw e;
+    }
+  },
+
+  // --- Hearing Reminders ---
+  async getHearingReminder(hearingId) {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        const token = user?.token;
+        if (token) {
+          const response = await axios.get(`${API}/legal/reminders/${hearingId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.data && response.data.success) {
+            return response.data.reminder;
+          }
+        }
+      }
+    } catch (error) {
+      console.log(
+        '[legalService] getHearingReminder API failed, falling back to case storage.',
+        error?.response?.data || error.message
+      );
+    }
+
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.hearingReminders)) {
+          const found = c.hearingReminders.find(r => r.hearingId === hearingId);
+          if (found) return found;
+        }
+      }
+    } catch (e) {
+      console.error('[LegalService] getHearingReminder case lookup failed', e);
+    }
+    return null;
+  },
+
+  async saveHearingReminder(reminder) {
+    let savedReminder = null;
+    let isOnlineSuccess = false;
+    let authError = false;
+
+    try {
+      const userStr = localStorage.getItem('user');
+      let token = null;
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        token = user?.token;
+      }
+
+      if (token) {
+        const response = await axios.post(`${API}/legal/reminders`, reminder, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data && response.data.success) {
+          savedReminder = response.data.reminder;
+          isOnlineSuccess = true;
+        }
+      } else {
+        authError = true;
+      }
+    } catch (error) {
+      console.log('[legalService] saveHearingReminder API failed.', error.message);
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        authError = true;
+      }
+    }
+
+    if (!savedReminder) {
+      savedReminder = {
+        ...reminder,
+        id: reminder.id || Date.now().toString(),
+        userId: 'current_user_fallback',
+      };
+    }
+
+    try {
+      const cases = await this.getCases();
+      const targetCase =
+        cases.find(c => c.hearings && c.hearings.some(h => h.id === reminder.hearingId)) ||
+        cases[0];
+      if (targetCase) {
+        const existing = targetCase.hearingReminders || [];
+        const updated = existing.filter(r => r.hearingId !== reminder.hearingId);
+        updated.push(savedReminder);
+        await apiService.updateProject(targetCase._id, {
+          ...targetCase,
+          hearingReminders: updated,
+        });
+      }
+    } catch (e) {
+      console.error('[LegalService] Error syncing hearing reminder to project', e);
+    }
+
+    if (authError) {
+      throw new Error('Authentication error. Saved to case database. Please log in again to sync.');
+    }
+
+    if (!isOnlineSuccess) {
+      throw new Error('Network error. Saved to case database.');
+    }
+
+    return savedReminder;
+  },
+
+  async deleteHearingReminder(hearingId) {
+    let isOnlineSuccess = false;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        const token = user?.token;
+        if (token) {
+          const response = await axios.delete(`${API}/legal/reminders/${hearingId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.data && response.data.success) {
+            isOnlineSuccess = true;
+          }
+        }
+      }
+    } catch (error) {
+      console.log(
+        '[legalService] deleteHearingReminder API failed, falling back to case storage.',
+        error?.response?.data || error.message
+      );
+    }
+
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (
+          Array.isArray(c.hearingReminders) &&
+          c.hearingReminders.some(r => r.hearingId === hearingId)
+        ) {
+          const updated = c.hearingReminders.filter(r => r.hearingId !== hearingId);
+          await apiService.updateProject(c._id, {
+            ...c,
+            hearingReminders: updated,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[LegalService] Error deleting hearing reminder', e);
+    }
+
+    if (!isOnlineSuccess) {
+      throw new Error('Network error. Deleted from case database.');
+    }
+
+    return true;
+  },
+
+  // --- Notifications ---
+  async getNotifications() {
+    try {
+      const cases = await this.getCases();
+      const notifications = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.notifications)) {
+          notifications.push(...c.notifications);
+        }
+      });
+      return notifications;
+    } catch (e) {
+      console.error('[LegalService] Error getting notifications', e);
+      return [];
+    }
+  },
+
+  async saveNotification(notif) {
+    try {
+      const cases = await this.getCases();
+      const caseId = notif.caseId || notif.case_id;
+      const target = cases.find(c => c._id === caseId || c.id === caseId) || cases[0];
+      if (target) {
+        const newNotif = {
+          ...notif,
+          id: Date.now().toString(),
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+        const existing = target.notifications || [];
+        await apiService.updateProject(target._id, {
+          ...target,
+          notifications: [newNotif, ...existing],
+        });
+        return newNotif;
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error saving notification', e);
+      throw e;
+    }
+  },
+
+  async markNotificationAsRead(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.notifications) && c.notifications.some(n => n.id === id)) {
+          const updated = c.notifications.map(n => (n.id === id ? { ...n, isRead: true } : n));
+          await apiService.updateProject(c._id, {
+            ...c,
+            notifications: updated,
+          });
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error marking notification as read', e);
+      throw e;
+    }
+  },
+
+  async markAllNotificationsAsRead() {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.notifications) && c.notifications.length > 0) {
+          const updated = c.notifications.map(n => ({ ...n, isRead: true }));
+          await apiService.updateProject(c._id, {
+            ...c,
+            notifications: updated,
+          });
+        }
+      }
+      return true;
+    } catch (e) {
+      console.error('[LegalService] Error marking all notifications as read', e);
+      return false;
+    }
+  },
+
+  // --- Evidence Analysis History ---
+  async getEvidenceHistory() {
+    try {
+      const cases = await this.getCases();
+      const history = [];
+      cases.forEach(c => {
+        if (Array.isArray(c.forensicHistory)) {
+          history.push(...c.forensicHistory);
+        }
+      });
+      return history;
+    } catch (e) {
+      console.error('[LegalService] Error getting evidence history', e);
+      return [];
+    }
+  },
+
+  async saveEvidenceSession(session) {
+    try {
+      const cases = await this.getCases();
+      const caseId = session.caseId || session.case_id;
+      const target = cases.find(c => c._id === caseId || c.id === caseId) || cases[0];
+      if (target) {
+        const newSession = {
+          ...session,
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+          displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          displayDate: new Date().toLocaleDateString(),
+        };
+        const existing = target.forensicHistory || [];
+        await apiService.updateProject(target._id, {
+          ...target,
+          forensicHistory: [newSession, ...existing],
+        });
+        await this.addActivity(`Evidence Analyzed: ${session.fileName || 'Document'}`, 'evidence');
+        return newSession;
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error saving evidence session', e);
+      throw e;
+    }
+  },
+
+  async deleteEvidenceSession(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (Array.isArray(c.forensicHistory) && c.forensicHistory.some(s => s.id === id)) {
+          const updated = c.forensicHistory.filter(s => s.id !== id);
+          await apiService.updateProject(c._id, {
+            ...c,
+            forensicHistory: updated,
+          });
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error deleting evidence session', e);
+      throw e;
+    }
+  },
+
+  // --- Argument Builder History ---
+  async getArgumentHistory() {
+    try {
+      const cases = await this.getCases();
+      const history = [];
+      cases.forEach(c => {
+        if (c.argumentsData && Array.isArray(c.argumentsData.sessions)) {
+          c.argumentsData.sessions.forEach(s => {
+            history.push({
+              ...s,
+              caseId: c._id || c.id,
+              title: s.title || 'Untitled Argument',
             });
-            return notifications;
-        } catch (e) {
-            console.error("[LegalService] Error getting notifications", e);
-            return [];
+          });
         }
-    },
+      });
+      return history;
+    } catch (e) {
+      console.error('[LegalService] Error getting argument history', e);
+      return [];
+    }
+  },
 
-    async saveNotification(notif) {
-        try {
-            const cases = await this.getCases();
-            const caseId = notif.caseId || notif.case_id;
-            const target = cases.find(c => c._id === caseId || c.id === caseId) || cases[0];
-            if (target) {
-                const newNotif = {
-                    ...notif,
-                    id: Date.now().toString(),
-                    isRead: false,
-                    createdAt: new Date().toISOString()
-                };
-                const existing = target.notifications || [];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    notifications: [newNotif, ...existing]
-                });
-                return newNotif;
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error saving notification", e);
-            throw e;
+  async saveArgumentSession(session) {
+    try {
+      const cases = await this.getCases();
+      const caseId = session.caseId || session.case_id;
+      const target = cases.find(c => c._id === caseId || c.id === caseId) || cases[0];
+      if (target) {
+        const newSession = {
+          ...session,
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+          displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          displayDate: new Date().toLocaleDateString(),
+        };
+        const currentData = target.argumentsData || { sessions: [], activeSessionId: '' };
+        const updatedSessions = [newSession, ...currentData.sessions];
+        await apiService.updateProject(target._id, {
+          ...target,
+          argumentsData: {
+            sessions: updatedSessions,
+            activeSessionId: currentData.activeSessionId || newSession.id,
+          },
+        });
+        await this.addActivity(`Argument Built: ${session.title}`, 'argument');
+        return newSession;
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error saving argument session', e);
+      throw e;
+    }
+  },
+
+  async deleteArgumentSession(id) {
+    try {
+      const cases = await this.getCases();
+      for (const c of cases) {
+        if (
+          c.argumentsData &&
+          Array.isArray(c.argumentsData.sessions) &&
+          c.argumentsData.sessions.some(s => s.id === id)
+        ) {
+          const updatedSessions = c.argumentsData.sessions.filter(s => s.id !== id);
+          await apiService.updateProject(c._id, {
+            ...c,
+            argumentsData: {
+              ...c.argumentsData,
+              sessions: updatedSessions,
+            },
+          });
+          return true;
         }
-    },
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error deleting argument session', e);
+      throw e;
+    }
+  },
 
-    async markNotificationAsRead(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.notifications) && c.notifications.some(n => n.id === id)) {
-                    const updated = c.notifications.map(n => n.id === id ? { ...n, isRead: true } : n);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        notifications: updated
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error marking notification as read", e);
-            throw e;
+  // --- Chat History ---
+  async getChatHistory(toolId) {
+    try {
+      const cases = await this.getCases();
+      if (cases.length > 0) {
+        const c = cases[0];
+        const chats = c.toolChats || {};
+        return chats[toolId] || [];
+      }
+      return [];
+    } catch (e) {
+      console.error('[LegalService] Error getting chat history', e);
+      return [];
+    }
+  },
+
+  async saveChatMessage(toolId, message) {
+    try {
+      const cases = await this.getCases();
+      if (cases.length > 0) {
+        const target = cases[0];
+        const chats = target.toolChats || {};
+        if (!chats[toolId]) chats[toolId] = [];
+        chats[toolId].push({
+          ...message,
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+        });
+        await apiService.updateProject(target._id, {
+          ...target,
+          toolChats: chats,
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error saving chat message', e);
+      return false;
+    }
+  },
+
+  async clearChatHistory(toolId) {
+    try {
+      const cases = await this.getCases();
+      if (cases.length > 0) {
+        const target = cases[0];
+        const chats = target.toolChats || {};
+        chats[toolId] = [];
+        await apiService.updateProject(target._id, {
+          ...target,
+          toolChats: chats,
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('[LegalService] Error clearing chat history', e);
+      return false;
+    }
+  },
+
+  // --- Stats & Analytics ---
+  async getDashboardStats() {
+    try {
+      const cases = await this.getCases();
+      const hearings = await this.getHearings();
+
+      let totalScore = 0;
+      let complianceCount = 0;
+      let riskLevel = null;
+      let evidenceCount = 0;
+      let argumentsCount = 0;
+
+      cases.forEach(c => {
+        if (c.compliance && c.compliance.score !== null && c.compliance.score !== undefined) {
+          totalScore += c.compliance.score;
+          complianceCount++;
+          riskLevel = c.compliance.riskLevel || riskLevel;
         }
-    },
-
-    async markAllNotificationsAsRead() {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.notifications) && c.notifications.length > 0) {
-                    const updated = c.notifications.map(n => ({ ...n, isRead: true }));
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        notifications: updated
-                    });
-                }
-            }
-            return true;
-        } catch (e) {
-            console.error("[LegalService] Error marking all notifications as read", e);
-            return false;
+        if (Array.isArray(c.forensicHistory)) {
+          evidenceCount += c.forensicHistory.length;
         }
-    },
-
-    // --- Evidence Analysis History ---
-    async getEvidenceHistory() {
-        try {
-            const cases = await this.getCases();
-            const history = [];
-            cases.forEach(c => {
-                if (Array.isArray(c.forensicHistory)) {
-                    history.push(...c.forensicHistory);
-                }
-            });
-            return history;
-        } catch (e) {
-            console.error("[LegalService] Error getting evidence history", e);
-            return [];
+        if (c.argumentsData && Array.isArray(c.argumentsData.sessions)) {
+          argumentsCount += c.argumentsData.sessions.length;
         }
-    },
+      });
 
-    async saveEvidenceSession(session) {
-        try {
-            const cases = await this.getCases();
-            const caseId = session.caseId || session.case_id;
-            const target = cases.find(c => c._id === caseId || c.id === caseId) || cases[0];
-            if (target) {
-                const newSession = { 
-                    ...session, 
-                    id: Date.now().toString(), 
-                    timestamp: new Date().toISOString(),
-                    displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    displayDate: new Date().toLocaleDateString()
-                };
-                const existing = target.forensicHistory || [];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    forensicHistory: [newSession, ...existing]
-                });
-                await this.addActivity(`Evidence Analyzed: ${session.fileName || 'Document'}`, 'evidence');
-                return newSession;
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error saving evidence session", e);
-            throw e;
-        }
-    },
+      const activeCases = cases.filter(c => c.status === 'Active').length;
+      const upcomingHearings = hearings.filter(
+        h => h.status?.toLowerCase() !== 'completed' && h.status?.toLowerCase() !== 'adjourned'
+      ).length;
+      const totalInsights = evidenceCount + argumentsCount;
 
-    async deleteEvidenceSession(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (Array.isArray(c.forensicHistory) && c.forensicHistory.some(s => s.id === id)) {
-                    const updated = c.forensicHistory.filter(s => s.id !== id);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        forensicHistory: updated
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error deleting evidence session", e);
-            throw e;
-        }
-    },
+      const hasAnyData = cases.length > 0 || hearings.length > 0 || complianceCount > 0;
+      if (!hasAnyData) return null;
 
-    // --- Argument Builder History ---
-    async getArgumentHistory() {
-        try {
-            const cases = await this.getCases();
-            const history = [];
-            cases.forEach(c => {
-                if (c.argumentsData && Array.isArray(c.argumentsData.sessions)) {
-                    c.argumentsData.sessions.forEach(s => {
-                        history.push({
-                            ...s,
-                            caseId: c._id || c.id,
-                            title: s.title || 'Untitled Argument'
-                        });
-                    });
-                }
-            });
-            return history;
-        } catch (e) {
-            console.error("[LegalService] Error getting argument history", e);
-            return [];
-        }
-    },
+      const averageScore = complianceCount > 0 ? Math.round(totalScore / complianceCount) : null;
 
-    async saveArgumentSession(session) {
-        try {
-            const cases = await this.getCases();
-            const caseId = session.caseId || session.case_id;
-            const target = cases.find(c => c._id === caseId || c.id === caseId) || cases[0];
-            if (target) {
-                const newSession = { 
-                    ...session, 
-                    id: Date.now().toString(), 
-                    timestamp: new Date().toISOString(),
-                    displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    displayDate: new Date().toLocaleDateString()
-                };
-                const currentData = target.argumentsData || { sessions: [], activeSessionId: '' };
-                const updatedSessions = [newSession, ...currentData.sessions];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    argumentsData: {
-                        sessions: updatedSessions,
-                        activeSessionId: currentData.activeSessionId || newSession.id
-                    }
-                });
-                await this.addActivity(`Argument Built: ${session.title}`, 'argument');
-                return newSession;
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error saving argument session", e);
-            throw e;
-        }
-    },
+      return {
+        activeCases: activeCases.toString(),
+        hearingsCount: upcomingHearings.toString(),
+        complianceScore: averageScore !== null ? `${averageScore}%` : null,
+        riskScore: riskLevel || null,
+        aiInsights: totalInsights > 0 ? totalInsights.toString() : null,
+      };
+    } catch (e) {
+      console.error('[LegalService] Error getting dashboard stats', e);
+      return null;
+    }
+  },
 
-    async deleteArgumentSession(id) {
-        try {
-            const cases = await this.getCases();
-            for (const c of cases) {
-                if (c.argumentsData && Array.isArray(c.argumentsData.sessions) && c.argumentsData.sessions.some(s => s.id === id)) {
-                    const updatedSessions = c.argumentsData.sessions.filter(s => s.id !== id);
-                    await apiService.updateProject(c._id, {
-                        ...c,
-                        argumentsData: {
-                            ...c.argumentsData,
-                            sessions: updatedSessions
-                        }
-                    });
-                    return true;
-                }
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error deleting argument session", e);
-            throw e;
-        }
-    },
+  async generateAiTimelineEvents(caseId, caseData, caseNotes = []) {
+    try {
+      const summary = caseData.summary || caseData.description || '';
+      // If Case Summary is empty or too short, do not generate a timeline
+      if (!summary || summary.trim().split(/\s+/).length < 8) {
+        console.log(
+          '[LegalService] Case Summary is too short or empty. Skipping AI timeline generation.'
+        );
+        return { events: [], suggestions: [], deadlines: [], missingDocuments: [] };
+      }
 
-    // --- Chat History ---
-    async getChatHistory(toolId) {
-        try {
-            const cases = await this.getCases();
-            if (cases.length > 0) {
-                const c = cases[0];
-                const chats = c.toolChats || {};
-                return chats[toolId] || [];
-            }
-            return [];
-        } catch (e) {
-            console.error("[LegalService] Error getting chat history", e);
-            return [];
-        }
-    },
+      const docsText = (caseData.documents || [])
+        .map(d => `- Document: ${d.name} (Uploaded: ${d.uploadedAt || 'N/A'})`)
+        .join('\n');
+      const draftsText = (caseData.drafts || [])
+        .map(d => `- Draft (Type: ${d.type}): ${d.content ? d.content.substring(0, 400) : ''}`)
+        .join('\n');
+      const evidenceText = (caseData.forensicHistory || [])
+        .map(f => `- Forensic Log: ${f.title} (Details: ${f.details || f.notes || ''})`)
+        .join('\n');
+      const notesText = caseNotes
+        .map(n => `- Note: ${n.title}\nContent:\n${n.content}`)
+        .join('\n\n');
+      const researchText = (caseData.research || [])
+        .map(r => `Law: ${r.lawName || ''}, Section: ${r.section || ''}`)
+        .join('; ');
+      const argumentsText =
+        caseData.argumentsData?.sessions
+          ?.map(s => s.messages?.map(m => m.content).join(' | '))
+          .join('\n') || '';
 
-    async saveChatMessage(toolId, message) {
-        try {
-            const cases = await this.getCases();
-            if (cases.length > 0) {
-                const target = cases[0];
-                const chats = target.toolChats || {};
-                if (!chats[toolId]) chats[toolId] = [];
-                chats[toolId].push({ ...message, id: Date.now().toString(), timestamp: new Date().toISOString() });
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    toolChats: chats
-                });
-                return true;
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error saving chat message", e);
-            return false;
-        }
-    },
-
-    async clearChatHistory(toolId) {
-        try {
-            const cases = await this.getCases();
-            if (cases.length > 0) {
-                const target = cases[0];
-                const chats = target.toolChats || {};
-                chats[toolId] = [];
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    toolChats: chats
-                });
-                return true;
-            }
-            return false;
-        } catch (e) {
-            console.error("[LegalService] Error clearing chat history", e);
-            return false;
-        }
-    },
-
-    // --- Stats & Analytics ---
-    async getDashboardStats() {
-        try {
-            const cases = await this.getCases();
-            const hearings = await this.getHearings();
-            
-            let totalScore = 0;
-            let complianceCount = 0;
-            let riskLevel = null;
-            let evidenceCount = 0;
-            let argumentsCount = 0;
-
-            cases.forEach(c => {
-                if (c.compliance && c.compliance.score !== null && c.compliance.score !== undefined) {
-                    totalScore += c.compliance.score;
-                    complianceCount++;
-                    riskLevel = c.compliance.riskLevel || riskLevel;
-                }
-                if (Array.isArray(c.forensicHistory)) {
-                    evidenceCount += c.forensicHistory.length;
-                }
-                if (c.argumentsData && Array.isArray(c.argumentsData.sessions)) {
-                    argumentsCount += c.argumentsData.sessions.length;
-                }
-            });
-
-            const activeCases = cases.filter(c => c.status === 'Active').length;
-            const upcomingHearings = hearings.filter(h => h.status?.toLowerCase() !== 'completed' && h.status?.toLowerCase() !== 'adjourned').length;
-            const totalInsights = evidenceCount + argumentsCount;
-
-            const hasAnyData = cases.length > 0 || hearings.length > 0 || complianceCount > 0;
-            if (!hasAnyData) return null;
-
-            const averageScore = complianceCount > 0 ? Math.round(totalScore / complianceCount) : null;
-
-            return {
-                activeCases: activeCases.toString(),
-                hearingsCount: upcomingHearings.toString(),
-                complianceScore: averageScore !== null ? `${averageScore}%` : null,
-                riskScore: riskLevel || null,
-                aiInsights: totalInsights > 0 ? totalInsights.toString() : null,
-            };
-        } catch (e) {
-            console.error("[LegalService] Error getting dashboard stats", e);
-            return null;
-        }
-    },
-
-    async generateAiTimelineEvents(caseId, caseData, caseNotes = []) {
-        try {
-            const summary = caseData.summary || caseData.description || '';
-            // If Case Summary is empty or too short, do not generate a timeline
-            if (!summary || summary.trim().split(/\s+/).length < 8) {
-                console.log("[LegalService] Case Summary is too short or empty. Skipping AI timeline generation.");
-                return { events: [], suggestions: [], deadlines: [], missingDocuments: [] };
-            }
-
-            const docsText = (caseData.documents || []).map(d => `- Document: ${d.name} (Uploaded: ${d.uploadedAt || 'N/A'})`).join('\n');
-            const draftsText = (caseData.drafts || []).map(d => `- Draft (Type: ${d.type}): ${d.content ? d.content.substring(0, 400) : ''}`).join('\n');
-            const evidenceText = (caseData.forensicHistory || []).map(f => `- Forensic Log: ${f.title} (Details: ${f.details || f.notes || ''})`).join('\n');
-            const notesText = caseNotes.map(n => `- Note: ${n.title}\nContent:\n${n.content}`).join('\n\n');
-            const researchText = (caseData.research || []).map(r => `Law: ${r.lawName || ''}, Section: ${r.section || ''}`).join('; ');
-            const argumentsText = caseData.argumentsData?.sessions?.map(s => s.messages?.map(m => m.content).join(' | ')).join('\n') || '';
-
-            const prompt = `
+      const prompt = `
 Generate AI Timeline and insights for this legal case strictly based on these data sources (Priority order 1 to 6):
 
 1. CASE SUMMARY / DESCRIPTION (Priority 1):
 ${summary}
 
 2. UPLOADED DOCUMENTS (Priority 2):
-${docsText || "No uploaded documents"}
+${docsText || 'No uploaded documents'}
 
 3. DRAFTS (Priority 3):
-${draftsText || "No drafts available"}
+${draftsText || 'No drafts available'}
 
 4. EVIDENCE / FORENSIC HISTORY (Priority 4):
-${evidenceText || "No evidence logs"}
+${evidenceText || 'No evidence logs'}
 
 5. CASE NOTES (Priority 5):
-${notesText || "No case notes"}
+${notesText || 'No case notes'}
 
 6. RESEARCH & ARGUMENTS (Priority 6):
-- Research: ${researchText || "No research precedents"}
-- Arguments: ${argumentsText || "No arguments"}
+- Research: ${researchText || 'No research precedents'}
+- Arguments: ${argumentsText || 'No arguments'}
 `;
 
-            const systemInstruction = `You are a Legal Case Journey AI Timeline & Insights Engine.
+      const systemInstruction = `You are a Legal Case Journey AI Timeline & Insights Engine.
 Your job is to read all provided legal case information and automatically compile a timeline and associated case insights in a structured JSON format.
 
 STRICT RULES:
@@ -1120,142 +1201,167 @@ Your output must be a single JSON object. Do NOT wrap it in markdown code blocks
 }
 `;
 
-            const res = await generateChatResponse([], prompt, systemInstruction, null, getActiveLanguage(), null, 'LEGAL_TOOLKIT');
-            let parsed = { events: [], suggestions: [], deadlines: [], missingDocuments: [] };
-            if (res) {
-                let text = '';
-                if (typeof res === 'string') text = res;
-                else if (res.reply) text = res.reply;
-                else if (res.data?.reply) text = res.data.reply;
-                else if (res.text) text = res.text;
+      const res = await generateChatResponse(
+        [],
+        prompt,
+        systemInstruction,
+        null,
+        getActiveLanguage(),
+        null,
+        'LEGAL_TOOLKIT'
+      );
+      let parsed = { events: [], suggestions: [], deadlines: [], missingDocuments: [] };
+      if (res) {
+        let text = '';
+        if (typeof res === 'string') text = res;
+        else if (res.reply) text = res.reply;
+        else if (res.data?.reply) text = res.data.reply;
+        else if (res.text) text = res.text;
 
-                // Clean response of any markdown json code blocks
-                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        // Clean response of any markdown json code blocks
+        text = text
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-                try {
-                    parsed = JSON.parse(text);
-                } catch (jsonErr) {
-                    // Try to find the JSON object if there's other text
-                    const start = text.indexOf('{');
-                    const end = text.lastIndexOf('}');
-                    if (start !== -1 && end !== -1) {
-                        try {
-                            parsed = JSON.parse(text.substring(start, end + 1));
-                        } catch (e) {
-                            console.error("[LegalService] Failed to parse unified timeline JSON substring", e);
-                        }
-                    } else {
-                        console.error("[LegalService] AI response did not contain JSON object", text);
-                    }
-                }
-            }
-
-            const eventsList = Array.isArray(parsed.events) ? parsed.events : [];
-            const suggestionsList = Array.isArray(parsed.suggestions) ? parsed.suggestions : [];
-            const deadlinesList = Array.isArray(parsed.deadlines) ? parsed.deadlines : [];
-            const missingDocsList = Array.isArray(parsed.missingDocuments) ? parsed.missingDocuments : [];
-
-            // Map events to have stable ID and isAiGenerated flag
-            const aiEvents = eventsList.map((e, idx) => ({
-                ...e,
-                id: e.id || `AI-EVT-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`,
-                isAiGenerated: true,
-                status: e.status || 'scheduled'
-            }));
-
-            // Retrieve existing case and merge manual events (which don't have isAiGenerated === true)
-            const cases = await this.getCases();
-            const target = cases.find(item => item._id === caseId || item.id === caseId);
-            let merged = [];
-            if (target) {
-                const existingEvents = target.timelineEvents || [];
-                const manualEvents = existingEvents.filter(evt => !evt.isAiGenerated);
-                
-                // Merge manual events and AI events
-                merged = [...manualEvents];
-                aiEvents.forEach(aiEv => {
-                    const duplicate = merged.find(manEv => 
-                        manEv.title?.toLowerCase() === aiEv.title?.toLowerCase() &&
-                        manEv.date === aiEv.date
-                    );
-                    if (!duplicate) {
-                        merged.push(aiEv);
-                    }
-                });
-
-                // Sort merged events strictly by date
-                merged.sort((a, b) => {
-                    const da = new Date(a.date);
-                    const db = new Date(b.date);
-                    if (isNaN(da.getTime())) return 1;
-                    if (isNaN(db.getTime())) return -1;
-                    return da - db;
-                });
-
-                await apiService.updateProject(target._id, {
-                    ...target,
-                    timelineEvents: merged,
-                    timelineSuggestions: suggestionsList,
-                    timelineDeadlines: deadlinesList,
-                    timelineMissingDocuments: missingDocsList
-                });
-
-                await this.addActivity(`Timeline generated by AI`, 'timeline');
-            } else {
-                merged = aiEvents;
-            }
-
-            return {
-                events: merged,
-                suggestions: suggestionsList,
-                deadlines: deadlinesList,
-                missingDocuments: missingDocsList
-            };
-        } catch (e) {
-            console.error("[LegalService] Error generating AI timeline events", e);
-            return { events: [], suggestions: [], deadlines: [], missingDocuments: [] };
-        }
-    },
-
-    async generateAiHearings(caseId, caseData, caseNotes = []) {
         try {
-            const summary = caseData.summary || caseData.description || '';
-            // If Case Summary is empty or too short, do not generate
-            if (!summary || summary.trim().split(/\s+/).length < 8) {
-                console.log("[LegalService] Case Summary is too short or empty. Skipping AI hearings generation.");
-                return [];
+          parsed = JSON.parse(text);
+        } catch (jsonErr) {
+          // Try to find the JSON object if there's other text
+          const start = text.indexOf('{');
+          const end = text.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            try {
+              parsed = JSON.parse(text.substring(start, end + 1));
+            } catch (e) {
+              console.error('[LegalService] Failed to parse unified timeline JSON substring', e);
             }
+          } else {
+            console.error('[LegalService] AI response did not contain JSON object', text);
+          }
+        }
+      }
 
-            const docsText = (caseData.documents || []).map(d => `- Document: ${d.name} (Uploaded: ${d.uploadedAt || 'N/A'})`).join('\n');
-            const draftsText = (caseData.drafts || []).map(d => `- Draft (Type: ${d.type}): ${d.content ? d.content.substring(0, 400) : ''}`).join('\n');
-            const evidenceText = (caseData.forensicHistory || []).map(f => `- Forensic Log: ${f.title} (Details: ${f.details || f.notes || ''})`).join('\n');
-            const notesText = caseNotes.map(n => `- Note: ${n.title}\nContent:\n${n.content}`).join('\n\n');
-            const researchText = (caseData.research || []).map(r => `Law: ${r.lawName || ''}, Section: ${r.section || ''}`).join('; ');
-            const timelineText = (caseData.timelineEvents || []).map(t => `- Event: ${t.title} on ${t.date} (${t.description})`).join('\n');
+      const eventsList = Array.isArray(parsed.events) ? parsed.events : [];
+      const suggestionsList = Array.isArray(parsed.suggestions) ? parsed.suggestions : [];
+      const deadlinesList = Array.isArray(parsed.deadlines) ? parsed.deadlines : [];
+      const missingDocsList = Array.isArray(parsed.missingDocuments) ? parsed.missingDocuments : [];
 
-            const prompt = `
+      // Map events to have stable ID and isAiGenerated flag
+      const aiEvents = eventsList.map((e, idx) => ({
+        ...e,
+        id: e.id || `AI-EVT-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`,
+        isAiGenerated: true,
+        status: e.status || 'scheduled',
+      }));
+
+      // Retrieve existing case and merge manual events (which don't have isAiGenerated === true)
+      const cases = await this.getCases();
+      const target = cases.find(item => item._id === caseId || item.id === caseId);
+      let merged = [];
+      if (target) {
+        const existingEvents = target.timelineEvents || [];
+        const manualEvents = existingEvents.filter(evt => !evt.isAiGenerated);
+
+        // Merge manual events and AI events
+        merged = [...manualEvents];
+        aiEvents.forEach(aiEv => {
+          const duplicate = merged.find(
+            manEv =>
+              manEv.title?.toLowerCase() === aiEv.title?.toLowerCase() && manEv.date === aiEv.date
+          );
+          if (!duplicate) {
+            merged.push(aiEv);
+          }
+        });
+
+        // Sort merged events strictly by date
+        merged.sort((a, b) => {
+          const da = new Date(a.date);
+          const db = new Date(b.date);
+          if (isNaN(da.getTime())) return 1;
+          if (isNaN(db.getTime())) return -1;
+          return da - db;
+        });
+
+        await apiService.updateProject(target._id, {
+          ...target,
+          timelineEvents: merged,
+          timelineSuggestions: suggestionsList,
+          timelineDeadlines: deadlinesList,
+          timelineMissingDocuments: missingDocsList,
+        });
+
+        await this.addActivity(`Timeline generated by AI`, 'timeline');
+      } else {
+        merged = aiEvents;
+      }
+
+      return {
+        events: merged,
+        suggestions: suggestionsList,
+        deadlines: deadlinesList,
+        missingDocuments: missingDocsList,
+      };
+    } catch (e) {
+      console.error('[LegalService] Error generating AI timeline events', e);
+      return { events: [], suggestions: [], deadlines: [], missingDocuments: [] };
+    }
+  },
+
+  async generateAiHearings(caseId, caseData, caseNotes = []) {
+    try {
+      const summary = caseData.summary || caseData.description || '';
+      // If Case Summary is empty or too short, do not generate
+      if (!summary || summary.trim().split(/\s+/).length < 8) {
+        console.log(
+          '[LegalService] Case Summary is too short or empty. Skipping AI hearings generation.'
+        );
+        return [];
+      }
+
+      const docsText = (caseData.documents || [])
+        .map(d => `- Document: ${d.name} (Uploaded: ${d.uploadedAt || 'N/A'})`)
+        .join('\n');
+      const draftsText = (caseData.drafts || [])
+        .map(d => `- Draft (Type: ${d.type}): ${d.content ? d.content.substring(0, 400) : ''}`)
+        .join('\n');
+      const evidenceText = (caseData.forensicHistory || [])
+        .map(f => `- Forensic Log: ${f.title} (Details: ${f.details || f.notes || ''})`)
+        .join('\n');
+      const notesText = caseNotes
+        .map(n => `- Note: ${n.title}\nContent:\n${n.content}`)
+        .join('\n\n');
+      const researchText = (caseData.research || [])
+        .map(r => `Law: ${r.lawName || ''}, Section: ${r.section || ''}`)
+        .join('; ');
+      const timelineText = (caseData.timelineEvents || [])
+        .map(t => `- Event: ${t.title} on ${t.date} (${t.description})`)
+        .join('\n');
+
+      const prompt = `
 Generate Court Hearing details for this case based on these data sources (Priority order 1 to 6):
 
 1. CASE SUMMARY / DESCRIPTION (Priority 1):
 ${summary}
 
 2. TIMELINE / COURT EVENTS (Priority 2):
-${timelineText || "No timeline events"}
+${timelineText || 'No timeline events'}
 
 3. UPLOADED DOCUMENTS & COURT ORDERS (Priority 3):
-${docsText || "No uploaded documents"}
+${docsText || 'No uploaded documents'}
 
 4. DRAFTS (Priority 4):
-${draftsText || "No drafts available"}
+${draftsText || 'No drafts available'}
 
 5. CASE NOTES (Priority 5):
-${notesText || "No case notes"}
+${notesText || 'No case notes'}
 
 6. EVIDENCE & OTHER DATA (Priority 6):
-${evidenceText || "No evidence logs"}
+${evidenceText || 'No evidence logs'}
 `;
 
-            const systemInstruction = `You are an AI Court Hearing Clerk Engine.
+      const systemInstruction = `You are an AI Court Hearing Clerk Engine.
 Your job is to read all provided case information (including summary, timeline events, documents, and notes) and extract chronological court hearings.
 
 STRICT RULES:
@@ -1295,99 +1401,120 @@ Your output must be a single JSON array of objects. Do NOT wrap it in markdown c
 ]
 `;
 
-            const res = await generateChatResponse([], prompt, systemInstruction, null, getActiveLanguage(), null, 'LEGAL_TOOLKIT');
-            let parsed = [];
-            if (res) {
-                let text = '';
-                if (typeof res === 'string') text = res;
-                else if (res.reply) text = res.reply;
-                else if (res.data?.reply) text = res.data.reply;
-                else if (res.text) text = res.text;
+      const res = await generateChatResponse(
+        [],
+        prompt,
+        systemInstruction,
+        null,
+        getActiveLanguage(),
+        null,
+        'LEGAL_TOOLKIT'
+      );
+      let parsed = [];
+      if (res) {
+        let text = '';
+        if (typeof res === 'string') text = res;
+        else if (res.reply) text = res.reply;
+        else if (res.data?.reply) text = res.data.reply;
+        else if (res.text) text = res.text;
 
-                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        text = text
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-                try {
-                    parsed = JSON.parse(text);
-                } catch (jsonErr) {
-                    const start = text.indexOf('[');
-                    const end = text.lastIndexOf(']');
-                    if (start !== -1 && end !== -1) {
-                        try {
-                            parsed = JSON.parse(text.substring(start, end + 1));
-                        } catch (e) {
-                            console.error("[LegalService] Failed to parse hearings JSON substring", e);
-                        }
-                    }
-                }
-            }
-
-            if (Array.isArray(parsed)) {
-                const aiHearings = parsed.map((h, idx) => ({
-                    ...h,
-                    id: h.id || `AI-HEAR-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`,
-                    isAiGenerated: true
-                }));
-
-                const cases = await this.getCases();
-                const target = cases.find(item => item._id === caseId || item.id === caseId);
-                if (target) {
-                    const existingHearings = target.hearings || [];
-                    const manualHearings = existingHearings.filter(h => !h.isAiGenerated);
-                    
-                    // Merge manual and AI hearings, removing duplicate slots
-                    const merged = [...manualHearings];
-                    aiHearings.forEach(aiH => {
-                        const duplicate = merged.find(manH => 
-                            manH.date === aiH.date &&
-                            manH.judge?.toLowerCase() === aiH.judge?.toLowerCase()
-                        );
-                        if (!duplicate) {
-                            merged.push(aiH);
-                        }
-                    });
-
-                    // Sort merged hearings strictly by date
-                    merged.sort((a, b) => {
-                        const da = new Date(a.date);
-                        const db = new Date(b.date);
-                        if (isNaN(da.getTime())) return 1;
-                        if (isNaN(db.getTime())) return -1;
-                        return da - db;
-                    });
-
-                    await apiService.updateProject(target._id, {
-                        ...target,
-                        hearings: merged
-                    });
-
-                    await this.addActivity(`AI extracted court hearings`, 'hearing');
-                    return merged;
-                }
-                return aiHearings;
-            }
-
-            return [];
-        } catch (e) {
-            console.error("[LegalService] Error extracting AI hearings", e);
-            return [];
-        }
-    },
-
-    async extractAiParties(caseId, caseData, caseNotes = []) {
         try {
-            const summary = caseData.summary || caseData.description || '';
-            if (!summary || summary.trim().split(/\s+/).length < 8) {
-                console.log("[LegalService] Case Summary is too short or empty. Skipping AI parties extraction.");
-                return caseData;
+          parsed = JSON.parse(text);
+        } catch (jsonErr) {
+          const start = text.indexOf('[');
+          const end = text.lastIndexOf(']');
+          if (start !== -1 && end !== -1) {
+            try {
+              parsed = JSON.parse(text.substring(start, end + 1));
+            } catch (e) {
+              console.error('[LegalService] Failed to parse hearings JSON substring', e);
             }
+          }
+        }
+      }
 
-            const docsText = (caseData.documents || []).map(d => `- Document: ${d.name}`).join('\n');
-            const draftsText = (caseData.drafts || []).map(d => `- Draft (Type: ${d.type}): ${d.content ? d.content.substring(0, 400) : ''}`).join('\n');
-            const evidenceText = (caseData.forensicHistory || []).map(f => `- Forensic Log: ${f.title} (Details: ${f.details || ''})`).join('\n');
-            const notesText = caseNotes.map(n => `- Note: ${n.title}\nContent:\n${n.content}`).join('\n\n');
-            const timelineText = (caseData.timelineEvents || []).map(t => `- Event: ${t.title} on ${t.date} (${t.description})`).join('\n');
+      if (Array.isArray(parsed)) {
+        const aiHearings = parsed.map((h, idx) => ({
+          ...h,
+          id: h.id || `AI-HEAR-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`,
+          isAiGenerated: true,
+        }));
 
-            const prompt = `
+        const cases = await this.getCases();
+        const target = cases.find(item => item._id === caseId || item.id === caseId);
+        if (target) {
+          const existingHearings = target.hearings || [];
+          const manualHearings = existingHearings.filter(h => !h.isAiGenerated);
+
+          // Merge manual and AI hearings, removing duplicate slots
+          const merged = [...manualHearings];
+          aiHearings.forEach(aiH => {
+            const duplicate = merged.find(
+              manH =>
+                manH.date === aiH.date && manH.judge?.toLowerCase() === aiH.judge?.toLowerCase()
+            );
+            if (!duplicate) {
+              merged.push(aiH);
+            }
+          });
+
+          // Sort merged hearings strictly by date
+          merged.sort((a, b) => {
+            const da = new Date(a.date);
+            const db = new Date(b.date);
+            if (isNaN(da.getTime())) return 1;
+            if (isNaN(db.getTime())) return -1;
+            return da - db;
+          });
+
+          await apiService.updateProject(target._id, {
+            ...target,
+            hearings: merged,
+          });
+
+          await this.addActivity(`AI extracted court hearings`, 'hearing');
+          return merged;
+        }
+        return aiHearings;
+      }
+
+      return [];
+    } catch (e) {
+      console.error('[LegalService] Error extracting AI hearings', e);
+      return [];
+    }
+  },
+
+  async extractAiParties(caseId, caseData, caseNotes = []) {
+    try {
+      const summary = caseData.summary || caseData.description || '';
+      if (!summary || summary.trim().split(/\s+/).length < 8) {
+        console.log(
+          '[LegalService] Case Summary is too short or empty. Skipping AI parties extraction.'
+        );
+        return caseData;
+      }
+
+      const docsText = (caseData.documents || []).map(d => `- Document: ${d.name}`).join('\n');
+      const draftsText = (caseData.drafts || [])
+        .map(d => `- Draft (Type: ${d.type}): ${d.content ? d.content.substring(0, 400) : ''}`)
+        .join('\n');
+      const evidenceText = (caseData.forensicHistory || [])
+        .map(f => `- Forensic Log: ${f.title} (Details: ${f.details || ''})`)
+        .join('\n');
+      const notesText = caseNotes
+        .map(n => `- Note: ${n.title}\nContent:\n${n.content}`)
+        .join('\n\n');
+      const timelineText = (caseData.timelineEvents || [])
+        .map(t => `- Event: ${t.title} on ${t.date} (${t.description})`)
+        .join('\n');
+
+      const prompt = `
 Read the case details and extract the roster of case participants.
 
 CASE CONTEXT:
@@ -1399,7 +1526,7 @@ Evidence: ${evidenceText}
 Notes: ${notesText}
 `;
 
-            const systemInstruction = `You are an AI Legal Registry Clerk.
+      const systemInstruction = `You are an AI Legal Registry Clerk.
 Your job is to read all provided case details and extract the participants/parties involved.
 
 STRICT RULES:
@@ -1440,157 +1567,173 @@ Your output must be a single JSON object. Return ONLY the raw JSON string matchi
 }
 `;
 
-            const res = await generateChatResponse([], prompt, systemInstruction, null, getActiveLanguage(), null, 'LEGAL_TOOLKIT');
-            let parsed = null;
-            if (res) {
-                let text = '';
-                if (typeof res === 'string') text = res;
-                else if (res.reply) text = res.reply;
-                else if (res.data?.reply) text = res.data.reply;
-                else if (res.text) text = res.text;
+      const res = await generateChatResponse(
+        [],
+        prompt,
+        systemInstruction,
+        null,
+        getActiveLanguage(),
+        null,
+        'LEGAL_TOOLKIT'
+      );
+      let parsed = null;
+      if (res) {
+        let text = '';
+        if (typeof res === 'string') text = res;
+        else if (res.reply) text = res.reply;
+        else if (res.data?.reply) text = res.data.reply;
+        else if (res.text) text = res.text;
 
-                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        text = text
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-                try {
-                    parsed = JSON.parse(text);
-                } catch (jsonErr) {
-                    const start = text.indexOf('{');
-                    const end = text.lastIndexOf('}');
-                    if (start !== -1 && end !== -1) {
-                        try {
-                            parsed = JSON.parse(text.substring(start, end + 1));
-                        } catch (e) {
-                            console.error("[LegalService] Failed to parse parties JSON substring", e);
-                        }
-                    }
-                }
-            }
-
-            if (parsed && typeof parsed === 'object') {
-                const cases = await this.getCases();
-                const target = cases.find(item => item._id === caseId || item.id === caseId);
-                if (target) {
-                    const updated = {
-                        ...target,
-                        clientName: parsed.clientName || target.clientName || '',
-                        clientPhone: parsed.clientPhone || target.clientPhone || '',
-                        clientEmail: parsed.clientEmail || target.clientEmail || '',
-                        clientAddress: parsed.clientAddress || target.clientAddress || '',
-                        advocateName: parsed.advocateName || target.advocateName || '',
-                        opponentName: parsed.opponentName || target.opponentName || '',
-                        opponentPhone: parsed.opponentPhone || target.opponentPhone || '',
-                        opponentEmail: parsed.opponentEmail || target.opponentEmail || '',
-                        opponentAddress: parsed.opponentAddress || target.opponentAddress || '',
-                        opponentAdvocate: parsed.opponentAdvocate || target.opponentAdvocate || '',
-                        opponentFirm: parsed.opponentFirm || target.opponentFirm || '',
-                        courtName: parsed.courtName || target.courtName || '',
-                        courtType: parsed.courtType || target.courtType || '',
-                        judge: parsed.judge || target.judge || '',
-                        caseNo: parsed.caseNo || target.caseNo || '',
-                        jurisdiction: parsed.jurisdiction || target.jurisdiction || '',
-                        courtAddress: parsed.courtAddress || target.courtAddress || '',
-                        additionalParties: parsed.additionalParties || target.additionalParties || []
-                    };
-
-                    await apiService.updateProject(target._id, updated);
-                    await this.addActivity(`AI auto-extracted parties roster`, 'parties');
-                    return updated;
-                }
-            }
-            return caseData;
-        } catch (e) {
-            console.error("[LegalService] Error extracting parties", e);
-            return caseData;
-        }
-    },
-
-    async analyzeUploadedDocument(caseId, docObj, caseData, caseNotes = []) {
         try {
-            // Disable stale/cached values: ensure fresh initialization
-            const fileName = docObj.name || '';
-            const lowerName = fileName.toLowerCase();
-            
-            let detectedType = 'Other';
-            let localSummary = '';
-            let localOCR = '';
-            let localParties = [];
-            let localDates = [];
-            let localCourt = caseData.courtName || 'District Court';
-            let localJudge = caseData.judge || 'Hon\'ble Judge A. K. Sen';
-            let localActs = 'Indian Contract Act';
-            let localSections = 'Section 73';
-            let localPrecedents = 'M.C. Chacko v. State Bank of Travancore (1969)';
-            let localRisk = 'Low';
-            let localRecs = 'Verify signatories and archive record.';
-
-            const clientName = caseData.clientName || 'Ajay';
-            const opponentName = caseData.opponentName || 'Kalesh';
-
-            // Automatic type detection and unique local fallback text generation
-            if (lowerName.includes('order')) {
-                detectedType = 'Court Order';
-                localSummary = `Court Order in case of ${clientName} vs ${opponentName}. Directions: Maintain status quo. Summons issued to witness for evidentiary proceedings.`;
-                localOCR = `IN THE COURT OF THE CIVIL JUDGE\nSuit No. 402 of 2026\n\n${clientName} ... Plaintiff\nvs\n${opponentName} ... Defendant\n\nORDER\nUpon hearing counsel, the Court directs both parties to maintain status quo regarding the disputed property. Let summons be issued to witness returnable on next date.\n\nSd/-\nJudge`;
-                localParties = [clientName, opponentName];
-                localDates = ['12/04/2026'];
-                localRisk = 'Medium';
-                localRecs = 'Serve copy of status quo order to the opposing counsel; verify next returnable date.';
-            } else if (lowerName.includes('prediction') || lowerName.includes('report')) {
-                detectedType = 'Case Prediction Report';
-                localSummary = `Case Prediction Report for litigation ${clientName} vs ${opponentName}.\n\n• Executive Outcome Summary: High probability of favorable settlement based on contract breach precedents.\n• Win Probability: 82%\n• Litigation Risk: Medium\n• Estimated Duration: 18-24 months\n• Applicable Laws: Indian Contract Act Section 73, CPC Section 96\n• Precedents: M.C. Chacko v. State Bank of Travancore (1969)\n• AI Recommendations: File interim application for attachment before judgment; initiate mediation.\n• Parties: ${clientName} (Plaintiff), ${opponentName} (Defendant)\n• Court: ${localCourt}\n• Case Category: Suit for Breach of Contract`;
-                localOCR = `AISA AI LEGAL ASSISTANT\nCASE PREDICTION REPORT\n\nPARTIES: ${clientName} vs ${opponentName}\nWIN PROBABILITY: 82%\nRISK LEVEL: Medium\nESTIMATED DURATION: 18-24 Months\n\nLegal Analysis: The suit involves breach of contract where the defendant failed to deliver services. Under Section 73 of the Indian Contract Act, the plaintiff is entitled to damages. Precedent case law supports recovery of the security deposit.`;
-                localParties = [clientName, opponentName];
-                localDates = [new Date().toLocaleDateString()];
-                localRisk = 'Medium';
-                localRecs = 'Initiate mediation discussion; prepare interim relief application.';
-            } else if (lowerName.includes('notice')) {
-                detectedType = 'Legal Notice';
-                localSummary = `Legal Demand Notice sent on behalf of ${clientName} to ${opponentName} demanding settlement of outstanding dues.`;
-                localOCR = `LEGAL DEMAND NOTICE\n\nTo: ${opponentName}\n\nUnder instructions from my client ${clientName}, I hereby call upon you to pay the outstanding sum of INR 15,00,000 within 15 days of receipt of this notice, failing which civil and criminal proceedings will be initiated.\n\nSincerely,\nAdvocate`;
-                localParties = [clientName, opponentName];
-                localDates = ['15/05/2026'];
-                localRisk = 'High';
-                localRecs = 'Wait for 15-day notice period to expire; draft civil plaint if no response.';
-            } else if (lowerName.includes('contract') || lowerName.includes('agreement') || lowerName.includes('nda')) {
-                detectedType = lowerName.includes('employment') ? 'Employment Contract' : 'Agreement';
-                localSummary = `Contract agreement between ${clientName} and the counterparty specifying terms of confidentiality, obligations, and liability limits.`;
-                localOCR = `MUTUAL NON-DISCLOSURE AGREEMENT\n\nThis Agreement is entered into on 15 Jan 2026 by and between ${clientName || 'Party A'} and ${opponentName || 'Party B'}.\n\nClause 1. Confidentiality: Both parties shall maintain strict confidentiality.\nClause 2. Termination: Either party may terminate with 30 days notice.`;
-                localParties = [clientName, opponentName];
-                localDates = ['15 Jan 2026'];
-                localRisk = 'Low';
-            } else if (lowerName.includes('affidavit')) {
-                detectedType = 'Affidavit';
-                localSummary = `Solemn declaration by deponent ${clientName} stating case facts and verifying evidence authenticity.`;
-                localOCR = `BEFORE THE OATH COMMISSIONER\n\nAFFIDAVIT\n\nI, ${clientName}, do hereby solemnly affirm and declare on oath that the facts stated in the accompanying petition are true to the best of my knowledge.\n\nDeponent`;
-                localParties = [clientName];
-                localDates = ['20/06/2026'];
-            } else if (lowerName.includes('fir')) {
-                detectedType = 'FIR';
-                localSummary = `First Information Report registered under Section 154 CrPC alleging offences under IPC.`;
-                localOCR = `FIRST INFORMATION REPORT\n\nDistrict: South\nFIR No: 112/2026\nDate: 10/05/2026\n\nComplainant: ${clientName}\nAccused: ${opponentName}\n\nOffences alleged: Section 420, 406 IPC.`;
-                localParties = [clientName, opponentName];
-                localDates = ['10/05/2026'];
-                localRisk = 'High';
-            } else if (lowerName.includes('invoice')) {
-                detectedType = 'Invoice';
-                localSummary = `Invoice for legal fees and service costs in litigation support.`;
-                localOCR = `TAX INVOICE\n\nInvoice No: INV-98442\nDate: 03/07/2026\n\nBill To: ${clientName}\nFrom: Legal Associates\n\nAmount: INR 45,000 for consultations.`;
-                localParties = [clientName];
-                localDates = ['03/07/2026'];
-            } else {
-                detectedType = 'Evidence';
-                localSummary = `Evidence document: "${fileName}" uploaded for support of current case pleadings.`;
-                localOCR = `DOCUMENT EXHIBIT A\n\nFilename: ${fileName}\nUploaded for case context. No further OCR text parsed.`;
-                localParties = [clientName];
+          parsed = JSON.parse(text);
+        } catch (jsonErr) {
+          const start = text.indexOf('{');
+          const end = text.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            try {
+              parsed = JSON.parse(text.substring(start, end + 1));
+            } catch (e) {
+              console.error('[LegalService] Failed to parse parties JSON substring', e);
             }
+          }
+        }
+      }
 
-            const prompt = `
+      if (parsed && typeof parsed === 'object') {
+        const cases = await this.getCases();
+        const target = cases.find(item => item._id === caseId || item.id === caseId);
+        if (target) {
+          const updated = {
+            ...target,
+            clientName: parsed.clientName || target.clientName || '',
+            clientPhone: parsed.clientPhone || target.clientPhone || '',
+            clientEmail: parsed.clientEmail || target.clientEmail || '',
+            clientAddress: parsed.clientAddress || target.clientAddress || '',
+            advocateName: parsed.advocateName || target.advocateName || '',
+            opponentName: parsed.opponentName || target.opponentName || '',
+            opponentPhone: parsed.opponentPhone || target.opponentPhone || '',
+            opponentEmail: parsed.opponentEmail || target.opponentEmail || '',
+            opponentAddress: parsed.opponentAddress || target.opponentAddress || '',
+            opponentAdvocate: parsed.opponentAdvocate || target.opponentAdvocate || '',
+            opponentFirm: parsed.opponentFirm || target.opponentFirm || '',
+            courtName: parsed.courtName || target.courtName || '',
+            courtType: parsed.courtType || target.courtType || '',
+            judge: parsed.judge || target.judge || '',
+            caseNo: parsed.caseNo || target.caseNo || '',
+            jurisdiction: parsed.jurisdiction || target.jurisdiction || '',
+            courtAddress: parsed.courtAddress || target.courtAddress || '',
+            additionalParties: parsed.additionalParties || target.additionalParties || [],
+          };
+
+          await apiService.updateProject(target._id, updated);
+          await this.addActivity(`AI auto-extracted parties roster`, 'parties');
+          return updated;
+        }
+      }
+      return caseData;
+    } catch (e) {
+      console.error('[LegalService] Error extracting parties', e);
+      return caseData;
+    }
+  },
+
+  async analyzeUploadedDocument(caseId, docObj, caseData, caseNotes = []) {
+    try {
+      // Disable stale/cached values: ensure fresh initialization
+      const fileName = docObj.name || '';
+      const lowerName = fileName.toLowerCase();
+
+      let detectedType = 'Other';
+      let localSummary = '';
+      let localOCR = '';
+      let localParties = [];
+      let localDates = [];
+      let localCourt = caseData.courtName || 'District Court';
+      let localJudge = caseData.judge || "Hon'ble Judge A. K. Sen";
+      let localActs = 'Indian Contract Act';
+      let localSections = 'Section 73';
+      let localPrecedents = 'M.C. Chacko v. State Bank of Travancore (1969)';
+      let localRisk = 'Low';
+      let localRecs = 'Verify signatories and archive record.';
+
+      const clientName = caseData.clientName || 'Ajay';
+      const opponentName = caseData.opponentName || 'Kalesh';
+
+      // Automatic type detection and unique local fallback text generation
+      if (lowerName.includes('order')) {
+        detectedType = 'Court Order';
+        localSummary = `Court Order in case of ${clientName} vs ${opponentName}. Directions: Maintain status quo. Summons issued to witness for evidentiary proceedings.`;
+        localOCR = `IN THE COURT OF THE CIVIL JUDGE\nSuit No. 402 of 2026\n\n${clientName} ... Plaintiff\nvs\n${opponentName} ... Defendant\n\nORDER\nUpon hearing counsel, the Court directs both parties to maintain status quo regarding the disputed property. Let summons be issued to witness returnable on next date.\n\nSd/-\nJudge`;
+        localParties = [clientName, opponentName];
+        localDates = ['12/04/2026'];
+        localRisk = 'Medium';
+        localRecs =
+          'Serve copy of status quo order to the opposing counsel; verify next returnable date.';
+      } else if (lowerName.includes('prediction') || lowerName.includes('report')) {
+        detectedType = 'Case Prediction Report';
+        localSummary = `Case Prediction Report for litigation ${clientName} vs ${opponentName}.\n\n• Executive Outcome Summary: High probability of favorable settlement based on contract breach precedents.\n• Win Probability: 82%\n• Litigation Risk: Medium\n• Estimated Duration: 18-24 months\n• Applicable Laws: Indian Contract Act Section 73, CPC Section 96\n• Precedents: M.C. Chacko v. State Bank of Travancore (1969)\n• AI Recommendations: File interim application for attachment before judgment; initiate mediation.\n• Parties: ${clientName} (Plaintiff), ${opponentName} (Defendant)\n• Court: ${localCourt}\n• Case Category: Suit for Breach of Contract`;
+        localOCR = `AISA AI LEGAL ASSISTANT\nCASE PREDICTION REPORT\n\nPARTIES: ${clientName} vs ${opponentName}\nWIN PROBABILITY: 82%\nRISK LEVEL: Medium\nESTIMATED DURATION: 18-24 Months\n\nLegal Analysis: The suit involves breach of contract where the defendant failed to deliver services. Under Section 73 of the Indian Contract Act, the plaintiff is entitled to damages. Precedent case law supports recovery of the security deposit.`;
+        localParties = [clientName, opponentName];
+        localDates = [new Date().toLocaleDateString()];
+        localRisk = 'Medium';
+        localRecs = 'Initiate mediation discussion; prepare interim relief application.';
+      } else if (lowerName.includes('notice')) {
+        detectedType = 'Legal Notice';
+        localSummary = `Legal Demand Notice sent on behalf of ${clientName} to ${opponentName} demanding settlement of outstanding dues.`;
+        localOCR = `LEGAL DEMAND NOTICE\n\nTo: ${opponentName}\n\nUnder instructions from my client ${clientName}, I hereby call upon you to pay the outstanding sum of INR 15,00,000 within 15 days of receipt of this notice, failing which civil and criminal proceedings will be initiated.\n\nSincerely,\nAdvocate`;
+        localParties = [clientName, opponentName];
+        localDates = ['15/05/2026'];
+        localRisk = 'High';
+        localRecs = 'Wait for 15-day notice period to expire; draft civil plaint if no response.';
+      } else if (
+        lowerName.includes('contract') ||
+        lowerName.includes('agreement') ||
+        lowerName.includes('nda')
+      ) {
+        detectedType = lowerName.includes('employment') ? 'Employment Contract' : 'Agreement';
+        localSummary = `Contract agreement between ${clientName} and the counterparty specifying terms of confidentiality, obligations, and liability limits.`;
+        localOCR = `MUTUAL NON-DISCLOSURE AGREEMENT\n\nThis Agreement is entered into on 15 Jan 2026 by and between ${clientName || 'Party A'} and ${opponentName || 'Party B'}.\n\nClause 1. Confidentiality: Both parties shall maintain strict confidentiality.\nClause 2. Termination: Either party may terminate with 30 days notice.`;
+        localParties = [clientName, opponentName];
+        localDates = ['15 Jan 2026'];
+        localRisk = 'Low';
+      } else if (lowerName.includes('affidavit')) {
+        detectedType = 'Affidavit';
+        localSummary = `Solemn declaration by deponent ${clientName} stating case facts and verifying evidence authenticity.`;
+        localOCR = `BEFORE THE OATH COMMISSIONER\n\nAFFIDAVIT\n\nI, ${clientName}, do hereby solemnly affirm and declare on oath that the facts stated in the accompanying petition are true to the best of my knowledge.\n\nDeponent`;
+        localParties = [clientName];
+        localDates = ['20/06/2026'];
+      } else if (lowerName.includes('fir')) {
+        detectedType = 'FIR';
+        localSummary = `First Information Report registered under Section 154 CrPC alleging offences under IPC.`;
+        localOCR = `FIRST INFORMATION REPORT\n\nDistrict: South\nFIR No: 112/2026\nDate: 10/05/2026\n\nComplainant: ${clientName}\nAccused: ${opponentName}\n\nOffences alleged: Section 420, 406 IPC.`;
+        localParties = [clientName, opponentName];
+        localDates = ['10/05/2026'];
+        localRisk = 'High';
+      } else if (lowerName.includes('invoice')) {
+        detectedType = 'Invoice';
+        localSummary = `Invoice for legal fees and service costs in litigation support.`;
+        localOCR = `TAX INVOICE\n\nInvoice No: INV-98442\nDate: 03/07/2026\n\nBill To: ${clientName}\nFrom: Legal Associates\n\nAmount: INR 45,000 for consultations.`;
+        localParties = [clientName];
+        localDates = ['03/07/2026'];
+      } else {
+        detectedType = 'Evidence';
+        localSummary = `Evidence document: "${fileName}" uploaded for support of current case pleadings.`;
+        localOCR = `DOCUMENT EXHIBIT A\n\nFilename: ${fileName}\nUploaded for case context. No further OCR text parsed.`;
+        localParties = [clientName];
+      }
+
+      const prompt = `
 Perform legal AI analysis, classification, and linking for this uploaded file:
 File Name: "${docObj.name}"
 Case Summary: "${caseData.summary || caseData.description || 'N/A'}"
 `;
 
-            const systemInstruction = `You are an expert AI Legal Document Analyzer and OCR system.
+      const systemInstruction = `You are an expert AI Legal Document Analyzer and OCR system.
 Analyze the attached document content (via file attachment or name/context) and output a clean JSON object containing classification, metadata, key dates, risk level, recommendations, and extracted text.
 
 Important:
@@ -1645,190 +1788,238 @@ Return ONLY a valid raw JSON object matching this structure:
 }
 `;
 
-            const attachments = [];
-            if (docObj.fileBase64) {
-                attachments.push({
-                    name: docObj.name,
-                    type: docObj.type || 'application/pdf',
-                    url: docObj.fileBase64
-                });
-            }
+      const attachments = [];
+      if (docObj.fileBase64) {
+        attachments.push({
+          name: docObj.name,
+          type: docObj.type || 'application/pdf',
+          url: docObj.fileBase64,
+        });
+      }
 
-            const res = await generateChatResponse([], prompt, systemInstruction, attachments, getActiveLanguage(), null, 'LEGAL_TOOLKIT');
-            let parsed = {};
-            if (res) {
-                let text = '';
-                if (typeof res === 'string') text = res;
-                else if (res.reply) text = res.reply;
-                else if (res.data?.reply) text = res.data.reply;
-                else if (res.text) text = res.text;
+      const res = await generateChatResponse(
+        [],
+        prompt,
+        systemInstruction,
+        attachments,
+        getActiveLanguage(),
+        null,
+        'LEGAL_TOOLKIT'
+      );
+      let parsed = {};
+      if (res) {
+        let text = '';
+        if (typeof res === 'string') text = res;
+        else if (res.reply) text = res.reply;
+        else if (res.data?.reply) text = res.data.reply;
+        else if (res.text) text = res.text;
 
-                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        text = text
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-                try {
-                    parsed = JSON.parse(text);
-                } catch (e) {
-                    const start = text.indexOf('{');
-                    const end = text.lastIndexOf('}');
-                    if (start !== -1 && end !== -1) {
-                        try {
-                            parsed = JSON.parse(text.substring(start, end + 1));
-                        } catch (err) {}
-                    }
-                }
-            }
-
-            // Invalidation/Fresh Analysis check: Ensure we do not inherit from old variables.
-            let finalType = parsed.category || detectedType;
-            let finalSummary = parsed.summary || localSummary;
-            let finalOCR = parsed.extractedText || localOCR;
-            let finalParties = parsed.extractedParties?.length ? parsed.extractedParties : localParties;
-            let finalDates = parsed.extractedDates?.length ? parsed.extractedDates : localDates;
-            let finalCourt = parsed.courtName || localCourt;
-            let finalJudge = parsed.judgeName || localJudge;
-            let finalActs = parsed.acts || localActs;
-            let finalSections = parsed.sections || localSections;
-            let finalPrecedents = parsed.precedents || localPrecedents;
-            let finalRisk = parsed.riskLevel || localRisk;
-            let finalRecs = parsed.recommendations || localRecs;
-
-            // VALIDATION: Verify Summary, OCR, Metadata, Document Type, Entities all originate from the same uploaded document.
-            let isVerified = true;
-            if (finalType === 'Case Prediction Report' && (!finalSummary.includes('Prediction') || finalSummary.includes('Court Order'))) {
-                isVerified = false;
-            }
-            if (finalType === 'Court Order' && !finalSummary.toLowerCase().includes('order')) {
-                isVerified = false;
-            }
-            if (finalType === 'Legal Notice' && !finalSummary.toLowerCase().includes('notice')) {
-                isVerified = false;
-            }
-
-            if (!isVerified) {
-                console.warn("[Validation Failed] Inconsistent document analysis cached. Restoring verified local extraction.");
-                finalType = detectedType;
-                finalSummary = localSummary;
-                finalOCR = localOCR;
-                finalParties = localParties;
-                finalDates = localDates;
-                finalCourt = localCourt;
-                finalJudge = localJudge;
-                finalActs = localActs;
-                finalSections = localSections;
-                finalPrecedents = localPrecedents;
-                finalRisk = localRisk;
-                finalRecs = localRecs;
-            }
-
-            const hash = 'SHA256-' + docObj.name.substring(0, 3).toUpperCase() + Math.random().toString(16).substring(2, 8).toUpperCase();
-            const isContract = /nda|contract|agreement|lease/i.test(docObj.name) || /contract|agreement/i.test(finalType);
-
-            const analyzed = {
-                ...docObj,
-                category: finalType,
-                language: parsed.language || 'English',
-                pageCount: parsed.pageCount || 1,
-                confidenceScore: parsed.confidenceScore || 95,
-                authenticityScore: parsed.authenticityScore || '95%',
-                strength: parsed.strength || 'Moderate',
-                reliability: parsed.reliability || 'High',
-                admissibility: parsed.admissibility || 'Admissible',
-                extractedDates: finalDates,
-                extractedParties: finalParties,
-                effectiveDate: parsed.effectiveDate || finalDates[0] || '',
-                terminationDate: parsed.terminationDate || finalDates[1] || '',
-                renewal: parsed.renewal || '',
-                courtName: finalCourt,
-                judgeName: finalJudge,
-                acts: finalActs,
-                sections: finalSections,
-                precedents: finalPrecedents,
-                riskLevel: finalRisk,
-                recommendations: finalRecs,
-                linkedTimelineEvent: parsed.linkedTimelineEvent || 'Unlinked',
-                linkedHearing: parsed.linkedHearing || 'Unlinked',
-                linkedArgument: parsed.linkedArgument || 'Unlinked',
-                linkedPrecedent: finalPrecedents,
-                facts: finalSummary,
-                extractedText: finalOCR,
-                ocrStatus: 'Success (OCR Done)',
-                aiProcessed: 'Extracted successfully',
-                hash: hash,
-                chainOfCustody: 'Logged in AI secure locker',
-                signatureDetected: parsed.signatureDetected ?? false,
-                version: docObj.version || 'v1.0.0',
-                status: docObj.status || (finalRisk === 'High' ? 'Pending Review' : 'Reviewed'),
-                tags: docObj.tags || [finalType].filter(Boolean),
-                folder: docObj.folder || 'Contracts',
-                contractAnalysis: isContract ? {
-                    summary: finalSummary,
-                    clauses: {
-                        payment: parsed.clauses?.payment || "Terms require payments within 30 days of invoicing.",
-                        obligations: parsed.clauses?.obligations || "Complete details of contract performance deliverables.",
-                        penalties: parsed.clauses?.penalties || "Interest on delayed payments or breach liquidated damages.",
-                        termination: parsed.clauses?.termination || "Either party may terminate with 30 days written notice.",
-                        jurisdiction: parsed.clauses?.jurisdiction || `Governed under ${finalCourt} jurisdiction.`,
-                        confidentiality: parsed.clauses?.confidentiality || "Standard mutual non-disclosure covenants apply.",
-                        liability: parsed.clauses?.liability || "Limited to direct damages up to contract value.",
-                        indemnity: parsed.clauses?.indemnity || "Standard mutual indemnity for IP infringement.",
-                        forceMajeure: parsed.clauses?.forceMajeure || "Standard excuse for unavoidable performance failure.",
-                        arbitration: parsed.clauses?.arbitration || "Arbitration under AAA rules.",
-                        renewal: parsed.clauses?.renewal || "Auto-renews for 1-year terms unless notified."
-                    },
-                    risks: parsed.redFlags || parsed.risks || [
-                        "No dispute resolution forum explicitly specified.",
-                        "Liability limit is lower than transaction values."
-                    ],
-                    improvements: parsed.recommendations ? [parsed.recommendations] : [
-                        "Add explicit governing arbitration clause.",
-                        "Add standard Force Majeure provisions."
-                    ],
-                    dates: {
-                        agreementDate: parsed.effectiveDate || finalDates[0] || "15 Jan 2026",
-                        expiryDate: parsed.terminationDate || finalDates[1] || "14 Jan 2027",
-                        renewalNotice: parsed.renewal || "30 days prior to expiry"
-                    },
-                    parties: {
-                        partyA: finalParties[0] || clientName,
-                        partyB: finalParties[1] || opponentName,
-                        witnesses: parsed.witnesses || ["Vipul Sen (Advocate)"]
-                    },
-                    missingClauses: parsed.missingClauses || [
-                        "Force Majeure Clause",
-                        "IP Assignment Clause"
-                    ],
-                    signatureDetected: parsed.signatureDetected ?? false
-                } : null
-            };
-
-            // Save to database
-            const cases = await this.getCases();
-            const target = cases.find(c => c._id === caseId || c.id === caseId);
-            if (target) {
-                const docs = (target.documents || []).map(d => d.id === docObj.id ? analyzed : d);
-                await this.updateCase(target._id, { documents: docs });
-            }
-
-            return analyzed;
-        } catch (e) {
-            console.error("[LegalService] Error analyzing uploaded document", e);
-            return docObj;
-        }
-    },
-
-    async generateAiResearch(caseId, caseData, caseNotes = []) {
         try {
-            const summary = caseData.summary || caseData.description || '';
-            if (!summary || summary.trim().split(/\s+/).length < 8) {
-                console.log("[LegalService] Summary empty or too short. Skipping AI research generation.");
-                return null;
+          parsed = JSON.parse(text);
+        } catch (e) {
+          const start = text.indexOf('{');
+          const end = text.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            try {
+              parsed = JSON.parse(text.substring(start, end + 1));
+            } catch (err) {}
+          }
+        }
+      }
+
+      // Invalidation/Fresh Analysis check: Ensure we do not inherit from old variables.
+      let finalType = parsed.category || detectedType;
+      let finalSummary = parsed.summary || localSummary;
+      let finalOCR = parsed.extractedText || localOCR;
+      let finalParties = parsed.extractedParties?.length ? parsed.extractedParties : localParties;
+      let finalDates = parsed.extractedDates?.length ? parsed.extractedDates : localDates;
+      let finalCourt = parsed.courtName || localCourt;
+      let finalJudge = parsed.judgeName || localJudge;
+      let finalActs = parsed.acts || localActs;
+      let finalSections = parsed.sections || localSections;
+      let finalPrecedents = parsed.precedents || localPrecedents;
+      let finalRisk = parsed.riskLevel || localRisk;
+      let finalRecs = parsed.recommendations || localRecs;
+
+      // VALIDATION: Verify Summary, OCR, Metadata, Document Type, Entities all originate from the same uploaded document.
+      let isVerified = true;
+      if (
+        finalType === 'Case Prediction Report' &&
+        (!finalSummary.includes('Prediction') || finalSummary.includes('Court Order'))
+      ) {
+        isVerified = false;
+      }
+      if (finalType === 'Court Order' && !finalSummary.toLowerCase().includes('order')) {
+        isVerified = false;
+      }
+      if (finalType === 'Legal Notice' && !finalSummary.toLowerCase().includes('notice')) {
+        isVerified = false;
+      }
+
+      if (!isVerified) {
+        console.warn(
+          '[Validation Failed] Inconsistent document analysis cached. Restoring verified local extraction.'
+        );
+        finalType = detectedType;
+        finalSummary = localSummary;
+        finalOCR = localOCR;
+        finalParties = localParties;
+        finalDates = localDates;
+        finalCourt = localCourt;
+        finalJudge = localJudge;
+        finalActs = localActs;
+        finalSections = localSections;
+        finalPrecedents = localPrecedents;
+        finalRisk = localRisk;
+        finalRecs = localRecs;
+      }
+
+      const hash =
+        'SHA256-' +
+        docObj.name.substring(0, 3).toUpperCase() +
+        Math.random().toString(16).substring(2, 8).toUpperCase();
+      const isContract =
+        /nda|contract|agreement|lease/i.test(docObj.name) || /contract|agreement/i.test(finalType);
+
+      const analyzed = {
+        ...docObj,
+        category: finalType,
+        language: parsed.language || 'English',
+        pageCount: parsed.pageCount || 1,
+        confidenceScore: parsed.confidenceScore || 95,
+        authenticityScore: parsed.authenticityScore || '95%',
+        strength: parsed.strength || 'Moderate',
+        reliability: parsed.reliability || 'High',
+        admissibility: parsed.admissibility || 'Admissible',
+        extractedDates: finalDates,
+        extractedParties: finalParties,
+        effectiveDate: parsed.effectiveDate || finalDates[0] || '',
+        terminationDate: parsed.terminationDate || finalDates[1] || '',
+        renewal: parsed.renewal || '',
+        courtName: finalCourt,
+        judgeName: finalJudge,
+        acts: finalActs,
+        sections: finalSections,
+        precedents: finalPrecedents,
+        riskLevel: finalRisk,
+        recommendations: finalRecs,
+        linkedTimelineEvent: parsed.linkedTimelineEvent || 'Unlinked',
+        linkedHearing: parsed.linkedHearing || 'Unlinked',
+        linkedArgument: parsed.linkedArgument || 'Unlinked',
+        linkedPrecedent: finalPrecedents,
+        facts: finalSummary,
+        extractedText: finalOCR,
+        ocrStatus: 'Success (OCR Done)',
+        aiProcessed: 'Extracted successfully',
+        hash: hash,
+        chainOfCustody: 'Logged in AI secure locker',
+        signatureDetected: parsed.signatureDetected ?? false,
+        version: docObj.version || 'v1.0.0',
+        status: docObj.status || (finalRisk === 'High' ? 'Pending Review' : 'Reviewed'),
+        tags: docObj.tags || [finalType].filter(Boolean),
+        folder: docObj.folder || 'Contracts',
+        contractAnalysis: isContract
+          ? {
+              summary: finalSummary,
+              clauses: {
+                payment:
+                  parsed.clauses?.payment || 'Terms require payments within 30 days of invoicing.',
+                obligations:
+                  parsed.clauses?.obligations ||
+                  'Complete details of contract performance deliverables.',
+                penalties:
+                  parsed.clauses?.penalties ||
+                  'Interest on delayed payments or breach liquidated damages.',
+                termination:
+                  parsed.clauses?.termination ||
+                  'Either party may terminate with 30 days written notice.',
+                jurisdiction:
+                  parsed.clauses?.jurisdiction || `Governed under ${finalCourt} jurisdiction.`,
+                confidentiality:
+                  parsed.clauses?.confidentiality ||
+                  'Standard mutual non-disclosure covenants apply.',
+                liability:
+                  parsed.clauses?.liability || 'Limited to direct damages up to contract value.',
+                indemnity:
+                  parsed.clauses?.indemnity || 'Standard mutual indemnity for IP infringement.',
+                forceMajeure:
+                  parsed.clauses?.forceMajeure ||
+                  'Standard excuse for unavoidable performance failure.',
+                arbitration: parsed.clauses?.arbitration || 'Arbitration under AAA rules.',
+                renewal: parsed.clauses?.renewal || 'Auto-renews for 1-year terms unless notified.',
+              },
+              risks: parsed.redFlags ||
+                parsed.risks || [
+                  'No dispute resolution forum explicitly specified.',
+                  'Liability limit is lower than transaction values.',
+                ],
+              improvements: parsed.recommendations
+                ? [parsed.recommendations]
+                : [
+                    'Add explicit governing arbitration clause.',
+                    'Add standard Force Majeure provisions.',
+                  ],
+              dates: {
+                agreementDate: parsed.effectiveDate || finalDates[0] || '15 Jan 2026',
+                expiryDate: parsed.terminationDate || finalDates[1] || '14 Jan 2027',
+                renewalNotice: parsed.renewal || '30 days prior to expiry',
+              },
+              parties: {
+                partyA: finalParties[0] || clientName,
+                partyB: finalParties[1] || opponentName,
+                witnesses: parsed.witnesses || ['Vipul Sen (Advocate)'],
+              },
+              missingClauses: parsed.missingClauses || [
+                'Force Majeure Clause',
+                'IP Assignment Clause',
+              ],
+              signatureDetected: parsed.signatureDetected ?? false,
             }
+          : null,
+      };
 
-            const docsText = (caseData.documents || []).map(d => `- Document: ${d.name} (Category: ${d.category || 'N/A'}, Facts: ${d.facts || 'N/A'})`).join('\n');
-            const timelineText = (caseData.timelineEvents || []).map(t => `- Event: ${t.title} on ${t.date} (${t.description})`).join('\n');
-            const notesText = caseNotes.map(n => `- Note: ${n.title}\nContent:\n${n.content}`).join('\n\n');
+      // Save to database
+      const cases = await this.getCases();
+      const target = cases.find(c => c._id === caseId || c.id === caseId);
+      if (target) {
+        const docs = (target.documents || []).map(d => (d.id === docObj.id ? analyzed : d));
+        await this.updateCase(target._id, { documents: docs });
+      }
 
-            const prompt = `
+      return analyzed;
+    } catch (e) {
+      console.error('[LegalService] Error analyzing uploaded document', e);
+      return docObj;
+    }
+  },
+
+  async generateAiResearch(caseId, caseData, caseNotes = []) {
+    try {
+      const summary = caseData.summary || caseData.description || '';
+      if (!summary || summary.trim().split(/\s+/).length < 8) {
+        console.log('[LegalService] Summary empty or too short. Skipping AI research generation.');
+        return null;
+      }
+
+      const docsText = (caseData.documents || [])
+        .map(
+          d =>
+            `- Document: ${d.name} (Category: ${d.category || 'N/A'}, Facts: ${d.facts || 'N/A'})`
+        )
+        .join('\n');
+      const timelineText = (caseData.timelineEvents || [])
+        .map(t => `- Event: ${t.title} on ${t.date} (${t.description})`)
+        .join('\n');
+      const notesText = caseNotes
+        .map(n => `- Note: ${n.title}\nContent:\n${n.content}`)
+        .join('\n\n');
+
+      const prompt = `
 Generate a legal research dossier for this case:
 Case Name: "${caseData.name || 'Untitled Litigation'}"
 Summary: ${summary}
@@ -1837,7 +2028,7 @@ Documents: ${docsText}
 Notes: ${notesText}
 `;
 
-            const systemInstruction = `You are a legal research agent.
+      const systemInstruction = `You are a legal research agent.
 You must analyze the case information and extract Governing laws, precedents, strategy, and recommendations.
 
 STRICT RULE:
@@ -1896,65 +2087,85 @@ Your output must be a single JSON object. Return ONLY the raw JSON string matchi
 }
 `;
 
-            const res = await generateChatResponse([], prompt, systemInstruction, null, getActiveLanguage(), null, 'LEGAL_TOOLKIT');
-            let parsed = null;
-            if (res) {
-                let text = '';
-                if (typeof res === 'string') text = res;
-                else if (res.reply) text = res.reply;
-                else if (res.data?.reply) text = res.data.reply;
-                else if (res.text) text = res.text;
+      const res = await generateChatResponse(
+        [],
+        prompt,
+        systemInstruction,
+        null,
+        getActiveLanguage(),
+        null,
+        'LEGAL_TOOLKIT'
+      );
+      let parsed = null;
+      if (res) {
+        let text = '';
+        if (typeof res === 'string') text = res;
+        else if (res.reply) text = res.reply;
+        else if (res.data?.reply) text = res.data.reply;
+        else if (res.text) text = res.text;
 
-                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        text = text
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-                try {
-                    parsed = JSON.parse(text);
-                } catch (jsonErr) {
-                    const start = text.indexOf('{');
-                    const end = text.lastIndexOf('}');
-                    if (start !== -1 && end !== -1) {
-                        try {
-                            parsed = JSON.parse(text.substring(start, end + 1));
-                        } catch (e) {
-                            console.error("[LegalService] Failed to parse research JSON", e);
-                        }
-                    }
-                }
-            }
-
-            if (parsed && typeof parsed === 'object') {
-                const cases = await this.getCases();
-                const target = cases.find(item => item._id === caseId || item.id === caseId);
-                if (target) {
-                    await apiService.updateProject(target._id, {
-                        ...target,
-                        aiResearch: parsed
-                    });
-                    await this.addActivity(`AI auto-generated legal research dossiers`, 'research');
-                    return parsed;
-                }
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error generating research", e);
-            return null;
-        }
-    },
-
-    async generateAiArguments(caseId, caseData, caseNotes = []) {
         try {
-            const summary = caseData.summary || caseData.description || '';
-            if (!summary || summary.trim().split(/\s+/).length < 8) {
-                console.log("[LegalService] Summary empty or too short. Skipping AI arguments generation.");
-                return null;
+          parsed = JSON.parse(text);
+        } catch (jsonErr) {
+          const start = text.indexOf('{');
+          const end = text.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            try {
+              parsed = JSON.parse(text.substring(start, end + 1));
+            } catch (e) {
+              console.error('[LegalService] Failed to parse research JSON', e);
             }
+          }
+        }
+      }
 
-            const docsText = (caseData.documents || []).map(d => `- Document: ${d.name} (Category: ${d.category || 'N/A'}, Facts: ${d.facts || 'N/A'})`).join('\n');
-            const timelineText = (caseData.timelineEvents || []).map(t => `- Event: ${t.title} on ${t.date} (${t.description})`).join('\n');
-            const notesText = caseNotes.map(n => `- Note: ${n.title}\nContent:\n${n.content}`).join('\n\n');
-            const researchText = caseData.aiResearch ? JSON.stringify(caseData.aiResearch) : '';
+      if (parsed && typeof parsed === 'object') {
+        const cases = await this.getCases();
+        const target = cases.find(item => item._id === caseId || item.id === caseId);
+        if (target) {
+          await apiService.updateProject(target._id, {
+            ...target,
+            aiResearch: parsed,
+          });
+          await this.addActivity(`AI auto-generated legal research dossiers`, 'research');
+          return parsed;
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error generating research', e);
+      return null;
+    }
+  },
 
-            const prompt = `
+  async generateAiArguments(caseId, caseData, caseNotes = []) {
+    try {
+      const summary = caseData.summary || caseData.description || '';
+      if (!summary || summary.trim().split(/\s+/).length < 8) {
+        console.log('[LegalService] Summary empty or too short. Skipping AI arguments generation.');
+        return null;
+      }
+
+      const docsText = (caseData.documents || [])
+        .map(
+          d =>
+            `- Document: ${d.name} (Category: ${d.category || 'N/A'}, Facts: ${d.facts || 'N/A'})`
+        )
+        .join('\n');
+      const timelineText = (caseData.timelineEvents || [])
+        .map(t => `- Event: ${t.title} on ${t.date} (${t.description})`)
+        .join('\n');
+      const notesText = caseNotes
+        .map(n => `- Note: ${n.title}\nContent:\n${n.content}`)
+        .join('\n\n');
+      const researchText = caseData.aiResearch ? JSON.stringify(caseData.aiResearch) : '';
+
+      const prompt = `
 Generate a courtroom litigation arguments dossier for this case:
 Case Name: "${caseData.name || 'Untitled Litigation'}"
 Summary: ${summary}
@@ -1964,7 +2175,7 @@ Notes: ${notesText}
 Research & Laws: ${researchText}
 `;
 
-            const systemInstruction = `You are a Senior Legal AI Architect.
+      const systemInstruction = `You are a Senior Legal AI Architect.
 Analyze the case summary and context, then generate litigation arguments, mapping, risks, predictions, petitioner strategies, respondent strategies, checklists, and notes.
 
 STRICT RULE:
@@ -2066,50 +2277,62 @@ Your output must be a single JSON object. Return ONLY the raw JSON string matchi
 }
 `;
 
-            const res = await generateChatResponse([], prompt, systemInstruction, null, getActiveLanguage(), null, 'LEGAL_TOOLKIT');
-            let parsed = null;
-            if (res) {
-                let text = '';
-                if (typeof res === 'string') text = res;
-                else if (res.reply) text = res.reply;
-                else if (res.data?.reply) text = res.data.reply;
-                else if (res.text) text = res.text;
+      const res = await generateChatResponse(
+        [],
+        prompt,
+        systemInstruction,
+        null,
+        getActiveLanguage(),
+        null,
+        'LEGAL_TOOLKIT'
+      );
+      let parsed = null;
+      if (res) {
+        let text = '';
+        if (typeof res === 'string') text = res;
+        else if (res.reply) text = res.reply;
+        else if (res.data?.reply) text = res.data.reply;
+        else if (res.text) text = res.text;
 
-                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        text = text
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-                try {
-                    parsed = JSON.parse(text);
-                } catch (jsonErr) {
-                    const start = text.indexOf('{');
-                    const end = text.lastIndexOf('}');
-                    if (start !== -1 && end !== -1) {
-                        try {
-                            parsed = JSON.parse(text.substring(start, end + 1));
-                        } catch (e) {
-                            console.error("[LegalService] Failed to parse arguments JSON", e);
-                        }
-                    }
-                }
+        try {
+          parsed = JSON.parse(text);
+        } catch (jsonErr) {
+          const start = text.indexOf('{');
+          const end = text.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            try {
+              parsed = JSON.parse(text.substring(start, end + 1));
+            } catch (e) {
+              console.error('[LegalService] Failed to parse arguments JSON', e);
             }
-
-            if (parsed && typeof parsed === 'object') {
-                const cases = await this.getCases();
-                const target = cases.find(item => item._id === caseId || item.id === caseId);
-                if (target) {
-                    await apiService.updateProject(target._id, {
-                        ...target,
-                        aiArguments: parsed
-                    });
-                    await this.addActivity(`AI auto-generated litigation courtroom arguments dossier`, 'arguments');
-                    return parsed;
-                }
-            }
-            return null;
-        } catch (e) {
-            console.error("[LegalService] Error generating arguments", e);
-            return null;
+          }
         }
+      }
+
+      if (parsed && typeof parsed === 'object') {
+        const cases = await this.getCases();
+        const target = cases.find(item => item._id === caseId || item.id === caseId);
+        if (target) {
+          await apiService.updateProject(target._id, {
+            ...target,
+            aiArguments: parsed,
+          });
+          await this.addActivity(
+            `AI auto-generated litigation courtroom arguments dossier`,
+            'arguments'
+          );
+          return parsed;
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error('[LegalService] Error generating arguments', e);
+      return null;
     }
+  },
 };
-
-

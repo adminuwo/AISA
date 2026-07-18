@@ -78,7 +78,7 @@ export const useGenerationStore = create((set, get) => ({
   },
 
   /** Clears messages for a specific chat */
-  clearMessagesForChat: (chatId) => {
+  clearMessagesForChat: chatId => {
     set(state => {
       const next = { ...state.messagesByChat };
       delete next[chatId];
@@ -88,20 +88,21 @@ export const useGenerationStore = create((set, get) => ({
 
   // ── Existing Accessors ─────────────────────────────────────────────────────
 
-
   /** Returns the generation state for a specific chat (or a default) */
-  getGeneration: (chatId) => {
-    return get().generations[chatId] ?? {
-      chatId,
-      isGenerating: false,
-      partialResponse: '',
-      streamedTokens: 0,
-      error: null,
-      startedAt: null,
-      completedAt: null,
-      loadingText: 'AISA is thinking...',
-      typingMessageId: null,
-    };
+  getGeneration: chatId => {
+    return (
+      get().generations[chatId] ?? {
+        chatId,
+        isGenerating: false,
+        partialResponse: '',
+        streamedTokens: 0,
+        error: null,
+        startedAt: null,
+        completedAt: null,
+        loadingText: 'AISA is thinking...',
+        typingMessageId: null,
+      }
+    );
   },
 
   /** True if ANY chat is currently generating */
@@ -119,7 +120,10 @@ export const useGenerationStore = create((set, get) => ({
   // ── Mutations ─────────────────────────────────────────────────────────────
 
   /** Called when we START streaming for a chat */
-  startGeneration: (chatId, { loadingText = 'AISA is thinking...', typingMessageId = null } = {}) => {
+  startGeneration: (
+    chatId,
+    { loadingText = 'AISA is thinking...', typingMessageId = null } = {}
+  ) => {
     if (!chatId) return null;
     // Create a fresh AbortController
     const controller = new AbortController();
@@ -151,7 +155,7 @@ export const useGenerationStore = create((set, get) => ({
     set(state => {
       const gen = state.generations[oldId];
       const msgs = state.messagesByChat[oldId];
-      
+
       const newGenerations = { ...state.generations };
       const newMessagesByChat = { ...state.messagesByChat };
 
@@ -159,7 +163,7 @@ export const useGenerationStore = create((set, get) => ({
         newGenerations[newId] = { ...gen, chatId: newId };
         delete newGenerations[oldId];
       }
-      
+
       if (msgs) {
         newMessagesByChat[newId] = msgs;
         delete newMessagesByChat[oldId];
@@ -172,9 +176,9 @@ export const useGenerationStore = create((set, get) => ({
         _abortControllers.delete(oldId);
       }
 
-      return { 
+      return {
         generations: newGenerations,
-        messagesByChat: newMessagesByChat
+        messagesByChat: newMessagesByChat,
       };
     });
   },
@@ -231,7 +235,7 @@ export const useGenerationStore = create((set, get) => ({
   },
 
   /** Called when generation completes successfully */
-  completeGeneration: (chatId) => {
+  completeGeneration: chatId => {
     _abortControllers.delete(chatId);
     set(state => {
       const prev = state.generations[chatId];
@@ -272,7 +276,7 @@ export const useGenerationStore = create((set, get) => ({
   },
 
   /** Abort generation for a specific chat */
-  abortGeneration: (chatId) => {
+  abortGeneration: chatId => {
     const controller = _abortControllers.get(chatId);
     if (controller) {
       controller.abort();
@@ -296,12 +300,12 @@ export const useGenerationStore = create((set, get) => ({
   },
 
   /** Get the AbortController for a chat (live reference) */
-  getAbortController: (chatId) => {
+  getAbortController: chatId => {
     return _abortControllers.get(chatId) ?? null;
   },
 
   /** Remove stale completed generation entry to free memory */
-  clearGeneration: (chatId) => {
+  clearGeneration: chatId => {
     set(state => {
       const next = { ...state.generations };
       delete next[chatId];
@@ -311,19 +315,19 @@ export const useGenerationStore = create((set, get) => ({
 }));
 
 // ── Convenience selectors (stable references via shallow) ──────────────────────
-export const selectIsGenerating = (chatId) => (state) =>
+export const selectIsGenerating = chatId => state =>
   state.generations[chatId]?.isGenerating ?? false;
 
-export const selectGeneratingChatIds = (state) =>
+export const selectGeneratingChatIds = state =>
   Object.entries(state.generations)
     .filter(([, g]) => g.isGenerating)
     .map(([id]) => id);
 
-export const selectPartialResponse = (chatId) => (state) =>
+export const selectPartialResponse = chatId => state =>
   state.generations[chatId]?.partialResponse ?? '';
 
-export const selectLoadingText = (chatId) => (state) =>
+export const selectLoadingText = chatId => state =>
   state.generations[chatId]?.loadingText ?? 'AISA is thinking...';
 
-export const selectTypingMessageId = (chatId) => (state) =>
+export const selectTypingMessageId = chatId => state =>
   state.generations[chatId]?.typingMessageId ?? null;

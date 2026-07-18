@@ -27,7 +27,7 @@ export const useAILegalCRM = ({
   setLegalView,
   activeTool,
   setActiveTool,
-  setDashboardCategory
+  setDashboardCategory,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,7 +40,7 @@ export const useAILegalCRM = ({
     caseType: '',
     otherCaseType: '',
     accused: '',
-    summary: ''
+    summary: '',
   });
   const [isRenamingCase, setIsRenamingCase] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -60,17 +60,25 @@ export const useAILegalCRM = ({
     }
   }, [location.pathname]);
 
-  const handleOpenEditModal = (c) => {
+  const handleOpenEditModal = c => {
     setEditingCaseId(c._id);
-    const standardTypes = ['Civil Case', 'Criminal Case', 'Divorce Case', 'Property Dispute', 'Corporate Legal', 'Consumer Court', 'Labor Dispute'];
+    const standardTypes = [
+      'Civil Case',
+      'Criminal Case',
+      'Divorce Case',
+      'Property Dispute',
+      'Corporate Legal',
+      'Consumer Court',
+      'Labor Dispute',
+    ];
     const isOther = c.caseType && !standardTypes.includes(c.caseType);
 
     setNewCaseForm({
       clientName: c.clientName || '',
-      caseType: isOther ? 'Other' : (c.caseType || ''),
+      caseType: isOther ? 'Other' : c.caseType || '',
       otherCaseType: isOther ? c.caseType : '',
       accused: c.accused || '',
-      summary: c.summary || c.caseSummary || ''
+      summary: c.summary || c.caseSummary || '',
     });
     setIsNewCaseModalOpen(true);
   };
@@ -93,12 +101,12 @@ export const useAILegalCRM = ({
     navigate('/dashboard/legal', { replace: true });
   };
 
-  const handleUseInArgument = (argument) => {
+  const handleUseInArgument = argument => {
     setInputValue(argument);
     setLegalView('CHAT');
-    toast.success("✅ Argument inserted into chat", {
+    toast.success('✅ Argument inserted into chat', {
       icon: '✍️',
-      style: { borderRadius: '10px', background: '#333', color: '#fff' }
+      style: { borderRadius: '10px', background: '#333', color: '#fff' },
     });
     setTimeout(() => {
       if (inputRef && inputRef.current) {
@@ -149,7 +157,7 @@ export const useAILegalCRM = ({
       const all = await apiService.getProjects();
       setAllProjects(all);
     } catch (err) {
-      console.error("Failed to fetch legal cases:", err);
+      console.error('Failed to fetch legal cases:', err);
     }
   };
 
@@ -161,15 +169,15 @@ export const useAILegalCRM = ({
 
   const handleCreateNewCase = async () => {
     if (!newCaseForm.clientName.trim()) {
-      toast.error("Client name is required");
+      toast.error('Client name is required');
       return;
     }
     if (newCaseForm.caseType === 'Other' && !newCaseForm.otherCaseType.trim()) {
-      toast.error("Please enter the case type");
+      toast.error('Please enter the case type');
       return;
     }
 
-    const tid = toast.loading(editingCaseId ? "Updating legal case..." : "Creating legal case...");
+    const tid = toast.loading(editingCaseId ? 'Updating legal case...' : 'Creating legal case...');
     setIsNewCaseModalOpen(false);
     const formSnapshot = { ...newCaseForm };
     setNewCaseForm({ clientName: '', caseType: '', otherCaseType: '', accused: '', summary: '' });
@@ -181,7 +189,8 @@ export const useAILegalCRM = ({
       const caseName = formSnapshot.accused
         ? `${formSnapshot.clientName} vs ${formSnapshot.accused}`
         : `${formSnapshot.clientName} Case`;
-      const finalCaseType = formSnapshot.caseType === 'Other' ? formSnapshot.otherCaseType : formSnapshot.caseType;
+      const finalCaseType =
+        formSnapshot.caseType === 'Other' ? formSnapshot.otherCaseType : formSnapshot.caseType;
 
       const payload = {
         name: caseName,
@@ -189,17 +198,15 @@ export const useAILegalCRM = ({
         caseType: finalCaseType,
         accused: formSnapshot.accused,
         summary: formSnapshot.summary,
-        isLegalCase: true
+        isLegalCase: true,
       };
 
       if (caseIdToEdit) {
         await apiService.updateProject(caseIdToEdit, payload);
-        toast.success("Case updated successfully!", { id: tid });
+        toast.success('Case updated successfully!', { id: tid });
         setAllProjects(prev =>
           prev.map(p =>
-            p._id === caseIdToEdit
-              ? { ...p, ...payload, updatedAt: new Date().toISOString() }
-              : p
+            p._id === caseIdToEdit ? { ...p, ...payload, updatedAt: new Date().toISOString() } : p
           )
         );
         if (currentCase?._id === caseIdToEdit) {
@@ -216,23 +223,26 @@ export const useAILegalCRM = ({
         };
         setAllProjects(prev => [optimisticCase, ...prev]);
         toast.success("New case created! It's now at the top of your list. ✅", { id: tid });
-        
-        apiService.analyzeProject(newCase._id)
+
+        apiService
+          .analyzeProject(newCase._id)
           .then(() => apiService.getProject(newCase._id))
           .then(analyzed => {
             if (analyzed) {
               setAllProjects(prev =>
-                prev.map(p => p._id === newCase._id ? { ...p, ...analyzed } : p)
+                prev.map(p => (p._id === newCase._id ? { ...p, ...analyzed } : p))
               );
             }
           })
-          .catch(err => console.warn("[Case] Background analysis failed (non-critical):", err));
+          .catch(err => console.warn('[Case] Background analysis failed (non-critical):', err));
       }
     } catch (err) {
-      console.error("[Case] Create/update failed:", err);
+      console.error('[Case] Create/update failed:', err);
       const errMsg =
         err?.response?.data?.message ||
-        (caseIdToEdit ? "Failed to update case. Please try again." : "Failed to create case. Please try again.");
+        (caseIdToEdit
+          ? 'Failed to update case. Please try again.'
+          : 'Failed to create case. Please try again.');
       toast.error(errMsg, { id: tid });
       setNewCaseForm(formSnapshot);
       setIsNewCaseModalOpen(true);
@@ -261,11 +271,15 @@ export const useAILegalCRM = ({
     }, 500);
   };
 
-  const handleDeleteCase = async (id) => {
-    if (window.confirm("Are you sure you want to delete this case? All data and history will be lost.")) {
+  const handleDeleteCase = async id => {
+    if (
+      window.confirm(
+        'Are you sure you want to delete this case? All data and history will be lost.'
+      )
+    ) {
       try {
         await apiService.deleteProject(id);
-        toast.success("Case deleted");
+        toast.success('Case deleted');
         fetchLegalCases(true);
 
         if (currentProjectId === id) {
@@ -275,12 +289,12 @@ export const useAILegalCRM = ({
           navigate('/dashboard/legal', { replace: true });
         }
       } catch (err) {
-        toast.error("Delete failed");
+        toast.error('Delete failed');
       }
     }
   };
 
-  const handleRenameCase = async (id) => {
+  const handleRenameCase = async id => {
     if (!renameValue.trim()) {
       setIsRenamingCase(null);
       return;
@@ -293,16 +307,20 @@ export const useAILegalCRM = ({
       if (currentCase?._id === id) {
         setCurrentCase(prev => ({ ...prev, name: renameValue }));
       }
-      toast.success("Case renamed");
+      toast.success('Case renamed');
     } catch (err) {
-      toast.error("Rename failed");
+      toast.error('Rename failed');
     }
   };
 
   const renderNewCaseModal = () => {
     return (
       <Transition appear show={isNewCaseModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-[200000]" onClose={() => setIsNewCaseModalOpen(false)}>
+        <Dialog
+          as="div"
+          className="relative z-[200000]"
+          onClose={() => setIsNewCaseModalOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -330,31 +348,46 @@ export const useAILegalCRM = ({
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-indigo-600 rounded-xl text-white">
-                         {editingCaseId ? <Edit2 size={20} /> : <Plus size={20} />}
+                        {editingCaseId ? <Edit2 size={20} /> : <Plus size={20} />}
                       </div>
-                      <Dialog.Title as="h3" className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                         {editingCaseId ? 'Edit Legal Case' : 'New Legal Case'}
+                      <Dialog.Title
+                        as="h3"
+                        className="text-2xl font-black text-slate-900 dark:text-white tracking-tight"
+                      >
+                        {editingCaseId ? 'Edit Legal Case' : 'New Legal Case'}
                       </Dialog.Title>
                     </div>
-                    <button onClick={() => { setIsNewCaseModalOpen(false); setEditingCaseId(null); }} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                    <button
+                      onClick={() => {
+                        setIsNewCaseModalOpen(false);
+                        setEditingCaseId(null);
+                      }}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                    >
                       <X size={20} className="text-subtext" />
                     </button>
                   </div>
 
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">Client Name/ Complainant <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">
+                        Client Name/ Complainant <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="text"
                         value={newCaseForm.clientName}
-                        onChange={e => setNewCaseForm({ ...newCaseForm, clientName: e.target.value })}
+                        onChange={e =>
+                          setNewCaseForm({ ...newCaseForm, clientName: e.target.value })
+                        }
                         placeholder="Mr. A. Kumar"
                         className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">Case Type</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">
+                        Case Type
+                      </label>
                       <div className="relative">
                         <select
                           value={newCaseForm.caseType}
@@ -363,7 +396,7 @@ export const useAILegalCRM = ({
                             setNewCaseForm({
                               ...newCaseForm,
                               caseType: val,
-                              otherCaseType: val === 'Other' ? newCaseForm.otherCaseType : ''
+                              otherCaseType: val === 'Other' ? newCaseForm.otherCaseType : '',
                             });
                           }}
                           className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold appearance-none cursor-pointer pr-10"
@@ -390,12 +423,16 @@ export const useAILegalCRM = ({
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                             className="space-y-2 overflow-hidden"
                           >
-                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">Enter Case Type <span className="text-red-500">*</span></label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">
+                              Enter Case Type <span className="text-red-500">*</span>
+                            </label>
                             <input
                               type="text"
                               autoFocus
                               value={newCaseForm.otherCaseType}
-                              onChange={e => setNewCaseForm({ ...newCaseForm, otherCaseType: e.target.value })}
+                              onChange={e =>
+                                setNewCaseForm({ ...newCaseForm, otherCaseType: e.target.value })
+                              }
                               placeholder="e.g. Intellectual Property"
                               className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-bold"
                             />
@@ -405,7 +442,9 @@ export const useAILegalCRM = ({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">Accused</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">
+                        Accused
+                      </label>
                       <input
                         type="text"
                         value={newCaseForm.accused}
@@ -416,7 +455,9 @@ export const useAILegalCRM = ({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">Case Summary</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-subtext ml-1 whitespace-nowrap">
+                        Case Summary
+                      </label>
                       <textarea
                         rows={3}
                         value={newCaseForm.summary}
@@ -468,7 +509,8 @@ export const useAILegalCRM = ({
           if (!selectedLegalTool?.id || !selectedLegalTool.id.startsWith('legal_')) {
             setSelectedLegalTool({ id: 'legal_my_case', name: 'My Case Assistant' });
           }
-          if (legalView !== 'DASHBOARD' && legalView !== 'PRECEDENTS' && legalView !== 'CHAT') setLegalView('CHAT');
+          if (legalView !== 'DASHBOARD' && legalView !== 'PRECEDENTS' && legalView !== 'CHAT')
+            setLegalView('CHAT');
         }
         return;
       }
@@ -493,10 +535,13 @@ export const useAILegalCRM = ({
                     const params = new URLSearchParams(location.search);
                     const toolParam = params.get('tool') || selectedLegalTool?.id;
                     const toolQuery = toolParam ? `&tool=${toolParam}` : '';
-                    navigate(`/dashboard/chat/${caseSessions[0].sessionId}?caseId=${currentProjectId}${toolQuery}`, { replace: true });
+                    navigate(
+                      `/dashboard/chat/${caseSessions[0].sessionId}?caseId=${currentProjectId}${toolQuery}`,
+                      { replace: true }
+                    );
                   }
                 } catch (sessionErr) {
-                  console.error("Failed to fetch case sessions:", sessionErr);
+                  console.error('Failed to fetch case sessions:', sessionErr);
                 }
               }
             }
@@ -509,12 +554,24 @@ export const useAILegalCRM = ({
           if (currentCase !== null) setCurrentCase(null);
           if (currentMode !== 'NORMAL_CHAT') setCurrentMode('NORMAL_CHAT');
         } else {
-          console.error("Failed to fetch case details:", err);
+          console.error('Failed to fetch case details:', err);
         }
       }
     };
     fetchCaseDetails();
-  }, [currentProjectId, location.pathname, currentMode, currentCase?._id, selectedLegalTool?.id, setCurrentCase, setCurrentMode, setSelectedLegalTool, setLegalView, navigate, setCurrentProjectId]);
+  }, [
+    currentProjectId,
+    location.pathname,
+    currentMode,
+    currentCase?._id,
+    selectedLegalTool?.id,
+    setCurrentCase,
+    setCurrentMode,
+    setSelectedLegalTool,
+    setLegalView,
+    navigate,
+    setCurrentProjectId,
+  ]);
 
   return {
     renderNewCaseModal,
@@ -531,6 +588,6 @@ export const useAILegalCRM = ({
     setIsNewCaseModalOpen,
     setEditingCaseId,
     handleLegalPrecedentsBack,
-    fetchLegalCases
+    fetchLegalCases,
   };
 };
