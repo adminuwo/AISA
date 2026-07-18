@@ -241,9 +241,8 @@ export const ChatInput = ({
     <div
       className={`absolute bottom-0 left-0 right-0 z-[1001] pointer-events-none aisa-chat-input-container ${hiddenSidebar ? 'hidden' : ''}`}
     >
-      {/* Background solid layer to hide text scrolling behind/below input */}
       <div
-        className="relative z-20 bg-slate-50 dark:bg-[#0b0c15] sm:bg-white sm:dark:bg-[#0b0c15]"
+        className="relative z-20 bg-transparent"
         style={{ padding: '0.5rem 1rem calc(1.75rem + env(safe-area-inset-bottom, 0px)) 1rem' }}
       >
         <div className="max-w-4xl mx-auto w-full pointer-events-auto">
