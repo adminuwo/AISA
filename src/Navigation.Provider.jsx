@@ -9,7 +9,67 @@ import {
   useLocation,
   Link,
   useParams,
+  matchPath,
 } from 'react-router-dom';
+
+const VALID_ROUTE_PATTERNS = [
+  '/',
+  '/login',
+  '/signup',
+  '/verification',
+  '/forgot-password',
+  '/reset-password',
+  '/privacy-policy',
+  '/terms-of-service',
+  '/cookie-policy',
+  '/pricing',
+  '/share/:shareId',
+  '/dashboard',
+  '/dashboard/chat',
+  '/dashboard/chat/new',
+  '/dashboard/chat/:sessionId',
+  '/dashboard/cases',
+  '/dashboard/cases/:caseId/chat',
+  '/dashboard/case/:caseId',
+  '/dashboard/legal',
+  '/dashboard/legal/chat',
+  '/dashboard/legal/cases/:caseId/chat',
+  '/dashboard/legal/draft',
+  '/dashboard/legal/evidence',
+  '/dashboard/legal/strategy',
+  '/dashboard/legal/contracts',
+  '/dashboard/legal/predictor',
+  '/dashboard/legal/arguments',
+  '/dashboard/legal/precedents',
+  '/dashboard/legal/compliance',
+  '/dashboard/legal/hearings',
+  '/dashboard/social-agent',
+  '/dashboard/ai-personal-assistant',
+  '/dashboard/ai-base',
+  '/dashboard/admin',
+  '/dashboard/security',
+];
+
+export const isAllowedRoute = pathname => {
+  if (!pathname) return false;
+  const normalizedPath =
+    pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  return VALID_ROUTE_PATTERNS.some(pattern =>
+    matchPath({ path: pattern, end: true }, normalizedPath)
+  );
+};
+
+const UndefinedRouteRedirect = () => {
+  useEffect(() => {
+    const targetUrl = 'https://aisa24.com';
+    console.warn(
+      `[ROUTE GUARD] Undefined route detected: "${window.location.pathname}". Redirecting to ${targetUrl}`
+    );
+    window.location.replace(targetUrl);
+  }, []);
+
+  return null;
+};
 
 import Landing from './landingpage/Landing';
 import Sidebar from './Components/SideBar/Sidebar.jsx';
@@ -457,6 +517,17 @@ const SSOInterceptor = ({ children }) => {
   // Ref to ensure SSO handoff only runs once per token
   const processedSSORef = useRef(false);
 
+  // Global Route Access Restriction Guard
+  useEffect(() => {
+    if (!isAllowedRoute(location.pathname)) {
+      const targetUrl = 'https://aisa24.com';
+      console.warn(
+        `[ROUTE GUARD] Unauthorized route accessed: "${location.pathname}". Redirecting to ${targetUrl}`
+      );
+      window.location.replace(targetUrl);
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const ssoToken = params.get('sso_token');
@@ -776,8 +847,8 @@ const NavigateProvider = () => {
 
         {/* Vendor Dashboard Routes (Public for MVP/Testing) */}
 
-        {/* Catch All */}
-        <Route path="*" element={<Navigate to={AppRoute.LANDING} replace />} />
+        {/* Catch All - Redirect any invalid or undefined route to https://aisa24.com */}
+        <Route path="*" element={<UndefinedRouteRedirect />} />
       </Routes>
     </SSOInterceptor>
   );
