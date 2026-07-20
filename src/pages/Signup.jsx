@@ -55,8 +55,8 @@ const Signup = () => {
         acceptedTerms: true,
         acceptedPrivacy: true,
         acceptedCookiePolicy: true,
-        termsVersion: '1.0',
-        privacyVersion: '1.0',
+        termsVersion: 'v1.2',
+        privacyVersion: 'v1.1',
         cookiePolicyVersion: '1.0',
       };
       const res = await axios.post(apis.signUp, payLoad);
@@ -96,8 +96,8 @@ const Signup = () => {
         acceptedTerms: true,
         acceptedPrivacy: true,
         acceptedCookiePolicy: true,
-        termsVersion: '1.0',
-        privacyVersion: '1.0',
+        termsVersion: 'v1.2',
+        privacyVersion: 'v1.1',
         cookiePolicyVersion: '1.0',
       });
 
