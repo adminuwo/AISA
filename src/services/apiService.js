@@ -2287,6 +2287,19 @@ export const apiService = {
     }
   },
 
+  async resolveAllIncidents() {
+    try {
+      const response = await apiClient.post('/incidents/resolve-all');
+      return response.data;
+    } catch (error) {
+      console.error(
+        '[Frontend] resolveAllIncidents failed:',
+        error?.response?.data || error.message
+      );
+      throw error;
+    }
+  },
+
   async updateIncidentStatus(incidentId, status, notes) {
     try {
       const response = await apiClient.post(`/incidents/${incidentId}/status`, { status, notes });

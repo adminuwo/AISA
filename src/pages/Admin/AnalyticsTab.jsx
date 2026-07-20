@@ -18,19 +18,17 @@ import {
   Copy,
   Check,
   User2,
-  Laptop,
   Terminal,
-  ExternalLink,
   ChevronRight,
   Globe,
   Monitor,
   BugPlay,
   Smartphone,
   Server,
-  FileWarning,
   MessageCircle,
   ShieldAlert,
 } from 'lucide-react';
+
 import { AnimatePresence, motion } from 'framer-motion';
 import { SectionCard } from './AdminCommon';
 import ErrorMonitoring from './ErrorMonitoring';
@@ -333,7 +331,28 @@ const AnalyticsTab = () => {
         </SectionCard>
 
         {/* Error share list with clickable drill-down */}
-        <SectionCard title="Errors by Sub-Tool (Click to inspect)">
+        <SectionCard
+          title="Errors by Sub-Tool (Click to inspect)"
+          action={
+            data?.errorByMode && data.errorByMode.length > 0 ? (
+              <button
+                onClick={async () => {
+                  try {
+                    toast.loading('Resolving all active errors...', { id: 'resolve-all' });
+                    await apiService.resolveAllIncidents();
+                    toast.success('All active errors marked as Resolved!', { id: 'resolve-all' });
+                    fetchAnalytics(true);
+                  } catch (err) {
+                    toast.error('Failed to resolve errors', { id: 'resolve-all' });
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-bold transition-all"
+              >
+                Resolve All Errors
+              </button>
+            ) : null
+          }
+        >
           <div className="space-y-3">
             {!data?.errorByMode || data.errorByMode.length === 0 ? (
               <p className="text-center py-12 text-emerald-500 font-semibold text-sm">
@@ -585,11 +604,11 @@ const AnalyticsTab = () => {
                                           key={si}
                                           className="bg-black/10 dark:bg-black/30 rounded-lg px-3 py-2 text-xs text-subtext font-mono leading-relaxed border border-white/5"
                                         >
-                                          "
-                                          {sample.length > 200
-                                            ? sample.substring(0, 200) + '...'
-                                            : sample}
-                                          "
+                                          {`"${
+                                            sample.length > 200
+                                              ? sample.substring(0, 200) + '...'
+                                              : sample
+                                          }"`}
                                         </div>
                                       ))}
                                     </div>
@@ -705,7 +724,7 @@ const AnalyticsTab = () => {
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-[10px] text-subtext">
                                       <span className="text-maintext font-semibold">
-                                        "{s.sessionTitle || 'Unnamed Session'}"
+                                        {`"${s.sessionTitle || 'Unnamed Session'}"`}
                                       </span>
                                     </span>
                                     <span className="text-[9px] text-subtext/60">·</span>
@@ -833,8 +852,9 @@ export const SessionInspectorModal = ({ session, onClose, copiedStack, onCopySta
                 </span>
               </div>
               <h2 className="text-base font-bold text-maintext leading-tight truncate">
-                "{session.sessionTitle || 'Unnamed Session'}"
+                {`"${session.sessionTitle || 'Unnamed Session'}"`}
               </h2>
+
               <p className="text-[11px] text-subtext">
                 {session.createdAt
                   ? new Date(session.createdAt).toLocaleString('en-IN', {
