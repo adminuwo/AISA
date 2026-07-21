@@ -261,13 +261,13 @@ const TOOL_PRICING = {
   },
   image: {
     models: [
-      { id: 'gemini-3.1-flash-image-preview', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest preview — fastest Gemini image generation' },
-      { id: 'gemini-3-pro-image-preview', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade scene understanding & generation' },
+      { id: 'gemini-3.1-flash-image', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest model — fastest Gemini image generation' },
+      { id: 'gemini-3-pro-image', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade scene understanding & generation' },
       { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable production image generation' }
     ],
     editModels: [
-      { id: 'gemini-3.1-flash-image-preview', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest preview model — fastest AI image editing' },
-      { id: 'gemini-3-pro-image-preview', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade image editing with rich scene understanding' },
+      { id: 'gemini-3.1-flash-image', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest model — fastest AI image editing' },
+      { id: 'gemini-3-pro-image', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade image editing with rich scene understanding' },
       { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable — production-ready image edits' }
     ]
   },
@@ -279,7 +279,7 @@ const TOOL_PRICING = {
   },
   document: {
     models: [
-      { id: 'gemini-2.5-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
+      { id: 'gemini-3.5-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
       { id: 'gemini-pro', name: 'AISA™ Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
       { id: 'gpt4', name: 'AISA™ Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' }
     ]
@@ -860,10 +860,10 @@ const Chat = () => {
   const [filePreviews, setFilePreviews] = useState([]);
   const [activeAgent, setActiveAgent] = useState({ agentName: 'AI Ads', category: 'General' });
   const [toolModels, setToolModels] = useState({
-    chat: 'gemini-2.5-flash',
-    image: 'gemini-2.5-flash',
-    document: 'gemini-2.5-flash',
-    voice: 'gemini-2.5-flash'
+    chat: 'gemini-3.5-flash',
+    image: 'gemini-3.1-flash-image',
+    document: 'gemini-3.5-flash',
+    voice: 'gemini-3.5-flash'
   });
   const uploadInputRef = useRef(null);
   const driveInputRef = useRef(null);
@@ -952,7 +952,7 @@ const Chat = () => {
 
   const [videoAspectRatio, setVideoAspectRatio] = useState('16:9');
   const [videoModelId, setVideoModelId] = useState('veo-3.1-fast-generate-001');
-  const [editModelId, setEditModelId] = useState('gemini-2.5-flash');
+  const [editModelId, setEditModelId] = useState('gemini-3.1-flash-image');
   const [videoResolution, setVideoResolution] = useState('1080p');
   const v = personalizations?.voice || { languageCode: 'en-US', voiceName: 'en-US-Chirp3-HD-Autonoe', pitch: 0, speed: 1.0 };
   const [audioLangCode, setAudioLangCode] = useState(v.languageCode);
@@ -967,7 +967,7 @@ const Chat = () => {
   const [isPlayingSample, setIsPlayingSample] = useState(false);
   const sampleAudioRef = useRef(null);
   const [imageAspectRatio, setImageAspectRatio] = useState('1:1');
-  const [imageModelId, setImageModelId] = useState('gemini-2.5-flash');
+  const [imageModelId, setImageModelId] = useState('gemini-3.1-flash-image');
   const [isMagicSettingsOpen, setIsMagicSettingsOpen] = useState(false);
   const abortControllerRef = useRef(null);
   const voiceUsedRef = useRef(false); // Track if voice input was used
