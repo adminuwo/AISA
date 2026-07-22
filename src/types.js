@@ -57,11 +57,10 @@ export const AppRoute = {
   ADMIN_DASHBOARD: '/dashboard/admin',
 };
 
-// API Base URL - reads from VITE_AISA_BACKEND_API env variable (set in .env), falls back to production
-const API =
+export const API =
   window._env_?.VITE_AISA_BACKEND_API ||
   import.meta.env.VITE_AISA_BACKEND_API ||
-  'http://127.0.0.1:8080/api';
+  'https://aisa24.com/api';
 
 console.log('API', API);
 

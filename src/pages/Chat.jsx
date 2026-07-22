@@ -1698,7 +1698,7 @@ const Chat = () => {
       setIsSearchingStocks(true);
       try {
         const user = getUserData();
-        const baseURL = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://127.0.0.1:8080/api";
+        const baseURL = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "https://aisa24.com/api";
         const response = await axios.get(`${baseURL}/cashflow/search`, {
           params: { keywords: inputValue },
           headers: { Authorization: `Bearer ${user.token}` }
@@ -2965,7 +2965,7 @@ const Chat = () => {
       }
 
       try {
-        const baseURL = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "http://127.0.0.1:8080/api";
+        const baseURL = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API || "https://aisa24.com/api";
         const response = await axios.post(`${baseURL}/cashflow/analyze`, {
           symbol: stock.symbol,
           name: stock.name
