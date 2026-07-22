@@ -57,10 +57,10 @@ export const AppRoute = {
   ADMIN_DASHBOARD: '/dashboard/admin',
 };
 
-export const API =
+const API =
   window._env_?.VITE_AISA_BACKEND_API ||
   import.meta.env.VITE_AISA_BACKEND_API ||
-  'https://aisa24.com/api';
+  'http://localhost:8080/api';
 
 console.log('API', API);
 

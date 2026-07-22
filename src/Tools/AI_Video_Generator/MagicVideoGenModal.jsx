@@ -23,7 +23,7 @@ import PromptLibraryModal from '../../Components/PromptLibraryModal';
 const baseURL =
   window._env_?.VITE_AISA_BACKEND_API ||
   import.meta.env.VITE_AISA_BACKEND_API ||
-  'https://aisa24.com/api';
+  'http://127.0.0.1:8080/api';
 
 const CinematicParticles = ({ count = 20 }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;

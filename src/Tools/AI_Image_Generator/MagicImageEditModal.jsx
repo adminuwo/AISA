@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 const baseURL =
   window._env_?.VITE_AISA_BACKEND_API ||
   import.meta.env.VITE_AISA_BACKEND_API ||
-  'https://aisa24.com/api';
+  'http://127.0.0.1:8080/api';
 
 const MagicImageEditModal = ({ isOpen, onClose, onCreditDeduction }) => {
   const [selectedImage, setSelectedImage] = useState(null);
