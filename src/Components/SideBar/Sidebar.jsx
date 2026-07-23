@@ -694,21 +694,25 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
                                   // Disconnect
                                   const tid = toast.loading('Disconnecting...');
                                   try {
-                                    await axios.delete(`${API}/connectors/gmail/disconnect`, { headers: { Authorization: `Bearer ${token}` } });
-                                    const updatedApps = (user?.personalizations?.apps || []).filter(a => a.name !== 'Gmail');
+                                    await axios.delete(`${API}/connectors/gmail/disconnect`, {
+                                      headers: { Authorization: `Bearer ${token}` },
+                                    });
+                                    const updatedApps = (user?.personalizations?.apps || []).filter(
+                                      a => a.name !== 'Gmail'
+                                    );
                                     const updatedUser = {
                                       ...user,
                                       personalizations: {
                                         ...user?.personalizations,
-                                        apps: updatedApps
-                                      }
+                                        apps: updatedApps,
+                                      },
                                     };
                                     setUserData(updatedUser);
                                     setUserRecoil({ user: updatedUser });
-                                    toast.success("Disconnected!", { id: tid });
+                                    toast.success('Disconnected!', { id: tid });
                                   } catch (e) {
-                                    console.error("Disconnect error in sidebar:", e);
-                                    toast.error("Failed", { id: tid });
+                                    console.error('Disconnect error in sidebar:', e);
+                                    toast.error('Failed', { id: tid });
                                   }
                                 } else {
                                   // Connect

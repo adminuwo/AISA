@@ -98,8 +98,7 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
       ticket?.message?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket?.status?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === 'all' || ticket?.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || ticket?.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -172,7 +171,12 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
           </select>
           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-subtext">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
@@ -271,7 +275,9 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-subtext uppercase font-semibold">Name</label>
-                    <p className="text-maintext font-semibold text-sm mt-0.5">{selectedTicket.name}</p>
+                    <p className="text-maintext font-semibold text-sm mt-0.5">
+                      {selectedTicket.name}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs text-subtext uppercase font-semibold">Email</label>
@@ -293,7 +299,9 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
 
                 <div className="flex items-center justify-between border-t border-border pt-4">
                   <div>
-                    <label className="text-xs text-subtext uppercase font-semibold block mb-1">Status</label>
+                    <label className="text-xs text-subtext uppercase font-semibold block mb-1">
+                      Status
+                    </label>
                     <div className="relative">
                       <select
                         value={selectedTicket.status}
@@ -316,20 +324,34 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
                         )}
                       </select>
                       <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-subtext">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
                         </svg>
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <label className="text-xs text-subtext uppercase font-semibold block mb-0.5">Created</label>
+                    <label className="text-xs text-subtext uppercase font-semibold block mb-0.5">
+                      Created
+                    </label>
                     <p className="text-maintext text-xs">
                       {new Date(selectedTicket.createdAt).toLocaleString()}
                     </p>
                     {selectedTicket.status === 'resolved' && selectedTicket.resolvedAt && (
                       <div className="mt-1.5">
-                        <label className="text-[10px] text-green-500 uppercase font-black block">Resolved At</label>
+                        <label className="text-[10px] text-green-500 uppercase font-black block">
+                          Resolved At
+                        </label>
                         <p className="text-[11px] text-green-500 font-semibold">
                           {new Date(selectedTicket.resolvedAt).toLocaleString()}
                         </p>
@@ -340,10 +362,13 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
 
                 {/* Reply section */}
                 <div className="border-t border-border pt-4">
-                  <label className="text-xs text-subtext uppercase font-semibold block mb-2">Send Reply Email</label>
+                  <label className="text-xs text-subtext uppercase font-semibold block mb-2">
+                    Send Reply Email
+                  </label>
                   {selectedTicket.status === 'resolved' ? (
                     <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-500 text-sm rounded-lg font-medium">
-                      This query is marked as Resolved. Replies and edits are disabled unless the ticket is reopened.
+                      This query is marked as Resolved. Replies and edits are disabled unless the
+                      ticket is reopened.
                     </div>
                   ) : (
                     <div className="space-y-2">

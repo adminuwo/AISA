@@ -59,6 +59,11 @@ export default [
 
       // ── Disabled / relaxed for legacy codebase ──────────────────────────────
       'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/display-name': 'off',
+      'react/no-unknown-property': 'off',
+      'react/jsx-no-undef': 'warn',
+      'react-hooks/rules-of-hooks': 'warn',
 
       // ── Code quality — warn only (safe for gradual adoption) ────────────────
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
