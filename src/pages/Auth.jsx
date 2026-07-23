@@ -118,7 +118,7 @@ const Auth = () => {
               </>
             ) : (
               <>
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link
                   to={AppRoute.SIGNUP}
                   className="text-violet-400 hover:text-violet-300 font-medium"

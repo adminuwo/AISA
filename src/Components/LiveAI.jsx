@@ -296,7 +296,7 @@ const LiveAI = ({ onClose, language }) => {
 
       console.log('✅ [LiveAI] Audio received, playing...', response.data.size);
 
-      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioBlob = response.data;
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 

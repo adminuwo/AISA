@@ -1984,7 +1984,7 @@ const Chat = () => {
         });
 
         // 4. Success - Update AI Message with Player and Download
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioBlob = new Blob([response.data], { type: response.headers['content-type'] || 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
 
         const reader2 = new FileReader();
@@ -1997,6 +1997,7 @@ const Chat = () => {
             ? (rawBytes / (1024 * 1024)).toFixed(1) + ' MB'
             : (rawBytes / 1024).toFixed(1) + ' KB';
 
+          const audioExt = (response.headers['content-type'] || '').includes('wav') ? 'wav' : 'mp3';
           const aiResponse = {
             id: aiMsgId,
             role: 'model',
@@ -2005,8 +2006,8 @@ const Chat = () => {
             conversion: {
               file: mp3Base64,
               blobUrl: audioUrl,
-              fileName: `${file.name.split('.')[0]}_Audio.mp3`,
-              mimeType: 'audio/mpeg',
+              fileName: `${file.name.split('.')[0]}_Audio.${audioExt}`,
+              mimeType: response.headers['content-type'] || 'audio/mpeg',
               fileSize: formattedFileSize,
               rawSize: rawBytes,
               charCount: charCount
@@ -2122,7 +2123,7 @@ const Chat = () => {
           headers: { Authorization: `Bearer ${getUserData()?.token}` }
         });
 
-        const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioBlob = new Blob([response.data], { type: response.headers['content-type'] || 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const reader2 = new FileReader();
         reader2.readAsDataURL(audioBlob);
@@ -2132,6 +2133,7 @@ const Chat = () => {
           const charCount = response.headers['x-text-length'] || 0;
           const formattedSize = rawBytes > 1024 * 1024 ? (rawBytes / (1024 * 1024)).toFixed(1) + ' MB' : (rawBytes / 1024).toFixed(1) + ' KB';
 
+          const audioExt = (response.headers['content-type'] || '').includes('wav') ? 'wav' : 'mp3';
           const aiResponse = {
             id: aiMsgId,
             role: 'model',
@@ -2140,8 +2142,8 @@ const Chat = () => {
             conversion: {
               file: mp3Base64,
               blobUrl: audioUrl,
-              fileName: `${file.name.split('.')[0]}_Audio.mp3`,
-              mimeType: 'audio/mpeg',
+              fileName: `${file.name.split('.')[0]}_Audio.${audioExt}`,
+              mimeType: response.headers['content-type'] || 'audio/mpeg',
               fileSize: formattedSize,
               rawSize: rawBytes,
               charCount: charCount
@@ -2250,7 +2252,7 @@ const Chat = () => {
         speakingRate: audioSpeed
       }, { responseType: 'arraybuffer', timeout: 0, headers: { Authorization: `Bearer ${getUserData()?.token}` } });
 
-      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioBlob = new Blob([response.data], { type: response.headers['content-type'] || 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       const reader2 = new FileReader();
       reader2.readAsDataURL(audioBlob);
@@ -2268,8 +2270,8 @@ const Chat = () => {
           conversion: {
             file: mp3Base64,
             blobUrl: audioUrl,
-            fileName: `AISA_voice_${Date.now()}.mp3`,
-            mimeType: 'audio/mpeg',
+            fileName: `AISA_voice_${Date.now()}.${(response.headers['content-type'] || '').includes('wav') ? 'wav' : 'mp3'}`,
+            mimeType: response.headers['content-type'] || 'audio/mpeg',
             fileSize: formattedSize,
             rawSize: rawBytes,
             charCount: charCount
@@ -3229,7 +3231,7 @@ const Chat = () => {
               headers: { Authorization: `Bearer ${getUserData()?.token}` }
             });
 
-            audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+            audioBlob = new Blob([response.data], { type: response.headers['content-type'] || 'audio/mpeg' });
             toast.dismiss('voice-loading');
 
           } else {
@@ -3489,7 +3491,7 @@ const Chat = () => {
             });
 
             toast.dismiss('voice-loading');
-            audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+            audioBlob = new Blob([response.data], { type: response.headers['content-type'] || 'audio/mpeg' });
           }
 
           // Save to Cache
@@ -7931,7 +7933,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                             introText: txt, languageCode: audioLangCode,
                             voiceName: audioVoiceName, pitch: audioPitch, speakingRate: audioSpeed
                           }, { responseType: 'arraybuffer', timeout: 30000, headers: { Authorization: `Bearer ${getUserData()?.token}` } });
-                          const audio = new Audio(URL.createObjectURL(new Blob([res.data], { type: 'audio/mpeg' })));
+                          const audio = new Audio(URL.createObjectURL(new Blob([res.data], { type: res.headers['content-type'] || 'audio/mpeg' })));
                           sampleAudioRef.current = audio;
                           audio.onended = () => setIsPlayingSample(false);
                           audio.play();
