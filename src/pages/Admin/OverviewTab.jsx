@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { apiService } from '../../services/apiService';
-import { Activity, RefreshCw, Users, DollarSign, Headphones } from 'lucide-react';
+import { Activity, RefreshCw, Users, DollarSign, Headphones, CheckCircle2 } from 'lucide-react';
 import { StatCard, SectionCard } from './AdminCommon';
 
 const OverviewTab = () => {
@@ -54,7 +54,7 @@ const OverviewTab = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard icon={Users} label={t('totalUsers')} value={stats?.totalUsers ?? 0} />
         <StatCard
           icon={Activity}
@@ -74,6 +74,12 @@ const OverviewTab = () => {
           value={stats?.pendingTickets ?? 0}
           color="primary"
           trend={stats?.pendingTickets > 0 ? 'Action Required' : 'All Clear'}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label={t('resolvedQueries') || 'Resolved Queries'}
+          value={stats?.resolvedTickets ?? 0}
+          color="emerald-500"
         />
       </div>
 

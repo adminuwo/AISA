@@ -1238,6 +1238,16 @@ export const apiService = {
     }
   },
 
+  async replyToSupportTicket(ticketId, message) {
+    try {
+      const response = await apiClient.post(`/support/tickets/${ticketId}/reply`, { message });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to reply to support ticket:', error);
+      throw error;
+    }
+  },
+
   async getAllUsers() {
     try {
       const response = await apiClient.get('/user/all');
