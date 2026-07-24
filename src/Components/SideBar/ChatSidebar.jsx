@@ -133,9 +133,8 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       window.removeEventListener('chat-session-created', handleSessionCreated);
     };
 
-  // NOTE: sessionId intentionally excluded — we don't need to re-fetch sessions
-  // every time the user navigates between chats (that causes flash-of-empty).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // NOTE: sessionId intentionally excluded — we don't need to re-fetch sessions
+    // every time the user navigates between chats (that causes flash-of-empty).
   }, [token, setSessions, currentProjectId, searchQuery]);
 
   // Auto-expand projects if search matches a project name
