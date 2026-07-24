@@ -84,7 +84,10 @@ export const useAILegalCRM = ({
   };
 
   const handleBackToDashboard = () => {
-    if (location.pathname === '/dashboard/legal') return;
+    if (location.pathname === '/dashboard/legal') {
+      handleDashboardBack();
+      return;
+    }
     // Set view to DASHBOARD first to prevent blank screen flash during navigation
     setLegalView('DASHBOARD');
     setCurrentMode('LEGAL_TOOLKIT');
@@ -131,7 +134,7 @@ export const useAILegalCRM = ({
       setActiveLegalToolkit(false);
       // setMessages([]); // REMOVED for master fix
       if (setDashboardCategory) setDashboardCategory('business');
-      navigate('/dashboard/chat/new', { replace: true });
+      navigate('/dashboard/chat/new', { replace: true, state: { forceGlobal: true } });
     }
   };
 
@@ -146,7 +149,7 @@ export const useAILegalCRM = ({
     setMessages([]); // OK to clear when exiting AI Legal Toolkit entirely
     setLegalView('CHAT');
     if (setDashboardCategory) setDashboardCategory('business');
-    navigate('/dashboard/chat/new', { replace: true });
+    navigate('/dashboard/chat/new', { replace: true, state: { forceGlobal: true } });
   };
 
   const fetchLegalCases = async (force = false) => {
