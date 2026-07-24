@@ -103,7 +103,9 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     const fetchSessions = async () => {
       try {
         const data = await chatStorageService.getSessions(searchQuery ? null : currentProjectId);
-        setSessions(Array.isArray(data) ? data : []);
+        if (Array.isArray(data)) {
+          setSessions(data);
+        }
       } catch (err) {
         console.error('Failed to fetch sessions:', err);
       }
@@ -120,9 +122,21 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       console.log('[SIDEBAR] Merge complete event received, refetching sessions...');
       fetchSessions();
     };
+    const handleSessionCreated = () => {
+      console.log('[SIDEBAR] New session created, refetching sessions...');
+      fetchSessions();
+    };
     window.addEventListener('chat-merge-complete', handleMergeComplete);
-    return () => window.removeEventListener('chat-merge-complete', handleMergeComplete);
-  }, [token, sessionId, setSessions, currentProjectId, searchQuery]);
+    window.addEventListener('chat-session-created', handleSessionCreated);
+    return () => {
+      window.removeEventListener('chat-merge-complete', handleMergeComplete);
+      window.removeEventListener('chat-session-created', handleSessionCreated);
+    };
+
+  // NOTE: sessionId intentionally excluded — we don't need to re-fetch sessions
+  // every time the user navigates between chats (that causes flash-of-empty).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, setSessions, currentProjectId, searchQuery]);
 
   // Auto-expand projects if search matches a project name
   useEffect(() => {

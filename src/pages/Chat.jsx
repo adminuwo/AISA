@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Fragment } from 'react';
+import React, { useState, useRef, useEffect, Fragment, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Send, SendHorizontal, Bot, User, Sparkles, Plus, Monitor, ChevronDown, History, Paperclip, X, AlertCircle, FileText, Image as ImageIcon, Cloud, HardDrive, Edit2, Download, Mic, Wand2, Eye, FileSpreadsheet, Presentation, File as FileIcon, MoreVertical, Trash2, Check, Camera, Video, Copy, ThumbsUp, ThumbsDown, Share, Search, Undo2, Menu as MenuIcon, Volume2, Pause, Headphones, MessageCircle, ExternalLink, ZoomIn, ZoomOut, RotateCcw, Minus, Code, Globe, Sliders, PlayCircle, Brain, ImagePlus, PlaySquare, RefreshCcw, TrendingUp, Zap, Gavel, Navigation, Rocket, Megaphone, Scale, ArrowLeft, ChevronRight, Briefcase, Calendar, Users, FolderOpen, Save, Sun, Moon, LayoutDashboard, Maximize2, Minimize2 } from 'lucide-react';
@@ -75,6 +75,142 @@ import { useTheme, useIsDark } from '../context/ThemeContext';
 import ChatWelcome from '../Components/Chat/ChatWelcome.jsx';
 import ChatInput from '../Components/Chat/ChatInput.jsx';
 import ChatBubble from '../Components/Chat/ChatBubble.jsx';
+import { List, useDynamicRowHeight, useListRef } from 'react-window';
+
+// Static row rendering component for virtualization (Sprint 6A)
+const ChatRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) => {
+  const {
+    messages,
+    hasSpacerRow,
+    isTypingIndicatorActive,
+    logo,
+    loadingText,
+    typingMessageId,
+    expandedMessages,
+    setExpandedMessages,
+    activeMessageId,
+    setActiveMessageId,
+    editingMessageId,
+    editContent,
+    setEditContent,
+    startEditing,
+    cancelEdit,
+    saveEdit,
+    messageFeedback,
+    handleThumbsUp,
+    handleThumbsDown,
+    handleCopyMessage,
+    handleShare,
+    handlePdfAction,
+    handleDownload,
+    handleMessageDelete,
+    handleMessageUndo,
+    handleDownloadCodeProject,
+    speakResponse,
+    speakingMessageId,
+    isPaused,
+    downloadedMessages,
+    isDownloadingUrl,
+    navigate,
+    activateToolWithTypingEffect,
+    setCurrentMode,
+    viewingDoc,
+    setViewingDoc,
+    suggestions,
+    handleSuggestionClick,
+    isLoading,
+    scrollToBottom,
+    setIsMagicEditing,
+    setEditRefImage,
+    inputRef,
+    handleCopyImage
+  } = rowProps;
+
+  // Spacer row
+  if (hasSpacerRow && index === messages.length + (isTypingIndicatorActive ? 1 : 0)) {
+    return (
+      <div style={style} {...ariaAttributes}>
+        <div className="h-64 md:h-72 shrink-0 pointer-events-none" />
+      </div>
+    );
+  }
+  // Typing indicator row
+  if (isTypingIndicatorActive && index === messages.length) {
+    return (
+      <div style={style} {...ariaAttributes}>
+        <div className="chatgpt-message-row ai-row group mb-6 sm:mb-8">
+          <div className="chatgpt-message-content select-text">
+            <div className="chatgpt-avatar-container w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                <img src={logo} alt="AISA" className="w-6 h-[18px] object-cover object-top" />
+              </div>
+            </div>
+            <div className="chatgpt-text typing-bubble flex items-center">
+              <AisaTypingIndicator
+                visible={true}
+                message={loadingText}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const msg = messages[index];
+  if (!msg) return null;
+
+  return (
+    <div style={style} {...ariaAttributes}>
+      <ChatBubble
+        key={msg.id}
+        msg={msg}
+        idx={index}
+        messages={messages}
+        typingMessageId={typingMessageId}
+        expandedMessages={expandedMessages}
+        setExpandedMessages={setExpandedMessages}
+        activeMessageId={activeMessageId}
+        setActiveMessageId={setActiveMessageId}
+        editingMessageId={editingMessageId}
+        editContent={editContent}
+        setEditContent={setEditContent}
+        startEditing={startEditing}
+        cancelEdit={cancelEdit}
+        saveEdit={saveEdit}
+        messageFeedback={messageFeedback}
+        handleThumbsUp={handleThumbsUp}
+        handleThumbsDown={handleThumbsDown}
+        handleCopyMessage={handleCopyMessage}
+        handleShare={handleShare}
+        handlePdfAction={handlePdfAction}
+        handleDownload={handleDownload}
+        handleMessageDelete={handleMessageDelete}
+        handleMessageUndo={handleMessageUndo}
+        handleDownloadCodeProject={handleDownloadCodeProject}
+        speakResponse={speakResponse}
+        speakingMessageId={speakingMessageId}
+        isPaused={isPaused}
+        downloadedMessages={downloadedMessages}
+        isDownloadingUrl={isDownloadingUrl}
+        navigate={navigate}
+        activateToolWithTypingEffect={activateToolWithTypingEffect}
+        setCurrentMode={setCurrentMode}
+        viewingDoc={viewingDoc}
+        setViewingDoc={setViewingDoc}
+        suggestions={suggestions}
+        handleSuggestionClick={handleSuggestionClick}
+        isLoading={isLoading}
+        scrollToBottom={scrollToBottom}
+        setIsMagicEditing={setIsMagicEditing}
+        setEditRefImage={setEditRefImage}
+        inputRef={inputRef}
+        handleCopyImage={handleCopyImage}
+      />
+    </div>
+  );
+});
+ChatRow.displayName = 'ChatRow';
 
 // AI Legal Modular Components
 import ActionCard from '../Components/ActionCard';
@@ -665,6 +801,8 @@ const Chat = () => {
   const [textPreview, setTextPreview] = useState(null);
   const sessions = useUserStore(state => state.sessions);
   const setSessions = useUserStore(state => state.setSessions);
+  const currentProjectId = useUserStore(state => state.activeProjectId);
+  const setCurrentProjectId = useUserStore(state => state.setActiveProjectId);
   const [inputValue, setInputValue] = useState('');
   const [longTextPreview, setLongTextPreview] = useState(null);
   const [isInputExpanded, setIsInputExpanded] = useState(false);
@@ -683,6 +821,55 @@ const Chat = () => {
 
 
   const { updateWorkspace, getWorkspace } = useCaseWorkspaceStore();
+
+  // ─── Session History Hydration ─────────────────────────────────────────────
+  // When navigating to an existing session (sessionId is set and not 'new'),
+  // load messages from IndexedDB/backend if the store doesn't already have them.
+  const hydratedSessionRef = useRef(null);
+  useEffect(() => {
+    if (!sessionId || sessionId === 'new') {
+      hydratedSessionRef.current = null;
+      return;
+    }
+    // Already hydrated this session — skip to avoid overwriting in-progress generation
+    if (hydratedSessionRef.current === sessionId) return;
+
+    const existingMessages = useGenerationStore.getState().messagesByChat[sessionId];
+    if (existingMessages && existingMessages.length > 0) {
+      // Already in store (e.g. user just sent a message here) — mark as hydrated
+      hydratedSessionRef.current = sessionId;
+      setIsHydrating(false);
+      return;
+    }
+
+    // Need to fetch from storage
+    setIsHydrating(true);
+    hydratedSessionRef.current = sessionId;
+
+    chatStorageService.getHistory(sessionId)
+      .then(data => {
+        const msgs = Array.isArray(data?.messages) ? data.messages : (Array.isArray(data) ? data : []);
+        if (msgs.length > 0) {
+          setMessages(msgs);
+        }
+
+        // Hydrate project/case context from loaded session
+        const rawProjId = data?.projectId || data?.caseId;
+        const projId = (rawProjId && rawProjId !== 'null' && rawProjId !== 'undefined') ? rawProjId : 'default';
+        if (projId && projId !== currentProjectId) {
+          console.log(`[Hydration] Setting project context to: ${projId}`);
+          setCurrentProjectId(projId);
+          localStorage.setItem('aisa_active_project_id', projId);
+        }
+      })
+      .catch(err => {
+        console.error('[Chat] Failed to load history for session:', sessionId, err);
+      })
+      .finally(() => {
+        setIsHydrating(false);
+      });
+  }, [sessionId, currentProjectId, setCurrentProjectId]);
+
   const handleSendMessageRef = useRef(null);
   useEffect(() => {
     handleSendMessageRef.current = handleSendMessage;
@@ -1105,8 +1292,7 @@ const Chat = () => {
   const transcriptRef = useRef(''); // Ref for speech transcript
   const isManualStopRef = useRef(false); // Track manual stop to avoid recursive loops
   const isDetectionPausedRef = useRef(false); // Pause detection after explicit dismissal
-  const currentProjectId = useUserStore(state => state.activeProjectId);
-  const setCurrentProjectId = useUserStore(state => state.setActiveProjectId);
+
 
   // ─── Deep Link Case & General Chat Route Handling ───
   const lastHydratedRef = useRef(null);
@@ -1121,7 +1307,12 @@ const Chat = () => {
     if (isGeneralChatRoute) {
       lastHydratedRef.current = null;
       console.log("[RouteSync] Entering General Chat route. Syncing context.");
-      if (currentProjectId && currentProjectId !== 'default' && currentProjectId !== 'all') {
+      
+      // Only reset standard project context to 'default' if it's a legal case case,
+      // because standard projects use the general chat page layout.
+      const activeProjectObj = allProjects?.find(p => p._id === currentProjectId);
+      if (currentProjectId && currentProjectId !== 'default' && currentProjectId !== 'all' && (!activeProjectObj || activeProjectObj.isLegalCase)) {
+        console.log("[RouteSync] Resetting project context to default");
         setCurrentProjectId('default');
         localStorage.setItem('aisa_active_project_id', 'default');
       }
@@ -1224,7 +1415,7 @@ const Chat = () => {
         }
       }
     }
-  }, [location.pathname, caseId, currentProjectId, currentCase?._id, selectedLegalTool?.id, currentMode, activeTool, legalView, setMessages, getWorkspace, navigate, setCurrentProjectId, setCurrentCase, setCurrentMode, setSelectedLegalTool, setLegalView, setActiveTool]);
+  }, [location.pathname, caseId, currentProjectId, currentCase?._id, selectedLegalTool?.id, currentMode, activeTool, legalView, setMessages, getWorkspace, navigate, setCurrentProjectId, setCurrentCase, setCurrentMode, setSelectedLegalTool, setLegalView, setActiveTool, allProjects]);
 
   // Restore scroll position when returning to the chat view
   useEffect(() => {
@@ -3947,7 +4138,27 @@ const Chat = () => {
   };
 
   const scrollToBottom = (force = false, behavior = 'auto') => {
-    if (chatContainerRef.current) {
+    const itemCount = messages.length + (isTypingIndicatorActive ? 1 : 0) + (hasSpacerRow ? 1 : 0);
+    if (listRef.current && itemCount > 0) {
+      if (chatContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 350;
+        shouldAutoScrollRef.current = isNearBottom;
+        if (force || isNearBottom) {
+          listRef.current.scrollToRow({
+            index: itemCount - 1,
+            align: 'end',
+            behavior: behavior === 'smooth' ? 'smooth' : 'auto'
+          });
+        }
+      } else {
+        listRef.current.scrollToRow({
+          index: itemCount - 1,
+          align: 'end',
+          behavior: behavior === 'smooth' ? 'smooth' : 'auto'
+        });
+      }
+    } else if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 350;
 
@@ -4797,6 +5008,10 @@ const Chat = () => {
 
           // ── Navigate AFTER state is stabilized ──
           navigate(`/dashboard/chat/${activeSessionId}`, { replace: true });
+
+          // Dispatch event so the sidebar can do a proper server-side refresh
+          // after the new session is fully committed to the DB
+          setTimeout(() => window.dispatchEvent(new Event('chat-session-created')), 1500);
 
           // REAL-TIME TITLE GENERATION (Parallel - Match ChatGPT behavior)
           chatStorageService.generateSessionTitle(activeSessionId, userMsg.content).then(newTitle => {
@@ -6739,6 +6954,130 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
     }
   }, [isAudioConvertMode]);
 
+  const isTypingIndicatorActive = gen.isGenerating && !gen.typingMessageId && selectedLegalTool?.id !== 'legal_general_chat' && !LEGAL_TOOLS_WITH_WORKSPACE.has(selectedLegalTool?.id);
+  const hasSpacerRow = !(selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case') && currentMode !== 'LEGAL_TOOLKIT';
+
+  // ─── Virtualization States & Refs (Sprint 6A) ──────────────────────────────
+  const [listHeight, setListHeight] = useState(window.innerHeight - 250);
+  const listRef = useListRef();
+  const chatContainerParentRef = useRef(null);
+  const dynamicRowHeight = useDynamicRowHeight({
+    defaultRowHeight: 150,
+    key: sessionId
+  });
+
+  // ResizeObserver to measure parent layout height container
+  useEffect(() => {
+    if (!chatContainerParentRef.current) return;
+    const initialHeight = chatContainerParentRef.current.getBoundingClientRect().height;
+    if (initialHeight > 0) {
+      setListHeight(initialHeight);
+    }
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const height = entry.contentRect.height;
+        if (height > 0) {
+          setListHeight(height);
+        }
+      }
+    });
+    observer.observe(chatContainerParentRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const rowProps = useMemo(() => ({
+    messages,
+    hasSpacerRow,
+    isTypingIndicatorActive,
+    logo,
+    loadingText,
+    typingMessageId,
+    expandedMessages,
+    setExpandedMessages,
+    activeMessageId,
+    setActiveMessageId,
+    editingMessageId,
+    editContent,
+    setEditContent,
+    startEditing,
+    cancelEdit,
+    saveEdit,
+    messageFeedback,
+    handleThumbsUp,
+    handleThumbsDown,
+    handleCopyMessage,
+    handleShare,
+    handlePdfAction,
+    handleDownload,
+    handleMessageDelete,
+    handleMessageUndo,
+    handleDownloadCodeProject,
+    speakResponse,
+    speakingMessageId,
+    isPaused,
+    downloadedMessages,
+    isDownloadingUrl,
+    navigate,
+    activateToolWithTypingEffect,
+    setCurrentMode,
+    viewingDoc,
+    setViewingDoc,
+    suggestions,
+    handleSuggestionClick,
+    isLoading,
+    scrollToBottom,
+    setIsMagicEditing,
+    setEditRefImage,
+    inputRef,
+    handleCopyImage
+  }), [
+    messages,
+    hasSpacerRow,
+    isTypingIndicatorActive,
+    loadingText,
+    typingMessageId,
+    expandedMessages,
+    activeMessageId,
+    editingMessageId,
+    editContent,
+    messageFeedback,
+    speakingMessageId,
+    isPaused,
+    downloadedMessages,
+    isDownloadingUrl,
+    viewingDoc,
+    isLoading,
+    navigate,
+    activateToolWithTypingEffect,
+    setCurrentMode,
+    setViewingDoc,
+    suggestions,
+    handleSuggestionClick,
+    scrollToBottom,
+    setIsMagicEditing,
+    setEditRefImage,
+    inputRef,
+    handleCopyImage,
+    handleThumbsUp,
+    handleThumbsDown,
+    handleCopyMessage,
+    handleShare,
+    handlePdfAction,
+    handleDownload,
+    handleMessageDelete,
+    handleMessageUndo,
+    handleDownloadCodeProject,
+    speakResponse,
+    setExpandedMessages,
+    setActiveMessageId,
+    setEditContent,
+    startEditing,
+    cancelEdit,
+    saveEdit
+  ]);
+
+  const itemCount = messages.length + (isTypingIndicatorActive ? 1 : 0) + (hasSpacerRow ? 1 : 0);
+
   if (isHydrating) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-[#0b0c15] text-slate-900 dark:text-white transition-all duration-500">
@@ -6917,8 +7256,7 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
     }
   };
 
-  const isTypingIndicatorActive = gen.isGenerating && !gen.typingMessageId && selectedLegalTool?.id !== 'legal_general_chat' && !LEGAL_TOOLS_WITH_WORKSPACE.has(selectedLegalTool?.id);
-  const hasSpacerRow = !(selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case') && currentMode !== 'LEGAL_TOOLKIT';
+
 
   return (
     <div className="flex w-full bg-transparent relative overflow-hidden aisa-scalable-text h-full">
@@ -7189,96 +7527,39 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           </div>
         ) : (
           <div
-            ref={chatContainerRef}
-            onScroll={handleScroll}
-            className={`relative flex-1 aisa-scalable-text chatgpt-container z-20 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent ${selectedLegalTool?.id === 'legal_general_chat' ? 'legal-chat-active' : ''} ${(((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') || (selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case')) ? 'legal-no-padding' : ''} ${((currentMode === 'LEGAL_TOOLKIT' && !showFloatingNavbar) || location.pathname === '/dashboard/legal') ? 'no-top-padding' : ''} ${(((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') || (selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case'))
+            ref={chatContainerParentRef}
+            className={`relative flex-1 aisa-scalable-text chatgpt-container z-20 ${selectedLegalTool?.id === 'legal_general_chat' ? 'legal-chat-active' : ''} ${(((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') || (selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case')) ? 'legal-no-padding' : ''} ${((currentMode === 'LEGAL_TOOLKIT' && !showFloatingNavbar) || location.pathname === '/dashboard/legal') ? 'no-top-padding' : ''} ${(((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') || (selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case'))
               ? 'z-[30] h-full w-full overflow-hidden flex flex-col bg-transparent min-h-0'
               : selectedLegalTool?.id === 'legal_general_chat' ? 'overflow-hidden flex flex-col min-h-0'
-              : viewingDoc ? 'overflow-hidden' : `overflow-y-auto ${showFloatingNavbar ? 'pt-[72px] sm:mt-0 sm:pt-24' : (currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/legal' ? 'pt-4' : 'pt-[72px] sm:mt-0 sm:pt-[76px]')} lg:pt-6 pb-64 md:pb-72`
+              : viewingDoc ? 'overflow-hidden' : `overflow-hidden ${showFloatingNavbar ? 'pt-[72px] sm:mt-0 sm:pt-24' : (currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/legal' ? 'pt-4' : 'pt-[72px] sm:mt-0 sm:pt-[76px]')} lg:pt-6`
               }`}
             style={{
-              overflowY: viewingDoc || ((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') || selectedLegalTool?.id === 'legal_general_chat' || (selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case') ? 'hidden' : 'auto',
               height: '100%',
               flex: '1 1 auto',
               display: 'flex',
               flexDirection: 'column',
-              WebkitOverflowScrolling: 'touch',
-              minHeight: 0
+              minHeight: 0,
+              overflow: 'hidden'
             }}
           >
-            {messages.map((msg, idx) => (
-              <ChatBubble
-                key={msg.id}
-                msg={msg}
-                idx={idx}
-                messages={messages}
-                typingMessageId={typingMessageId}
-                expandedMessages={expandedMessages}
-                setExpandedMessages={setExpandedMessages}
-                activeMessageId={activeMessageId}
-                setActiveMessageId={setActiveMessageId}
-                editingMessageId={editingMessageId}
-                editContent={editContent}
-                setEditContent={setEditContent}
-                startEditing={startEditing}
-                cancelEdit={cancelEdit}
-                saveEdit={saveEdit}
-                messageFeedback={messageFeedback}
-                handleThumbsUp={handleThumbsUp}
-                handleThumbsDown={handleThumbsDown}
-                handleCopyMessage={handleCopyMessage}
-                handleShare={handleShare}
-                handlePdfAction={handlePdfAction}
-                handleDownload={handleDownload}
-                handleMessageDelete={handleMessageDelete}
-                handleMessageUndo={handleMessageUndo}
-                handleDownloadCodeProject={handleDownloadCodeProject}
-                speakResponse={speakResponse}
-                speakingMessageId={speakingMessageId}
-                isPaused={isPaused}
-                downloadedMessages={downloadedMessages}
-                isDownloadingUrl={isDownloadingUrl}
-                navigate={navigate}
-                activateToolWithTypingEffect={activateToolWithTypingEffect}
-                setCurrentMode={setCurrentMode}
-                viewingDoc={viewingDoc}
-                setViewingDoc={setViewingDoc}
-                suggestions={suggestions}
-                handleSuggestionClick={handleSuggestionClick}
-                isLoading={isLoading}
-                scrollToBottom={scrollToBottom}
-                setIsMagicEditing={setIsMagicEditing}
-                setEditRefImage={setEditRefImage}
-                inputRef={inputRef}
-                handleCopyImage={handleCopyImage}
-              />
-            ))}
-
-            {/* Typing Indicator */}
-            {isTypingIndicatorActive && (
-              <div className="chatgpt-message-row ai-row group mb-6 sm:mb-8">
-                <div className="chatgpt-message-content select-text">
-                  <div className="chatgpt-avatar-container w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                      <img src={logo} alt="AISA" className="w-6 h-[18px] object-cover object-top" />
-                    </div>
-                  </div>
-                  <div className="chatgpt-text typing-bubble flex items-center">
-                    <AisaTypingIndicator
-                      visible={true}
-                      message={loadingText}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Spacer */}
-            {hasSpacerRow && (
-              <div className="h-64 md:h-72 shrink-0 pointer-events-none" />
-            )}
-
-            <div ref={messagesEndRef} />
+            <List
+              listRef={listRef}
+              height={listHeight}
+              width="100%"
+              rowCount={itemCount}
+              rowHeight={dynamicRowHeight}
+              rowComponent={ChatRow}
+              rowProps={rowProps}
+              outerRef={chatContainerRef}
+              onScroll={handleScroll}
+              className="scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent overflow-y-auto"
+              style={{
+                height: '100%',
+                width: '100%',
+                WebkitOverflowScrolling: 'touch',
+                overflowY: viewingDoc || ((legalView === 'DASHBOARD' || legalView === 'PRECEDENTS') && currentMode === 'LEGAL_TOOLKIT') || selectedLegalTool?.id === 'legal_general_chat' || (selectedLegalTool?.id && selectedLegalTool.id !== 'legal_my_case') ? 'hidden' : 'auto'
+              }}
+            />
           </div>
         )}
 
