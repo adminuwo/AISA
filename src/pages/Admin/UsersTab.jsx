@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { motion } from 'framer-motion';
 import { Search, Settings, Ban, Trash2, Check } from 'lucide-react';
@@ -8,6 +8,143 @@ import { API } from '../../types.js';
 import toast from 'react-hot-toast';
 import DeleteConfirmModal from '../../Components/DeleteConfirmModal';
 import { LoadingSpinner } from './AdminCommon';
+import { List, useDynamicRowHeight, useListRef } from 'react-window';
+
+// Static row rendering component for virtualization (Sprint 6B)
+const UserRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) => {
+  const {
+    filteredUsers,
+    selectedUser,
+    setSelectedUser,
+    upgradeData,
+    setUpgradeData,
+    isUpgrading,
+    handleManualUpgrade,
+    handleBlockToggle,
+    setDeleteModal,
+    t,
+    availablePlans
+  } = rowProps;
+
+  const user = filteredUsers[index];
+  if (!user) return null;
+
+  const isSelected = selectedUser === (user._id || user.id);
+
+  return (
+    <div style={style} {...ariaAttributes} className="pb-2">
+      <div className="bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-xl p-4 hover:border-primary/20 transition-all">
+        <div className="flex items-start sm:items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                  onError={e => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/account.png';
+                  }}
+                />
+              ) : (
+                <span className="font-bold text-primary text-sm">
+                  {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-maintext text-sm truncate">{user.name}</p>
+              <p className="text-xs text-subtext truncate">{user.email}</p>
+            </div>
+            {user.isBlocked && (
+              <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase">
+                {t('block')}
+              </span>
+            )}
+            <span
+              className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                user.planName?.toLowerCase().includes('pro')
+                  ? 'bg-amber-500/10 text-amber-500'
+                  : user.planName?.toLowerCase().includes('founder')
+                    ? 'bg-purple-500/10 text-purple-500'
+                    : 'bg-primary/10 text-primary'
+              }`}
+            >
+              {user.planName || user.role || 'Free Plan'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                setSelectedUser(
+                  isSelected ? null : user._id || user.id
+                )
+              }
+              className="p-2 rounded-lg hover:bg-primary/10 text-subtext hover:text-primary transition-all"
+              title={t('manage')}
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleBlockToggle(user._id || user.id, user.isBlocked)}
+              className={`p-2 rounded-lg transition-all ${user.isBlocked ? 'hover:bg-green-500/10 text-green-500' : 'hover:bg-amber-500/10 text-amber-500'}`}
+              title={user.isBlocked ? t('unblock') : t('block')}
+            >
+              {user.isBlocked ? <Check className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setDeleteModal({ isOpen: true, userId: user._id || user.id })}
+              className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-all"
+              title={t('delete')}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {isSelected && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden border-t border-white/10 mt-3 pt-3"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                className="flex-1 min-w-[120px] bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-maintext"
+                value={upgradeData.planName}
+                onChange={e => setUpgradeData({ ...upgradeData, planName: e.target.value })}
+              >
+                <option value="">{t('selectPlan')}</option>
+                {availablePlans.map(p => (
+                  <option key={p._id} value={p.planName}>
+                    {p.planName}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="date"
+                className="flex-1 min-w-[120px] bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-maintext"
+                value={upgradeData.expiryDate}
+                onChange={e => setUpgradeData({ ...upgradeData, expiryDate: e.target.value })}
+              />
+              <button
+                onClick={() => handleManualUpgrade(user._id || user.id)}
+                disabled={isUpgrading === (user._id || user.id)}
+                className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:opacity-90 transition-all whitespace-nowrap"
+              >
+                {isUpgrading === (user._id || user.id) ? t('loading') : t('upgrade')}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+});
+UserRow.displayName = 'UserRow';
 
 const UsersTab = () => {
   const { t } = useLanguage();
@@ -109,6 +246,61 @@ const UsersTab = () => {
       u.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // ─── Virtualization States & Refs (Sprint 6B) ──────────────────────────────
+  const [listHeight, setListHeight] = useState(500);
+  const listRef = useListRef();
+  const listContainerRef = useRef(null);
+
+  const dynamicRowHeight = useDynamicRowHeight({
+    defaultRowHeight: 80,
+    key: searchQuery // reset layout cache when search query changes
+  });
+
+  // ResizeObserver to measure parent available height
+  useEffect(() => {
+    if (!listContainerRef.current) return;
+    const initialHeight = listContainerRef.current.getBoundingClientRect().height;
+    if (initialHeight > 0) {
+      setListHeight(initialHeight);
+    }
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const height = entry.contentRect.height;
+        if (height > 0) {
+          setListHeight(height);
+        }
+      }
+    });
+    observer.observe(listContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const rowProps = useMemo(() => ({
+    filteredUsers,
+    selectedUser,
+    setSelectedUser,
+    upgradeData,
+    setUpgradeData,
+    isUpgrading,
+    handleManualUpgrade,
+    handleBlockToggle,
+    setDeleteModal,
+    t,
+    availablePlans
+  }), [
+    filteredUsers,
+    selectedUser,
+    setSelectedUser,
+    upgradeData,
+    setUpgradeData,
+    isUpgrading,
+    handleManualUpgrade,
+    handleBlockToggle,
+    setDeleteModal,
+    t,
+    availablePlans
+  ]);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -127,123 +319,22 @@ const UsersTab = () => {
 
       {/* User List */}
       <div className="space-y-2">
-        {filteredUsers.length === 0 && (
+        {filteredUsers.length === 0 ? (
           <p className="text-center text-subtext py-8 text-sm">{t('noUsersFound')}</p>
+        ) : (
+          <div ref={listContainerRef} className="h-[calc(100vh-320px)] min-h-[400px] w-full relative">
+            <List
+              listRef={listRef}
+              height={listHeight}
+              width="100%"
+              rowCount={filteredUsers.length}
+              rowHeight={dynamicRowHeight}
+              rowComponent={UserRow}
+              rowProps={rowProps}
+              className="scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent overflow-y-auto"
+            />
+          </div>
         )}
-        {filteredUsers.map(user => (
-          <motion.div
-            key={user._id || user.id}
-            layout
-            className="bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-xl p-4 hover:border-primary/20 transition-all"
-          >
-            <div className="flex items-start sm:items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                      onError={e => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = '/account.png';
-                      }}
-                    />
-                  ) : (
-                    <span className="font-bold text-primary text-sm">
-                      {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-maintext text-sm truncate">{user.name}</p>
-                  <p className="text-xs text-subtext truncate">{user.email}</p>
-                </div>
-                {user.isBlocked && (
-                  <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase">
-                    {t('block')}
-                  </span>
-                )}
-                <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                    user.planName?.toLowerCase().includes('pro')
-                      ? 'bg-amber-500/10 text-amber-500'
-                      : user.planName?.toLowerCase().includes('founder')
-                        ? 'bg-purple-500/10 text-purple-500'
-                        : 'bg-primary/10 text-primary'
-                  }`}
-                >
-                  {user.planName || user.role || 'Free Plan'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    setSelectedUser(
-                      selectedUser === (user._id || user.id) ? null : user._id || user.id
-                    )
-                  }
-                  className="p-2 rounded-lg hover:bg-primary/10 text-subtext hover:text-primary transition-all"
-                  title={t('manage')}
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleBlockToggle(user._id || user.id, user.isBlocked)}
-                  className={`p-2 rounded-lg transition-all ${user.isBlocked ? 'hover:bg-green-500/10 text-green-500' : 'hover:bg-amber-500/10 text-amber-500'}`}
-                  title={user.isBlocked ? t('unblock') : t('block')}
-                >
-                  {user.isBlocked ? <Check className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={() => setDeleteModal({ isOpen: true, userId: user._id || user.id })}
-                  className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-all"
-                  title={t('delete')}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {selectedUser === (user._id || user.id) && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden border-t border-white/10 mt-3 pt-3"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    className="flex-1 min-w-[120px] bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-maintext"
-                    value={upgradeData.planName}
-                    onChange={e => setUpgradeData({ ...upgradeData, planName: e.target.value })}
-                  >
-                    <option value="">{t('selectPlan')}</option>
-                    {availablePlans.map(p => (
-                      <option key={p._id} value={p.planName}>
-                        {p.planName}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="date"
-                    className="flex-1 min-w-[120px] bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-maintext"
-                    value={upgradeData.expiryDate}
-                    onChange={e => setUpgradeData({ ...upgradeData, expiryDate: e.target.value })}
-                  />
-                  <button
-                    onClick={() => handleManualUpgrade(user._id || user.id)}
-                    disabled={isUpgrading === (user._id || user.id)}
-                    className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:opacity-90 transition-all whitespace-nowrap"
-                  >
-                    {isUpgrading === (user._id || user.id) ? t('loading') : t('upgrade')}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        ))}
       </div>
 
       <DeleteConfirmModal

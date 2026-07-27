@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { apiService } from '../../services/apiService';
 import toast from 'react-hot-toast';
@@ -22,6 +22,93 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { List, useListRef } from 'react-window';
+
+// Static row rendering component for virtualization (Sprint 6B)
+const SessionRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) => {
+  const {
+    sessions,
+    fetchDetail,
+    handleOpenMailModal,
+    formatDate
+  } = rowProps;
+
+  const s = sessions[index];
+  if (!s) return null;
+
+  return (
+    <div
+      style={style}
+      {...ariaAttributes}
+      onClick={() => fetchDetail(s.sessionId)}
+      className="flex w-full items-center text-sm border-b border-white/5 hover:bg-primary/5 cursor-pointer transition-all group h-[48px]"
+    >
+      <div className="w-[12%] px-4 py-3 min-w-0">
+        <span className="font-mono text-[11px] text-primary/80 group-hover:text-primary transition-colors whitespace-nowrap block truncate">
+          {s.sessionId?.slice(0, 12)}…
+        </span>
+      </div>
+      <div className="w-[10%] px-4 py-3 min-w-0">
+        <span className="font-semibold text-maintext text-xs whitespace-nowrap block truncate">
+          {s.userName || 'Guest'}
+        </span>
+      </div>
+      <div className="w-[18%] px-4 py-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-subtext text-xs whitespace-nowrap block truncate flex-1">
+            {s.userEmail || '—'}
+          </span>
+          {s.userEmail && s.userEmail !== '—' && (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                handleOpenMailModal(s.userEmail);
+              }}
+              className="p-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
+              title="Send Email to User"
+            >
+              <Mail className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="w-[12%] px-4 py-3 min-w-0">
+        <span className="text-xs text-subtext whitespace-nowrap block truncate">
+          {MODE_LABELS[s.detectedMode] || s.detectedMode || '—'}
+        </span>
+      </div>
+      <div className="w-[14%] px-4 py-3 min-w-0">
+        <span className="text-xs text-subtext whitespace-nowrap block truncate">
+          {formatDate(s.createdAt)}
+        </span>
+      </div>
+      <div className="w-[8%] px-4 py-3 min-w-0">
+        <span className="text-xs font-mono text-subtext whitespace-nowrap block truncate">
+          {s.duration || '—'}
+        </span>
+      </div>
+      <div className="w-[6%] px-4 py-3 text-center min-w-0">
+        <span className="text-xs font-bold text-maintext whitespace-nowrap block truncate">
+          {s.totalMessages ?? 0}
+        </span>
+      </div>
+      <div className="w-[6%] px-4 py-3 text-center min-w-0">
+        <span className="text-xs text-blue-400 font-semibold whitespace-nowrap block truncate">
+          {s.userMessages ?? 0}
+        </span>
+      </div>
+      <div className="w-[6%] px-4 py-3 text-center min-w-0">
+        <span className="text-xs text-emerald-400 font-semibold whitespace-nowrap block truncate">
+          {s.aiMessages ?? 0}
+        </span>
+      </div>
+      <div className="w-[8%] px-4 py-3 whitespace-nowrap min-w-0">
+        <SessionStatusBadge status={s.sessionStatus} />
+      </div>
+    </div>
+  );
+});
+SessionRow.displayName = 'SessionRow';
 
 const STATUS_META = {
   active: { label: 'Active', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
@@ -75,6 +162,21 @@ const SessionStatusBadge = ({ status }) => {
 
 const ChatSessionsTab = () => {
   const { t } = useLanguage();
+
+  // ─── Virtualization States & Refs (Sprint 6B) ──────────────────────────────
+  const listRef = useListRef();
+
+  const rowProps = useMemo(() => ({
+    sessions,
+    fetchDetail,
+    handleOpenMailModal,
+    formatDate
+  }), [
+    sessions,
+    fetchDetail,
+    handleOpenMailModal,
+    formatDate
+  ]);
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [stats, setStats] = useState(null);
@@ -413,128 +515,57 @@ const ChatSessionsTab = () => {
         </div>
 
         <div className="overflow-x-auto -mx-px">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead>
-              <tr className="border-b border-white/10">
-                {[
-                  'Session ID',
-                  'User',
-                  'Email',
-                  'Mode',
-                  'Start Time',
-                  'Duration',
-                  'Total',
-                  'User',
-                  'AI',
-                  'Status',
-                ].map((h, i) => (
-                  <th
-                    key={i}
-                    className="px-4 py-3 text-left text-[10px] font-bold text-subtext uppercase tracking-wider whitespace-nowrap"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} className="border-b border-white/5">
-                    {Array.from({ length: 10 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <div
-                          className="h-3 bg-white/10 rounded-full animate-pulse"
-                          style={{ width: `${40 + Math.random() * 40}%` }}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : sessions.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="text-center py-12 text-subtext text-sm">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    No sessions found
-                  </td>
-                </tr>
-              ) : (
-                sessions.map((s, i) => (
-                  <motion.tr
-                    key={s.sessionId || i}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.02 }}
-                    onClick={() => fetchDetail(s.sessionId)}
-                    className="border-b border-white/5 hover:bg-primary/5 cursor-pointer transition-all group"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-[11px] text-primary/80 group-hover:text-primary transition-colors whitespace-nowrap">
-                        {s.sessionId?.slice(0, 12)}…
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-semibold text-maintext text-xs whitespace-nowrap">
-                        {s.userName || 'Guest'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-subtext text-xs whitespace-nowrap">
-                          {s.userEmail || '—'}
-                        </span>
-                        {s.userEmail && s.userEmail !== '—' && (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleOpenMailModal(s.userEmail);
-                            }}
-                            className="p-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                            title="Send Email to User"
-                          >
-                            <Mail className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-subtext whitespace-nowrap">
-                        {MODE_LABELS[s.detectedMode] || s.detectedMode || '—'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-subtext whitespace-nowrap">
-                        {formatDate(s.createdAt)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-mono text-subtext whitespace-nowrap">
-                        {s.duration || '—'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-xs font-bold text-maintext whitespace-nowrap">
-                        {s.totalMessages ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-xs text-blue-400 font-semibold whitespace-nowrap">
-                        {s.userMessages ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-xs text-emerald-400 font-semibold whitespace-nowrap">
-                        {s.aiMessages ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <SessionStatusBadge status={s.sessionStatus} />
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="min-w-[720px] text-sm">
+            {/* Header */}
+            <div className="border-b border-white/10 flex w-full font-bold text-subtext text-[10px] uppercase tracking-wider">
+              <div className="w-[12%] px-4 py-3">Session ID</div>
+              <div className="w-[10%] px-4 py-3">User</div>
+              <div className="w-[18%] px-4 py-3">Email</div>
+              <div className="w-[12%] px-4 py-3">Mode</div>
+              <div className="w-[14%] px-4 py-3">Start Time</div>
+              <div className="w-[8%] px-4 py-3">Duration</div>
+              <div className="w-[6%] px-4 py-3 text-center">Total</div>
+              <div className="w-[6%] px-4 py-3 text-center">User</div>
+              <div className="w-[6%] px-4 py-3 text-center">AI</div>
+              <div className="w-[8%] px-4 py-3">Status</div>
+            </div>
+
+            {/* Body */}
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border-b border-white/5 flex w-full items-center h-[48px]">
+                  <div className="w-[12%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-3/4" /></div>
+                  <div className="w-[10%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-2/3" /></div>
+                  <div className="w-[18%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-4/5" /></div>
+                  <div className="w-[12%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2" /></div>
+                  <div className="w-[14%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-3/4" /></div>
+                  <div className="w-[8%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-1/3" /></div>
+                  <div className="w-[6%] px-4 py-3 text-center"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" /></div>
+                  <div className="w-[6%] px-4 py-3 text-center"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" /></div>
+                  <div className="w-[6%] px-4 py-3 text-center"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" /></div>
+                  <div className="w-[8%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-2/3" /></div>
+                </div>
+              ))
+            ) : sessions.length === 0 ? (
+              <div className="text-center py-12 text-subtext text-sm">
+                <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                No sessions found
+              </div>
+            ) : (
+              <div className="w-full relative" style={{ height: `${Math.min(sessions.length * 48, 480) || 48}px` }}>
+                <List
+                  listRef={listRef}
+                  height={Math.min(sessions.length * 48, 480) || 48}
+                  width="100%"
+                  rowCount={sessions.length}
+                  rowHeight={48}
+                  rowComponent={SessionRow}
+                  rowProps={rowProps}
+                  className="scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent overflow-y-auto"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Pagination */}

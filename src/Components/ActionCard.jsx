@@ -23,7 +23,7 @@ const ICON_MAP = {
   legal_research_assistant: Library,
 };
 
-export default function ActionCard({ title, desc, action, link, onClick, isLocked }) {
+const ActionCard = React.memo(function ActionCard({ title, desc, action, link, onClick, isLocked }) {
   const Icon = ICON_MAP[link.replace('action:', '')] || Scale;
 
   return (
@@ -53,4 +53,6 @@ export default function ActionCard({ title, desc, action, link, onClick, isLocke
       </button>
     </div>
   );
-}
+});
+
+export default ActionCard;
