@@ -4,7 +4,7 @@ import { LaptopMinimalCheck } from 'lucide-react';
 import { useUserStore } from '../../userStore/useUserStore';
 import { motion } from 'framer-motion';
 const NotificationBar = ({ msg, error }) => {
-  const { toggles: notifiyTgl, setToggle } = useUserStore();
+  const setToggle = useUserStore(state => state.setToggle);
   return (
     <motion.div
       initial={{ opacity: 0, y: -50, scale: 0.9 }}

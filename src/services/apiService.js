@@ -1302,18 +1302,34 @@ export const apiService = {
 
   // --- Packages ---
   async getPackages() {
-    try {
-      const response = await apiClient.get('/pricing/packages');
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch packages:', error);
-      throw error;
+    if (window.__packagesCache) {
+      return window.__packagesCache;
     }
+    if (window.__packagesPromise) {
+      return window.__packagesPromise;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await apiClient.get('/pricing/packages');
+        window.__packagesCache = response.data;
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch packages:', error);
+        throw error;
+      } finally {
+        window.__packagesPromise = null;
+      }
+    })();
+
+    window.__packagesPromise = fetchPromise;
+    return fetchPromise;
   },
 
   async createPackage(data) {
     try {
       const response = await apiClient.post('/admin/packages', data);
+      window.__packagesCache = null;
       return response.data;
     } catch (error) {
       console.error('Failed to create package:', error);
@@ -1324,6 +1340,7 @@ export const apiService = {
   async updatePackage(id, data) {
     try {
       const response = await apiClient.put(`/admin/packages/${id}`, data);
+      window.__packagesCache = null;
       return response.data;
     } catch (error) {
       console.error('Failed to update package:', error);
@@ -1334,6 +1351,7 @@ export const apiService = {
   async deletePackage(id) {
     try {
       const response = await apiClient.delete(`/admin/packages/${id}`);
+      window.__packagesCache = null;
       return response.data;
     } catch (error) {
       console.error('Failed to delete package:', error);
@@ -1343,39 +1361,87 @@ export const apiService = {
 
   // --- Plans ---
   async getAdminPlans() {
-    try {
-      const response = await apiClient.get('/admin/plans');
-      return response.data;
-    } catch (error) {
-      // Fallback to public plans endpoint if admin route fails
-      const response = await apiClient.get('/pricing/plans');
-      return response.data;
+    if (window.__adminPlansCache) {
+      return window.__adminPlansCache;
     }
+    if (window.__adminPlansPromise) {
+      return window.__adminPlansPromise;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await apiClient.get('/admin/plans');
+        window.__adminPlansCache = response.data;
+        return response.data;
+      } catch (error) {
+        // Fallback to public plans endpoint if admin route fails
+        const response = await apiClient.get('/pricing/plans');
+        window.__adminPlansCache = response.data;
+        return response.data;
+      } finally {
+        window.__adminPlansPromise = null;
+      }
+    })();
+
+    window.__adminPlansPromise = fetchPromise;
+    return fetchPromise;
   },
 
   async getPlans() {
-    try {
-      const response = await apiClient.get('/pricing/plans');
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch plans:', error);
-      throw error;
+    if (window.__plansCache) {
+      return window.__plansCache;
     }
+    if (window.__plansPromise) {
+      return window.__plansPromise;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await apiClient.get('/pricing/plans');
+        window.__plansCache = response.data;
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch plans:', error);
+        throw error;
+      } finally {
+        window.__plansPromise = null;
+      }
+    })();
+
+    window.__plansPromise = fetchPromise;
+    return fetchPromise;
   },
 
   async getPublicFeatureCosts() {
-    try {
-      const response = await apiClient.get('/pricing/feature-costs');
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch public feature costs:', error);
-      return { success: false, features: [] };
+    if (window.__featureCostsCache) {
+      return window.__featureCostsCache;
     }
+    if (window.__featureCostsPromise) {
+      return window.__featureCostsPromise;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await apiClient.get('/pricing/feature-costs');
+        window.__featureCostsCache = response.data;
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch public feature costs:', error);
+        return { success: false, features: [] };
+      } finally {
+        window.__featureCostsPromise = null;
+      }
+    })();
+
+    window.__featureCostsPromise = fetchPromise;
+    return fetchPromise;
   },
 
   async createPlan(data) {
     try {
       const response = await apiClient.post('/admin/plans', data);
+      window.__plansCache = null;
+      window.__adminPlansCache = null;
       return response.data;
     } catch (error) {
       console.error('Failed to create plan:', error);
@@ -1386,6 +1452,8 @@ export const apiService = {
   async updatePlan(id, data) {
     try {
       const response = await apiClient.put(`/admin/plans/${id}`, data);
+      window.__plansCache = null;
+      window.__adminPlansCache = null;
       return response.data;
     } catch (error) {
       console.error('Failed to update plan:', error);
@@ -1396,6 +1464,8 @@ export const apiService = {
   async deletePlan(id) {
     try {
       const response = await apiClient.delete(`/admin/plans/${id}`);
+      window.__plansCache = null;
+      window.__adminPlansCache = null;
       return response.data;
     } catch (error) {
       console.error('Failed to delete plan:', error);
@@ -1624,27 +1694,42 @@ export const apiService = {
 
   // ── Credits & Subscription (Quota System) ──────────────────────────────────────────────
   async getQuotaStatus() {
-    try {
-      const response = await apiClient.get('/subscription/quota-status');
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch quota status:', error);
-      // Return a safe default so the app doesn't crash
-      return {
-        success: false,
-        planKey: 'free',
-        limits: {
-          chat: 100,
-          chatScope: 'total',
-          images: 0,
-          carousels: 0,
-          videos: 0,
-          editImage: false,
-          cashflow: false,
-        },
-        usage: { chat: 0, images: 0, carousels: 0, videos: 0 },
-      };
+    if (window.__quotaCache) {
+      return window.__quotaCache;
     }
+    if (window.__quotaPromise) {
+      return window.__quotaPromise;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await apiClient.get('/subscription/quota-status');
+        window.__quotaCache = response.data;
+        return response.data;
+      } catch (error) {
+        console.error('Failed to fetch quota status:', error);
+        // Return a safe default so the app doesn't crash
+        return {
+          success: false,
+          planKey: 'free',
+          limits: {
+            chat: 100,
+            chatScope: 'total',
+            images: 0,
+            carousels: 0,
+            videos: 0,
+            editImage: false,
+            cashflow: false,
+          },
+          usage: { chat: 0, images: 0, carousels: 0, videos: 0 },
+        };
+      } finally {
+        window.__quotaPromise = null;
+      }
+    })();
+
+    window.__quotaPromise = fetchPromise;
+    return fetchPromise;
   },
 
   // Legacy credit methods — kept so old components don't crash

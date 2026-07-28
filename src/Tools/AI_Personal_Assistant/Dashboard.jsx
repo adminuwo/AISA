@@ -26,8 +26,9 @@ const Dashboard = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, today, pending, completed
-  const { toggles: tglState, setToggle } = useUserStore();
-  const toggleSidebar = () => setToggle('sidebarOpen', !tglState.sidebarOpen);
+  const sidebarOpen = useUserStore(state => state.toggles.sidebarOpen);
+  const setToggle = useUserStore(state => state.setToggle);
+  const toggleSidebar = () => setToggle('sidebarOpen', !sidebarOpen);
   const { speakReminder, stopReminderVoice } = usePersonalization();
 
   const notifiedRef = useRef(new Set());

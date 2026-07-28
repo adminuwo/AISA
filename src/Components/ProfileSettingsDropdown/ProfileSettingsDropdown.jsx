@@ -81,7 +81,8 @@ import { PrivacyPolicyContent } from '../../landingpage/PolicyModals/PrivacyPoli
 
 const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
   const fileInputRef = useRef(null);
-  const { user: currentUser, setUser: setUserRecoil } = useUserStore();
+  const currentUser = useUserStore(state => state.user);
+  const setUserRecoil = useUserStore(state => state.setUser);
   const user = currentUser || getUserData() || {};
   const { limits, usage, renewalDate } = useCreditStore();
   const {

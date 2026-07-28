@@ -41,6 +41,9 @@ const useCreditStore = create(
       // ── SYNC FROM BACKEND ─────────────────────────────────────────────────────
       syncCredits: async () => {
         try {
+          if (typeof window !== 'undefined') {
+            window.__quotaCache = null;
+          }
           const response = await apiService.getQuotaStatus();
           if (response.success) {
             set({

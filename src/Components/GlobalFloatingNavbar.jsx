@@ -18,7 +18,9 @@ const GlobalFloatingNavbar = () => {
   const scrollThreshold = 15;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { toggles: tglState, setToggle, activeMode: currentMode } = useUserStore();
+  const sidebarOpen = useUserStore(state => state.toggles.sidebarOpen);
+  const setToggle = useUserStore(state => state.setToggle);
+  const currentMode = useUserStore(state => state.activeMode);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const isLegalWorkspace =
@@ -111,7 +113,7 @@ const GlobalFloatingNavbar = () => {
         {!isLegalWorkspace && (
           <div className="hidden lg:flex items-center gap-2.5 pointer-events-auto bg-transparent backdrop-blur-md border border-transparent shadow-none rounded-2xl p-1.5 sm:p-2 transition-all duration-300">
             {/* Theme Toggle Button - Hidden on mobile if sidebar is open */}
-            {!(tglState.sidebarOpen && window.innerWidth < 1024) && (
+            {!(sidebarOpen && window.innerWidth < 1024) && (
               <motion.button
                 whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
                 whileTap={{ scale: 0.95 }}

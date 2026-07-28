@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -45,17 +45,15 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   const isDark = theme === 'dark';
 
   // --- Zustand Store States ---
-  const {
-    sessions,
-    setSessions,
-    activeProjects: projects,
-    setActiveProjects: setProjects,
-    activeProjectId: currentProjectId,
-    setActiveProjectId: setCurrentProjectId,
-    activeMode: currentMode,
-    setActiveMode: setMode,
-    setActiveLegalToolData: setLegalTool,
-  } = useUserStore();
+  const sessions = useUserStore(state => state.sessions);
+  const setSessions = useUserStore(state => state.setSessions);
+  const projects = useUserStore(state => state.activeProjects);
+  const setProjects = useUserStore(state => state.setActiveProjects);
+  const currentProjectId = useUserStore(state => state.activeProjectId);
+  const setCurrentProjectId = useUserStore(state => state.setActiveProjectId);
+  const currentMode = useUserStore(state => state.activeMode);
+  const setMode = useUserStore(state => state.setActiveMode);
+  const setLegalTool = useUserStore(state => state.setActiveLegalToolData);
 
   // --- Local UI States ---
   const [currentSessionId, setCurrentSessionId] = useState(sessionId || 'new');
@@ -196,22 +194,22 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     }
   };
 
-  const handleNewChat = () => {
+  const handleNewChat = useCallback(() => {
     setCurrentProjectId('default');
     setMode('NORMAL_CHAT');
     setLegalTool(null);
     navigate('/dashboard/chat/new', { state: { forceGlobal: true } });
     if (onClose) onClose();
-  };
+  }, [setCurrentProjectId, setMode, setLegalTool, navigate, onClose]);
 
-  const handleDeleteSession = (e, sessionIdToDelete) => {
+  const handleDeleteSession = useCallback((e, sessionIdToDelete) => {
     e.stopPropagation();
     e.preventDefault();
     setChatToDelete(sessionIdToDelete);
     setIsChatDeleteModalOpen(true);
-  };
+  }, [setChatToDelete, setIsChatDeleteModalOpen]);
 
-  const confirmDeleteSession = async () => {
+  const confirmDeleteSession = useCallback(async () => {
     if (!chatToDelete) return;
     try {
       await chatStorageService.deleteSession(chatToDelete);
@@ -230,16 +228,16 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       setIsChatDeleteModalOpen(false);
       setChatToDelete(null);
     }
-  };
+  }, [chatToDelete, currentProjectId, currentSessionId, setSessions, navigate, t]);
 
-  const startRename = (e, session) => {
+  const startRename = useCallback((e, session) => {
     e.stopPropagation();
     e.preventDefault();
     setEditingSessionId(session.sessionId);
     setNewTitle(session.title || 'New Chat');
-  };
+  }, [setEditingSessionId, setNewTitle]);
 
-  const handleRename = async (e, sessionId) => {
+  const handleRename = useCallback(async (e, sessionId) => {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
@@ -276,9 +274,9 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     } finally {
       setEditingSessionId(null);
     }
-  };
+  }, [editingSessionId, newTitle, sessions, setSessions, t]);
 
-  const handleRenameProject = async (e, projectId) => {
+  const handleRenameProject = useCallback(async (e, projectId) => {
     e.stopPropagation();
     if (!renameProjectName.trim()) {
       setEditingProjectId(null);
@@ -297,15 +295,26 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     } finally {
       setEditingProjectId(null);
     }
-  };
+  }, [renameProjectName, setProjects, projects, t]);
 
-  const handleDeleteProject = (e, projectId) => {
+  const handleDeleteProject = useCallback((e, projectId) => {
     e.stopPropagation();
     setProjectToDelete(projectId);
     setIsDeleteModalOpen(true);
-  };
+  }, [setProjectToDelete, setIsDeleteModalOpen]);
 
-  const confirmDeleteProject = async () => {
+  const handleSwitchProject = useCallback(projectId => {
+    setCurrentProjectId(projectId);
+    const p = projects.find(proj => proj._id === projectId);
+    if (p?.isLegalCase) {
+      navigate(`/dashboard/legal/cases/${projectId}/chat`);
+    } else {
+      navigate('/dashboard/chat/new');
+    }
+    if (onClose) onClose();
+  }, [setCurrentProjectId, projects, navigate, onClose]);
+
+  const confirmDeleteProject = useCallback(async () => {
     if (!projectToDelete) return;
 
     const isCase = projects.find(p => p._id === projectToDelete)?.isLegalCase;
@@ -323,18 +332,29 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
       setIsDeleteModalOpen(false);
       setProjectToDelete(null);
     }
-  };
+  }, [projectToDelete, projects, setProjects, currentProjectId, handleSwitchProject, t]);
 
-  const handleSwitchProject = projectId => {
-    setCurrentProjectId(projectId);
-    const p = projects.find(proj => proj._id === projectId);
-    if (p?.isLegalCase) {
-      navigate(`/dashboard/legal/cases/${projectId}/chat`);
-    } else {
-      navigate('/dashboard/chat/new');
-    }
-    if (onClose) onClose();
-  };
+  const regularProjects = useMemo(() => {
+    return Array.isArray(projects) ? projects.filter(p => !p.isLegalCase) : [];
+  }, [projects]);
+
+  const filteredCases = useMemo(() => {
+    if (!Array.isArray(projects)) return [];
+    const query = searchQuery.toLowerCase();
+    return projects.filter(
+      p =>
+        p.isLegalCase &&
+        (!query || p.name.toLowerCase().includes(query))
+    );
+  }, [projects, searchQuery]);
+
+  const filteredSessions = useMemo(() => {
+    if (!Array.isArray(sessions)) return [];
+    const query = searchQuery.toLowerCase();
+    return sessions.filter(session =>
+      session.title?.toLowerCase().includes(query)
+    );
+  }, [sessions, searchQuery]);
 
   const hasHistory = Array.isArray(sessions) && sessions.length > 0;
 
@@ -430,9 +450,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                 </button>
 
                 {/* Regular Projects List */}
-                {projects
-                  .filter(p => !p.isLegalCase)
-                  .map((p, idx) => (
+                {regularProjects.map((p, idx) => (
                     <div key={p._id} className="relative group/proj flex items-center mx-3">
                       {editingProjectId === p._id ? (
                         <div
@@ -549,14 +567,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                         </div>
                       )}
 
-                      {projects
-                        .filter(
-                          p =>
-                            p.isLegalCase &&
-                            (!searchQuery ||
-                              p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                        )
-                        .map((p, idx) => (
+                      {filteredCases.map((p, idx) => (
                           <motion.div
                             key={p._id}
                             initial={{ x: -10, opacity: 0 }}
@@ -699,222 +710,214 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
         )}
 
         {hasHistory &&
-          (() => {
-            const filteredSessions = sessions.filter(session =>
-              session.title?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-
-            if (filteredSessions.length === 0) return null;
-
-            return filteredSessions.map((session, idx) => (
-              <motion.div
-                key={session.sessionId}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.015, duration: 0.25 }}
-                className="group relative"
-              >
-                {editingSessionId === session.sessionId ? (
-                  <div
-                    className="flex items-center gap-3 px-4 py-4 bg-white/5 rounded-2xl border border-primary/40 shadow-2xl mx-2"
-                    onClick={e => e.stopPropagation()}
+          filteredSessions.map((session, idx) => (
+            <motion.div
+              key={session.sessionId}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.015, duration: 0.25 }}
+              className="group relative"
+            >
+              {editingSessionId === session.sessionId ? (
+                <div
+                  className="flex items-center gap-3 px-4 py-4 bg-white/5 rounded-2xl border border-primary/40 shadow-2xl mx-2"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    onBlur={e => handleRename(e, session.sessionId)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRename(e, session.sessionId);
+                      if (e.key === 'Escape') setEditingSessionId(null);
+                    }}
+                    className="bg-transparent text-[14px] font-bold text-maintext w-full outline-none"
+                  />
+                  <button
+                    onMouseDown={e => {
+                      e.preventDefault();
+                    }}
+                    onClick={e => handleRename(e, session.sessionId)}
+                    className="text-primary hover:scale-125 transition-transform shrink-0"
                   >
-                    <input
-                      autoFocus
-                      type="text"
-                      value={newTitle}
-                      onChange={e => setNewTitle(e.target.value)}
-                      onBlur={e => handleRename(e, session.sessionId)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleRename(e, session.sessionId);
-                        if (e.key === 'Escape') setEditingSessionId(null);
-                      }}
-                      className="bg-transparent text-[14px] font-bold text-maintext w-full outline-none"
-                    />
-                    <button
-                      onMouseDown={e => {
-                        e.preventDefault();
-                      }}
-                      onClick={e => handleRename(e, session.sessionId)}
-                      className="text-primary hover:scale-125 transition-transform shrink-0"
-                    >
-                      <Check className="w-5 h-5" strokeWidth={3} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="sidebar-chat-container relative">
-                    <NavLink to={`/dashboard/chat/${session.sessionId}`} onClick={onClose}>
-                      {({ isActive }) => (
-                        <div
-                          className={`sidebar-chat-item group/item transition-all duration-500 mx-2 cursor-pointer
-                          ${
-                            isActive
-                              ? isDark
-                                ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl'
-                                : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5'
-                              : isDark
-                                ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent'
-                                : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]'
-                          }
-                        `}
-                        >
-                          {isActive ? (
-                            <motion.div
-                              layoutId="activeIndicator"
-                              className="absolute left-1 top-3 bottom-3 w-[3px] bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]"
-                            />
-                          ) : (
-                            <div
-                              className={`absolute left-1 top-3 bottom-3 w-[3px] rounded-full transition-all duration-300 group-hover/item:opacity-60 ${isDark ? 'bg-white/10 opacity-20' : 'bg-slate-300/80 opacity-30'}`}
-                            />
-                          )}
-                          <div className="sidebar-chat-title-group text-left flex-1 min-w-0">
-                            <div className="sidebar-chat-title flex items-center gap-1.5">
-                              {session.activeTool?.startsWith('legal_') ? (
-                                (() => {
-                                  const tool = session.activeTool.toLowerCase();
-                                  if (tool.includes('precedent') || tool.includes('gavel'))
-                                    return (
-                                      <Gavel
-                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
-                                        strokeWidth={2.5}
-                                      />
-                                    );
-                                  if (tool.includes('draft') || tool.includes('agreement'))
-                                    return (
-                                      <FileText
-                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
-                                        strokeWidth={2.5}
-                                      />
-                                    );
-                                  if (tool.includes('evidence'))
-                                    return (
-                                      <Search
-                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
-                                        strokeWidth={2.5}
-                                      />
-                                    );
-                                  if (tool.includes('case'))
-                                    return (
-                                      <Briefcase
-                                        className="w-3.5 h-3.5 text-purple-500 shrink-0"
-                                        strokeWidth={2.5}
-                                      />
-                                    );
+                    <Check className="w-5 h-5" strokeWidth={3} />
+                  </button>
+                </div>
+              ) : (
+                <div className="sidebar-chat-container relative">
+                  <NavLink to={`/dashboard/chat/${session.sessionId}`} onClick={onClose}>
+                    {({ isActive }) => (
+                      <div
+                        className={`sidebar-chat-item group/item transition-all duration-500 mx-2 cursor-pointer
+                        ${
+                          isActive
+                            ? isDark
+                              ? 'bg-white/[0.08] text-white border border-white/10 shadow-2xl backdrop-blur-3xl'
+                              : 'bg-white text-primary border border-primary/20 shadow-lg shadow-primary/10 backdrop-blur-3xl ring-4 ring-primary/5'
+                            : isDark
+                              ? 'text-subtext/60 hover:bg-white/[0.04] hover:text-white border border-transparent'
+                              : 'text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent hover:shadow-md hover:scale-[1.01]'
+                        }
+                      `}
+                      >
+                        {isActive ? (
+                          <motion.div
+                            layoutId="activeIndicator"
+                            className="absolute left-1 top-3 bottom-3 w-[3px] bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]"
+                          />
+                        ) : (
+                          <div
+                            className={`absolute left-1 top-3 bottom-3 w-[3px] rounded-full transition-all duration-300 group-hover/item:opacity-60 ${isDark ? 'bg-white/10 opacity-20' : 'bg-slate-300/80 opacity-30'}`}
+                          />
+                        )}
+                        <div className="sidebar-chat-title-group text-left flex-1 min-w-0">
+                          <div className="sidebar-chat-title flex items-center gap-1.5">
+                            {session.activeTool?.startsWith('legal_') ? (
+                              (() => {
+                                const tool = session.activeTool.toLowerCase();
+                                if (tool.includes('precedent') || tool.includes('gavel'))
                                   return (
-                                    <Scale
+                                    <Gavel
                                       className="w-3.5 h-3.5 text-purple-500 shrink-0"
                                       strokeWidth={2.5}
                                     />
                                   );
-                                })()
-                              ) : (
-                                <MessageSquare
-                                  className="w-3.5 h-3.5 text-primary/50 shrink-0"
-                                  strokeWidth={2}
-                                />
-                              )}
-
-                              {generatingChatIds.includes(session.sessionId) && (
-                                <span
-                                  title="Generating response..."
-                                  className="flex items-center gap-[3px] shrink-0"
-                                >
-                                  <span
-                                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
-                                    style={{ animationDelay: '0ms' }}
+                                if (tool.includes('draft') || tool.includes('agreement'))
+                                  return (
+                                    <FileText
+                                      className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                      strokeWidth={2.5}
+                                    />
+                                  );
+                                if (tool.includes('evidence'))
+                                  return (
+                                    <Search
+                                      className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                      strokeWidth={2.5}
+                                    />
+                                  );
+                                if (tool.includes('case'))
+                                  return (
+                                    <Briefcase
+                                      className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                      strokeWidth={2.5}
+                                    />
+                                  );
+                                return (
+                                  <Scale
+                                    className="w-3.5 h-3.5 text-purple-500 shrink-0"
+                                    strokeWidth={2.5}
                                   />
-                                  <span
-                                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
-                                    style={{ animationDelay: '120ms' }}
-                                  />
-                                  <span
-                                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
-                                    style={{ animationDelay: '240ms' }}
-                                  />
-                                </span>
-                              )}
-                              <span className="truncate">
-                                {highlightMatch(
-                                  session.title || 'Untitled Intelligence',
-                                  searchQuery
-                                )}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                              {session.activeTool?.startsWith('legal_') && (
-                                <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-purple-500/10 border border-purple-500/20">
-                                  <span className="text-[8px] font-black text-purple-500 uppercase tracking-tighter">
-                                    AI LEGAL
-                                  </span>
-                                  <span className="text-[8px] font-bold text-purple-400/70 truncate max-w-[80px]">
-                                    {session.activeTool
-                                      .replace('legal_', '')
-                                      .split('_')
-                                      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                                      .join(' ')}
-                                  </span>
-                                </div>
-                              )}
-
-                              {session.projectId && (
-                                <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-primary/10 border border-primary/20">
-                                  <Folder className="w-2.5 h-2.5 text-primary" />
-                                  <span className="text-[9px] font-bold text-primary truncate max-w-[60px]">
-                                    {projects.find(p => p._id === session.projectId)?.name ||
-                                      'Personal'}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="sidebar-chat-actions">
-                            {generatingChatIds.includes(session.sessionId) ? (
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  useGenerationStore.getState().abortGeneration(session.sessionId);
-                                }}
-                                className="sidebar-chat-action-btn stop-btn text-red-500 hover:text-red-600 bg-red-500/10 rounded-lg p-1 animate-pulse"
-                                title="Stop Generation"
-                              >
-                                <Square className="w-2.5 h-2.5 fill-current" />
-                              </button>
+                                );
+                              })()
                             ) : (
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  startRename(e, session);
-                                }}
-                                className="sidebar-chat-action-btn"
-                                title="Rename Chat"
-                              >
-                                <Edit2 />
-                              </button>
+                              <MessageSquare
+                                className="w-3.5 h-3.5 text-primary/50 shrink-0"
+                                strokeWidth={2}
+                              />
                             )}
+
+                            {generatingChatIds.includes(session.sessionId) && (
+                              <span
+                                title="Generating response..."
+                                className="flex items-center gap-[3px] shrink-0"
+                              >
+                                <span
+                                  className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
+                                  style={{ animationDelay: '0ms' }}
+                                />
+                                <span
+                                  className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
+                                  style={{ animationDelay: '120ms' }}
+                                />
+                                <span
+                                  className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-bounce"
+                                  style={{ animationDelay: '240ms' }}
+                                />
+                              </span>
+                            )}
+                            <span className="truncate">
+                              {highlightMatch(
+                                session.title || 'Untitled Intelligence',
+                                searchQuery
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                            {session.activeTool?.startsWith('legal_') && (
+                              <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-purple-500/10 border border-purple-500/20">
+                                <span className="text-[8px] font-black text-purple-500 uppercase tracking-tighter">
+                                  AI LEGAL
+                                </span>
+                                <span className="text-[8px] font-bold text-purple-400/70 truncate max-w-[80px]">
+                                  {session.activeTool
+                                    .replace('legal_', '')
+                                    .split('_')
+                                    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                                    .join(' ')}
+                                </span>
+                              </div>
+                            )}
+
+                            {session.projectId && (
+                              <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-primary/10 border border-primary/20">
+                                <Folder className="w-2.5 h-2.5 text-primary" />
+                                <span className="text-[9px] font-bold text-primary truncate max-w-[60px]">
+                                  {projects.find(p => p._id === session.projectId)?.name ||
+                                    'Personal'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="sidebar-chat-actions">
+                          {generatingChatIds.includes(session.sessionId) ? (
                             <button
                               onClick={e => {
                                 e.stopPropagation();
                                 e.preventDefault();
-                                handleDeleteSession(e, session.sessionId);
+                                useGenerationStore.getState().abortGeneration(session.sessionId);
                               }}
-                              className="sidebar-chat-action-btn delete"
-                              title="Delete Chat"
+                              className="sidebar-chat-action-btn stop-btn text-red-500 hover:text-red-600 bg-red-500/10 rounded-lg p-1 animate-pulse"
+                              title="Stop Generation"
                             >
-                              <X />
+                              <Square className="w-2.5 h-2.5 fill-current" />
                             </button>
-                          </div>
+                          ) : (
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                startRename(e, session);
+                              }}
+                              className="sidebar-chat-action-btn"
+                              title="Rename Chat"
+                            >
+                              <Edit2 />
+                            </button>
+                          )}
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeleteSession(e, session.sessionId);
+                            }}
+                            className="sidebar-chat-action-btn delete"
+                            title="Delete Chat"
+                          >
+                            <X />
+                          </button>
                         </div>
-                      )}
-                    </NavLink>
-                  </div>
-                )}
-              </motion.div>
-            ));
-          })()}
+                      </div>
+                    )}
+                  </NavLink>
+                </div>
+              )}
+            </motion.div>
+          ))}
       </div>
 
       {/* Confirmation and Share Modals */}

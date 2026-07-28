@@ -308,15 +308,13 @@ const useScrollNavbar = () => {
 };
 
 const DashboardLayout = () => {
-  const {
-    toggles: tglState,
-    setToggle,
-    user: currentUser,
-    activeMode: currentMode,
-    activeLegalToolData: selectedLegalTool,
-    legalView,
-  } = useUserStore();
-  const isSidebarOpen = tglState.sidebarOpen;
+  const isSidebarOpen = useUserStore(state => state.toggles.sidebarOpen);
+  const focusMode = useUserStore(state => state.toggles.focusMode);
+  const setToggle = useUserStore(state => state.setToggle);
+  const currentUser = useUserStore(state => state.user);
+  const currentMode = useUserStore(state => state.activeMode);
+  const selectedLegalTool = useUserStore(state => state.activeLegalToolData);
+  const legalView = useUserStore(state => state.legalView);
   const setIsSidebarOpen = val => setToggle('sidebarOpen', val);
 
   const location = useLocation();
@@ -397,7 +395,7 @@ const DashboardLayout = () => {
         />
       </div>
 
-      {!tglState.focusMode && !isLegalWorkspace && (
+      {!focusMode && !isLegalWorkspace && (
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
@@ -407,7 +405,7 @@ const DashboardLayout = () => {
 
       <div className="flex-1 flex flex-col min-w-0 bg-transparent h-full relative">
         {/* ─── FINAL RENDER (Navbar) ─── */}
-        {allowNavbar && !isFullScreen && !isSidebarOpen && !tglState.focusMode && (
+        {allowNavbar && !isFullScreen && !isSidebarOpen && !focusMode && (
           <div
             className={`navbar fixed top-0 left-0 right-0 z-[1001] transition-transform duration-300 ${isLegalWorkspace ? 'lg:left-0' : 'lg:left-[280px]'}
               ${showOnScroll ? 'translate-y-0' : '-translate-y-full'} bg-transparent border-none shadow-none`}
@@ -595,7 +593,7 @@ const NavigateToCaseChat = () => {
 };
 
 const NavigateProvider = () => {
-  const tglState = useUserStore(state => state.toggles);
+
 
   return (
     <SSOInterceptor>

@@ -70,12 +70,10 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
   const getFlagUrl = code => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 
   const navigate = useNavigate();
-  const {
-    toggles: notifiyTgl,
-    user: currentUser,
-    setUser: setUserRecoil,
-    setActiveProjects: setProjects,
-  } = useUserStore();
+  const notify = useUserStore(state => state.toggles.notify);
+  const currentUser = useUserStore(state => state.user);
+  const setUserRecoil = useUserStore(state => state.setUser);
+  const setProjects = useUserStore(state => state.setActiveProjects);
   const user = currentUser || getUserData() || { name: 'Loading...', email: '...', role: 'user' };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   // New States
@@ -129,37 +127,87 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
     navigate(AppRoute.LANDING);
   };
 
+  // Load layout metadata and sync credits in parallel on mount
   useEffect(() => {
-    if (token) {
+    if (!token) return;
+
+    Promise.all([
       axios
         .get(apis.user, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        .then(res => {
-          if (res.data) {
-            const mergedData = setUserData(res.data);
-            setUserRecoil({ user: mergedData });
-          }
-        })
+        .then(res => res.data)
         .catch(err => {
           console.error(err);
           if (err.status == 401) clearUser();
-        });
-    }
+          return null;
+        }),
+      getSubscriptionDetails().catch(err => {
+        console.log(err);
+        return null;
+      }),
+      syncCredits().catch(err => {
+        console.error(err);
+        return null;
+      }),
+      apiService.getProjects().catch(err => {
+        console.error('Failed to fetch projects:', err);
+        return [];
+      }),
+    ]).then(([userData, subDetails, credits, projectsData]) => {
+      // 1. Update user details
+      if (userData) {
+        const mergedData = setUserData(userData);
+        setUserRecoil({ user: mergedData });
+      }
 
-    if (token) {
-      getSubscriptionDetails()
-        .then(data => {
-          if (data.founderStatus) {
-            setPlanName('Founder');
-          } else if (data.subscription?.planId?.planName) {
-            setPlanName(data.subscription.planId.planName);
-          } else {
-            setPlanName('Free Plan');
-          }
-        })
-        .catch(err => console.log(err));
-    }
+      // 2. Set plan name
+      if (subDetails) {
+        if (subDetails.founderStatus) {
+          setPlanName('Founder');
+        } else if (subDetails.subscription?.planId?.planName) {
+          setPlanName(subDetails.subscription.planId.planName);
+        } else {
+          setPlanName('Free Plan');
+        }
+      }
+
+      // 3. Set projects list & check reminders
+      const verifiedProjects = Array.isArray(projectsData) ? projectsData : [];
+      setProjects(verifiedProjects);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      verifiedProjects.forEach(p => {
+        if (p.isLegalCase && p.hearings) {
+          p.hearings.forEach(h => {
+            if (h.status !== 'Upcoming') return;
+            const hDate = new Date(h.date);
+            hDate.setHours(0, 0, 0, 0);
+
+            if (hDate.getTime() === today.getTime()) {
+              addNotification({
+                title: `Hearing Today: ${p.name}`,
+                desc: `Scheduled for ${h.time || 'today'} at ${h.courtName || 'Court'}.`,
+                type: 'alert',
+              });
+            } else if (hDate.getTime() === tomorrow.getTime()) {
+              addNotification({
+                title: `Upcoming Hearing Tomorrow`,
+                desc: `Case: ${p.name}. Location: ${h.location || h.courtName || 'Scheduled Court'}.`,
+                type: 'info',
+              });
+            }
+          });
+        }
+      });
+    });
+
+    const interval = setInterval(syncCredits, 60000); // Every minute
+    return () => clearInterval(interval);
   }, [token]);
 
   useEffect(() => {
@@ -168,62 +216,10 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
     }
   }, [isCreditsOpen, token]);
 
-  // Sync credits initially and set up periodic sync
-  useEffect(() => {
-    if (token) {
-      syncCredits();
-      const interval = setInterval(syncCredits, 60000); // Every minute
-      return () => clearInterval(interval);
-    }
-  }, [token]);
-
-  // Fetch projects for logged-in users
-  useEffect(() => {
-    if (token) {
-      apiService
-        .getProjects()
-        .then(data => {
-          const projectsData = Array.isArray(data) ? data : [];
-          setProjects(projectsData);
-
-          // Check for hearing reminders
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-
-          projectsData.forEach(p => {
-            if (p.isLegalCase && p.hearings) {
-              p.hearings.forEach(h => {
-                if (h.status !== 'Upcoming') return;
-                const hDate = new Date(h.date);
-                hDate.setHours(0, 0, 0, 0);
-
-                if (hDate.getTime() === today.getTime()) {
-                  addNotification({
-                    title: `Hearing Today: ${p.name}`,
-                    desc: `Scheduled for ${h.time || 'today'} at ${h.courtName || 'Court'}.`,
-                    type: 'alert',
-                  });
-                } else if (hDate.getTime() === tomorrow.getTime()) {
-                  addNotification({
-                    title: `Upcoming Hearing Tomorrow`,
-                    desc: `Case: ${p.name}. Location: ${h.location || h.courtName || 'Scheduled Court'}.`,
-                    type: 'info',
-                  });
-                }
-              });
-            }
-          });
-        })
-        .catch(err => console.error('Failed to fetch projects:', err));
-    }
-  }, [token]);
-
   return (
     <>
       <AnimatePresence>
-        {notifiyTgl.notify && (
+        {notify && (
           <motion.div
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}

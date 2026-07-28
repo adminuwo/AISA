@@ -21,7 +21,6 @@ const LoginRequiredModal = () => {
     return () => window.removeEventListener('login_required', handleLoginRequired);
   }, []);
 
-  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -30,7 +29,7 @@ const LoginRequiredModal = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className={`fixed inset-0 z-[100000] backdrop-blur-md flex justify-center items-center p-4 ${
+          className={`fixed inset-0 z-[100000] backdrop-blur-sm sm:backdrop-blur-md flex justify-center items-center p-4 ${
             isDark ? 'bg-black/80' : 'bg-slate-900/40'
           }`}
           onClick={() => setIsOpen(false)}

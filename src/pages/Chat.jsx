@@ -216,8 +216,8 @@ ChatRow.displayName = 'ChatRow';
 import ActionCard from '../Components/ActionCard';
 import { useAILegalCRM } from '../Tools/AI_Legal/hooks/useAILegalCRM';
 import LegalWorkspaceHeader from '../Tools/AI_Legal/components/LegalWorkspaceHeader';
-import LegalWorkspaceWelcome from '../Tools/AI_Legal/components/LegalWorkspaceWelcome';
-import AiLegalContent from '../Tools/AI_Legal/components/AiLegalContent';
+const LegalWorkspaceWelcome = React.lazy(() => import('../Tools/AI_Legal/components/LegalWorkspaceWelcome'));
+const AiLegalContent = React.lazy(() => import('../Tools/AI_Legal/components/AiLegalContent'));
 import useCaseWorkspaceStore from '../userStore/caseWorkspaceStore';
 import { ActiveCaseProvider } from '../Tools/AI_Legal/context/ActiveCaseContext';
 import { SelectionToolbarProvider } from '../Components/SelectionToolbar/SelectionToolbarProvider';
@@ -871,9 +871,7 @@ const Chat = () => {
   }, [sessionId, currentProjectId, setCurrentProjectId]);
 
   const handleSendMessageRef = useRef(null);
-  useEffect(() => {
-    handleSendMessageRef.current = handleSendMessage;
-  });
+  const scrollToBottomRef = useRef(null);
 
   useEffect(() => {
     window.handleAisaAction = (text) => {
@@ -886,7 +884,6 @@ const Chat = () => {
     };
   }, []);
 
-  const tglState = useUserStore(state => state.toggles);
   const setTglState = (updater) => {
     const next = typeof updater === 'function' ? updater(useUserStore.getState().toggles) : updater;
     Object.entries(next).forEach(([k, v]) => useUserStore.getState().setToggle(k, v));
@@ -1953,7 +1950,7 @@ const Chat = () => {
     };
   }, [isAttachMenuOpen, isToolsMenuOpen, messages.length, isLoading]);
 
-  const processFile = (file) => {
+  const processFile = useCallback((file) => {
     if (!file) return;
 
     let fileName = file.name || `file_${Date.now()}`;
@@ -2014,9 +2011,9 @@ const Chat = () => {
       }]);
     };
     reader.readAsDataURL(file);
-  };
+  }, [setSelectedFiles, setFilePreviews]);
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = useCallback((e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -2026,10 +2023,10 @@ const Chat = () => {
     // [PROACTIVE FEATURE]: If this is a new chat (no messages), automatically trigger analysis
     if (messages.length === 0 && !isLoading) {
       setTimeout(() => {
-        handleSendMessage();
+        handleSendMessageRef.current?.();
       }, 1000); // 1s delay to ensure FileReader (in processFile) has finished
     }
-  };
+  }, [processFile, setIsAttachMenuOpen, messages.length, isLoading]);
 
   const handlePaste = (e) => {
     // Only handle if there are files (blobs) or items in clipboard
@@ -2063,7 +2060,7 @@ const Chat = () => {
     }
   };
 
-  const handleRemoveFile = (id) => {
+  const handleRemoveFile = useCallback((id) => {
     if (id) {
       // Find the file name to remove from selectedFiles
       const previewToRemove = filePreviews.find(p => p.id === id);
@@ -2079,7 +2076,7 @@ const Chat = () => {
     if (uploadInputRef.current) uploadInputRef.current.value = '';
     if (driveInputRef.current) driveInputRef.current.value = '';
     if (photosInputRef.current) photosInputRef.current.value = '';
-  };
+  }, [filePreviews, setSelectedFiles, setFilePreviews, uploadInputRef, driveInputRef, photosInputRef]);
 
   const handleAttachmentSelect = (type) => {
     setIsAttachMenuOpen(false);
@@ -2094,7 +2091,7 @@ const Chat = () => {
     }
   };
 
-  const handleDocToVoiceSelect = async (e) => {
+  const handleDocToVoiceSelect = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -2148,7 +2145,7 @@ const Chat = () => {
         isProcessing: true
       };
       setMessages(prev => [...prev, processingMsg]);
-      scrollToBottom();
+      scrollToBottomRef.current?.();
 
       // Update UI slightly after extraction
       setTimeout(() => {
@@ -2157,7 +2154,7 @@ const Chat = () => {
           content: `🎧 **CONVERTING TO VOICE...**\nSynthesizing natural audio for **${file.name}**. This won't take long!`
         } : msg));
       }, 1500);
-      scrollToBottom();
+      scrollToBottomRef.current?.();
 
       // 3. Start Conversion - Added high timeout for long docs
       try {
@@ -2212,7 +2209,7 @@ const Chat = () => {
 
           toast.success("Conversion complete! 🎶");
           refreshSubscription();
-          scrollToBottom();
+          scrollToBottomRef.current?.();
         };
 
       } catch (err) {
@@ -2252,7 +2249,7 @@ const Chat = () => {
     reader.readAsDataURL(file);
 
     e.target.value = ''; // Always reset so user can click/upload same file again
-  };
+  }, [checkLimitLocally, setIsAttachMenuOpen, activeSessionId, currentProjectId, navigate, setMessages, audioLangCode, audioVoiceName, audioPitch, audioSpeed, refreshSubscription]);
 
   const manualFileToAudioConversion = async (file, activeSessionId) => {
     if (!file) return;
@@ -3218,7 +3215,7 @@ const Chat = () => {
   };
 
   // Voice Input Handler
-  const handleVoiceInput = () => {
+  const handleVoiceInput = useCallback(() => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       toast.error('Voice input not supported in this browser');
       return;
@@ -3270,7 +3267,7 @@ const Chat = () => {
       const text = transcriptRef.current.trim();
       if (!isManualStopRef.current && text) {
         voiceUsedRef.current = true;
-        handleSendMessage(null, text);
+        handleSendMessageRef.current?.(null, text);
       }
       isManualStopRef.current = false;
     };
@@ -3287,7 +3284,7 @@ const Chat = () => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [isListening, setIsListening, currentLang, setInputValue]);
 
   // Ensure Chat Mic stops when Live Mode starts
   useEffect(() => {
@@ -4174,6 +4171,8 @@ const Chat = () => {
       }
     }
   };
+
+  scrollToBottomRef.current = scrollToBottom;
 
   useEffect(() => {
     // Do NOT auto-scroll while AI is streaming text word-by-word
@@ -5588,6 +5587,8 @@ ${documentConvertActive ? `### DOCUMENT CONVERSION MODE ENABLED (CRITICAL):
       gen.complete(activeSessionId); // Ensure global store is always cleaned up
     }
   };
+
+  handleSendMessageRef.current = handleSendMessage;
 
   const handleDeleteSession = (e, id) => {
     e.stopPropagation();
@@ -7499,7 +7500,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
                   ) : (
                     <div className="relative flex-grow overflow-y-auto pt-[72px] sm:pt-[76px] pb-64 select-text">
                       {messages.length === 0 && !isSessionLoading && !isHydrating && currentCase && selectedLegalTool?.id === 'legal_my_case' && location.pathname !== '/dashboard/legal' && (
-                        <LegalWorkspaceWelcome currentCase={currentCase} />
+                        <React.Suspense fallback={<div className="p-8 text-center text-xs opacity-50">Loading Workspace...</div>}>
+                          <LegalWorkspaceWelcome currentCase={currentCase} />
+                        </React.Suspense>
                       )}
 
                       <AnimatePresence>
@@ -7782,14 +7785,16 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
       </Transition>
 
       {/* Limit Reached handling is now via LoginRequiredModal event */}
-      <OnboardingModal
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={() => {
-          // Onboarding finished, just close the modal
-          setShowOnboarding(false);
-        }}
-      />
+      {showOnboarding && (
+        <OnboardingModal
+          isOpen={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          onComplete={() => {
+            // Onboarding finished, just close the modal
+            setShowOnboarding(false);
+          }}
+        />
+      )}
 
       {/* ===== WHATSAPP IN-APP SHARE MODAL ===== */}
       {
@@ -8427,36 +8432,42 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
       </React.Suspense>
 
       {/* Gmail Connected Feature Showcase Modal */}
-      <GmailConnectedModal
-        isOpen={showGmailModal}
-        onClose={() => setShowGmailModal(false)}
-        onTryPrompt={(prompt) => {
-          setInputValue(prompt);
-          setShowGmailModal(false);
-          setTimeout(() => {
-            if (inputRef.current) inputRef.current.focus();
-          }, 100);
-        }}
-      />
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        shareId={currentShareId}
-        sessionTitle={messages[0]?.content || "Shared Chat"}
-        sessionId={activeSessionId}
-      />
+      {showGmailModal && (
+        <GmailConnectedModal
+          isOpen={showGmailModal}
+          onClose={() => setShowGmailModal(false)}
+          onTryPrompt={(prompt) => {
+            setInputValue(prompt);
+            setShowGmailModal(false);
+            setTimeout(() => {
+              if (inputRef.current) inputRef.current.focus();
+            }, 100);
+          }}
+        />
+      )}
+      {isShareModalOpen && (
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          shareId={currentShareId}
+          sessionTitle={messages[0]?.content || "Shared Chat"}
+          sessionId={activeSessionId}
+        />
+      )}
       {/* My Case Intelligence Dashboard Panel */}
-      <CaseIntelligencePanel
-        isOpen={isCasePanelOpen}
-        onClose={() => setIsCasePanelOpen(false)}
-        currentCase={currentCase}
-        onUseInArgument={handleUseInArgument}
-        onUpdate={(updated) => {
-          setCurrentCase(updated);
-          // Sync with the legalCases list if needed
-          setAllProjects(prev => prev.map(c => c._id === updated._id ? updated : c));
-        }}
-      />
+      {isCasePanelOpen && (
+        <CaseIntelligencePanel
+          isOpen={isCasePanelOpen}
+          onClose={() => setIsCasePanelOpen(false)}
+          currentCase={currentCase}
+          onUseInArgument={handleUseInArgument}
+          onUpdate={(updated) => {
+            setCurrentCase(updated);
+            // Sync with the legalCases list if needed
+            setAllProjects(prev => prev.map(c => c._id === updated._id ? updated : c));
+          }}
+        />
+      )}
     </div>
 
   );
@@ -8478,18 +8489,27 @@ export const AiLegalContentRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0"
     >
-      <AiLegalContent
-        isDark={context.isDarkMode}
-        setSelectedLegalTool={context.setSelectedLegalTool}
-        currentCase={context.currentCase}
-        setCurrentCase={context.setCurrentCase}
-        allProjects={context.allProjects}
-        setAllProjects={context.setAllProjects}
-        setCurrentProjectId={context.setCurrentProjectId}
-        setMessages={context.setMessages}
-        setLegalView={context.setLegalView}
-        onBack={context.handleBackToDashboard}
-      />
+      <React.Suspense fallback={
+        <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">Loading Workspace...</span>
+          </div>
+        </div>
+      }>
+        <AiLegalContent
+          isDark={context.isDarkMode}
+          setSelectedLegalTool={context.setSelectedLegalTool}
+          currentCase={context.currentCase}
+          setCurrentCase={context.setCurrentCase}
+          allProjects={context.allProjects}
+          setAllProjects={context.setAllProjects}
+          setCurrentProjectId={context.setCurrentProjectId}
+          setMessages={context.setMessages}
+          setLegalView={context.setLegalView}
+          onBack={context.handleBackToDashboard}
+        />
+      </React.Suspense>
     </motion.div>
   );
 };
