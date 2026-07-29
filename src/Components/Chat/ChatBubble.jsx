@@ -43,9 +43,7 @@ import toast from 'react-hot-toast';
 const CashFlowChartWidget = React.lazy(() =>
   import('../../Tools/AI_Cashflow/CashFlowChartWidget').catch(() => ({ default: () => null }))
 );
-const CustomVideoPlayer = React.lazy(() =>
-  import('../../Tools/AI_Video_Generator/CustomVideoPlayer').catch(() => ({ default: () => null }))
-);
+
 
 // Standalone CodeBlock component with memoization for performance (Sprint 7A)
 const CodeBlock = React.memo(({ lang, codeValue, isUser, ...props }) => {
@@ -494,7 +492,6 @@ const ChatBubble = React.memo(
 
     const isMediaFeature =
       msg.mode === MODES.IMAGE_GENERATION ||
-      msg.mode === MODES.VIDEO_GENERATION ||
       msg.mode === MODES.IMAGE_EDIT ||
       !!msg.imageUrl ||
       !!msg.videoUrl;
@@ -578,13 +575,6 @@ const ChatBubble = React.memo(
             color: 'text-violet-500',
             bg: 'bg-violet-500/10',
             border: 'border-violet-500/20',
-          };
-        case MODES.VIDEO_GENERATION:
-          return {
-            label: 'AI Video Generation',
-            color: 'text-orange-500',
-            bg: 'bg-orange-500/10',
-            border: 'border-orange-500/20',
           };
         case MODES.IMAGE_EDIT:
           return {
@@ -1146,13 +1136,7 @@ const ChatBubble = React.memo(
 
                   {msg.videoUrl && (
                     <div className="relative mt-4 mb-2 w-fit max-w-full">
-                      <React.Suspense
-                        fallback={
-                          <div className="w-full aspect-video bg-black/20 animate-pulse rounded-xl" />
-                        }
-                      >
-                        <CustomVideoPlayer src={msg.videoUrl} compact={true} />
-                      </React.Suspense>
+                      <video src={msg.videoUrl} controls className="w-full max-w-sm rounded-xl border border-white/10" />
                     </div>
                   )}
 

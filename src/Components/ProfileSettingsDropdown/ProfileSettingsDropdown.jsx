@@ -1413,15 +1413,6 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                         : `${usage?.carousels || 0} / ${limits?.carousels || 0} per day`}
                     </span>
                   </div>
-
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-semibold text-subtext">AI Videos:</span>
-                    <span className="font-black text-maintext">
-                      {limits?.videos === 0
-                        ? 'Not Included'
-                        : `${usage?.videos || 0} / ${limits?.videos || 0} per day`}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>

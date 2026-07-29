@@ -131,9 +131,6 @@ const MODE_LABELS = {
   IMAGE_GENERATION: 'Generate Image',
   imageGen: 'Generate Image',
   image: 'Generate Image',
-  VIDEO_GENERATION: 'Generate Video',
-  videoGen: 'Generate Video',
-  video: 'Generate Video',
   AUDIO_CONVERT: 'Convert to Audio',
   audioGen: 'Convert to Audio',
   audio: 'Convert to Audio',
@@ -439,7 +436,6 @@ const ChatSessionsTab = () => {
                 <option value="CODE_WRITER">Code Writer</option>
                 <option value="LEGAL_TOOLKIT">AI Legal</option>
                 <option value="IMAGE_GENERATION">Generate Image</option>
-                <option value="VIDEO_GENERATION">Generate Video</option>
                 <option value="AUDIO_CONVERT">Convert to Audio</option>
                 <option value="DOCUMENT_CONVERT">Convert Documents</option>
                 <option value="IMAGE_EDIT">Edit Image</option>

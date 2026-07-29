@@ -63,7 +63,6 @@ const ToolLimitTab = () => {
           chatScope: plan.chatScope,
           imageLimit: Number(plan.imageLimit),
           carouselLimit: Number(plan.carouselLimit),
-          videoLimit: Number(plan.videoLimit),
           editImageAllowed: Boolean(plan.editImageAllowed),
           cashflowAllowed: Boolean(plan.cashflowAllowed),
           validityDays: Number(plan.validityDays),
@@ -185,12 +184,6 @@ const ToolLimitTab = () => {
           name: 'AI Carousel Generation',
           description: 'Daily AIAD carousel limit',
           field: 'carouselLimit',
-          type: 'number',
-        },
-        {
-          name: 'AI Video Generation',
-          description: 'Daily video creation limit',
-          field: 'videoLimit',
           type: 'number',
         },
         {

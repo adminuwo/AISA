@@ -116,7 +116,7 @@ const ModernDashboard = ({
       icon: Sparkles,
       color: '#a78bfa',
       description:
-        '🎨 Generate stunning visuals, cinematic videos, and natural audio with state-of-the-art AI models.',
+        '🎨 Generate stunning visuals and natural audio with state-of-the-art AI models.',
       tools: [
         {
           id: 'image',
@@ -124,20 +124,6 @@ const ModernDashboard = ({
           desc: 'High-quality AI image generation.',
           icon: ImagePlus,
           color: '#a78bfa',
-        },
-        {
-          id: 'video',
-          label: t('generateVideo') || 'Generate Video',
-          desc: 'Cinematic AI video creation.',
-          icon: Video,
-          color: '#fb923c',
-        },
-        {
-          id: 'image_to_video',
-          label: t('imageToVideo') || 'Image to Video',
-          desc: 'Animate photos with fluid motion.',
-          icon: PlayCircle,
-          color: '#f97316',
         },
         {
           id: 'edit_image',

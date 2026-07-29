@@ -45,11 +45,6 @@ const formatFeatureString = (feature, plan) => {
     result = result.replace(/\d+/, plan.carouselLimit ?? 0);
   }
 
-  // 5. Videos/day
-  if (/Videos\/day/i.test(result)) {
-    result = result.replace(/\d+/, plan.videoLimit ?? 0);
-  }
-
   return result;
 };
 

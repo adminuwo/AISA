@@ -42,17 +42,10 @@ const PLAN_FEATURES_MAP = {
   generate_carousel: [
     '1–5 AI Carousels per day',
     '5–10 Images per day',
-    'AI Video Generation',
     'AI Ads Agent',
   ],
-  generate_video: [
-    '5 Videos per day (Standalone)',
-    '10 Images per day',
-    'AI Carousels',
-    'Priority Support',
-  ],
-  cashflow: ['CashFlow Explorer', 'Unlimited AI Chat', 'Image & Video Generation', 'AI Ads Agent'],
-  default: ['Unlimited AI Chat', 'Image & Video Generation', 'AI Ads Agent', 'CashFlow Explorer'],
+  cashflow: ['CashFlow Explorer', 'Unlimited AI Chat', 'Image Generation', 'AI Ads Agent'],
+  default: ['Unlimited AI Chat', 'Image Generation', 'AI Ads Agent', 'CashFlow Explorer'],
 };
 
 const ICON_MAP = {

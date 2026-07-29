@@ -45,10 +45,7 @@ import { copyText } from '../utils/clipboard';
 import ActionCard from '../Components/ActionCard';
 import { useTheme } from '../context/ThemeContext';
 
-// Lazy load video player to optimize initial bundle size
-const CustomVideoPlayer = React.lazy(() =>
-  import('../Tools/AI_Video_Generator/CustomVideoPlayer').catch(() => ({ default: () => null }))
-);
+
 
 const ImageViewer = ({ src, alt }) => {
   const [scale, setScale] = useState(1);
@@ -241,14 +238,6 @@ const getModeInfo = mode => {
         color: 'text-violet-500',
         bg: 'bg-violet-500/10',
         border: 'border-violet-500/20',
-      };
-    case MODES.VIDEO_GENERATION:
-      return {
-        label: 'AI Video Generation',
-        icon: Video,
-        color: 'text-orange-500',
-        bg: 'bg-orange-500/10',
-        border: 'border-orange-500/20',
       };
     case MODES.IMAGE_EDIT:
       return {
@@ -997,13 +986,7 @@ const SharedChat = () => {
                   {/* Video Url Rendering */}
                   {msg.videoUrl && (
                     <div className="relative mt-4 mb-2 w-fit max-w-full">
-                      <React.Suspense
-                        fallback={
-                          <div className="w-full aspect-video bg-black/20 animate-pulse rounded-xl" />
-                        }
-                      >
-                        <CustomVideoPlayer src={msg.videoUrl} compact={true} />
-                      </React.Suspense>
+                      <video src={msg.videoUrl} controls className="w-full max-w-sm rounded-xl border border-white/10" />
                     </div>
                   )}
 

@@ -67,11 +67,6 @@ const formatFeatureString = (feature, plan) => {
     result = result.replace(/\d+/, plan.carouselLimit ?? 0);
   }
 
-  // 5. Videos/day
-  if (/Videos\/day/i.test(result)) {
-    result = result.replace(/\d+/, plan.videoLimit ?? 0);
-  }
-
   return result;
 };
 
@@ -253,12 +248,8 @@ const Pricing = () => {
       });
     }
 
-    if (plan.videoLimit > 0) {
-      summary.push({ text: `${plan.videoLimit} Videos / Day`, icon: <Video size={14} /> });
-    } else if (plan.carouselLimit > 0) {
-      summary.push({ text: `${plan.carouselLimit} Carousel / Day`, icon: <Video size={14} /> });
-    } else {
-      summary.push({ text: 'No Carousel/Video Gen', icon: <Video size={14} />, locked: true });
+    if (plan.carouselLimit > 0) {
+      summary.push({ text: `${plan.carouselLimit} Carousel / Day`, icon: <ImageIcon size={14} /> });
     }
 
     return summary;
@@ -466,34 +457,6 @@ const Pricing = () => {
             </span>
           );
 
-        case 'generate_video':
-          if (plan.videoLimit > 0) {
-            return (
-              <span className="feature-badge">
-                ✓ {t('fourKUltra')} ({plan.videoLimit}/day)
-              </span>
-            );
-          }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
-
-        case 'magic_card':
-          if (plan.videoLimit > 0 || planKey === 'plan_3') {
-            return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
-              </span>
-            );
-          }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
-
         case 'web_search':
         case 'deep_search':
         case 'code_writer':
@@ -592,8 +555,6 @@ const Pricing = () => {
       { feature: 'AISA Chat', key: 'chat' },
       { feature: 'AISA Generate Image', key: 'generate_image' },
       { feature: 'AISA Edit Image', key: 'edit_image' },
-      { feature: 'AISA Generate Video', key: 'generate_video' },
-      { feature: 'AISA Image -> Video Magic Card', key: 'magic_card' },
       { feature: 'AISA Web Search', key: 'web_search' },
       { feature: 'AISA Deep Search', key: 'deep_search' },
       { feature: 'AISA Code Writer', key: 'code_writer' },
@@ -618,8 +579,8 @@ const Pricing = () => {
               </tr>
             </thead>
             <tbody>
-              {comparisonData.map((row, idx) => (
-                <tr key={idx}>
+              {comparisonData.map((row) => (
+                <tr key={`comp-row-${row.key}`}>
                   <td className="font-bold flex items-center gap-2">
                     <span className="aisa-badge-small">AISA™</span>
                     {row.feature.replace('AISA ', '')}
@@ -792,10 +753,10 @@ const Pricing = () => {
                 {(() => {
                   const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
                   if (isFree) return <span>Free Access Tier</span>;
-                  if (plan.imageLimit === 0 && plan.videoLimit === 0) {
+                  if (plan.imageLimit === 0) {
                     return <span>Starter Package</span>;
                   }
-                  if (plan.videoLimit > 0) {
+                  if (plan.imageLimit >= 10) {
                     return <span>Business Pack</span>;
                   }
                   return <span>Pro Creator Pack</span>;
@@ -804,7 +765,7 @@ const Pricing = () => {
 
               <div className="credit-details">
                 {renderQuotaSummary(plan).map((est, i) => (
-                  <p key={i} className={est.locked ? 'locked-estimation' : ''}>
+                  <p key={`summary-${plan._id || plan.planId || 'p'}-${i}`} className={est.locked ? 'locked-estimation' : ''}>
                     <span style={{ opacity: est.locked ? 0.4 : 1 }}>{est.icon}</span>
                     <span style={{ opacity: est.locked ? 0.4 : 1 }}>{est.text}</span>
                     {est.locked && <span className="lock-icon">🔒</span>}
@@ -813,10 +774,12 @@ const Pricing = () => {
               </div>
 
               <ul className="feature-list">
-                {plan.features.map((feature, i) => {
+                {(plan.features || [])
+                  .filter(feature => !/video/i.test(feature))
+                  .map((feature, i) => {
                   const formattedFeature = formatFeatureString(feature, plan);
                   return (
-                    <li key={i}>
+                    <li key={`feat-${plan._id || plan.planId || 'p'}-${feature}-${i}`}>
                       <Check size={16} />
                       <span className="flex items-center gap-1.5">
                         <span

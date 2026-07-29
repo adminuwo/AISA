@@ -44,18 +44,6 @@ const SidebarTools = ({ onToolSelect, activeToolId }) => {
           icon: ImagePlus,
           color: '#a78bfa',
         },
-        {
-          id: 'video',
-          label: t('generateVideo') || 'Generate Video',
-          icon: Video,
-          color: '#fb923c',
-        },
-        {
-          id: 'image_to_video',
-          label: t('imageToVideo') || 'Image to Video',
-          icon: PlayCircle,
-          color: '#f97316',
-        },
         { id: 'edit_image', label: t('editImage') || 'Edit Image', icon: Wand2, color: '#f43f5e' },
         { id: 'audio', label: 'Generate Audio', icon: Headphones, color: '#34d399' },
       ],

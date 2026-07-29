@@ -135,7 +135,6 @@ const AnalyticsTab = () => {
     NORMAL_CHAT: 'AI Chat',
     LEGAL_TOOLKIT: 'Legal Toolkit',
     IMAGE_GENERATION: 'Image Generation',
-    VIDEO_GENERATION: 'Video Generation',
     IMAGE_EDIT: 'Image Edit',
     AUDIO_CONVERT: 'Audio Convert',
     DOCUMENT_CONVERT: 'Document Convert',

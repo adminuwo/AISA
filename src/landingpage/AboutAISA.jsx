@@ -60,11 +60,6 @@ const AboutAISA = ({ isOpen, onClose }) => {
       icon: <Image className="w-4 h-4" />,
       desc: t('createVisualsFromText'),
     },
-    {
-      title: t('generateVideo'),
-      icon: <Video className="w-4 h-4" />,
-      desc: t('textToCinematicVideo'),
-    },
     { title: t('webSearch'), icon: <Globe className="w-4 h-4" />, desc: t('liveWebDataAccess') },
     {
       title: t('deepSearch'),

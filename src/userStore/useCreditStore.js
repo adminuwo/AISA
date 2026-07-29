@@ -20,7 +20,6 @@ const useCreditStore = create(
         chatScope: 'total',
         images: 0,
         carousels: 0,
-        videos: 0,
         editImage: false,
         cashflow: false,
       },
@@ -28,7 +27,6 @@ const useCreditStore = create(
         chat: 0,
         images: 0,
         carousels: 0,
-        videos: 0,
       },
       planActivatedAt: null,
       renewalDate: null,
@@ -123,18 +121,6 @@ const useCreditStore = create(
               return {
                 allowed: false,
                 reason: `You've used your ${limits.carousels} carousel${limits.carousels > 1 ? 's' : ''} for today.`,
-              };
-            return { allowed: true };
-          case 'generate_video':
-            if (!limits.videos || limits.videos === 0)
-              return {
-                allowed: false,
-                reason: 'Video generation requires Business plan (₹2499/mo).',
-              };
-            if (usage.videos >= limits.videos)
-              return {
-                allowed: false,
-                reason: `You've used your ${limits.videos} videos for today.`,
               };
             return { allowed: true };
           case 'cashflow':

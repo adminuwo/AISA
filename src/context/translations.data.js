@@ -151,8 +151,6 @@ export const translations = {
     builtForEveryone: 'Built for Everyone',
     oneAssistant: 'One Assistant. Unlimited Possibilities.',
     createVisualsFromText: 'Create high-quality AI images from text prompts.',
-    textToCinematicVideo: 'Transform your text into cinematic AI videos instantly.',
-    imageToVideoMagic: 'Animate your photos with fluid and realistic AI motion.',
     magicImageEditor: 'Sophisticated AI magic editor for creative visual refinements.',
     researchComplexTopics: 'In-depth analysis and comprehensive data mining reports.',
     liveWebDataAccess: 'Fast and accurate real-time web search and queries.',
@@ -453,9 +451,6 @@ export const translations = {
     imageGenTitle: 'Image Generation',
     imageGenLongDesc:
       "Transform text prompts into stunning visuals instantly with AISA™'s image generation engine.",
-    videoGenTitle: 'Video Generation',
-    videoGenLongDesc:
-      'Create cinematic AI videos from text or images. The future of content creation is here.',
     webSearchTitle: 'Web Search',
     webSearchLongDesc:
       'Smart AI web browsing that surfaces the most relevant real-time information instantly.',

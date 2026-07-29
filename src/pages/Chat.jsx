@@ -23,7 +23,6 @@ import { apiService } from '../services/apiService';
 import { useLegalToolCredits } from '../hooks/useLegalToolCredits';
 
 const ImageEditor = React.lazy(() => import('../Tools/AI_Image_Generator/ImageEditor').catch(() => ({ default: () => null })));
-const CustomVideoPlayer = React.lazy(() => import('../Tools/AI_Video_Generator/CustomVideoPlayer').catch(() => ({ default: () => null })));
 import ModelSelector from '../Components/ModelSelector';
 const MagicToolSettingsCard = React.lazy(() => import('../Tools/MagicTools/MagicToolSettingsCard').catch(() => ({ default: () => null })));
 const CashFlowStockModal = React.lazy(() => import('../Tools/AI_Cashflow/CashFlowStockModal').catch(() => ({ default: () => null })));
@@ -54,7 +53,6 @@ import { getUserData, clearUser } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
 import PremiumUpsellModal from '../Components/PremiumUpsellModal';
-const MagicVideoGenModal = React.lazy(() => import('../Tools/AI_Video_Generator/MagicVideoGenModal').catch(() => ({ default: () => null })));
 const MagicImageEditModal = React.lazy(() => import('../Tools/AI_Image_Generator/MagicImageEditModal').catch(() => ({ default: () => null })));
 const AiSocialMediaDashboard = React.lazy(() => import('../Tools/AI_Social_Media/AiSocialMediaDashboard').catch(() => ({ default: () => null })));
 import DeleteConfirmModal from '../Components/DeleteConfirmModal';
@@ -407,12 +405,6 @@ const TOOL_PRICING = {
       { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable — production-ready image edits' }
     ]
   },
-  video: {
-    models: [
-      { id: 'veo-3.1-fast-generate-001', name: 'AISA™ Video Fast', price: '225/5S', speed: 'Fast', description: 'Quick high-quality video generation' },
-      { id: 'veo-3.1-generate-001', name: 'AISA™ Video Pro', price: '600/5S', speed: 'Cinema', description: 'Next-gen cinematic video synthesis' }
-    ]
-  },
   document: {
     models: [
       { id: 'gemini-3.5-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
@@ -588,8 +580,6 @@ const getModeInfo = (mode) => {
       return { label: "AI Web Search", icon: Globe, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20" };
     case MODES.IMAGE_GENERATION:
       return { label: "AI Image Generation", icon: ImagePlus, color: "text-violet-500", bg: "bg-violet-500/10", border: "border-violet-500/20" };
-    case MODES.VIDEO_GENERATION:
-      return { label: "AI Video Generation", icon: Video, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20" };
     case MODES.IMAGE_EDIT:
       return { label: "AI Magic Edit", icon: Wand2, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" };
     case MODES.CODING_HELP:
@@ -680,20 +670,6 @@ const Chat = () => {
         }
       }));
       return false;
-    }
-
-    // Lock Video features for Starter/Pro users
-    if (['Generate Video', 'Image to Video', 'Image to Video Magic'].includes(toolName)) {
-      const plan = (userPlanName || '').toLowerCase();
-      if (plan.includes('starter') || plan.includes('pro') || plan.includes('founder')) {
-        window.dispatchEvent(new CustomEvent('premium_required', {
-          detail: {
-            toolName,
-            customMessage: `Text to Video features are not available on the ${userPlanName || 'current'} plan. Please upgrade to Business to generate videos.`
-          }
-        }));
-        return false;
-      }
     }
 
     return true;
@@ -956,7 +932,6 @@ const Chat = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gen.isGenerating, gen.partialResponse, gen.typingMessageId]);
   const [editRefImage, setEditRefImage] = useState(null);
-  const [isMagicVideoModalOpen, setIsMagicVideoModalOpen] = useState(false);
   const [isSocialMediaDashboardOpen, setIsSocialMediaDashboardOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -976,7 +951,6 @@ const Chat = () => {
     "Analyze complex legal documents...",
     "Generate cinematic 8k images in space...",
     "Search for real-time market updates...",
-    "Animate static scenes into cinematic video...",
     "Summarize 50-page PDF reports...",
     "Write production-ready Python code...",
     "Convert documents into human-like audio..."
@@ -1020,14 +994,12 @@ const Chat = () => {
 
   const TOOL_PLACEHOLDERS = {
     image: "Describe the image you want to generate in detail...",
-    video: "Describe the video scene you want to create...",
     audio: "Paste text to generate natural-sounding audio...",
     code: "Write or paste code...",
     deep_search: "Enter a topic for in-depth AI research and analysis...",
     web_search: "Search for live updates or ask anything to the web...",
     document: "Upload a document and ask me to summarize or analyze it...",
     edit_image: "Describe the changes you want to make to the image...",
-    image_to_video: "Describe how you want to animate this image...",
     ai_cashflow: "Enter a stock symbol or ask about financial trends...",
     aiad_agent: "Describe your brand or product for social media content...",
     legal_general_chat: "Ask your legal question...",
@@ -1122,7 +1094,6 @@ const Chat = () => {
   });
   const [stockSearchResults, setStockSearchResults] = useState([]);
   const [isSearchingStocks, setIsSearchingStocks] = useState(false);
-  const [isVideoGeneration, setIsVideoGeneration] = useState(false);
   const [activeLegalToolkit, setActiveLegalToolkit] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
   const [unlockedTools, setUnlockedTools] = useState([]);
@@ -1134,10 +1105,7 @@ const Chat = () => {
     !excludedFloatingNavTools.includes(selectedLegalTool.id) &&
     legalView === 'CHAT';
 
-  const [videoAspectRatio, setVideoAspectRatio] = useState('16:9');
-  const [videoModelId, setVideoModelId] = useState('veo-3.1-fast-generate-001');
   const [editModelId, setEditModelId] = useState('gemini-3.1-flash-image');
-  const [videoResolution, setVideoResolution] = useState('1080p');
   const v = personalizations?.voice || { languageCode: 'en-US', voiceName: 'en-US-Chirp3-HD-Autonoe', pitch: 0, speed: 1.0 };
   const [audioLangCode, setAudioLangCode] = useState(v.languageCode);
   const [audioVoiceName, setAudioVoiceName] = useState(v.voiceName);
@@ -1619,14 +1587,13 @@ const Chat = () => {
     let mode = currentMode || 'NORMAL_CHAT';
     if (isCashFlowMode) mode = 'CASHFLOW';
     else if (isImageGeneration) mode = 'IMAGE_GENERATION';
-    else if (isVideoGeneration) mode = 'VIDEO_GENERATION';
     else if (isAudioConvertMode) mode = 'AUDIO_CONVERT';
     else if (isDocumentConvert) mode = 'DOCUMENT_CONVERT';
     else if (isCodeWriter) mode = 'CODE_WRITER';
     else if (isDeepSearch || isWebSearch || isFileAnalysis) mode = 'RAG';
     
     localStorage.setItem('aisa_active_mode', mode);
-  }, [currentMode, isCashFlowMode, isImageGeneration, isVideoGeneration, isAudioConvertMode, isDocumentConvert, isCodeWriter, isDeepSearch, isWebSearch, isFileAnalysis]);
+  }, [currentMode, isCashFlowMode, isImageGeneration, isAudioConvertMode, isDocumentConvert, isCodeWriter, isDeepSearch, isWebSearch, isFileAnalysis]);
 
   useEffect(() => {
     if (selectedLegalTool) {
@@ -1696,40 +1663,34 @@ const Chat = () => {
   const toolsMenuRef = useRef(null);
 
   useEffect(() => {
-    if (isImageGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isImageGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isImageGeneration]);
   useEffect(() => {
-    if (isVideoGeneration) { setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsImageGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
-  }, [isVideoGeneration]);
-  useEffect(() => {
-    if (isDeepSearch) { setIsImageGeneration(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isDeepSearch) { setIsImageGeneration(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isDeepSearch]);
   useEffect(() => {
-    if (isWebSearch) { setIsImageGeneration(false); setIsDeepSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isWebSearch) { setIsImageGeneration(false); setIsDeepSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isWebSearch]);
   useEffect(() => {
-    if (isAudioConvertMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isAudioConvertMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isAudioConvertMode]);
   useEffect(() => {
-    if (isDocumentConvert) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isDocumentConvert) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isDocumentConvert]);
   useEffect(() => {
-    if (isCodeWriter) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isCodeWriter) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isCodeWriter]);
   useEffect(() => {
-    if (isMagicEditing) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isMagicEditing) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isMagicEditing]);
   useEffect(() => {
-    if (isFileAnalysis) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isFileAnalysis) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsCashFlowMode(false); setIsStockModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isFileAnalysis]);
   useEffect(() => {
-    if (isMagicVideoModalOpen) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
-  }, [isMagicVideoModalOpen]);
-  useEffect(() => {
-    if (isCashFlowMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
+    if (isCashFlowMode) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setActiveLegalToolkit(false); setCurrentMode(null); setSelectedLegalTool(null); }
   }, [isCashFlowMode]);
   useEffect(() => {
-    if (activeLegalToolkit) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsVideoGeneration(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsMagicVideoModalOpen(false); setIsCashFlowMode(false); setIsStockModalOpen(false); }
+    if (activeLegalToolkit) { setIsImageGeneration(false); setIsDeepSearch(false); setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false); setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false); setIsCashFlowMode(false); setIsStockModalOpen(false); }
   }, [activeLegalToolkit]);
 
   // ─── Intent Detection Logic (Routing System) ──────────────────────────────
@@ -1781,7 +1742,7 @@ const Chat = () => {
     const toolUpdates = mapModeToToolState(suggestion.frontend_mode);
 
     // Deactivate all first (safety)
-    setIsImageGeneration(false); setIsVideoGeneration(false); setIsDeepSearch(false);
+    setIsImageGeneration(false); setIsDeepSearch(false);
     setIsWebSearch(false); setIsAudioConvertMode(false); setIsDocumentConvert(false);
     setIsCodeWriter(false); setIsMagicEditing(false); setIsFileAnalysis(false);
     setIsCashFlowMode(false);
@@ -1789,13 +1750,6 @@ const Chat = () => {
 
     // Dynamic activation based on map
     if (toolUpdates.activeImageGen) { setIsImageGeneration(true); }
-    if (toolUpdates.activeVideoGen) {
-      if (toolUpdates.videoMode === 'image_to_video') {
-        setIsMagicVideoModalOpen(true);
-      } else {
-        setIsVideoGeneration(true);
-      }
-    }
     if (toolUpdates.activeMagicEdit) setIsMagicEditing(true);
     if (toolUpdates.activeAudioTalk) setIsAudioConvertMode(true);
     if (toolUpdates.webSearchMode) setIsWebSearch(true);
@@ -2517,203 +2471,6 @@ const Chat = () => {
       });
       chatStorageService.saveMessage(activeSessionId, errorResponse, null, currentProjectId).catch(e => console.error(e));
       toast.error("Conversion failed");
-    }
-  };
-
-  const handleGenerateVideo = async (overridePrompt, activeSessionId) => {
-    if (!checkLimitLocally('video')) {
-      return;
-    }
-    try {
-      if (!inputRef.current?.value.trim() && !overridePrompt && selectedFiles.length === 0) {
-        // toast.error('Please enter a prompt or select a file');
-        // Let it slide if it's voice input (handled elsewhere)
-        if (!voiceUsedRef.current) return;
-      }
-
-      const prompt = overridePrompt || inputRef.current?.value || "";
-      // const filesToSend = [...selectedFiles]; // Snapshot // This variable is not used
-
-      // Voice Reader Mode Logic
-      if (isVoiceMode) {
-        try {
-          // 1. Add User Message to UI
-          const userMsgId = Date.now().toString();
-          const newUserMsg = {
-            id: userMsgId,
-            role: 'user', // Ensure role user
-            content: prompt, // Use content
-            timestamp: new Date(),
-            mode: 'VOICE_ASSISTANT',
-            activeTool: 'legal_voice_reader',
-            projectId: currentProjectId,
-            attachments: filePreviews.map(fp => ({
-              url: fp.url,
-              name: fp.name,
-              type: fp.type
-            }))
-          };
-          setMessages(prev => prev.filter(m => !m.isSystemLog).concat(newUserMsg), activeSessionId);
-
-          // Clear Inputs
-          setInputValue('');
-          setSelectedFiles([]);
-          setFilePreviews([]);
-          if (inputRef.current) inputRef.current.style.height = 'auto';
-
-          // Save to backend
-          if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, newUserMsg, null, currentProjectId).catch(err => console.error("Error saving voice message:", err));
-          }
-
-          // 2. Trigger Voice Reading Directly
-          setIsLoading(true);
-
-          // Show a "Reading..." AI bubble
-          const aiMsgId = (Date.now() + 1).toString();
-          const readingMsg = {
-            id: aiMsgId,
-            role: 'model', // Ensure role assistant
-            content: "🎧 Reading content aloud...", // Use content
-            timestamp: new Date(),
-            projectId: currentProjectId
-          };
-          setMessages(prev => [...prev, readingMsg], activeSessionId);
-
-          if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, readingMsg, null, currentProjectId).catch(err => console.error("Error saving reading bubble:", err));
-          }
-
-          setTimeout(() => {
-            speakResponse(prompt, audioLangCode, aiMsgId, newUserMsg.attachments);
-            setIsLoading(false);
-          }, 500);
-
-          return; // STOP HERE (Do not call AI API)
-        } catch (err) {
-          console.error("Voice mode handler failed:", err);
-        }
-      }
-
-      setLoadingText("Generating Video... 🎥");
-      setIsLoading(true);
-      // isSendingRef.current = true; // Mark as sending // This variable is not defined in the provided context
-
-      // 1. Add User Message to UI
-      const userMsgId = Date.now().toString();
-      const userMsg = {
-        id: userMsgId,
-        role: 'user',
-        content: prompt,
-        timestamp: new Date(),
-        projectId: currentProjectId,
-        attachments: filePreviews.map(fp => ({
-          url: fp.url,
-          name: fp.name,
-          type: fp.type
-        })),
-        mode: MODES.VIDEO_GENERATION
-      };
-
-      // Show a message that video generation is in progress
-      const tempId = (Date.now() + 1).toString();
-      const newMessage = {
-        id: tempId,
-        role: 'model',
-        isGenerating: true,
-        content: `🎬 Generating video from prompt: "${prompt}"\n\nPlease wait, this may take a moment...`, // Use content
-        timestamp: new Date(),
-        projectId: currentProjectId,
-        mode: MODES.VIDEO_GENERATION
-      };
-
-      setMessages(prev => prev.filter(m => !m.isSystemLog).concat([userMsg, newMessage]), activeSessionId);
-      if (inputRef.current) inputRef.current.value = '';
-      setInputValue('');
-      handleRemoveFile();
-
-      // Ensure the prompt and loading state are visible
-      setTimeout(() => scrollToBottom(true), 50);
-
-      // Save user message to backend — pass interim title so session is not created as "New Chat"
-      if (activeSessionId && activeSessionId !== 'new') {
-        const titleForSave = pendingMediaTitleRef.current || null;
-        chatStorageService.saveMessage(activeSessionId, userMsg, titleForSave, currentProjectId).catch(err => console.error("Error saving video user message:", err));
-      }
-
-      try {
-        // Use apiService
-        const data = await apiService.generateVideo(prompt, 5, 'medium', videoAspectRatio, videoModelId, videoResolution);
-
-        if (data.videoUrl) {
-          // Add the generated video to the message
-          const videoMessage = {
-            id: tempId, // Keep same ID
-            role: 'model',
-            isGenerating: false,
-            content: `🎥 Video generated successfully!`, // Use content
-            videoUrl: data.videoUrl,
-            timestamp: new Date(),
-            projectId: currentProjectId,
-            mode: MODES.VIDEO_GENERATION
-          };
-
-          setMessages(prev => prev.map(msg => msg.id === tempId ? videoMessage : msg), activeSessionId);
-          toast.success('Video generated successfully!');
-          refreshSubscription();
-
-          // Save AI response to backend
-          if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, videoMessage, null, currentProjectId).catch(err => console.error("Error saving video results:", err));
-          }
-
-        } else if (data.imageUrl) {
-          // Add image fallback
-          const imageMessage = {
-            id: tempId, // Keep same ID
-            role: 'model',
-            content: `🖼️ ${data.message || 'Video generation limit reached. Generated a preview image instead.'}`,
-            imageUrl: data.imageUrl,
-            timestamp: new Date(),
-          };
-
-          setMessages(prev => prev.map(msg => msg.id === tempId ? imageMessage : msg));
-          toast.success('Generated preview image');
-
-          // Save AI fallback image to backend
-          if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, imageMessage, null, currentProjectId).catch(err => console.error("Error saving video fallback image:", err));
-          }
-        }
-      } catch (error) {
-        const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to generate video';
-
-        // If we got an image URL even with error (sometimes happens with 200 fallback but let's be safe)
-        if (error.response?.data?.imageUrl) {
-          const imageMessage = {
-            id: tempId,
-            role: 'model',
-            content: `🖼️ ${error.response.data.message || 'Video generation failed. Generated preview.'}`,
-            imageUrl: error.response.data.imageUrl,
-            timestamp: new Date(),
-          };
-          setMessages(prev => prev.map(msg => msg.id === tempId ? imageMessage : msg));
-
-          // Save AI error fallback image to backend
-          if (activeSessionId && activeSessionId !== 'new') {
-            chatStorageService.saveMessage(activeSessionId, imageMessage, null, currentProjectId).catch(err => console.error("Error saving video error fallback image:", err));
-          }
-          return;
-        }
-
-        setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, isGenerating: false, content: `❌ ${errorMsg}` } : msg));
-        toast.error(errorMsg);
-      }
-    } catch (error) {
-      console.error('Video generation error:', error);
-      toast.error('Error initiating video generation');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -4422,7 +4179,7 @@ const Chat = () => {
     // we route it through the pipeline instead of standard chat.
     if (intentSuggestion && !toolOverride && intentSuggestion.confidence > 0.85 && intentSuggestion.intent !== 'normal_chat') {
       // Check if ANY magic tool mode is already active
-      const isCurrentModeChat = !isImageGeneration && !isVideoGeneration && !isDeepSearch && !isWebSearch &&
+      const isCurrentModeChat = !isImageGeneration && !isDeepSearch && !isWebSearch &&
         !isMagicEditing && !isCodeWriter && !isFileAnalysis && !isAudioConvertMode &&
         !isDocumentConvert && !isVoiceMode;
 
@@ -4766,11 +4523,9 @@ const Chat = () => {
         // Since image/video/edit modes return early and skip the main optimistic update below,
         // we must create the session in the sidebar immediately.
         if (isImageGeneration || toolOverride === 'text_to_image' ||
-          isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video' ||
           isMagicEditing || toolOverride === 'image_edit') {
 
-          const earlyMode = (isImageGeneration || toolOverride === 'text_to_image') ? MODES.IMAGE_GENERATION :
-            ((isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') ? MODES.VIDEO_GENERATION : MODES.IMAGE_EDIT);
+          const earlyMode = (isImageGeneration || toolOverride === 'text_to_image') ? MODES.IMAGE_GENERATION : MODES.IMAGE_EDIT;
 
           // Use a truncated prompt as the interim title instead of "New Chat"
           // This ensures the sidebar shows something meaningful immediately
@@ -4818,12 +4573,6 @@ const Chat = () => {
       // Handle Image Generation Mode
       if (isImageGeneration || toolOverride === 'text_to_image') {
         await handleGenerateImage(contentToSend, activeSessionId);
-        return;
-      }
-
-      // Handle Video Generation Mode
-      if (isVideoGeneration || toolOverride === 'text_to_video' || toolOverride === 'image_to_video') {
-        await handleGenerateVideo(contentToSend, activeSessionId);
         return;
       }
 
@@ -4935,7 +4684,6 @@ const Chat = () => {
       const documentConvertActive = isDocumentConvert;
       const webSearchActive = isWebSearch;
       const imageGenActive = isImageGeneration;
-      const videoGenActive = isVideoGeneration;
       const magicEditActive = isMagicEditing; // New: capture magic edit state
       const codeWriterActive = isCodeWriter; // Added: capture code writer state
       // Note: We don't reset these state immediately anymore so the tag stays visible in input bar while "Thinking..."
@@ -4943,14 +4691,13 @@ const Chat = () => {
       // Detect mode for UI indicator
       const detectedMode = magicEditActive ? MODES.IMAGE_EDIT :
         (imageGenActive ? MODES.IMAGE_GENERATION :
-          (videoGenActive ? MODES.VIDEO_GENERATION :
-            (isFileAnalysis ? MODES.FILE_ANALYSIS :
-              (deepSearchActive ? MODES.DEEP_SEARCH :
-                (documentConvertActive ? MODES.DOCUMENT_CONVERT :
-                  (webSearchActive ? MODES.WEB_SEARCH :
-                    (codeWriterActive ? MODES.CODING_HELP :
-                      (currentMode === 'LEGAL_TOOLKIT' ? MODES.LEGAL_TOOLKIT :
-                        detectMode(contentToSend, userMsg.attachments)))))))));
+          (isFileAnalysis ? MODES.FILE_ANALYSIS :
+            (deepSearchActive ? MODES.DEEP_SEARCH :
+              (documentConvertActive ? MODES.DOCUMENT_CONVERT :
+                (webSearchActive ? MODES.WEB_SEARCH :
+                  (codeWriterActive ? MODES.CODING_HELP :
+                    (currentMode === 'LEGAL_TOOLKIT' ? MODES.LEGAL_TOOLKIT :
+                      detectMode(contentToSend, userMsg.attachments))))))));
       setCurrentMode(detectedMode);
 
 
@@ -4968,8 +4715,6 @@ const Chat = () => {
         setLoadingText("Generating Image... 🎨");
       } else if (magicEditActive) {
         setLoadingText("Editing Image... ✨");
-      } else if (videoGenActive) {
-        setLoadingText("Generating Video... 🎥");
       } else if (documentConvertActive) {
         setLoadingText("Converting Document... 🔄");
       } else if (isFileAnalysis) {
@@ -7090,17 +6835,15 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
   const activeToolId = 
     isImageGeneration ? 'image' :
-      isVideoGeneration ? 'video' :
-        isDeepSearch ? 'deep_search' :
-          isWebSearch ? 'web_search' :
-            isCodeWriter ? 'code' :
-              isAudioConvertMode ? 'audio' :
-                isFileAnalysis ? 'document' :
-                  isMagicEditing ? 'edit_image' :
-                    isMagicVideoModalOpen ? 'image_to_video' :
-                      isStockModalOpen ? 'ai_cashflow' :
-                        isSocialMediaDashboardOpen ? 'aiad_agent' :
-                          (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT' || new URLSearchParams(window.location.search).get('tool')?.startsWith('legal_')) ? 'legal' : null;
+      isDeepSearch ? 'deep_search' :
+        isWebSearch ? 'web_search' :
+          isCodeWriter ? 'code' :
+            isAudioConvertMode ? 'audio' :
+              isFileAnalysis ? 'document' :
+                isMagicEditing ? 'edit_image' :
+                  isStockModalOpen ? 'ai_cashflow' :
+                    isSocialMediaDashboardOpen ? 'aiad_agent' :
+                      (activeLegalToolkit || currentMode === 'LEGAL_TOOLKIT' || new URLSearchParams(window.location.search).get('tool')?.startsWith('legal_')) ? 'legal' : null;
 
   const isChatRoute = location.pathname.startsWith('/dashboard/chat') || 
                       location.pathname.startsWith('/dashboard/legal/cases/') ||
@@ -7149,7 +6892,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
 
   const handleDashboardToolSelect = (id) => {
     setIsImageGeneration(false);
-    setIsVideoGeneration(false);
     setIsAudioConvertMode(false);
     setIsCodeWriter(false);
     setIsDeepSearch(false);
@@ -7157,7 +6899,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
     setIsFileAnalysis(false);
     setIsMagicEditing(false);
     setIsMagicImageModalOpen(false);
-    setIsMagicVideoModalOpen(false);
     setIsCashFlowMode(false);
     setActiveTool(null);
 
@@ -7175,12 +6916,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
       setActiveTool('image');
       if (inputRef.current) { inputRef.current.focus(); }
       toast.success("Image Mode Active");
-    } else if (id === 'video') {
-      if (!checkPremiumTool('Generate Video')) return;
-      setIsVideoGeneration(true);
-      setActiveTool('video');
-      if (inputRef.current) { inputRef.current.focus(); }
-      toast.success("Video Mode Active");
     } else if (id === 'audio') {
       if (!checkPremiumTool('Convert to Audio')) return;
       setIsAudioConvertMode(true);
@@ -7221,11 +6956,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
         if (lastImg) setEditRefImage({ url: lastImg.imageUrl, name: 'Last Generated', type: 'image' });
       }
       toast.success("Image Editing Mode Active");
-    } else if (id === 'image_to_video') {
-      if (!checkPremiumTool('Image to Video')) return;
-      setIsMagicVideoModalOpen(true);
-      setActiveTool('image_to_video');
-      toast.success("Image to Video Mode Active");
     } else if (id === 'ai_cashflow') {
       if (!checkPremiumTool('AI CashFlow')) return;
       setIsCashFlowMode(true);
@@ -7613,7 +7343,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           isWebSearch={isWebSearch}
           isDeepSearch={isDeepSearch}
           isImageGeneration={isImageGeneration}
-          isVideoGeneration={isVideoGeneration}
           isVoiceMode={isVoiceMode}
           isAudioConvertMode={isAudioConvertMode}
           isDocumentConvert={isDocumentConvert}
@@ -7630,12 +7359,9 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           activeTool={activeTool}
           imageAspectRatio={imageAspectRatio}
           imageModelId={imageModelId}
-          videoAspectRatio={videoAspectRatio}
-          videoResolution={videoResolution}
           setIsStockModalOpen={setIsStockModalOpen}
           setIsMagicSettingsOpen={setIsMagicSettingsOpen}
           isMagicSettingsOpen={isMagicSettingsOpen}
-          setIsVideoGeneration={setIsVideoGeneration}
           setIsImageGeneration={setIsImageGeneration}
           setIsDeepSearch={setIsDeepSearch}
           setIsWebSearch={setIsWebSearch}
@@ -7644,7 +7370,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
           setIsCodeWriter={setIsCodeWriter}
           setIsMagicEditing={setIsMagicEditing}
           setIsMagicImageModalOpen={setIsMagicImageModalOpen}
-          setIsMagicVideoModalOpen={setIsMagicVideoModalOpen}
           setIsCashFlowMode={setIsCashFlowMode}
           setIsSocialMediaDashboardOpen={setIsSocialMediaDashboardOpen}
           setLegalView={setLegalView}
@@ -8263,33 +7988,17 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
             setIsImageGeneration(true);
           }}
         />
-        <MagicVideoGenModal
-          isOpen={isMagicVideoModalOpen}
-          onClose={() => {
-            setIsMagicVideoModalOpen(false);
-            setIsVideoGeneration(false); // Reset video mode when closing magic video gen
-          }}
-          onVideoGenerated={(videoUrl) => {
-            setVideoPreview(videoUrl);
-            setIsVideoGeneration(true);
-          }}
-          onCreditDeduction={(credits) => console.log('deducted', credits)}
-        />
-
-
         <MagicToolSettingsCard
           isOpen={isMagicSettingsOpen}
           onClose={() => setIsMagicSettingsOpen(false)}
           referenceImage={editRefImage}
-          toolType={isMagicEditing ? 'edit' : isImageGeneration ? 'image' : isVideoGeneration ? 'video' : ''}
+          toolType={isMagicEditing ? 'edit' : isImageGeneration ? 'image' : ''}
           config={
             isMagicEditing
               ? { modelId: editModelId }
               : isImageGeneration
                 ? { aspectRatio: imageAspectRatio, modelId: imageModelId }
-                : isVideoGeneration
-                  ? { aspectRatio: videoAspectRatio, resolution: videoResolution, modelId: videoModelId }
-                  : {}
+                : {}
           }
           onChange={(key, value) => {
             if (isMagicEditing) {
@@ -8297,10 +8006,6 @@ If the user asks for an image (e.g., "generate", "create", "draw", "show me a pi
             } else if (isImageGeneration) {
               if (key === 'aspectRatio') setImageAspectRatio(value);
               if (key === 'modelId') setImageModelId(value);
-            } else if (isVideoGeneration) {
-              if (key === 'aspectRatio') setVideoAspectRatio(value);
-              if (key === 'modelId') setVideoModelId(value);
-              if (key === 'resolution') setVideoResolution(value);
             }
           }}
           onContentSelect={(content) => {

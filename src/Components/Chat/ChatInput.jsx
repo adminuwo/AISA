@@ -101,7 +101,6 @@ export const ChatInput = ({
   isWebSearch,
   isDeepSearch,
   isImageGeneration,
-  isVideoGeneration,
   isVoiceMode,
   isAudioConvertMode,
   isDocumentConvert,
@@ -118,12 +117,9 @@ export const ChatInput = ({
   activeTool,
   imageAspectRatio,
   imageModelId,
-  videoAspectRatio,
-  videoResolution,
   setIsStockModalOpen,
   setIsMagicSettingsOpen,
   isMagicSettingsOpen,
-  setIsVideoGeneration,
   setIsImageGeneration,
   setIsDeepSearch,
   setIsWebSearch,
@@ -132,7 +128,6 @@ export const ChatInput = ({
   setIsCodeWriter,
   setIsMagicEditing,
   setIsMagicImageModalOpen,
-  setIsMagicVideoModalOpen,
   setIsCashFlowMode,
   setIsSocialMediaDashboardOpen,
   setLegalView,
@@ -485,7 +480,7 @@ export const ChatInput = ({
                     exit={{ opacity: 0, scale: 0.95, y: 15 }}
                     transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
                     ref={menuRef}
-                    className={`fixed sm:absolute bottom-[max(80px,calc(env(safe-area-inset-bottom)+80px))] sm:bottom-full left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 ${isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || currentMode === 'LEGAL_TOOLKIT' ? 'sm:mb-[68px]' : 'sm:mb-6'} w-[calc(100%-32px)] sm:w-[220px] bg-white/95 dark:bg-[#1c1c1e]/95 border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden z-[1020] backdrop-blur-xl ring-1 ring-black/[0.05]`}
+                    className={`fixed sm:absolute bottom-[max(80px,calc(env(safe-area-inset-bottom)+80px))] sm:bottom-full left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 ${isWebSearch || isDeepSearch || isImageGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || currentMode === 'LEGAL_TOOLKIT' ? 'sm:mb-[68px]' : 'sm:mb-6'} w-[calc(100%-32px)] sm:w-[220px] bg-white/95 dark:bg-[#1c1c1e]/95 border border-slate-200/50 dark:border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden z-[1020] backdrop-blur-xl ring-1 ring-black/[0.05]`}
                   >
                     <div className="p-2.5 space-y-1">
                       {getAgentCapabilities(activeAgent.agentName, activeAgent.category)
@@ -532,7 +527,7 @@ export const ChatInput = ({
                     exit={{ opacity: 0, scale: 0.95, y: 15 }}
                     transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
                     ref={toolsMenuRef}
-                    className={`fixed sm:absolute bottom-[max(80px,calc(env(safe-area-inset-bottom)+80px))] sm:bottom-full left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 ${isWebSearch || isDeepSearch || isImageGeneration || isVideoGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || currentMode === 'LEGAL_TOOLKIT' ? 'sm:mb-[68px]' : 'sm:mb-6'} w-[calc(100%-24px)] sm:w-[320px] bg-white dark:bg-[#1c1c1e] border border-slate-200/50 dark:border-white/10 rounded-[32px] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.3)] dark:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6)] overflow-hidden z-[1020] ring-1 ring-black/[0.05] backdrop-blur-xl`}
+                    className={`fixed sm:absolute bottom-[max(80px,calc(env(safe-area-inset-bottom)+80px))] sm:bottom-full left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 ${isWebSearch || isDeepSearch || isImageGeneration || isVoiceMode || isAudioConvertMode || isDocumentConvert || isCodeWriter || isMagicEditing || isFileAnalysis || isCashFlowMode || currentMode === 'LEGAL_TOOLKIT' ? 'sm:mb-[68px]' : 'sm:mb-6'} w-[calc(100%-24px)] sm:w-[320px] bg-white dark:bg-[#1c1c1e] border border-slate-200/50 dark:border-white/10 rounded-[32px] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.3)] dark:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6)] overflow-hidden z-[1020] ring-1 ring-black/[0.05] backdrop-blur-xl`}
                     style={{ maxHeight: 'calc(100vh - 180px)' }}
                   >
                     <div className="px-6 py-5 bg-slate-50/50 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/5 shrink-0">
@@ -565,7 +560,6 @@ export const ChatInput = ({
                           setIsToolsMenuOpen(false);
                           const newMode = !isImageGeneration;
                           setIsImageGeneration(newMode);
-                          setIsVideoGeneration(false);
                           setIsDeepSearch(false);
                           setIsAudioConvertMode(false);
                           setIsDocumentConvert(false);
@@ -602,53 +596,11 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (!checkPremiumTool('Generate Video')) return;
-                          setIsToolsMenuOpen(false);
-                          const newMode = !isVideoGeneration;
-                          setIsVideoGeneration(newMode);
-                          setIsImageGeneration(false);
-                          setIsDeepSearch(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          if (newMode) {
-                            setActiveTool('video');
-                            toast.success('Video Generation Mode Enabled');
-                          } else {
-                            setActiveTool(null);
-                          }
-                        }}
-                        className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isVideoGeneration ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
-                      >
-                        <div
-                          className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 tool-icon-premium ${isVideoGeneration ? 'bg-primary border-primary text-white' : 'bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300'}`}
-                        >
-                          <Video className="w-5.5 h-5.5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">
-                              AISA ™
-                            </span>
-                            <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">
-                              Generate Video
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
-                            Convert scenes into dynamic videos.
-                          </p>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
                           if (!checkPremiumTool('Web Search')) return;
                           setIsToolsMenuOpen(false);
                           setIsWebSearch(!isWebSearch);
                           setIsDeepSearch(false);
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsAudioConvertMode(false);
                           setIsDocumentConvert(false);
                           setIsCodeWriter(false);
@@ -689,7 +641,6 @@ export const ChatInput = ({
                           setIsDeepSearch(!isDeepSearch);
                           setIsWebSearch(false);
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsAudioConvertMode(false);
                           setIsDocumentConvert(false);
                           setIsCodeWriter(false);
@@ -730,7 +681,6 @@ export const ChatInput = ({
                           setIsAudioConvertMode(!isAudioConvertMode);
                           setIsDeepSearch(false);
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsDocumentConvert(false);
                           setIsCodeWriter(false);
                           if (!isAudioConvertMode) {
@@ -772,7 +722,6 @@ export const ChatInput = ({
                           setIsFileAnalysis(false);
                           setIsDeepSearch(false);
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsAudioConvertMode(false);
                           setIsCodeWriter(false);
                           if (nextState) {
@@ -813,7 +762,6 @@ export const ChatInput = ({
                           setIsCodeWriter(!isCodeWriter);
                           setIsDeepSearch(false);
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsAudioConvertMode(false);
                           setIsDocumentConvert(false);
                           setIsMagicEditing(false);
@@ -866,7 +814,6 @@ export const ChatInput = ({
                           }
 
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsDeepSearch(false);
                           setIsWebSearch(false);
                           setIsAudioConvertMode(false);
@@ -911,7 +858,6 @@ export const ChatInput = ({
                           const newMode = !isCashFlowMode;
                           setIsCashFlowMode(newMode);
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsDeepSearch(false);
                           setIsWebSearch(false);
                           setIsAudioConvertMode(false);
@@ -961,7 +907,6 @@ export const ChatInput = ({
                             setCurrentMode(MODES.LEGAL_TOOLKIT);
                             setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
                             setLegalView('DASHBOARD');
-                            setIsMagicVideoModalOpen(false);
                             setCurrentCase(null);
                             setCurrentProjectId(null);
                           } else {
@@ -971,7 +916,6 @@ export const ChatInput = ({
                           }
 
                           setIsImageGeneration(false);
-                          setIsVideoGeneration(false);
                           setIsDeepSearch(false);
                           setIsAudioConvertMode(false);
                           setIsDocumentConvert(false);
@@ -1008,37 +952,6 @@ export const ChatInput = ({
                           </div>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
                             {t('aiLegalToolsCount')}
-                          </p>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!checkPremiumTool('Image to Video')) return;
-                          setIsToolsMenuOpen(false);
-                          setIsMagicVideoModalOpen(true);
-                          setActiveTool('image_to_video');
-                          toast.success('Image to Video Mode Active');
-                        }}
-                        className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md`}
-                      >
-                        <div
-                          className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 tool-icon-premium bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300`}
-                        >
-                          <PlaySquare className="w-5.5 h-5.5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="aisa-badge-small !bg-primary !text-white !font-black !px-2 !rounded-md">
-                              AISA ™
-                            </span>
-                            <span className="text-[14.5px] font-extrabold text-slate-800 dark:text-white leading-none">
-                              Image to Video
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
-                            Animate your images with AI magic.
                           </p>
                         </div>
                       </button>
@@ -1121,7 +1034,6 @@ export const ChatInput = ({
                   {(isWebSearch ||
                     isDeepSearch ||
                     isImageGeneration ||
-                    isVideoGeneration ||
                     isVoiceMode ||
                     isAudioConvertMode ||
                     isDocumentConvert ||
@@ -1249,51 +1161,6 @@ export const ChatInput = ({
                               type="button"
                               onClick={() => {
                                 setIsImageGeneration(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-primary dark:text-primary transition-all hover:rotate-90 relative z-10"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isVideoGeneration && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex flex-row items-center gap-3 px-3.5 py-1.5 bg-primary/20 dark:bg-primary/25 text-primary rounded-full text-xs font-bold border border-primary/40 backdrop-blur-3xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/30 group shadow-[0_8px_32px_-4px_rgba(var(--primary-rgb),0.3)] relative overflow-hidden ring-1 ring-white/10"
-                          >
-                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
-                            <div className="flex flex-row items-center gap-2 relative z-10">
-                              <div className="w-5 h-5 rounded-lg bg-primary dark:bg-primary flex items-center justify-center shadow-lg shadow-primary/40 text-white">
-                                <Video size={14} strokeWidth={3} />
-                              </div>
-                              <span className="uppercase tracking-widest text-[9px] font-black">
-                                Video Gen
-                              </span>
-                            </div>
-                            <div className="w-[1px] h-3 bg-primary/40 mx-0.5 relative z-10" />
-                            <button
-                              type="button"
-                              onClick={() => setIsMagicSettingsOpen(!isMagicSettingsOpen)}
-                              className="flex flex-row items-center gap-1.5 hover:text-primary dark:hover:text-primary transition-all px-1.5 py-0.5 rounded-md hover:bg-white/10 relative z-10"
-                            >
-                              <span className="text-[10px] font-extrabold opacity-90">
-                                {videoAspectRatio || 'D'}
-                              </span>
-                              <span className="text-[10px] font-black tracking-tight ml-1">
-                                {videoResolution}
-                              </span>
-                              <ChevronDown
-                                size={11}
-                                className={`transition-transform duration-300 ${isMagicSettingsOpen ? 'rotate-180' : ''}`}
-                              />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsVideoGeneration(false);
                                 setActiveTool(null);
                               }}
                               className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-primary dark:text-primary transition-all hover:rotate-90 relative z-10"

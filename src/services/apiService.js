@@ -246,47 +246,6 @@ export const apiService = {
     }
   },
 
-  async generateVideo(
-    prompt,
-    duration = 5,
-    quality = 'medium',
-    aspectRatio = '16:9',
-    modelId = 'veo-3.1-fast-generate-001',
-    resolution = '1080p'
-  ) {
-    try {
-      console.log(
-        `[Frontend] Generating video for prompt: ${prompt}, Ratio: ${aspectRatio}, Model: ${modelId}, Res: ${resolution}`
-      );
-      // Increased timeout to 900s (15 minutes) for video generation as it regularly takes > 5 minutes
-      const response = await apiClient.post(
-        '/video/generate',
-        { prompt, duration, quality, aspectRatio, modelId, resolution },
-        { timeout: 900000 }
-      );
-      console.log('[Frontend] Video generation success:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to generate video:', error);
-      throw error;
-    }
-  },
-
-  async downloadVideo(videoUrl) {
-    try {
-      console.log('[Frontend] Downloading video from proxy:', videoUrl);
-      const response = await apiClient.post(
-        '/video/download',
-        { videoUrl },
-        { responseType: 'blob' }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Failed to download video proxy:', error);
-      throw error;
-    }
-  },
-
   // --- AI Social Agent (Phase 1) ---
   async getSocialAgentWorkspace(userId) {
     try {
@@ -1717,11 +1676,10 @@ export const apiService = {
             chatScope: 'total',
             images: 0,
             carousels: 0,
-            videos: 0,
             editImage: false,
             cashflow: false,
           },
-          usage: { chat: 0, images: 0, carousels: 0, videos: 0 },
+          usage: { chat: 0, images: 0, carousels: 0 },
         };
       } finally {
         window.__quotaPromise = null;

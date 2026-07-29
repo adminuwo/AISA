@@ -151,8 +151,6 @@ export const fetchAvailableTools = async () => {
 export const mapModeToToolState = frontendMode => {
   const modeMap = {
     IMAGE_GEN: { activeImageGen: true },
-    VIDEO_GEN: { activeVideoGen: true },
-    IMAGE_TO_VIDEO: { activeVideoGen: true, videoMode: 'image_to_video' },
     IMAGE_EDIT: { activeMagicEdit: true },
     AUDIO_TALK: { activeAudioTalk: true },
     web_search: { webSearchMode: true },

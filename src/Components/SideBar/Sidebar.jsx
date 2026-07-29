@@ -530,15 +530,6 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
                         </div>
 
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-subtext">AI Videos:</span>
-                          <span className="font-black text-maintext">
-                            {limits?.videos === 0
-                              ? 'Not Included'
-                              : `${usage?.videos || 0} / ${limits?.videos || 0} per day`}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-xs">
                           <span className="font-semibold text-subtext">Image Editing:</span>
                           <span
                             className={`font-black uppercase text-[10px] ${limits?.editImage ? 'text-green-500' : 'text-subtext'}`}
@@ -575,7 +566,7 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
                       </h4>
                       <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-border/50 text-xs text-subtext space-y-2">
                         <p>
-                          • Daily quotas (images, carousels, videos) reset every day at midnight
+                          • Daily quotas (images, carousels) reset every day at midnight
                           IST.
                         </p>
                         <p>

@@ -15,7 +15,6 @@ export const MODES = {
   WEB_SEARCH: 'web_search',
   LEGAL_TOOLKIT: 'LEGAL_TOOLKIT',
   IMAGE_GENERATION: 'IMAGE_GENERATION',
-  VIDEO_GENERATION: 'VIDEO_GENERATION',
   CASHFLOW: 'CASHFLOW',
 };
 
@@ -179,7 +178,6 @@ export function getModeName(mode) {
     [MODES.IMAGE_EDIT]: 'AISA™ Edit',
     [MODES.LEGAL_TOOLKIT]: 'AISA™ Legal',
     [MODES.IMAGE_GENERATION]: 'Image Generator',
-    [MODES.VIDEO_GENERATION]: 'Video Generator',
     [MODES.CASHFLOW]: 'Deep Market Research',
     [MODES.WEB_SEARCH]: 'Web Search',
   };
@@ -198,7 +196,6 @@ export function getModeIcon(mode) {
     [MODES.IMAGE_EDIT]: '🎨',
     [MODES.LEGAL_TOOLKIT]: '⚖️',
     [MODES.IMAGE_GENERATION]: '🖼️',
-    [MODES.VIDEO_GENERATION]: '🎥',
     [MODES.CASHFLOW]: '📊',
     [MODES.WEB_SEARCH]: '🌐',
   };
@@ -217,7 +214,6 @@ export function getModeColor(mode) {
     [MODES.IMAGE_EDIT]: '#f43f5e',
     [MODES.LEGAL_TOOLKIT]: '#8b5cf6',
     [MODES.IMAGE_GENERATION]: '#8b5cf6',
-    [MODES.VIDEO_GENERATION]: '#f59e0b',
     [MODES.CASHFLOW]: '#10b981',
     [MODES.WEB_SEARCH]: '#3b82f6',
   };

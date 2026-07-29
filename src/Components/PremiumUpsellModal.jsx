@@ -77,7 +77,7 @@ const PremiumUpsellModal = () => {
             {/* Feature bullets */}
             <div className="flex flex-col gap-2 mb-6">
               {[
-                'Generate Images & Videos',
+                'Generate Images & Visuals',
                 'Web & Deep Search',
                 'Convert to Audio & Doc',
                 'Code Writer Mode',
