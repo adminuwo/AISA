@@ -3675,11 +3675,20 @@ const Chat = () => {
         return;
       }
 
+      // ─── Early lock: mark this session as "being loaded" BEFORE any async work.
+      // This prevents a second initChat invocation (caused by setCurrentProjectId
+      // changing currentProjectId, which is in the dep array) from bypassing the
+      // guard above and running a duplicate history fetch that would wipe messages.
+      if (currentSession && currentSession !== 'new') {
+        lastLoadedSessionRef.current = currentSession;
+      }
+
       try {
         if (sessionId && sessionId !== 'new') {
-          if (lastLoadedSessionRef.current && lastLoadedSessionRef.current !== sessionId) {
-            setMessages([]);
-          }
+          // ─── No pre-clear: messages are never wiped before history loads. ─────
+          // The early lock above already marked this session as loaded, so any
+          // re-entrant initChat calls return early without clearing. The conditional
+          // setMessages below only writes if local store doesn't already have messages.
 
           const sessionData = await chatStorageService.getHistory(sessionId);
           if (currentSession !== sessionId) return;
@@ -3743,8 +3752,13 @@ const Chat = () => {
           // Optimization: If the backend returns empty history (common for brand new sessions)
           // but we already have local messages (user message just sent), don't overwrite with empty.
           const localMessages = useGenerationStore.getState().messagesByChat[sessionId] || [];
-          if (finalMessages.length === 0 && localMessages.length > 0) {
-            console.log(`[Hydration] Preserving ${localMessages.length} local messages for fresh session: ${sessionId}`);
+          if (localMessages.length > 0 && localMessages.length >= finalMessages.length) {
+            // ── Prefer local store messages when they are at least as many as backend history ──
+            // This handles two cases:
+            // 1. Fresh session: backend returns [] but user just sent a message (localMessages has it).
+            // 2. In-progress generation: local store has the user msg + partial AI response, backend
+            //    hasn't been persisted yet — preserving local prevents conversation from disappearing.
+            console.log(`[Hydration] Preserving ${localMessages.length} local messages over ${finalMessages.length} backend messages for session: ${sessionId}`);
             finalMessages = localMessages;
           }
           const liveGen = useGenerationStore?.getState?.()?.generations?.[sessionId];
@@ -3768,8 +3782,14 @@ const Chat = () => {
             setTypingMessageId(liveGen.typingMessageId);
           }
 
-          setMessages(finalMessages);
-          lastLoadedSessionRef.current = sessionId;
+          // ─── Conditional setMessages: only update if local store doesn't already
+          // have at least as many messages. This prevents initChat from overwriting
+          // an active conversation (e.g. user just sent msg, AI is streaming).
+          const storeMessagesAtSetTime = useGenerationStore.getState().messagesByChat[sessionId] || [];
+          if (storeMessagesAtSetTime.length === 0 || finalMessages.length > storeMessagesAtSetTime.length) {
+            setMessages(finalMessages);
+          }
+          // lastLoadedSessionRef was already set above (early lock) — no need to re-set here.
 
           const params = new URLSearchParams(location.search);
           const toolParam = params.get('tool') || activeTool;
@@ -4672,8 +4692,10 @@ const Chat = () => {
         activeTool: selectedLegalTool?.id,
       };
 
-      const updatedMessages = messages.filter(m => !m.isSystemLog).concat(userMsg);
-      setMessages(updatedMessages, activeSessionId);
+      // Use functional updater so we ALWAYS read the latest store state, never a
+      // stale closure value of `messages`. This is the safest way to append a new
+      // user message without accidentally wiping history that arrived asynchronously.
+      setMessages(prev => prev.filter(m => !m.isSystemLog).concat(userMsg), activeSessionId);
       // Double-attempt auto-scroll for user message to ensure it handles layout changes correctly
       setTimeout(() => scrollToBottom(true, 'smooth'), 50);
       setTimeout(() => scrollToBottom(true, 'smooth'), 400);
