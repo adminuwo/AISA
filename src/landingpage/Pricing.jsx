@@ -579,7 +579,7 @@ const Pricing = () => {
               </tr>
             </thead>
             <tbody>
-              {comparisonData.map((row) => (
+              {comparisonData.map(row => (
                 <tr key={`comp-row-${row.key}`}>
                   <td className="font-bold flex items-center gap-2">
                     <span className="aisa-badge-small">AISA™</span>
@@ -765,7 +765,10 @@ const Pricing = () => {
 
               <div className="credit-details">
                 {renderQuotaSummary(plan).map((est, i) => (
-                  <p key={`summary-${plan._id || plan.planId || 'p'}-${i}`} className={est.locked ? 'locked-estimation' : ''}>
+                  <p
+                    key={`summary-${plan._id || plan.planId || 'p'}-${i}`}
+                    className={est.locked ? 'locked-estimation' : ''}
+                  >
                     <span style={{ opacity: est.locked ? 0.4 : 1 }}>{est.icon}</span>
                     <span style={{ opacity: est.locked ? 0.4 : 1 }}>{est.text}</span>
                     {est.locked && <span className="lock-icon">🔒</span>}
@@ -777,22 +780,22 @@ const Pricing = () => {
                 {(plan.features || [])
                   .filter(feature => !/video/i.test(feature))
                   .map((feature, i) => {
-                  const formattedFeature = formatFeatureString(feature, plan);
-                  return (
-                    <li key={`feat-${plan._id || plan.planId || 'p'}-${feature}-${i}`}>
-                      <Check size={16} />
-                      <span className="flex items-center gap-1.5">
-                        <span
-                          className="aisa-badge-small"
-                          style={{ fontSize: '0.6rem', padding: '1px 4px', minWidth: '30px' }}
-                        >
-                          AISA™
+                    const formattedFeature = formatFeatureString(feature, plan);
+                    return (
+                      <li key={`feat-${plan._id || plan.planId || 'p'}-${feature}-${i}`}>
+                        <Check size={16} />
+                        <span className="flex items-center gap-1.5">
+                          <span
+                            className="aisa-badge-small"
+                            style={{ fontSize: '0.6rem', padding: '1px 4px', minWidth: '30px' }}
+                          >
+                            AISA™
+                          </span>
+                          {formattedFeature.replace(/^AISA\s+/i, '')}
                         </span>
-                        {formattedFeature.replace(/^AISA\s+/i, '')}
-                      </span>
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  })}
               </ul>
 
               {isCurrentPlan ? (

@@ -202,12 +202,15 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     if (onClose) onClose();
   }, [setCurrentProjectId, setMode, setLegalTool, navigate, onClose]);
 
-  const handleDeleteSession = useCallback((e, sessionIdToDelete) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setChatToDelete(sessionIdToDelete);
-    setIsChatDeleteModalOpen(true);
-  }, [setChatToDelete, setIsChatDeleteModalOpen]);
+  const handleDeleteSession = useCallback(
+    (e, sessionIdToDelete) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setChatToDelete(sessionIdToDelete);
+      setIsChatDeleteModalOpen(true);
+    },
+    [setChatToDelete, setIsChatDeleteModalOpen]
+  );
 
   const confirmDeleteSession = useCallback(async () => {
     if (!chatToDelete) return;
@@ -230,89 +233,106 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
     }
   }, [chatToDelete, currentProjectId, currentSessionId, setSessions, navigate, t]);
 
-  const startRename = useCallback((e, session) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setEditingSessionId(session.sessionId);
-    setNewTitle(session.title || 'New Chat');
-  }, [setEditingSessionId, setNewTitle]);
-
-  const handleRename = useCallback(async (e, sessionId) => {
-    if (e) {
+  const startRename = useCallback(
+    (e, session) => {
       e.stopPropagation();
       e.preventDefault();
-    }
-    if (editingSessionId !== sessionId) return;
+      setEditingSessionId(session.sessionId);
+      setNewTitle(session.title || 'New Chat');
+    },
+    [setEditingSessionId, setNewTitle]
+  );
 
-    if (!newTitle.trim()) {
-      setEditingSessionId(null);
-      return;
-    }
-
-    const oldSessions = Array.isArray(sessions) ? [...sessions] : [];
-    const renamedTitle = newTitle.trim();
-
-    setSessions(prev =>
-      (Array.isArray(prev) ? prev : [])
-        .map(s =>
-          s.sessionId === sessionId ? { ...s, title: renamedTitle, lastModified: Date.now() } : s
-        )
-        .sort((a, b) => b.lastModified - a.lastModified)
-    );
-
-    try {
-      const success = await chatStorageService.updateSessionTitle(sessionId, renamedTitle);
-      if (success) {
-        toast.success(t('chatRenamed'));
-      } else {
-        throw new Error('Failed to sync rename to server');
+  const handleRename = useCallback(
+    async (e, sessionId) => {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
       }
-    } catch (err) {
-      console.error('Rename failed:', err);
-      toast.error(t('couldNotRenameChat'));
-      setSessions(oldSessions);
-    } finally {
-      setEditingSessionId(null);
-    }
-  }, [editingSessionId, newTitle, sessions, setSessions, t]);
+      if (editingSessionId !== sessionId) return;
 
-  const handleRenameProject = useCallback(async (e, projectId) => {
-    e.stopPropagation();
-    if (!renameProjectName.trim()) {
-      setEditingProjectId(null);
-      return;
-    }
+      if (!newTitle.trim()) {
+        setEditingSessionId(null);
+        return;
+      }
 
-    try {
-      const updated = await apiService.renameProject(projectId, renameProjectName.trim());
-      setProjects(prev => prev.map(p => (p._id === projectId ? { ...p, name: updated.name } : p)));
-      const isCase = projects.find(p => p._id === projectId)?.isLegalCase;
-      toast.success(isCase ? t('caseRenamedSuccessfully') : t('projectRenamedSuccessfully'));
-    } catch (error) {
-      console.error('Failed to rename project:', error);
-      const isCase = projects.find(p => p._id === projectId)?.isLegalCase;
-      toast.error(isCase ? t('failedToRenameCase') : t('failedToRenameProject'));
-    } finally {
-      setEditingProjectId(null);
-    }
-  }, [renameProjectName, setProjects, projects, t]);
+      const oldSessions = Array.isArray(sessions) ? [...sessions] : [];
+      const renamedTitle = newTitle.trim();
 
-  const handleDeleteProject = useCallback((e, projectId) => {
-    e.stopPropagation();
-    setProjectToDelete(projectId);
-    setIsDeleteModalOpen(true);
-  }, [setProjectToDelete, setIsDeleteModalOpen]);
+      setSessions(prev =>
+        (Array.isArray(prev) ? prev : [])
+          .map(s =>
+            s.sessionId === sessionId ? { ...s, title: renamedTitle, lastModified: Date.now() } : s
+          )
+          .sort((a, b) => b.lastModified - a.lastModified)
+      );
 
-  const handleSwitchProject = useCallback(projectId => {
-    setCurrentProjectId(projectId);
-    const p = projects.find(proj => proj._id === projectId);
-    if (p?.isLegalCase) {
-      navigate(`/dashboard/legal/cases/${projectId}/chat`);
-    } else {
-      navigate('/dashboard/chat/new');
-    }
-    if (onClose) onClose();
-  }, [setCurrentProjectId, projects, navigate, onClose]);
+      try {
+        const success = await chatStorageService.updateSessionTitle(sessionId, renamedTitle);
+        if (success) {
+          toast.success(t('chatRenamed'));
+        } else {
+          throw new Error('Failed to sync rename to server');
+        }
+      } catch (err) {
+        console.error('Rename failed:', err);
+        toast.error(t('couldNotRenameChat'));
+        setSessions(oldSessions);
+      } finally {
+        setEditingSessionId(null);
+      }
+    },
+    [editingSessionId, newTitle, sessions, setSessions, t]
+  );
+
+  const handleRenameProject = useCallback(
+    async (e, projectId) => {
+      e.stopPropagation();
+      if (!renameProjectName.trim()) {
+        setEditingProjectId(null);
+        return;
+      }
+
+      try {
+        const updated = await apiService.renameProject(projectId, renameProjectName.trim());
+        setProjects(prev =>
+          prev.map(p => (p._id === projectId ? { ...p, name: updated.name } : p))
+        );
+        const isCase = projects.find(p => p._id === projectId)?.isLegalCase;
+        toast.success(isCase ? t('caseRenamedSuccessfully') : t('projectRenamedSuccessfully'));
+      } catch (error) {
+        console.error('Failed to rename project:', error);
+        const isCase = projects.find(p => p._id === projectId)?.isLegalCase;
+        toast.error(isCase ? t('failedToRenameCase') : t('failedToRenameProject'));
+      } finally {
+        setEditingProjectId(null);
+      }
+    },
+    [renameProjectName, setProjects, projects, t]
+  );
+
+  const handleDeleteProject = useCallback(
+    (e, projectId) => {
+      e.stopPropagation();
+      setProjectToDelete(projectId);
+      setIsDeleteModalOpen(true);
+    },
+    [setProjectToDelete, setIsDeleteModalOpen]
+  );
+
+  const handleSwitchProject = useCallback(
+    projectId => {
+      setCurrentProjectId(projectId);
+      const p = projects.find(proj => proj._id === projectId);
+      if (p?.isLegalCase) {
+        navigate(`/dashboard/legal/cases/${projectId}/chat`);
+      } else {
+        navigate('/dashboard/chat/new');
+      }
+      if (onClose) onClose();
+    },
+    [setCurrentProjectId, projects, navigate, onClose]
+  );
 
   const confirmDeleteProject = useCallback(async () => {
     if (!projectToDelete) return;
@@ -341,19 +361,13 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   const filteredCases = useMemo(() => {
     if (!Array.isArray(projects)) return [];
     const query = searchQuery.toLowerCase();
-    return projects.filter(
-      p =>
-        p.isLegalCase &&
-        (!query || p.name.toLowerCase().includes(query))
-    );
+    return projects.filter(p => p.isLegalCase && (!query || p.name.toLowerCase().includes(query)));
   }, [projects, searchQuery]);
 
   const filteredSessions = useMemo(() => {
     if (!Array.isArray(sessions)) return [];
     const query = searchQuery.toLowerCase();
-    return sessions.filter(session =>
-      session.title?.toLowerCase().includes(query)
-    );
+    return sessions.filter(session => session.title?.toLowerCase().includes(query));
   }, [sessions, searchQuery]);
 
   const hasHistory = Array.isArray(sessions) && sessions.length > 0;
@@ -451,60 +465,60 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
 
                 {/* Regular Projects List */}
                 {regularProjects.map((p, idx) => (
-                    <div key={p._id} className="relative group/proj flex items-center mx-3">
-                      {editingProjectId === p._id ? (
-                        <div
-                          className="flex w-full items-center gap-2 px-3 py-1.5"
-                          onClick={e => e.stopPropagation()}
+                  <div key={p._id} className="relative group/proj flex items-center mx-3">
+                    {editingProjectId === p._id ? (
+                      <div
+                        className="flex w-full items-center gap-2 px-3 py-1.5"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <input
+                          autoFocus
+                          value={renameProjectName}
+                          onChange={e => setRenameProjectName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleRenameProject(e, p._id);
+                            if (e.key === 'Escape') setEditingProjectId(null);
+                          }}
+                          className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
+                        />
+                        <button
+                          onClick={e => handleRenameProject(e, p._id)}
+                          className="text-primary"
                         >
-                          <input
-                            autoFocus
-                            value={renameProjectName}
-                            onChange={e => setRenameProjectName(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') handleRenameProject(e, p._id);
-                              if (e.key === 'Escape') setEditingProjectId(null);
-                            }}
-                            className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
-                          />
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleSwitchProject(p._id)}
+                          className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold' : 'text-subtext hover:bg-white/10 hover:text-maintext'}`}
+                        >
+                          <Folder className="w-4 h-4 shrink-0" />
+                          <span className="truncate text-[13px]">{p.name}</span>
+                        </button>
+                        <div className="absolute right-1 opacity-0 group-hover/proj:opacity-100 flex items-center gap-0.5">
                           <button
-                            onClick={e => handleRenameProject(e, p._id)}
-                            className="text-primary"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setEditingProjectId(p._id);
+                              setRenameProjectName(p.name);
+                            }}
+                            className="p-1 hover:text-primary"
                           >
-                            <Check className="w-4 h-4" />
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={e => handleDeleteProject(e, p._id)}
+                            className="p-1 hover:text-red-500"
+                          >
+                            <Trash2 className="w-3 h-3" />
                           </button>
                         </div>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleSwitchProject(p._id)}
-                            className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold' : 'text-subtext hover:bg-white/10 hover:text-maintext'}`}
-                          >
-                            <Folder className="w-4 h-4 shrink-0" />
-                            <span className="truncate text-[13px]">{p.name}</span>
-                          </button>
-                          <div className="absolute right-1 opacity-0 group-hover/proj:opacity-100 flex items-center gap-0.5">
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                setEditingProjectId(p._id);
-                                setRenameProjectName(p.name);
-                              }}
-                              className="p-1 hover:text-primary"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={e => handleDeleteProject(e, p._id)}
-                              className="p-1 hover:text-red-500"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                      </>
+                    )}
+                  </div>
+                ))}
 
                 {/* Cases Nested Folder */}
                 <div
@@ -568,110 +582,110 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                       )}
 
                       {filteredCases.map((p, idx) => (
-                          <motion.div
-                            key={p._id}
-                            initial={{ x: -10, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className="relative group/proj flex items-center"
-                          >
-                            {editingProjectId === p._id ? (
-                              <div
-                                className="flex w-full items-center gap-2 px-3 py-1.5"
-                                onClick={e => e.stopPropagation()}
+                        <motion.div
+                          key={p._id}
+                          initial={{ x: -10, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="relative group/proj flex items-center"
+                        >
+                          {editingProjectId === p._id ? (
+                            <div
+                              className="flex w-full items-center gap-2 px-3 py-1.5"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <input
+                                autoFocus
+                                value={renameProjectName}
+                                onChange={e => setRenameProjectName(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') handleRenameProject(e, p._id);
+                                  if (e.key === 'Escape') setEditingProjectId(null);
+                                }}
+                                className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
+                              />
+                              <button
+                                onClick={e => handleRenameProject(e, p._id)}
+                                className="text-primary hover:opacity-80 shrink-0"
                               >
-                                <input
-                                  autoFocus
-                                  value={renameProjectName}
-                                  onChange={e => setRenameProjectName(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') handleRenameProject(e, p._id);
-                                    if (e.key === 'Escape') setEditingProjectId(null);
-                                  }}
-                                  className="flex-1 min-w-0 bg-transparent border-b border-primary outline-none text-xs text-maintext py-1"
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setEditingProjectId(null);
+                                }}
+                                className="text-subtext hover:text-red-500 shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleSwitchProject(p._id)}
+                                className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold shadow-sm' : 'text-subtext hover:bg-white/20 dark:hover:bg-white/10 hover:text-maintext'}`}
+                              >
+                                <Folder
+                                  className={`w-4 h-4 shrink-0 transition-transform duration-300 ${currentProjectId === p._id ? 'scale-110 text-primary ring-4 ring-primary/10 rounded-full' : 'group-hover/proj:scale-110'}`}
                                 />
-                                <button
-                                  onClick={e => handleRenameProject(e, p._id)}
-                                  className="text-primary hover:opacity-80 shrink-0"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
+                                <div className="flex flex-col items-start min-w-0 pr-4">
+                                  <span className="truncate font-bold text-[13px] text-left">
+                                    {highlightMatch(p.name, searchQuery)}
+                                  </span>
+                                  {(() => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const tomorrow = new Date(today);
+                                    tomorrow.setDate(tomorrow.getDate() + 1);
+                                    const hasToday = p.hearings?.some(
+                                      h =>
+                                        new Date(h.date).toDateString() === today.toDateString() &&
+                                        h.status === 'Upcoming'
+                                    );
+                                    if (hasToday)
+                                      return (
+                                        <span className="text-[8px] font-black uppercase text-red-500 animate-pulse">
+                                          🔴 Hearing Today
+                                        </span>
+                                      );
+                                    const hasTomorrow = p.hearings?.some(
+                                      h =>
+                                        new Date(h.date).toDateString() ===
+                                          tomorrow.toDateString() && h.status === 'Upcoming'
+                                    );
+                                    if (hasTomorrow)
+                                      return (
+                                        <span className="text-[8px] font-black uppercase text-amber-500">
+                                          🟠 Tomorrow
+                                        </span>
+                                      );
+                                    return null;
+                                  })()}
+                                </div>
+                              </button>
+                              <div className="absolute right-2 opacity-0 group-hover/proj:opacity-100 flex items-center gap-1 transition-all duration-300 translate-x-2 group-hover/proj:translate-x-0">
                                 <button
                                   onClick={e => {
                                     e.stopPropagation();
-                                    setEditingProjectId(null);
+                                    setEditingProjectId(p._id);
+                                    setRenameProjectName(p.name);
                                   }}
-                                  className="text-subtext hover:text-red-500 shrink-0"
+                                  className="p-1.5 text-subtext hover:text-primary transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={e => handleDeleteProject(e, p._id)}
+                                  className="p-1.5 text-subtext hover:text-red-500 transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"
+                                >
+                                  <Trash2 className="w-3 h-3" />
                                 </button>
                               </div>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => handleSwitchProject(p._id)}
-                                  className={`flex-1 flex items-center min-w-0 gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${currentProjectId === p._id ? 'bg-primary/10 text-primary font-bold shadow-sm' : 'text-subtext hover:bg-white/20 dark:hover:bg-white/10 hover:text-maintext'}`}
-                                >
-                                  <Folder
-                                    className={`w-4 h-4 shrink-0 transition-transform duration-300 ${currentProjectId === p._id ? 'scale-110 text-primary ring-4 ring-primary/10 rounded-full' : 'group-hover/proj:scale-110'}`}
-                                  />
-                                  <div className="flex flex-col items-start min-w-0 pr-4">
-                                    <span className="truncate font-bold text-[13px] text-left">
-                                      {highlightMatch(p.name, searchQuery)}
-                                    </span>
-                                    {(() => {
-                                      const today = new Date();
-                                      today.setHours(0, 0, 0, 0);
-                                      const tomorrow = new Date(today);
-                                      tomorrow.setDate(tomorrow.getDate() + 1);
-                                      const hasToday = p.hearings?.some(
-                                        h =>
-                                          new Date(h.date).toDateString() ===
-                                            today.toDateString() && h.status === 'Upcoming'
-                                      );
-                                      if (hasToday)
-                                        return (
-                                          <span className="text-[8px] font-black uppercase text-red-500 animate-pulse">
-                                            🔴 Hearing Today
-                                          </span>
-                                        );
-                                      const hasTomorrow = p.hearings?.some(
-                                        h =>
-                                          new Date(h.date).toDateString() ===
-                                            tomorrow.toDateString() && h.status === 'Upcoming'
-                                      );
-                                      if (hasTomorrow)
-                                        return (
-                                          <span className="text-[8px] font-black uppercase text-amber-500">
-                                            🟠 Tomorrow
-                                          </span>
-                                        );
-                                      return null;
-                                    })()}
-                                  </div>
-                                </button>
-                                <div className="absolute right-2 opacity-0 group-hover/proj:opacity-100 flex items-center gap-1 transition-all duration-300 translate-x-2 group-hover/proj:translate-x-0">
-                                  <button
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      setEditingProjectId(p._id);
-                                      setRenameProjectName(p.name);
-                                    }}
-                                    className="p-1.5 text-subtext hover:text-primary transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"
-                                  >
-                                    <Edit2 className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    onClick={e => handleDeleteProject(e, p._id)}
-                                    className="p-1.5 text-subtext hover:text-red-500 transition-all bg-white/10 rounded-lg border border-white/5 shadow-sm"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </motion.div>
-                        ))}
+                            </>
+                          )}
+                        </motion.div>
+                      ))}
                     </motion.div>
                   )}
                 </AnimatePresence>

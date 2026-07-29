@@ -565,10 +565,7 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
                         Plan Rules & Reset
                       </h4>
                       <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-border/50 text-xs text-subtext space-y-2">
-                        <p>
-                          • Daily quotas (images, carousels) reset every day at midnight
-                          IST.
-                        </p>
+                        <p>• Daily quotas (images, carousels) reset every day at midnight IST.</p>
                         <p>
                           • Free tier chat limit of 100 messages is a lifetime total cap across all
                           your sessions.

@@ -39,11 +39,7 @@ const PLAN_FEATURES_MAP = {
     'Image Generation',
     'AI Ads Agent',
   ],
-  generate_carousel: [
-    '1–5 AI Carousels per day',
-    '5–10 Images per day',
-    'AI Ads Agent',
-  ],
+  generate_carousel: ['1–5 AI Carousels per day', '5–10 Images per day', 'AI Ads Agent'],
   cashflow: ['CashFlow Explorer', 'Unlimited AI Chat', 'Image Generation', 'AI Ads Agent'],
   default: ['Unlimited AI Chat', 'Image Generation', 'AI Ads Agent', 'CashFlow Explorer'],
 };

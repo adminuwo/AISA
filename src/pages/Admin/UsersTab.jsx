@@ -23,7 +23,7 @@ const UserRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) => {
     handleBlockToggle,
     setDeleteModal,
     t,
-    availablePlans
+    availablePlans,
   } = rowProps;
 
   const user = filteredUsers[index];
@@ -77,11 +77,7 @@ const UserRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() =>
-                setSelectedUser(
-                  isSelected ? null : user._id || user.id
-                )
-              }
+              onClick={() => setSelectedUser(isSelected ? null : user._id || user.id)}
               className="p-2 rounded-lg hover:bg-primary/10 text-subtext hover:text-primary transition-all"
               title={t('manage')}
             >
@@ -253,7 +249,7 @@ const UsersTab = () => {
 
   const dynamicRowHeight = useDynamicRowHeight({
     defaultRowHeight: 80,
-    key: searchQuery // reset layout cache when search query changes
+    key: searchQuery, // reset layout cache when search query changes
   });
 
   // ResizeObserver to measure parent available height
@@ -263,7 +259,7 @@ const UsersTab = () => {
     if (initialHeight > 0) {
       setListHeight(initialHeight);
     }
-    const observer = new ResizeObserver((entries) => {
+    const observer = new ResizeObserver(entries => {
       for (let entry of entries) {
         const height = entry.contentRect.height;
         if (height > 0) {
@@ -275,31 +271,34 @@ const UsersTab = () => {
     return () => observer.disconnect();
   }, []);
 
-  const rowProps = useMemo(() => ({
-    filteredUsers,
-    selectedUser,
-    setSelectedUser,
-    upgradeData,
-    setUpgradeData,
-    isUpgrading,
-    handleManualUpgrade,
-    handleBlockToggle,
-    setDeleteModal,
-    t,
-    availablePlans
-  }), [
-    filteredUsers,
-    selectedUser,
-    setSelectedUser,
-    upgradeData,
-    setUpgradeData,
-    isUpgrading,
-    handleManualUpgrade,
-    handleBlockToggle,
-    setDeleteModal,
-    t,
-    availablePlans
-  ]);
+  const rowProps = useMemo(
+    () => ({
+      filteredUsers,
+      selectedUser,
+      setSelectedUser,
+      upgradeData,
+      setUpgradeData,
+      isUpgrading,
+      handleManualUpgrade,
+      handleBlockToggle,
+      setDeleteModal,
+      t,
+      availablePlans,
+    }),
+    [
+      filteredUsers,
+      selectedUser,
+      setSelectedUser,
+      upgradeData,
+      setUpgradeData,
+      isUpgrading,
+      handleManualUpgrade,
+      handleBlockToggle,
+      setDeleteModal,
+      t,
+      availablePlans,
+    ]
+  );
 
   if (loading) return <LoadingSpinner />;
 
@@ -322,7 +321,10 @@ const UsersTab = () => {
         {filteredUsers.length === 0 ? (
           <p className="text-center text-subtext py-8 text-sm">{t('noUsersFound')}</p>
         ) : (
-          <div ref={listContainerRef} className="h-[calc(100vh-320px)] min-h-[400px] w-full relative">
+          <div
+            ref={listContainerRef}
+            className="h-[calc(100vh-320px)] min-h-[400px] w-full relative"
+          >
             <List
               listRef={listRef}
               height={listHeight}

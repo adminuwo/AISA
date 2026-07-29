@@ -593,8 +593,6 @@ const NavigateToCaseChat = () => {
 };
 
 const NavigateProvider = () => {
-
-
   return (
     <SSOInterceptor>
       <Toaster

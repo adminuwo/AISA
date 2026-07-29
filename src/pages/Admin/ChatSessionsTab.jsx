@@ -26,12 +26,7 @@ import { List, useListRef } from 'react-window';
 
 // Static row rendering component for virtualization (Sprint 6B)
 const SessionRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) => {
-  const {
-    sessions,
-    fetchDetail,
-    handleOpenMailModal,
-    formatDate
-  } = rowProps;
+  const { sessions, fetchDetail, handleOpenMailModal, formatDate } = rowProps;
 
   const s = sessions[index];
   if (!s) return null;
@@ -163,17 +158,15 @@ const ChatSessionsTab = () => {
   // ─── Virtualization States & Refs (Sprint 6B) ──────────────────────────────
   const listRef = useListRef();
 
-  const rowProps = useMemo(() => ({
-    sessions,
-    fetchDetail,
-    handleOpenMailModal,
-    formatDate
-  }), [
-    sessions,
-    fetchDetail,
-    handleOpenMailModal,
-    formatDate
-  ]);
+  const rowProps = useMemo(
+    () => ({
+      sessions,
+      fetchDetail,
+      handleOpenMailModal,
+      formatDate,
+    }),
+    [sessions, fetchDetail, handleOpenMailModal, formatDate]
+  );
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [stats, setStats] = useState(null);
@@ -530,16 +523,36 @@ const ChatSessionsTab = () => {
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="border-b border-white/5 flex w-full items-center h-[48px]">
-                  <div className="w-[12%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-3/4" /></div>
-                  <div className="w-[10%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-2/3" /></div>
-                  <div className="w-[18%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-4/5" /></div>
-                  <div className="w-[12%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2" /></div>
-                  <div className="w-[14%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-3/4" /></div>
-                  <div className="w-[8%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-1/3" /></div>
-                  <div className="w-[6%] px-4 py-3 text-center"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" /></div>
-                  <div className="w-[6%] px-4 py-3 text-center"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" /></div>
-                  <div className="w-[6%] px-4 py-3 text-center"><div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" /></div>
-                  <div className="w-[8%] px-4 py-3"><div className="h-3 bg-white/10 rounded animate-pulse w-2/3" /></div>
+                  <div className="w-[12%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-3/4" />
+                  </div>
+                  <div className="w-[10%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-2/3" />
+                  </div>
+                  <div className="w-[18%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-4/5" />
+                  </div>
+                  <div className="w-[12%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-1/2" />
+                  </div>
+                  <div className="w-[14%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-3/4" />
+                  </div>
+                  <div className="w-[8%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-1/3" />
+                  </div>
+                  <div className="w-[6%] px-4 py-3 text-center">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" />
+                  </div>
+                  <div className="w-[6%] px-4 py-3 text-center">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" />
+                  </div>
+                  <div className="w-[6%] px-4 py-3 text-center">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-1/2 mx-auto" />
+                  </div>
+                  <div className="w-[8%] px-4 py-3">
+                    <div className="h-3 bg-white/10 rounded animate-pulse w-2/3" />
+                  </div>
                 </div>
               ))
             ) : sessions.length === 0 ? (
@@ -548,7 +561,10 @@ const ChatSessionsTab = () => {
                 No sessions found
               </div>
             ) : (
-              <div className="w-full relative" style={{ height: `${Math.min(sessions.length * 48, 480) || 48}px` }}>
+              <div
+                className="w-full relative"
+                style={{ height: `${Math.min(sessions.length * 48, 480) || 48}px` }}
+              >
                 <List
                   listRef={listRef}
                   height={Math.min(sessions.length * 48, 480) || 48}

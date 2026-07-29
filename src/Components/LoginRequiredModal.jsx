@@ -21,7 +21,6 @@ const LoginRequiredModal = () => {
     return () => window.removeEventListener('login_required', handleLoginRequired);
   }, []);
 
-
   return (
     <AnimatePresence>
       {isOpen && (

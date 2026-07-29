@@ -44,7 +44,6 @@ const CashFlowChartWidget = React.lazy(() =>
   import('../../Tools/AI_Cashflow/CashFlowChartWidget').catch(() => ({ default: () => null }))
 );
 
-
 // Standalone CodeBlock component with memoization for performance (Sprint 7A)
 const CodeBlock = React.memo(({ lang, codeValue, isUser, ...props }) => {
   return (
@@ -75,9 +74,7 @@ const CodeBlock = React.memo(({ lang, codeValue, isUser, ...props }) => {
           </button>
         </div>
       )}
-      <div
-        className={`w-full ${isUser ? 'bg-transparent' : 'bg-[#282a36]'}`}
-      >
+      <div className={`w-full ${isUser ? 'bg-transparent' : 'bg-[#282a36]'}`}>
         <SyntaxHighlighter
           className="custom-scrollbar"
           language={lang || 'text'}
@@ -1136,7 +1133,11 @@ const ChatBubble = React.memo(
 
                   {msg.videoUrl && (
                     <div className="relative mt-4 mb-2 w-fit max-w-full">
-                      <video src={msg.videoUrl} controls className="w-full max-w-sm rounded-xl border border-white/10" />
+                      <video
+                        src={msg.videoUrl}
+                        controls
+                        className="w-full max-w-sm rounded-xl border border-white/10"
+                      />
                     </div>
                   )}
 

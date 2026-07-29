@@ -45,8 +45,6 @@ import { copyText } from '../utils/clipboard';
 import ActionCard from '../Components/ActionCard';
 import { useTheme } from '../context/ThemeContext';
 
-
-
 const ImageViewer = ({ src, alt }) => {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -986,7 +984,11 @@ const SharedChat = () => {
                   {/* Video Url Rendering */}
                   {msg.videoUrl && (
                     <div className="relative mt-4 mb-2 w-fit max-w-full">
-                      <video src={msg.videoUrl} controls className="w-full max-w-sm rounded-xl border border-white/10" />
+                      <video
+                        src={msg.videoUrl}
+                        controls
+                        className="w-full max-w-sm rounded-xl border border-white/10"
+                      />
                     </div>
                   )}
 
