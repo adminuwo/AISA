@@ -14,7 +14,7 @@ import { BrowserRouter, useLocation } from 'react-router-dom';
 import ErrorBoundary from './Components/ErrorBoundary';
 import { initIncidentReporter } from './services/incidentReporter';
 
-// Initialize DevOps telemetry and client error collectors
+// Initialize DevOps telemetry and client error collectors...
 try {
   initIncidentReporter();
 } catch (e) {
