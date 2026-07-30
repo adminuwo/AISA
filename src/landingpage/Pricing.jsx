@@ -133,23 +133,25 @@ const Pricing = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ── Tablet: track active card via scroll position ──
+  // ── Mobile/Tablet: track active card via scroll position ──
   useEffect(() => {
     const grid = gridRef.current;
-    if (!grid || !isTabletCarousel) return;
+    if (!grid || !isMobile) return;
     const handleScroll = () => {
-      const cardWidth = grid.clientWidth * 0.42;
+      const card = grid.querySelector('.pricing-card');
+      const cardWidth = card ? card.clientWidth : grid.clientWidth * 0.85;
       const idx = Math.round(grid.scrollLeft / (cardWidth + 12));
       setActiveCard(Math.max(0, Math.min(idx, plans.length - 1)));
     };
     grid.addEventListener('scroll', handleScroll, { passive: true });
     return () => grid.removeEventListener('scroll', handleScroll);
-  }, [plans.length, isTabletCarousel]);
+  }, [plans.length, isMobile]);
 
   const scrollToCard = idx => {
     const grid = gridRef.current;
     if (!grid) return;
-    const cardWidth = grid.clientWidth * 0.42;
+    const card = grid.querySelector('.pricing-card');
+    const cardWidth = card ? card.clientWidth : grid.clientWidth * 0.85;
     grid.scrollTo({ left: idx * (cardWidth + 12), behavior: 'smooth' });
   };
 
@@ -821,7 +823,7 @@ const Pricing = () => {
       </div>
 
       {/* ── Mobile dot indicators ── */}
-      {plans.length > 0 && isTabletCarousel && (
+      {plans.length > 0 && isMobile && (
         <div className="pricing-dots" role="tablist" aria-label="Plan selector">
           {plans.map((_, i) => (
             <button

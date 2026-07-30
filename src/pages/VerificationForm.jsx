@@ -19,6 +19,15 @@ export default function VerificationForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   // Safety check for user data
   const user = getUserData();
@@ -64,6 +73,7 @@ export default function VerificationForm() {
     try {
       await axios.post(apis.resendCode, { email });
       toast.success('Verification code resent successfully!');
+      setCountdown(60);
     } catch (err) {
       console.error('Resend Error:', err);
       setError(err.response?.data?.error || 'Failed to resend code.');
@@ -183,10 +193,14 @@ export default function VerificationForm() {
             <button
               type="button"
               onClick={handleResend}
-              disabled={resendLoading}
-              className="text-primary hover:underline text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              disabled={resendLoading || countdown > 0}
+              className="text-primary hover:underline text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:no-underline"
             >
-              {resendLoading ? 'Sending...' : 'Request New Code'}
+              {resendLoading
+                ? 'Sending...'
+                : countdown > 0
+                  ? `Resend Code (${countdown}s)`
+                  : 'Request New Code'}
             </button>
           </div>
         </motion.div>

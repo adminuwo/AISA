@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API } from '../types';
+import { API, apis } from '../types';
 
 const getAuthHeaders = () => {
   const userStr = localStorage.getItem('user');

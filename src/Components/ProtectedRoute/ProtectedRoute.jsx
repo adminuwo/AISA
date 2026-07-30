@@ -15,8 +15,8 @@ const ProtectedRoute = ({ children }) => {
       if (!user) return false;
 
       const userData = JSON.parse(user);
-      // Check if user object has required fields
-      return userData && userData.email;
+      // Check if user object has required fields and JWT token
+      return userData && userData.email && userData.token;
     } catch (error) {
       console.error('Error checking authentication:', error);
       return false;

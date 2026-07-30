@@ -728,6 +728,7 @@ const InvoiceLedgerTab = () => {
   const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     gateway: '',
@@ -807,12 +808,15 @@ const InvoiceLedgerTab = () => {
         alert('No subscription ID found for this invoice.');
         return;
       }
+      setDownloadingInvoiceId(inv._id);
       const response = await apiService.downloadInvoicePDF(subId);
       downloadBlob(response, `Invoice_${inv.invoiceNumber}.pdf`);
     } catch (e) {
       // If PDF endpoint not available, open URL
       if (inv.invoiceUrl) window.open(inv.invoiceUrl, '_blank');
       else alert('PDF not available for this invoice.');
+    } finally {
+      setDownloadingInvoiceId(null);
     }
   };
 
@@ -996,9 +1000,16 @@ const InvoiceLedgerTab = () => {
                       className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
                     >
                       <td className="py-3 px-3">
-                        <span className="font-mono font-bold text-primary text-[10px]">
-                          {inv.invoiceNumber}
-                        </span>
+                        <button
+                          onClick={() => handleDownloadPDF(inv)}
+                          disabled={downloadingInvoiceId === inv._id}
+                          className="font-mono font-bold text-primary text-[10px] hover:underline flex items-center gap-1.5 disabled:opacity-50 focus:outline-none"
+                        >
+                          {downloadingInvoiceId === inv._id && (
+                            <RefreshCw className="w-3 h-3 animate-spin text-primary" />
+                          )}
+                          <span>{inv.invoiceNumber}</span>
+                        </button>
                         <div
                           className="text-[9px] text-subtext font-mono truncate max-w-[90px] mt-0.5"
                           title={inv.paymentId}
