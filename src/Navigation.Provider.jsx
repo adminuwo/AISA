@@ -161,12 +161,13 @@ const isAuthenticated = () => {
   );
 };
 
-// ------------------------------
 // Home Redirect Component
-// ------------------------------
-// Always displays the landing page on root to satisfy Google OAuth Branding verification.
-// Users can explicitly enter the dashboard using CTA buttons.
+// Redirects authenticated users to the dashboard; shows Landing to guests.
 const HomeRedirect = () => {
+  const hasToken = isAuthenticated();
+  if (hasToken) {
+    return <Navigate to="/dashboard/chat/new" replace state={{ forceGlobal: true }} />;
+  }
   return <Landing />;
 };
 

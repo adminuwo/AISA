@@ -158,16 +158,6 @@ const ChatSessionsTab = () => {
   // ─── Virtualization States & Refs (Sprint 6B) ──────────────────────────────
   const listRef = useListRef();
 
-  const rowProps = useMemo(
-    () => ({
-      sessions,
-      fetchDetail,
-      handleOpenMailModal,
-      formatDate,
-    }),
-    [sessions, fetchDetail, handleOpenMailModal, formatDate]
-  );
-
   // ── State ──────────────────────────────────────────────────────────────────
   const [stats, setStats] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -294,6 +284,18 @@ const ChatSessionsTab = () => {
       minute: '2-digit',
     });
   };
+
+  // ── Row Props for Virtualized List ─────────────────────────────────────────
+  const rowProps = useMemo(
+    () => ({
+      sessions,
+      fetchDetail,
+      handleOpenMailModal,
+      formatDate,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessions, fetchDetail, handleOpenMailModal, formatDate]
+  );
 
   // ── Summary Cards ──────────────────────────────────────────────────────────
   const statCards = [
