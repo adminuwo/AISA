@@ -952,7 +952,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
     }
   };
 
-  const handleCompleteOnboarding = async e => {
+  const handleCompleteOnboarding = async (e, retryCount = 0) => {
     if (e && e.preventDefault) e.preventDefault();
 
     let targetWs = workspace;
@@ -984,9 +984,27 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         // Brand Setup is a separate tool that starts clean. Onboarding data only appears in Company Info.
         fetchWorkspaceData(res.workspace._id);
         initWorkspace(true);
+      } else {
+        throw new Error(res.message || 'Server returned failure');
       }
     } catch (error) {
-      toast.error('Setup sync failed. Please click Launch once more.');
+      console.error('[Onboarding] Complete onboarding failed:', error?.response?.data || error?.message || error);
+      const serverMsg = error?.response?.data?.message || error?.message;
+
+      // Auto-retry once on network/timeout errors
+      if (retryCount === 0 && (error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK' || !serverMsg)) {
+        console.warn('[Onboarding] Auto-retrying launch...');
+        setIsOnboardingSaving(false);
+        setTimeout(() => handleCompleteOnboarding(null, 1), 2000);
+        toast.loading('Connection hiccup — retrying launch...', { duration: 2000 });
+        return;
+      }
+
+      toast.error(
+        serverMsg
+          ? `Setup failed: ${serverMsg}`
+          : 'Setup sync failed. Please click Launch once more.'
+      );
     } finally {
       setIsOnboardingSaving(false);
     }
@@ -6439,7 +6457,7 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
       'Tell us what you want to achieve with AI content.',
     ];
 
-    const goNext = () => {
+    const goNext = async () => {
       if (onboardingStep === 0 && !onboardingData.customName.trim())
         return toast.error('Please enter your name');
       if (onboardingStep === 1 && !onboardingData.brandName.trim())
@@ -6452,8 +6470,8 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
         /* colors/logo optional */
       }
       if (onboardingStep >= TOTAL_STEPS - 1) {
-        // Last step - submit
-        handleCompleteOnboarding({ preventDefault: () => {} });
+        // Last step - await submit so logo upload fires after workspace is ready
+        await handleCompleteOnboarding({ preventDefault: () => {} });
         if (onboardingData.brandLogo && workspace) {
           const fd = new FormData();
           fd.append('workspaceId', workspace._id);

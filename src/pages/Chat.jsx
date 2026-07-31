@@ -917,20 +917,193 @@ const Chat = () => {
     );
   };
 
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [activeMessageId, setActiveMessageId] = useState(null);
+  const [viewingDoc, setViewingDoc] = useState(null);
+  const [messageFeedback, setMessageFeedback] = useState({});
+  const [downloadedMessages, setDownloadedMessages] = useState({});
+
+  const handleMessageDelete = useCallback((msgId) => {
+    setMessages((prev) => prev.filter((m) => m.id !== msgId && m._id !== msgId));
+    toast.success('Message deleted');
+  }, [setMessages]);
+
+  const handleMessageUndo = useCallback((msg) => {
+    const contentToRestore = msg.content || msg.text || '';
+    setInputValue(contentToRestore);
+    setMessages((prev) => prev.filter((m) => m.id !== msg.id && m._id !== msg.id));
+    toast.info('Message restored to input');
+  }, [setInputValue, setMessages]);
+
+  const startEditing = useCallback((msg) => {
+    setEditingMessageId(msg.id || msg._id);
+    setEditContent(msg.content || msg.text || '');
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingMessageId(null);
+    setEditContent('');
+  }, []);
+
+  const saveEdit = useCallback((msg) => {
+    if (!editContent.trim()) {
+      toast.error('Message cannot be empty');
+      return;
+    }
+    const newContent = editContent.trim();
+    setEditingMessageId(null);
+    setEditContent('');
+
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msg.id || m._id === msg._id ? { ...m, content: newContent, text: newContent } : m))
+    );
+
+    handleSendMessageRef.current?.(null, newContent);
+  }, [editContent, setMessages]);
+
+  const handleCopyMessage = useCallback((text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
+  }, []);
+
+  const handleThumbsUp = useCallback((msgId) => {
+    setMessageFeedback((prev) => ({
+      ...prev,
+      [msgId]: prev[msgId]?.type === 'up' ? null : { type: 'up' },
+    }));
+    toast.success('Thanks for your feedback!');
+  }, []);
+
+  const handleThumbsDown = useCallback((msgId) => {
+    setMessageFeedback((prev) => ({
+      ...prev,
+      [msgId]: prev[msgId]?.type === 'down' ? null : { type: 'down' },
+    }));
+    toast.info('Feedback recorded!');
+  }, []);
+
+  const handleShare = useCallback((content) => {
+    if (!content) return;
+    if (navigator.share) {
+      navigator.share({ title: 'AISA Chat', text: content }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(content);
+      toast.success('Copied snippet to clipboard!');
+    }
+  }, []);
+
+  const handlePdfAction = useCallback((action, msg) => {
+    const text = msg.content || msg.text || '';
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head><title>AISA Report</title><style>body{font-family:sans-serif;padding:40px;line-height:1.6;}</style></head>
+          <body><div>${text.replace(/\n/g, '<br/>')}</div></body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+    setDownloadedMessages((prev) => ({ ...prev, [msg.id]: true }));
+  }, []);
+
+  const handleDownload = useCallback((url, filename = 'AISA-download') => {
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, []);
+
+  const handleDownloadCodeProject = useCallback((msg) => {
+    const text = msg.content || msg.text || '';
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'code-project.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded project code');
+  }, []);
+
   const listProps = useMemo(() => {
     return {
       typingMessageId,
       isLoading,
       expandedMessages,
       setExpandedMessages,
+      activeMessageId,
+      setActiveMessageId,
+      editingMessageId,
+      editContent,
+      setEditContent,
+      startEditing,
+      cancelEdit,
+      saveEdit,
+      messageFeedback,
+      handleThumbsUp,
+      handleThumbsDown,
+      handleCopyMessage,
+      handleShare,
+      handlePdfAction,
+      handleDownload,
+      handleMessageDelete,
+      handleMessageUndo,
+      handleDownloadCodeProject,
+      speakResponse,
+      speakingMessageId,
+      isPaused,
+      downloadedMessages,
+      isDownloadingUrl,
       navigate,
       setCurrentMode: activateMode,
+      viewingDoc,
+      setViewingDoc,
       suggestions,
       scrollToBottom,
       inputRef: null,
       handleCopyImage,
     };
-  }, [typingMessageId, isLoading, expandedMessages, navigate, activateMode, suggestions, scrollToBottom, handleCopyImage]);
+  }, [
+    typingMessageId,
+    isLoading,
+    expandedMessages,
+    activeMessageId,
+    editingMessageId,
+    editContent,
+    messageFeedback,
+    handleThumbsUp,
+    handleThumbsDown,
+    handleCopyMessage,
+    handleShare,
+    handlePdfAction,
+    handleDownload,
+    handleMessageDelete,
+    handleMessageUndo,
+    handleDownloadCodeProject,
+    speakResponse,
+    speakingMessageId,
+    isPaused,
+    downloadedMessages,
+    isDownloadingUrl,
+    navigate,
+    activateMode,
+    viewingDoc,
+    suggestions,
+    scrollToBottom,
+    handleCopyImage,
+    startEditing,
+    cancelEdit,
+    saveEdit,
+  ]);
 
   return (
     <SelectionToolbarProvider>
@@ -1072,17 +1245,49 @@ const Chat = () => {
             sessionId={activeSessionId}
           />
         )}
-        {isCasePanelOpen && (
-          <CaseIntelligencePanel
-            isOpen={isCasePanelOpen}
-            onClose={() => setIsCasePanelOpen(false)}
-            currentCase={currentCase}
-            onUseInArgument={handleUseInArgument}
-            onUpdate={(updated) => {
-              setCurrentCase(updated);
-              setAllProjects((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
-            }}
-          />
+        {/* Document/Image Viewer Lightbox Modal */}
+        {viewingDoc && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-[110]">
+              <a
+                href={viewingDoc.url}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                title="Open in new tab"
+              >
+                <ExternalLink size={20} />
+              </a>
+              <button
+                onClick={() => setViewingDoc(null)}
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                title="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div
+              className="max-w-full max-h-full flex items-center justify-center w-full h-full"
+              onClick={() => setViewingDoc(null)}
+            >
+              <div
+                className="max-w-[90vw] max-h-[85vh] flex items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {viewingDoc.type === 'video' || viewingDoc.url?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                  <video
+                    src={viewingDoc.url}
+                    controls
+                    autoPlay
+                    className="max-w-full max-h-[85vh] rounded-lg shadow-2xl"
+                  />
+                ) : (
+                  <ImageViewer src={viewingDoc.url} alt={viewingDoc.name || 'Preview'} />
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </SelectionToolbarProvider>
