@@ -195,6 +195,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   };
 
   const handleNewChat = useCallback(() => {
+    useGenerationStore.getState().clearMessagesForChat('new');
     setCurrentProjectId('default');
     setMode('NORMAL_CHAT');
     setLegalTool(null);

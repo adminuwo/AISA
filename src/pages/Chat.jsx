@@ -351,6 +351,7 @@ const Chat = () => {
   useEffect(() => {
     if (!sessionId || sessionId === 'new') {
       hydratedSessionRef.current = null;
+      setMessages([]);
       return;
     }
     if (hydratedSessionRef.current === sessionId) return;
@@ -980,6 +981,8 @@ const Chat = () => {
               placeholder={TOOL_PLACEHOLDERS[currentMode] || 'Ask AISA anything...'}
               currentMode={currentMode}
               setCurrentMode={activateMode}
+              messages={messages}
+              typedPlaceholder={typedPlaceholder}
               isToolsMenuOpen={isToolsMenuOpen}
               setIsToolsMenuOpen={setIsToolsMenuOpen}
               isStockModalOpen={isStockModalOpen}
