@@ -491,8 +491,8 @@ export const useAILegalCRM = ({
     const fetchCaseDetails = async () => {
       if (!currentProjectId || currentProjectId === 'default' || currentProjectId === 'all') {
         if (currentCase !== null) setCurrentCase(null);
-        if (currentMode !== 'LEGAL_TOOLKIT') {
-          if (currentMode !== 'NORMAL_CHAT') setCurrentMode('NORMAL_CHAT');
+        if (currentMode === 'LEGAL_TOOLKIT') {
+          setCurrentMode('NORMAL_CHAT');
           if (selectedLegalTool !== null) setSelectedLegalTool(null);
           if (legalView !== 'CHAT') setLegalView('CHAT');
         }
@@ -533,15 +533,13 @@ export const useAILegalCRM = ({
               if (legalView !== 'CHAT') setLegalView('CHAT');
               if (location.pathname === '/dashboard/chat/new') {
                 try {
-                  const caseSessions = await chatStorageService.getSessions(currentProjectId);
-                  if (Array.isArray(caseSessions) && caseSessions.length > 0) {
-                    const params = new URLSearchParams(location.search);
-                    const toolParam = params.get('tool') || selectedLegalTool?.id;
-                    const toolQuery = toolParam ? `&tool=${toolParam}` : '';
-                    navigate(
-                      `/dashboard/chat/${caseSessions[0].sessionId}?caseId=${currentProjectId}${toolQuery}`,
-                      { replace: true }
-                    );
+                  const data = await apiService.getCaseSessions(currentProjectId);
+                  const sessions = Array.isArray(data) ? data : data?.sessions || [];
+                  if (sessions.length > 0) {
+                    const firstSessionId = sessions[0]._id || sessions[0].id;
+                    if (firstSessionId) {
+                      navigate(`/dashboard/chat/${firstSessionId}`, { replace: true });
+                    }
                   }
                 } catch (sessionErr) {
                   console.error('Failed to fetch case sessions:', sessionErr);
@@ -555,7 +553,7 @@ export const useAILegalCRM = ({
           console.warn(`[Case] Project ${currentProjectId} not found (404). Clearing stale ID.`);
           if (currentProjectId !== null) setCurrentProjectId(null);
           if (currentCase !== null) setCurrentCase(null);
-          if (currentMode !== 'NORMAL_CHAT') setCurrentMode('NORMAL_CHAT');
+          if (currentMode === 'LEGAL_TOOLKIT') setCurrentMode('NORMAL_CHAT');
         } else {
           console.error('Failed to fetch case details:', err);
         }
@@ -565,7 +563,6 @@ export const useAILegalCRM = ({
   }, [
     currentProjectId,
     location.pathname,
-    currentMode,
     currentCase?._id,
     selectedLegalTool?.id,
     setCurrentCase,

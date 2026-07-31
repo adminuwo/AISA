@@ -66,12 +66,17 @@ const ModernDashboard = ({
   userName,
   onToolSelect,
   activeToolId,
-  activeCategory = 'business',
+  activeCategory: externalCategory,
   onCategoryChange,
 }) => {
   const { t } = useLanguage();
   const isDark = useIsDark();
-  const setActiveCategory = onCategoryChange;
+  const [internalCategory, setInternalCategory] = useState('business');
+  const activeCategory = externalCategory !== undefined ? externalCategory : internalCategory;
+  const setActiveCategory = (cat) => {
+    setInternalCategory(cat);
+    if (onCategoryChange) onCategoryChange(cat);
+  };
 
   const categories = [
     {

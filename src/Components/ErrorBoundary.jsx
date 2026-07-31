@@ -4,8 +4,19 @@ import { reportErrorToBackend } from '../services/incidentReporter';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null, showDetails: false };
+    this.state = { hasError: false, error: null, errorInfo: null, showDetails: false, copied: false };
   }
+
+  handleCopyLog = () => {
+    const errorStr = this.state.error ? this.state.error.toString() : '';
+    const stackStr = this.state.errorInfo?.componentStack || '';
+    const logText = `${errorStr}\n\n${stackStr}`;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(logText);
+    }
+    this.setState({ copied: true });
+    setTimeout(() => this.setState({ copied: false }), 2000);
+  };
 
   static getDerivedStateFromError(error) {
     return { hasError: true };
@@ -92,10 +103,32 @@ class ErrorBoundary extends React.Component {
             </div>
 
             {this.state.showDetails && (
-              <div className="w-full text-left bg-[#05070a] border border-white/5 rounded-2xl p-5 font-mono text-[10px] text-red-400/90 leading-relaxed overflow-x-auto select-text max-h-[250px] custom-scrollbar">
-                <p className="font-extrabold uppercase text-[8px] text-white/40 tracking-wider mb-2 border-b border-white/5 pb-1">
-                  Telemetry Crash Log
-                </p>
+              <div className="w-full text-left bg-[#05070a] border border-white/5 rounded-2xl p-5 font-mono text-[10px] text-red-400/90 leading-relaxed overflow-x-auto select-text max-h-[250px] custom-scrollbar relative">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+                  <p className="font-extrabold uppercase text-[8px] text-white/40 tracking-wider m-0">
+                    Telemetry Crash Log
+                  </p>
+                  <button
+                    onClick={this.handleCopyLog}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white font-sans font-bold text-[10px] flex items-center gap-1.5 transition-all cursor-pointer border border-white/10"
+                    title="Copy Technical Log to Clipboard"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5 text-violet-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span>{this.state.copied ? 'Copied Log! ✓' : 'Copy Technical Log'}</span>
+                  </button>
+                </div>
                 <p className="font-extrabold text-white mb-2 break-all">
                   {this.state.error && this.state.error.toString()}
                 </p>

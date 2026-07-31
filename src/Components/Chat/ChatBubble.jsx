@@ -444,46 +444,46 @@ const ChatBubble = React.memo(
   ({
     msg,
     idx,
-    messages,
+    messages = [],
     typingMessageId,
-    expandedMessages,
-    setExpandedMessages,
+    expandedMessages = {},
+    setExpandedMessages = () => {},
     activeMessageId,
-    setActiveMessageId,
+    setActiveMessageId = () => {},
     editingMessageId,
     editContent,
-    setEditContent,
-    startEditing,
-    cancelEdit,
-    saveEdit,
-    messageFeedback,
-    handleThumbsUp,
-    handleThumbsDown,
-    handleCopyMessage,
-    handleShare,
-    handlePdfAction,
-    handleDownload,
-    handleMessageDelete,
-    handleMessageUndo,
-    handleDownloadCodeProject,
-    speakResponse,
+    setEditContent = () => {},
+    startEditing = () => {},
+    cancelEdit = () => {},
+    saveEdit = () => {},
+    messageFeedback = {},
+    handleThumbsUp = () => {},
+    handleThumbsDown = () => {},
+    handleCopyMessage = () => {},
+    handleShare = () => {},
+    handlePdfAction = () => {},
+    handleDownload = () => {},
+    handleMessageDelete = () => {},
+    handleMessageUndo = () => {},
+    handleDownloadCodeProject = () => {},
+    speakResponse = () => {},
     speakingMessageId,
     isPaused,
-    downloadedMessages,
+    downloadedMessages = {},
     isDownloadingUrl,
-    navigate,
-    activateToolWithTypingEffect,
-    setCurrentMode,
+    navigate = () => {},
+    activateToolWithTypingEffect = () => {},
+    setCurrentMode = () => {},
     viewingDoc,
-    setViewingDoc,
-    suggestions,
-    handleSuggestionClick,
+    setViewingDoc = () => {},
+    suggestions = [],
+    handleSuggestionClick = () => {},
     isLoading,
-    scrollToBottom,
-    setIsMagicEditing,
-    setEditRefImage,
+    scrollToBottom = () => {},
+    setIsMagicEditing = () => {},
+    setEditRefImage = () => {},
     inputRef,
-    handleCopyImage,
+    handleCopyImage = () => {},
   }) => {
     if (!msg) return null;
 
@@ -830,8 +830,9 @@ const ChatBubble = React.memo(
                     ) : (
                       <div className="flex flex-col">
                         <div
-                          className={`collapsible-container ${msg.content && msg.content.length > 350 && msg.id !== typingMessageId && expandedMessages[msg.id] === false ? 'collapsed-message' : ''}`}
+                          className={`collapsible-container ${msg.content && msg.content.length > 350 && msg.id !== typingMessageId && expandedMessages?.[msg.id] === false ? 'collapsed-message' : ''}`}
                         >
+                          {!(msg.imageUrl && (msg.content === 'Action processed.' || msg.content === 'Generated Image')) && (
                           <ReactMarkdown
                             className="select-text"
                             remarkPlugins={[remarkGfm]}
@@ -1044,6 +1045,7 @@ const ChatBubble = React.memo(
                           >
                             {transformLegalActionsLocal(msg.content || msg.text || '')}
                           </ReactMarkdown>
+                          )}
                         </div>
 
                         {(msg.content || msg.text) &&
@@ -1066,19 +1068,19 @@ const ChatBubble = React.memo(
                                 }}
                                 className="read-more-btn"
                                 title={
-                                  expandedMessages[msg.id] !== false
+                                  expandedMessages?.[msg.id] !== false
                                     ? 'Show less'
                                     : 'Read full response'
                                 }
-                                aria-expanded={expandedMessages[msg.id] !== false}
+                                aria-expanded={expandedMessages?.[msg.id] !== false}
                               >
                                 <span className="read-more-btn__text">
-                                  {expandedMessages[msg.id] !== false
+                                  {expandedMessages?.[msg.id] !== false
                                     ? 'Show less'
                                     : 'Read Full Response ↓'}
                                 </span>
                                 <ChevronDown
-                                  className={`read-more-btn__icon ${expandedMessages[msg.id] !== false ? 'rotated' : ''}`}
+                                  className={`read-more-btn__icon ${expandedMessages?.[msg.id] !== false ? 'rotated' : ''}`}
                                 />
                               </button>
                             </div>

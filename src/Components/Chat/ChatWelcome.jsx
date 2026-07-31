@@ -3,22 +3,22 @@ import { AnimatePresence, motion } from 'framer-motion';
 import ModernDashboard from '../../landingpage/ModernDashboard';
 
 export const ChatWelcome = ({
-  user,
-  messages,
-  isSessionLoading,
-  isHydrating,
-  currentCase,
-  currentProjectId,
-  currentMode,
-  activeLegalToolkit,
-  selectedLegalTool,
+  user = null,
+  messages = [],
+  isSessionLoading = false,
+  isHydrating = false,
+  currentCase = null,
+  currentProjectId = null,
+  currentMode = null,
+  activeLegalToolkit = false,
+  selectedLegalTool = null,
   activeCategory,
   onCategoryChange,
   activeToolId,
   onToolSelect,
 }) => {
   const showWelcome =
-    messages.length === 0 &&
+    (messages?.length ?? 0) === 0 &&
     !isSessionLoading &&
     !isHydrating &&
     !currentCase &&

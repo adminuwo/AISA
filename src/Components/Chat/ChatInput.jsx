@@ -5,6 +5,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useUserStore } from '../../userStore/useUserStore';
 import { logo } from '../../constants';
 import LegalLogo from '../../Tools/AI_Legal/components/LegalLogo';
+import { TOOL_PRICING as DEFAULT_TOOL_PRICING, TOOL_PLACEHOLDERS as DEFAULT_TOOL_PLACEHOLDERS } from '../../utils/chatHelpers';
+import { MODES as DEFAULT_MODES } from '../../utils/modeDetection';
 
 import {
   X,
@@ -35,6 +37,7 @@ import {
   Search,
   Plus,
   Brain,
+  Scale,
 } from 'lucide-react';
 
 const SendRipple = ({ onComplete }) => {
@@ -77,45 +80,46 @@ export const ChatInput = ({
   currentMode,
   selectedLegalTool,
   viewingDoc,
-  inputValue,
+  inputValue = '',
   setInputValue,
-  filePreviews,
+  filePreviews = [],
   longTextPreview,
   setLongTextPreview,
   setIsAutoPreviewDisabled,
   isAutoPreviewDisabled,
-  isMagicEditing,
+  isMagicEditing: propIsMagicEditing,
   editRefImage,
   setEditRefImage,
   isInputExpanded,
   setIsInputExpanded,
-  isCashFlowMode,
+  isCashFlowMode: propIsCashFlowMode,
   isSearchingStocks,
-  stockSearchResults,
+  stockSearchResults = [],
   setSelectedStock,
   setStockSearchResults,
-  isAttachMenuOpen,
-  setIsAttachMenuOpen,
-  isToolsMenuOpen,
-  setIsToolsMenuOpen,
-  isWebSearch,
-  isDeepSearch,
-  isImageGeneration,
-  isVoiceMode,
-  isAudioConvertMode,
-  isDocumentConvert,
-  isCodeWriter,
-  activeAgent,
-  messages,
-  isListening,
-  gen,
-  ripples,
+  isAttachMenuOpen: externalAttachMenuOpen,
+  setIsAttachMenuOpen: externalSetIsAttachMenuOpen,
+  isToolsMenuOpen: externalToolsMenuOpen,
+  setIsToolsMenuOpen: externalSetIsToolsMenuOpen,
+  isWebSearch: propIsWebSearch,
+  isDeepSearch: propIsDeepSearch,
+  isImageGeneration: propIsImageGeneration,
+  isVoiceMode: propIsVoiceMode,
+  isAudioConvertMode: propIsAudioConvertMode,
+  isDocumentConvert: propIsDocumentConvert,
+  isCodeWriter: propIsCodeWriter,
+  activeAgent = {},
+  messages = [],
+  isListening = false,
+  gen = {},
+  isLoading = false,
+  ripples = [],
   setRipples,
   isLaunching,
-  isLimitReached,
-  typedPlaceholder,
+  isLimitReached = false,
+  typedPlaceholder = '',
   activeTool,
-  imageAspectRatio,
+  imageAspectRatio = '1:1',
   imageModelId,
   setIsStockModalOpen,
   setIsMagicSettingsOpen,
@@ -133,12 +137,12 @@ export const ChatInput = ({
   setLegalView,
   setCurrentCase,
   setCurrentProjectId,
-  isFileAnalysis,
+  isFileAnalysis: propIsFileAnalysis,
   setIsFileAnalysis,
   setActiveTool,
   setCurrentMode,
   setSelectedLegalTool,
-  checkPremiumTool,
+  checkPremiumTool = () => true,
   activeSessionId,
   abortControllerRef,
   setIsLoading,
@@ -161,9 +165,9 @@ export const ChatInput = ({
   toolsBtnRef,
 
   // Constants
-  TOOL_PRICING,
-  TOOL_PLACEHOLDERS,
-  MODES,
+  TOOL_PRICING = DEFAULT_TOOL_PRICING,
+  TOOL_PLACEHOLDERS = DEFAULT_TOOL_PLACEHOLDERS,
+  MODES = DEFAULT_MODES,
   handleSendMessage,
   handleRemoveFile,
   handleFileSelect,
@@ -171,9 +175,30 @@ export const ChatInput = ({
   handleVoiceInput,
   setIsVoiceSettingsOpen,
 }) => {
+  const [internalAttachMenuOpen, setInternalAttachMenuOpen] = React.useState(false);
+  const [internalToolsMenuOpen, setInternalToolsMenuOpen] = React.useState(false);
+
+  const isAttachMenuOpen = externalAttachMenuOpen !== undefined ? externalAttachMenuOpen : internalAttachMenuOpen;
+  const setIsAttachMenuOpen = externalSetIsAttachMenuOpen || setInternalAttachMenuOpen;
+
+  const isToolsMenuOpen = externalToolsMenuOpen !== undefined ? externalToolsMenuOpen : internalToolsMenuOpen;
+  const setIsToolsMenuOpen = externalSetIsToolsMenuOpen || setInternalToolsMenuOpen;
+
+  const normMode = (currentMode || '').toUpperCase();
+  const isImageGeneration = normMode === 'IMAGE_GENERATION' || Boolean(propIsImageGeneration);
+  const isWebSearch = normMode === 'WEB_SEARCH' || Boolean(propIsWebSearch);
+  const isDeepSearch = normMode === 'DEEP_SEARCH' || Boolean(propIsDeepSearch);
+  const isVoiceMode = normMode === 'VOICE_MODE' || Boolean(propIsVoiceMode);
+  const isAudioConvertMode = normMode === 'AUDIO_CONVERT' || Boolean(propIsAudioConvertMode);
+  const isDocumentConvert = normMode === 'DOCUMENT_CONVERT' || Boolean(propIsDocumentConvert);
+  const isCodeWriter = normMode === 'CODING_HELP' || Boolean(propIsCodeWriter);
+  const isMagicEditing = normMode === 'IMAGE_EDIT' || Boolean(propIsMagicEditing);
+  const isFileAnalysis = normMode === 'FILE_ANALYSIS' || Boolean(propIsFileAnalysis);
+  const isCashFlowMode = normMode === 'CASHFLOW' || Boolean(propIsCashFlowMode);
+
   const isDark = useIsDark();
   const { t } = useLanguage();
-  const tglState = useUserStore(state => state.toggles);
+  const tglState = useUserStore((state) => state.toggles);
 
   const getAgentCapabilities = (agentName, category) => {
     const name = (agentName || '').toLowerCase();
@@ -241,10 +266,247 @@ export const ChatInput = ({
         style={{ padding: '0.5rem 1rem calc(4px + env(safe-area-inset-bottom, 0px)) 1rem' }}
       >
         <div className="max-w-4xl mx-auto w-full pointer-events-auto">
+
+          {/* ── Active Tool Mode Badge Row ── */}
+          <AnimatePresence>
+            {(isWebSearch || isDeepSearch || isImageGeneration || isVoiceMode ||
+              isAudioConvertMode || isDocumentConvert || isCodeWriter ||
+              isMagicEditing || isFileAnalysis || isCashFlowMode ||
+              normMode === 'LEGAL_TOOLKIT') && (
+              <motion.div
+                key="active-tool-badge-container"
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="flex items-center gap-2 px-2 sm:px-3 pb-2.5 overflow-x-auto no-scrollbar flex-wrap"
+              >
+                {/* IMAGE GEN */}
+                {isImageGeneration && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                      <ImageIcon size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">IMAGE GEN</span>
+                    <div className="w-px h-3.5 bg-indigo-200 dark:bg-indigo-700/80 mx-0.5" />
+                    <button
+                      type="button"
+                      onClick={() => setIsMagicSettingsOpen && setIsMagicSettingsOpen(!isMagicSettingsOpen)}
+                      className="flex items-center gap-1 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-white transition-colors"
+                    >
+                      <span>{imageAspectRatio}</span>
+                      <ChevronDown size={11} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsImageGeneration) setIsImageGeneration(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-800 hover:text-indigo-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* WEB SEARCH */}
+                {isWebSearch && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-cyan-200 dark:border-cyan-800/80 bg-cyan-50/90 dark:bg-cyan-950/70 text-cyan-700 dark:text-cyan-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-cyan-600 text-white flex items-center justify-center shrink-0">
+                      <Globe size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">WEB SEARCH</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsWebSearch) setIsWebSearch(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-cyan-400 hover:bg-cyan-200 dark:hover:bg-cyan-800 hover:text-cyan-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* DEEP SEARCH */}
+                {isDeepSearch && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-sky-200 dark:border-sky-800/80 bg-sky-50/90 dark:bg-sky-950/70 text-sky-700 dark:text-sky-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0">
+                      <Search size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">DEEP SEARCH</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsDeepSearch) setIsDeepSearch(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-sky-400 hover:bg-sky-200 dark:hover:bg-sky-800 hover:text-sky-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* AUDIO CONVERT */}
+                {isAudioConvertMode && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-violet-200 dark:border-violet-800/80 bg-violet-50/90 dark:bg-violet-950/70 text-violet-700 dark:text-violet-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">
+                      <Headphones size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">AUDIO CONVERT</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsAudioConvertMode) setIsAudioConvertMode(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-800 hover:text-violet-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* DOC CONVERT */}
+                {isDocumentConvert && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-blue-200 dark:border-blue-800/80 bg-blue-50/90 dark:bg-blue-950/70 text-blue-700 dark:text-blue-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <FileText size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">DOC CONVERT</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsDocumentConvert) setIsDocumentConvert(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800 hover:text-blue-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* CODE WRITER */}
+                {isCodeWriter && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                      <Code size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">CODE WRITER</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsCodeWriter) setIsCodeWriter(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-800 hover:text-indigo-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* EDIT IMAGE */}
+                {isMagicEditing && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-rose-200 dark:border-rose-800/80 bg-rose-50/90 dark:bg-rose-950/70 text-rose-700 dark:text-rose-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
+                      <Wand2 size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">EDIT IMAGE</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-800 hover:text-rose-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* AI CASHFLOW */}
+                {isCashFlowMode && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                      <TrendingUp size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">AI CASHFLOW</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsCashFlowMode) setIsCashFlowMode(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800 hover:text-emerald-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* AI LEGAL */}
+                {normMode === 'LEGAL_TOOLKIT' && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-amber-200 dark:border-amber-800/80 bg-amber-50/90 dark:bg-amber-950/70 text-amber-700 dark:text-amber-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
+                      <Scale size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">AI LEGAL</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setSelectedLegalTool) setSelectedLegalTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-800 hover:text-amber-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* FILE ANALYSIS */}
+                {isFileAnalysis && (
+                  <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border border-blue-200 dark:border-blue-800/80 bg-blue-50/90 dark:bg-blue-950/70 text-blue-700 dark:text-blue-200 shadow-md backdrop-blur-md shrink-0 whitespace-nowrap">
+                    <div className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Paperclip size={11} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">FILE ANALYSIS</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                        if (setIsFileAnalysis) setIsFileAnalysis(false);
+                        if (setActiveTool) setActiveTool(null);
+                      }}
+                      className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800 hover:text-blue-900 dark:hover:text-white transition-all"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+
           <form
             onSubmit={handleSendMessage}
             className="relative w-full flex flex-col transition-all duration-300 p-1 z-[1002] aisa-chat-input-wrapper bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-zinc-800 rounded-[28px] sm:rounded-[32px] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none overflow-visible"
           >
+
             {/* Internal File Preview Area */}
             {(filePreviews.length > 0 || longTextPreview) && (
               <div className="flex flex-wrap gap-4 px-3 py-2 mb-1">
@@ -559,16 +821,9 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Generate Image')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isImageGeneration;
-                          setIsImageGeneration(newMode);
-                          setIsDeepSearch(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.IMAGE_GENERATION : MODES.NORMAL_CHAT);
                           if (newMode) {
-                            setActiveTool('image');
                             toast.success('Image Generation Mode Enabled');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isImageGeneration ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -598,17 +853,10 @@ export const ChatInput = ({
                         onClick={() => {
                           if (!checkPremiumTool('Web Search')) return;
                           setIsToolsMenuOpen(false);
-                          setIsWebSearch(!isWebSearch);
-                          setIsDeepSearch(false);
-                          setIsImageGeneration(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          if (!isWebSearch) {
-                            setActiveTool('web_search');
+                          const newMode = !isWebSearch;
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.WEB_SEARCH : MODES.NORMAL_CHAT);
+                          if (newMode) {
                             toast.success('Real-Time Web Search Active');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isWebSearch ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -638,17 +886,10 @@ export const ChatInput = ({
                         onClick={() => {
                           if (!checkPremiumTool('Deep Search')) return;
                           setIsToolsMenuOpen(false);
-                          setIsDeepSearch(!isDeepSearch);
-                          setIsWebSearch(false);
-                          setIsImageGeneration(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          if (!isDeepSearch) {
-                            setActiveTool('deep_search');
+                          const newMode = !isDeepSearch;
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.DEEP_SEARCH : MODES.NORMAL_CHAT);
+                          if (newMode) {
                             toast.success('Deep Search Mode Enabled');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isDeepSearch ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -678,16 +919,10 @@ export const ChatInput = ({
                         onClick={() => {
                           if (!checkPremiumTool('Convert to Audio')) return;
                           setIsToolsMenuOpen(false);
-                          setIsAudioConvertMode(!isAudioConvertMode);
-                          setIsDeepSearch(false);
-                          setIsImageGeneration(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          if (!isAudioConvertMode) {
-                            setActiveTool('audio');
+                          const newMode = !isAudioConvertMode;
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.AUDIO_CONVERT : MODES.NORMAL_CHAT);
+                          if (newMode) {
                             toast.success('Convert to Audio Mode Active');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isAudioConvertMode ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -718,18 +953,10 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Document Converter')) return;
                           setIsToolsMenuOpen(false);
                           const nextState = !isDocumentConvert;
-                          setIsDocumentConvert(nextState);
-                          setIsFileAnalysis(false);
-                          setIsDeepSearch(false);
-                          setIsImageGeneration(false);
-                          setIsAudioConvertMode(false);
-                          setIsCodeWriter(false);
+                          if (setCurrentMode) setCurrentMode(nextState ? MODES.DOCUMENT_CONVERT : MODES.NORMAL_CHAT);
                           if (nextState) {
-                            setActiveTool('document');
-                            uploadInputRef.current?.click();
+                            uploadInputRef?.current?.click();
                             toast.success('Document Converter Mode Active');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isDocumentConvert ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -759,17 +986,10 @@ export const ChatInput = ({
                         onClick={() => {
                           if (!checkPremiumTool('Code Writer')) return;
                           setIsToolsMenuOpen(false);
-                          setIsCodeWriter(!isCodeWriter);
-                          setIsDeepSearch(false);
-                          setIsImageGeneration(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsMagicEditing(false);
-                          if (!isCodeWriter) {
-                            setActiveTool('code');
+                          const newMode = !isCodeWriter;
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.CODING_HELP : MODES.NORMAL_CHAT);
+                          if (newMode) {
                             toast.success('Code Writer Mode Enabled');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isCodeWriter ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -800,8 +1020,7 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Edit Image')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isMagicEditing;
-                          setIsMagicEditing(newMode);
-                          setIsMagicImageModalOpen(false);
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.IMAGE_EDIT : MODES.NORMAL_CHAT);
 
                           if (newMode && !editRefImageState && messages.length > 0) {
                             const lastImg = [...messages].reverse().find(m => m.imageUrl);
@@ -813,19 +1032,8 @@ export const ChatInput = ({
                               });
                           }
 
-                          setIsImageGeneration(false);
-                          setIsDeepSearch(false);
-                          setIsWebSearch(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          setIsCashFlowMode(false);
-                          setIsFileAnalysis(false);
                           if (newMode) {
-                            setActiveTool('edit_image');
                             toast.success('Image Editing Enabled');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isMagicEditing ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -856,21 +1064,10 @@ export const ChatInput = ({
                           if (!checkPremiumTool('AI CashFlow')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isCashFlowMode;
-                          setIsCashFlowMode(newMode);
-                          setIsImageGeneration(false);
-                          setIsDeepSearch(false);
-                          setIsWebSearch(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          setIsMagicEditing(false);
-                          setIsFileAnalysis(false);
+                          if (setCurrentMode) setCurrentMode(newMode ? MODES.CASHFLOW : MODES.NORMAL_CHAT);
                           if (newMode) {
-                            setActiveTool('ai_cashflow');
-                            setIsStockModalOpen(true);
+                            setIsStockModalOpen && setIsStockModalOpen(true);
                             toast.success('AI CashFlow Explorer Active');
-                          } else {
-                            setActiveTool(null);
                           }
                         }}
                         className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${isCashFlowMode ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
@@ -901,36 +1098,24 @@ export const ChatInput = ({
                           if (!checkPremiumTool('AI Legal')) return;
                           setIsToolsMenuOpen(false);
 
-                          const isCurrentlyLegal = currentMode === 'LEGAL_TOOLKIT';
+                          const isCurrentlyLegal = currentMode === MODES.LEGAL_TOOLKIT;
 
                           if (!isCurrentlyLegal) {
-                            setCurrentMode(MODES.LEGAL_TOOLKIT);
-                            setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
-                            setLegalView('DASHBOARD');
-                            setCurrentCase(null);
-                            setCurrentProjectId(null);
-                          } else {
-                            setCurrentMode(MODES.NORMAL_CHAT);
-                            setSelectedLegalTool(null);
-                            setLegalView('CHAT');
-                          }
-
-                          setIsImageGeneration(false);
-                          setIsDeepSearch(false);
-                          setIsAudioConvertMode(false);
-                          setIsDocumentConvert(false);
-                          setIsCodeWriter(false);
-                          setIsMagicEditing(false);
-                          if (!isCurrentlyLegal) {
-                            setActiveTool('legal');
-                            navigate('/dashboard/legal', { replace: true });
+                            if (setCurrentMode) setCurrentMode(MODES.LEGAL_TOOLKIT);
+                            if (setSelectedLegalTool) setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
+                            if (setLegalView) setLegalView('DASHBOARD');
+                            if (setCurrentCase) setCurrentCase(null);
+                            if (setCurrentProjectId) setCurrentProjectId(null);
+                            if (navigate) navigate('/dashboard/legal', { replace: true });
                             toast.success('AI Legal Enabled ⚖️');
                           } else {
-                            setActiveTool(null);
-                            navigate('/dashboard/chat/new', { replace: true });
+                            if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
+                            if (setSelectedLegalTool) setSelectedLegalTool(null);
+                            if (setLegalView) setLegalView('CHAT');
+                            if (navigate) navigate('/dashboard/chat/new', { replace: true });
                           }
                         }}
-                        className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${currentMode === 'LEGAL_TOOLKIT' ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
+                        className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 rounded-3xl transition-all group cursor-pointer border-2 ${currentMode === MODES.LEGAL_TOOLKIT ? 'bg-primary/5 border-primary/20 shadow-inner' : 'bg-white/50 dark:bg-white/5 border-white/80 dark:border-white/5 hover:border-primary/30 hover:bg-white dark:hover:bg-zinc-800 shadow-sm hover:shadow-md'}`}
                       >
                         <div
                           className={`w-11 h-11 rounded-2xl border-2 flex items-center justify-center transition-all shrink-0 tool-icon-premium ${currentMode === 'LEGAL_TOOLKIT' ? 'bg-primary border-primary text-white' : 'bg-slate-50 dark:bg-zinc-800 border-white dark:border-zinc-700 text-slate-600 dark:text-slate-300'}`}
@@ -1021,7 +1206,21 @@ export const ChatInput = ({
                       setIsToolsMenuOpen(!isToolsMenuOpen);
                       setIsAttachMenuOpen(false);
                     }}
-                    className="w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] rounded-full flex items-center justify-center bg-slate-50 dark:bg-zinc-800 text-slate-500 hover:text-primary transition-all border border-slate-200/50 dark:border-zinc-700/50 shadow-sm relative z-[1003]"
+                    className={`w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] rounded-full flex items-center justify-center transition-all border shadow-sm relative z-[1003] ${
+                      isWebSearch ||
+                      isDeepSearch ||
+                      isImageGeneration ||
+                      isVoiceMode ||
+                      isAudioConvertMode ||
+                      isDocumentConvert ||
+                      isCodeWriter ||
+                      isMagicEditing ||
+                      isFileAnalysis ||
+                      isCashFlowMode ||
+                      normMode === 'LEGAL_TOOLKIT'
+                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-500/30'
+                        : 'bg-slate-50 dark:bg-zinc-800 text-slate-500 hover:text-indigo-600 border-slate-200/50 dark:border-zinc-700/50'
+                    }`}
                     title="AISA ™ Magic Tools"
                   >
                     <Brain className="w-5 h-5" />
@@ -1030,331 +1229,12 @@ export const ChatInput = ({
               </div>
 
               <div className="flex-1 flex items-start min-w-0 bg-transparent border-0 ring-0 focus:ring-0 group">
-                <AnimatePresence>
-                  {(isWebSearch ||
-                    isDeepSearch ||
-                    isImageGeneration ||
-                    isVoiceMode ||
-                    isAudioConvertMode ||
-                    isDocumentConvert ||
-                    isCodeWriter ||
-                    isMagicEditing ||
-                    isFileAnalysis ||
-                    isCashFlowMode ||
-                    currentMode === 'LEGAL_TOOLKIT') && (
-                    <div className="absolute bottom-full left-0 mb-3.5 flex flex-row items-center justify-start pointer-events-none z-[100] w-full">
-                      <div className="flex gap-2.5 overflow-x-auto no-scrollbar pointer-events-auto px-2 sm:px-3 py-1 max-w-full">
-                        {isCashFlowMode && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsStockModalOpen(true)}
-                            className="flex flex-row items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0 cursor-pointer hover:bg-primary/20 transition-all"
-                          >
-                            <TrendingUp size={12} strokeWidth={3} />{' '}
-                            <span className="hidden sm:inline">AI CashFlow</span>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                setIsCashFlowMode(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 hover:text-primary/80 p-0.5"
-                            >
-                              <X size={12} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isWebSearch && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex flex-row items-center gap-3 px-3.5 py-1.5 bg-primary/20 dark:bg-primary/25 text-primary rounded-full text-xs font-bold border border-primary/40 backdrop-blur-3xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/30 group shadow-[0_8px_32px_-4px_rgba(var(--primary-rgb),0.3)] relative overflow-hidden ring-1 ring-white/10"
-                          >
-                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
-                            <div className="flex flex-row items-center gap-2 relative z-10">
-                              <div className="w-5 h-5 rounded-lg bg-primary dark:bg-primary flex flex-row items-center justify-center shadow-lg shadow-primary/40 text-white">
-                                <Globe size={14} strokeWidth={3} />
-                              </div>
-                              <span className="uppercase tracking-widest text-[9px] font-black">
-                                Web Search
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsWebSearch(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-primary dark:text-primary transition-all hover:rotate-90 relative z-10"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isDeepSearch && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex flex-row items-center gap-3 px-3.5 py-1.5 bg-primary/20 dark:bg-primary/25 text-primary rounded-full text-xs font-bold border border-primary/40 backdrop-blur-3xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/30 group shadow-[0_8px_32px_-4px_rgba(var(--primary-rgb),0.3)] relative overflow-hidden ring-1 ring-white/10"
-                          >
-                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
-                            <div className="flex flex-row items-center gap-2 relative z-10">
-                              <div className="w-5 h-5 rounded-lg bg-primary dark:bg-primary flex items-center justify-center shadow-lg shadow-primary/40 text-white">
-                                <Search size={14} strokeWidth={3} />
-                              </div>
-                              <span className="uppercase tracking-widest text-[9px] font-black">
-                                Deep Search
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsDeepSearch(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-primary dark:text-primary transition-all hover:rotate-90 relative z-10"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isImageGeneration && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex flex-row items-center gap-3 px-3.5 py-1.5 bg-primary/20 dark:bg-primary/25 text-primary rounded-full text-xs font-bold border border-primary/40 backdrop-blur-3xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/30 group shadow-[0_8px_32px_-4px_rgba(var(--primary-rgb),0.3)] relative overflow-hidden ring-1 ring-white/10"
-                          >
-                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
-                            <div className="flex flex-row items-center gap-2 relative z-10">
-                              <div className="w-5 h-5 rounded-lg bg-primary dark:bg-primary flex items-center justify-center shadow-lg shadow-primary/40 text-white">
-                                <ImageIcon size={14} strokeWidth={3} />
-                              </div>
-                              <span className="uppercase tracking-widest text-[9px] font-black">
-                                Image Gen
-                              </span>
-                            </div>
-                            <div className="w-[1px] h-3 bg-primary/40 mx-0.5 relative z-10" />
-                            <button
-                              type="button"
-                              onClick={() => setIsMagicSettingsOpen(!isMagicSettingsOpen)}
-                              className="flex flex-row items-center gap-1.5 hover:text-primary dark:hover:text-primary transition-all px-1.5 py-0.5 rounded-md hover:bg-white/10 relative z-10"
-                            >
-                              <span className="text-[10px] font-extrabold opacity-90">
-                                {imageAspectRatio}
-                              </span>
-                              <span className="text-[10px] font-black truncate max-w-[60px] sm:max-w-[100px] tracking-tight">
-                                {TOOL_PRICING.image.models
-                                  .find(m => m.id === imageModelId)
-                                  ?.name.replace('AISA ', '') || 'Model'}
-                              </span>
-                              <ChevronDown
-                                size={11}
-                                className={`transition-transform duration-300 ${isMagicSettingsOpen ? 'rotate-180' : ''}`}
-                              />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsImageGeneration(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-primary dark:text-primary transition-all hover:rotate-90 relative z-10"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isVoiceMode && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-row items-center gap-2.5 px-3 py-1.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-full text-xs font-bold border border-primary/30 backdrop-blur-xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/15 group shadow-lg shadow-primary/10"
-                          >
-                            <div className="flex flex-row items-center gap-2">
-                              <div className="w-5 h-5 rounded-lg bg-primary/20 flex items-center justify-center">
-                                <Volume2 size={14} strokeWidth={2.5} />
-                              </div>
-                              <span className="uppercase tracking-wide text-[10px] font-black">
-                                Voice Mode
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsVoiceMode(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-primary/20 text-primary dark:text-primary transition-all hover:rotate-90"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isAudioConvertMode && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-row items-center gap-2.5 px-3 py-1.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-full text-xs font-bold border border-primary/30 backdrop-blur-xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/15 group shadow-lg shadow-primary/10"
-                          >
-                            <div className="flex flex-row items-center gap-2">
-                              <div className="w-5 h-5 rounded-lg bg-primary/20 flex items-center justify-center">
-                                <Headphones size={14} strokeWidth={2.5} />
-                              </div>
-                              <span className="uppercase tracking-wide text-[10px] font-black">
-                                Audio Convert
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setIsVoiceSettingsOpen(true)}
-                              className="ml-1 w-5 h-5 rounded-lg flex items-center justify-center hover:bg-primary/20 text-subtext hover:text-primary transition-colors"
-                              title="Voice Settings"
-                            >
-                              <Sliders size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsAudioConvertMode(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-primary/20 text-primary transition-all hover:rotate-90"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isDocumentConvert && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0"
-                          >
-                            <FileText size={12} strokeWidth={3} /> <span>Doc Convert</span>
-                            <button
-                              onClick={() => {
-                                setIsDocumentConvert(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 hover:text-primary/80"
-                            >
-                              <X size={12} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isCodeWriter && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold border border-transparent backdrop-blur-md whitespace-nowrap shrink-0"
-                          >
-                            <Code size={12} strokeWidth={3} /> <span>Code Writer</span>
-                            <button
-                              onClick={() => {
-                                setIsCodeWriter(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 hover:text-primary/80"
-                            >
-                              <X size={12} />
-                            </button>
-                          </motion.div>
-                        )}
-
-                        {isMagicEditing && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex flex-row items-center gap-3 px-3.5 py-1.5 bg-primary/20 dark:bg-primary/25 text-primary rounded-full text-xs font-bold border border-primary/40 backdrop-blur-3xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/30 group shadow-[0_8px_32px_-4px_rgba(var(--primary-rgb),0.3)] relative overflow-hidden ring-1 ring-white/10"
-                          >
-                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50" />
-                            <div className="flex flex-row items-center gap-2 relative z-10">
-                              <div className="w-5 h-5 rounded-lg bg-primary dark:bg-primary flex items-center justify-center shadow-lg shadow-primary/40 text-white">
-                                <Wand2 size={14} strokeWidth={3} />
-                              </div>
-                              <span className="uppercase tracking-widest text-[9px] font-black hidden xs:inline">
-                                {t('imageEdit')}
-                              </span>
-                            </div>
-                            <div className="w-[1px] h-3 bg-primary/40 mx-0.5 relative z-10" />
-                            <button
-                              type="button"
-                              onClick={() => setIsMagicSettingsOpen(!isMagicSettingsOpen)}
-                              className="flex flex-row items-center gap-1.5 hover:text-primary dark:hover:text-primary transition-all px-1.5 py-0.5 rounded-md hover:bg-white/10 relative z-10"
-                            >
-                              <span className="text-[10px] font-extrabold opacity-90">
-                                {imageAspectRatio}
-                              </span>
-                              <span className="text-[10px] font-black truncate max-w-[60px] sm:max-w-[100px] tracking-tight">
-                                {TOOL_PRICING.image.models
-                                  .find(m => m.id === imageModelId)
-                                  ?.name.replace('AISA ', '') || 'Model'}
-                              </span>
-                              <ChevronDown
-                                size={11}
-                                className={`transition-transform duration-300 ${isMagicSettingsOpen ? 'rotate-180' : ''}`}
-                              />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsMagicEditing(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white text-primary dark:text-primary transition-all hover:rotate-90 relative z-10"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                        {isFileAnalysis && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-row items-center gap-2.5 px-3 py-1.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-full text-xs font-bold border border-primary/30 backdrop-blur-xl whitespace-nowrap shrink-0 transition-all hover:bg-primary/15 group shadow-lg shadow-primary/10"
-                          >
-                            <div className="flex flex-row items-center gap-2">
-                              <div className="w-5 h-5 rounded-lg bg-primary/20 flex items-center justify-center">
-                                <FileText size={14} strokeWidth={2.5} />
-                              </div>
-                              <span className="uppercase tracking-wide text-[10px] font-black">
-                                {t('analyzeDocument')}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsFileAnalysis(false);
-                                setActiveTool(null);
-                              }}
-                              className="ml-1 w-5 h-5 rounded-full flex items-center justify-center hover:bg-primary/20 text-primary dark:text-primary transition-all hover:rotate-90"
-                            >
-                              <X size={14} strokeWidth={3} />
-                            </button>
-                          </motion.div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </AnimatePresence>
-
                 <div className="relative w-full group">
                   <textarea
                     id="chat-input"
                     ref={inputRef}
                     value={inputValue}
-                    disabled={gen.isGenerating || isLimitReached}
+                    disabled={gen?.isGenerating || isLoading || isLimitReached}
                     onChange={e => {
                       const val = e.target.value;
                       if (!val) setIsAutoPreviewDisabled(false);
@@ -1390,20 +1270,36 @@ export const ChatInput = ({
                       if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (gen.isGenerating) return;
-                        if (inputValue.trim() || filePreviews.length > 0 || longTextPreview) {
-                          handleSendMessage(e);
+                        if (gen?.isGenerating || isLoading) return;
+                        if (inputValue.trim() || (filePreviews && filePreviews.length > 0) || longTextPreview) {
+                          handleSendMessage && handleSendMessage(e);
                         }
                       }
                     }}
                     placeholder={
                       isLimitReached
                         ? t('limitReached') || 'Chat limit reached. Sign in to continue.'
-                        : window.innerWidth < 768
-                          ? 'Ask anything...'
-                          : activeTool && TOOL_PLACEHOLDERS[activeTool]
-                            ? TOOL_PLACEHOLDERS[activeTool]
-                            : typedPlaceholder
+                        : isImageGeneration
+                          ? 'Describe the image you want to generate in detail...'
+                          : isWebSearch
+                            ? 'Search for live updates or ask anything to the web...'
+                            : isDeepSearch
+                              ? 'Enter a topic for in-depth AI research and analysis...'
+                              : isAudioConvertMode
+                                ? 'Paste text to generate natural-sounding audio...'
+                                : isDocumentConvert
+                                  ? 'Upload a document and ask me to summarize or analyze it...'
+                                  : isCodeWriter
+                                    ? 'Write or paste code...'
+                                    : isMagicEditing
+                                      ? 'Describe the changes you want to make to the image...'
+                                      : isCashFlowMode
+                                        ? 'Enter a stock symbol or ask about financial trends...'
+                                        : window.innerWidth < 768
+                                          ? 'Ask anything...'
+                                          : activeTool && TOOL_PLACEHOLDERS[activeTool]
+                                            ? TOOL_PLACEHOLDERS[activeTool]
+                                            : typedPlaceholder
                     }
                     rows={1}
                     className={`w-full bg-transparent border-0 focus:ring-0 outline-none focus:outline-none px-1 py-[9px] sm:px-3 sm:py-[7px] pr-8 text-slate-800 dark:text-zinc-100 text-left placeholder-slate-400 dark:placeholder-zinc-500 resize-none overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] font-normal leading-normal text-[15px] sm:text-[16px] transition-all duration-300 ${isLimitReached ? 'cursor-not-allowed opacity-50' : ''}`}
@@ -1449,7 +1345,7 @@ export const ChatInput = ({
 
                 {!isListening && !inputValue && (
                   <>
-                    {getAgentCapabilities(activeAgent.agentName, activeAgent.category).canVoice && (
+                    {getAgentCapabilities(activeAgent?.agentName, activeAgent?.category).canVoice && (
                       <div className="relative">
                         <motion.button
                           type="button"
@@ -1466,15 +1362,17 @@ export const ChatInput = ({
                   </>
                 )}
 
-                {gen.isGenerating ? (
+                {(gen?.isGenerating || isLoading) ? (
                   <button
                     type="button"
                     onClick={() => {
-                      gen.abort();
-                      if (abortControllerRef.current) abortControllerRef.current.abort();
-                      setIsLoading(false);
-                      const chatLock = getSessionLock(activeSessionId);
-                      chatLock.locked = false;
+                      gen?.abort?.();
+                      if (abortControllerRef?.current) abortControllerRef.current.abort();
+                      setIsLoading && setIsLoading(false);
+                      if (getSessionLock && activeSessionId) {
+                        const chatLock = getSessionLock(activeSessionId);
+                        if (chatLock) chatLock.locked = false;
+                      }
                     }}
                     className="w-[36px] h-[36px] rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 transition-all"
                     style={{ backgroundColor: 'var(--color-primary)' }}
@@ -1486,11 +1384,12 @@ export const ChatInput = ({
                     <motion.button
                       type="submit"
                       disabled={
-                        gen.isGenerating ||
-                        (!inputValue.trim() && filePreviews.length === 0 && !longTextPreview)
+                        gen?.isGenerating ||
+                        isLoading ||
+                        (!inputValue.trim() && (!filePreviews || filePreviews.length === 0) && !longTextPreview)
                       }
-                      onMouseEnter={() => setIsSendHovered(true)}
-                      onMouseLeave={() => setIsSendHovered(false)}
+                      onMouseEnter={() => setIsSendHovered && setIsSendHovered(true)}
+                      onMouseLeave={() => setIsSendHovered && setIsSendHovered(false)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       title={t('send')}
@@ -1542,4 +1441,6 @@ export const ChatInput = ({
   );
 };
 
-export default ChatInput;
+const MemoizedChatInput = React.memo(ChatInput);
+MemoizedChatInput.displayName = 'ChatInput';
+export default MemoizedChatInput;
