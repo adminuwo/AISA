@@ -81,22 +81,22 @@ export const ChatInput = ({
   selectedLegalTool,
   viewingDoc,
   inputValue = '',
-  setInputValue,
+  setInputValue = () => {},
   filePreviews = [],
-  longTextPreview,
-  setLongTextPreview,
-  setIsAutoPreviewDisabled,
-  isAutoPreviewDisabled,
+  longTextPreview: propLongTextPreview,
+  setLongTextPreview: propSetLongTextPreview,
+  setIsAutoPreviewDisabled: propSetIsAutoPreviewDisabled,
+  isAutoPreviewDisabled: propIsAutoPreviewDisabled,
   isMagicEditing: propIsMagicEditing,
   editRefImage,
-  setEditRefImage,
-  isInputExpanded,
-  setIsInputExpanded,
+  setEditRefImage = () => {},
+  isInputExpanded: propIsInputExpanded,
+  setIsInputExpanded: propSetIsInputExpanded,
   isCashFlowMode: propIsCashFlowMode,
   isSearchingStocks,
   stockSearchResults = [],
-  setSelectedStock,
-  setStockSearchResults,
+  setSelectedStock = () => {},
+  setStockSearchResults = () => {},
   isAttachMenuOpen: externalAttachMenuOpen,
   setIsAttachMenuOpen: externalSetIsAttachMenuOpen,
   isToolsMenuOpen: externalToolsMenuOpen,
@@ -114,41 +114,41 @@ export const ChatInput = ({
   gen = {},
   isLoading = false,
   ripples = [],
-  setRipples,
+  setRipples = () => {},
   isLaunching,
   isLimitReached = false,
   typedPlaceholder = '',
   activeTool,
   imageAspectRatio = '1:1',
   imageModelId,
-  setIsStockModalOpen,
-  setIsMagicSettingsOpen,
+  setIsStockModalOpen = () => {},
+  setIsMagicSettingsOpen = () => {},
   isMagicSettingsOpen,
-  setIsImageGeneration,
-  setIsDeepSearch,
-  setIsWebSearch,
-  setIsAudioConvertMode,
-  setIsDocumentConvert,
-  setIsCodeWriter,
-  setIsMagicEditing,
-  setIsMagicImageModalOpen,
-  setIsCashFlowMode,
-  setIsSocialMediaDashboardOpen,
-  setLegalView,
-  setCurrentCase,
-  setCurrentProjectId,
+  setIsImageGeneration = () => {},
+  setIsDeepSearch = () => {},
+  setIsWebSearch = () => {},
+  setIsAudioConvertMode = () => {},
+  setIsDocumentConvert = () => {},
+  setIsCodeWriter = () => {},
+  setIsMagicEditing = () => {},
+  setIsMagicImageModalOpen = () => {},
+  setIsCashFlowMode = () => {},
+  setIsSocialMediaDashboardOpen = () => {},
+  setLegalView = () => {},
+  setCurrentCase = () => {},
+  setCurrentProjectId = () => {},
   isFileAnalysis: propIsFileAnalysis,
-  setIsFileAnalysis,
-  setActiveTool,
-  setCurrentMode,
-  setSelectedLegalTool,
+  setIsFileAnalysis = () => {},
+  setActiveTool = () => {},
+  setCurrentMode = () => {},
+  setSelectedLegalTool = () => {},
   checkPremiumTool = () => true,
   activeSessionId,
   abortControllerRef,
-  setIsLoading,
+  setIsLoading = () => {},
   getSessionLock,
   isSendHovered,
-  setIsSendHovered,
+  setIsSendHovered = () => {},
   toast,
   navigate,
   editRefImageState,
@@ -168,15 +168,28 @@ export const ChatInput = ({
   TOOL_PRICING = DEFAULT_TOOL_PRICING,
   TOOL_PLACEHOLDERS = DEFAULT_TOOL_PLACEHOLDERS,
   MODES = DEFAULT_MODES,
-  handleSendMessage,
-  handleRemoveFile,
-  handleFileSelect,
-  handleDocToVoiceSelect,
-  handleVoiceInput,
-  setIsVoiceSettingsOpen,
+  handleSendMessage = () => {},
+  handleRemoveFile = () => {},
+  handleFileSelect = () => {},
+  handleDocToVoiceSelect = () => {},
+  handleVoiceInput = () => {},
+  setIsVoiceSettingsOpen = () => {},
 }) => {
   const [internalAttachMenuOpen, setInternalAttachMenuOpen] = React.useState(false);
   const [internalToolsMenuOpen, setInternalToolsMenuOpen] = React.useState(false);
+
+  const [internalLongTextPreview, setInternalLongTextPreview] = React.useState(null);
+  const [internalIsAutoPreviewDisabled, setInternalIsAutoPreviewDisabled] = React.useState(false);
+  const [internalIsInputExpanded, setInternalIsInputExpanded] = React.useState(false);
+
+  const longTextPreview = propLongTextPreview !== undefined ? propLongTextPreview : internalLongTextPreview;
+  const setLongTextPreview = propSetLongTextPreview || setInternalLongTextPreview;
+
+  const isAutoPreviewDisabled = propIsAutoPreviewDisabled !== undefined ? propIsAutoPreviewDisabled : internalIsAutoPreviewDisabled;
+  const setIsAutoPreviewDisabled = propSetIsAutoPreviewDisabled || setInternalIsAutoPreviewDisabled;
+
+  const isInputExpanded = propIsInputExpanded !== undefined ? propIsInputExpanded : internalIsInputExpanded;
+  const setIsInputExpanded = propSetIsInputExpanded || setInternalIsInputExpanded;
 
   const isAttachMenuOpen = externalAttachMenuOpen !== undefined ? externalAttachMenuOpen : internalAttachMenuOpen;
   const setIsAttachMenuOpen = externalSetIsAttachMenuOpen || setInternalAttachMenuOpen;
@@ -1237,7 +1250,9 @@ export const ChatInput = ({
                     disabled={gen?.isGenerating || isLoading || isLimitReached}
                     onChange={e => {
                       const val = e.target.value;
-                      if (!val) setIsAutoPreviewDisabled(false);
+                      if (!val && typeof setIsAutoPreviewDisabled === 'function') {
+                        setIsAutoPreviewDisabled(false);
+                      }
                       const lineCount = val.split('\n').length;
 
                       if (
@@ -1245,10 +1260,10 @@ export const ChatInput = ({
                         !isInputExpanded &&
                         (lineCount > 8 || val.length > 400)
                       ) {
-                        setLongTextPreview(val);
-                        setInputValue('');
+                        if (typeof setLongTextPreview === 'function') setLongTextPreview(val);
+                        if (typeof setInputValue === 'function') setInputValue('');
                       } else {
-                        setInputValue(val);
+                        if (typeof setInputValue === 'function') setInputValue(val);
                         if (!isInputExpanded) {
                           e.target.style.height = 'auto';
                           e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
@@ -1261,9 +1276,9 @@ export const ChatInput = ({
 
                       if (!isInputExpanded && (lineCount > 8 || pastedText.length > 400)) {
                         e.preventDefault();
-                        setLongTextPreview(pastedText);
-                        setInputValue('');
-                        setIsAutoPreviewDisabled(false);
+                        if (typeof setLongTextPreview === 'function') setLongTextPreview(pastedText);
+                        if (typeof setInputValue === 'function') setInputValue('');
+                        if (typeof setIsAutoPreviewDisabled === 'function') setIsAutoPreviewDisabled(false);
                       }
                     }}
                     onKeyDown={e => {

@@ -1141,6 +1141,12 @@ const Chat = () => {
               gen={gen}
               inputValue={inputValue}
               setInputValue={setInputValue}
+              longTextPreview={longTextPreview}
+              setLongTextPreview={setLongTextPreview}
+              isInputExpanded={isInputExpanded}
+              setIsInputExpanded={setIsInputExpanded}
+              isAutoPreviewDisabled={isAutoPreviewDisabled}
+              setIsAutoPreviewDisabled={setIsAutoPreviewDisabled}
               isLoading={isLoading}
               handleSendMessage={handleSendMessage}
               onSend={handleSendMessage}
