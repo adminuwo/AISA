@@ -77,6 +77,7 @@ const apis = {
   support: `${API}/support`,
   resetPasswordEmail: `${API}/auth/reset-password-email`,
   feedback: `${API}/feedback`,
+  synthesize: `${API}/voice/synthesize`,
   synthesizeVoice: `${API}/voice/synthesize`,
   synthesizeFile: `${API}/voice/synthesize-file`,
   payment: `${API}/payment`,

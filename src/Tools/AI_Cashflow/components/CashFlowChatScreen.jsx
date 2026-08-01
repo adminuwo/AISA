@@ -37,7 +37,7 @@ import remarkGfm from 'remark-gfm';
 import { generateChatResponse } from '../../../services/geminiService';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
-import CashFlowStandaloneModal from './CashFlowStandaloneModal';
+import { useTTS } from '../../../hooks/useTTS';
 import CashFlowStockModal from '../CashFlowStockModal';
 
 const IDENTITIES = [
@@ -108,10 +108,12 @@ export default function CashFlowChatScreen() {
   const [selectedGoal, setSelectedGoal] = useState('income');
   const [isTyping, setIsTyping] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
-  const [speakingId, setSpeakingId] = useState(null);
-  const [isStandaloneModalOpen, setIsStandaloneModalOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const { speakingMessageId, speakResponse, stopSpeaking } = useTTS({
+    currentLang: language || 'English',
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -209,19 +211,10 @@ export default function CashFlowChatScreen() {
   };
 
   const handleSpeakText = (id, text) => {
-    if ('speechSynthesis' in window) {
-      if (speakingId === id) {
-        window.speechSynthesis.cancel();
-        setSpeakingId(null);
-        return;
-      }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text.replace(/[*#_]/g, ''));
-      utterance.onend = () => setSpeakingId(null);
-      setSpeakingId(id);
-      window.speechSynthesis.speak(utterance);
+    if (speakingMessageId === id) {
+      stopSpeaking();
     } else {
-      toast.error('Text-to-speech is not supported in this browser.');
+      speakResponse(text, language || 'English', id);
     }
   };
 
@@ -231,37 +224,9 @@ export default function CashFlowChatScreen() {
 
   return (
     <div className="flex flex-col h-full w-full bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 relative overflow-hidden font-sans transition-colors duration-300">
-      {/* ─── Top Banner: Standalone App Coming Soon ─── */}
-      <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-emerald-950/40 border-b border-emerald-200/60 dark:border-emerald-800/40 px-4 py-2 flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-sm z-20">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-black text-[10px] uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-            <Rocket size={12} className="animate-bounce" /> COMING SOON
-          </span>
-          <span className="text-slate-700 dark:text-slate-200 font-medium truncate text-xs">
-            <strong>AI CashFlow™ Standalone App</strong> — Financial Intelligence OS (AISA Wealth
-            Layer)
-          </span>
-        </div>
-        <button
-          onClick={() => setIsStandaloneModalOpen(true)}
-          className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] shrink-0 transition-all shadow-sm flex items-center gap-1 cursor-pointer"
-        >
-          Explore Features
-          <ArrowRight size={12} />
-        </button>
-      </div>
-
       {/* ─── Header Bar (Matching AI Legal Chatbot Design) ─── */}
       <header className="px-4 sm:px-6 py-3 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/dashboard/cashflow')}
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-            title="Back to Cashflow Overview"
-          >
-            <ArrowLeft size={18} />
-          </button>
-
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800/60 shadow-sm">
               <TrendingUp size={20} />
@@ -499,12 +464,19 @@ export default function CashFlowChatScreen() {
                             <button
                               onClick={() => handleSpeakText(msg.id, msg.text)}
                               className={`hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1 transition-colors cursor-pointer ${
-                                speakingId === msg.id ? 'text-emerald-500 font-bold' : ''
+                                speakingMessageId === msg.id ? 'text-emerald-500 font-bold' : ''
                               }`}
-                              title="Listen"
+                              title="Listen with Chirp 3 HD"
                             >
-                              <Volume2 size={14} />
-                              <span>{speakingId === msg.id ? 'Stop' : 'Listen'}</span>
+                              <Volume2
+                                size={14}
+                                className={
+                                  speakingMessageId === msg.id
+                                    ? 'animate-pulse text-emerald-500'
+                                    : ''
+                                }
+                              />
+                              <span>{speakingMessageId === msg.id ? 'Stop' : 'Listen'}</span>
                             </button>
                           </div>
                         </div>
@@ -580,10 +552,6 @@ export default function CashFlowChatScreen() {
       </div>
 
       {/* ─── Modals ─── */}
-      <CashFlowStandaloneModal
-        isOpen={isStandaloneModalOpen}
-        onClose={() => setIsStandaloneModalOpen(false)}
-      />
       <CashFlowStockModal
         isOpen={isStockModalOpen}
         onClose={() => setIsStockModalOpen(false)}

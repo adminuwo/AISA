@@ -4,6 +4,9 @@ import { useTextSelection } from './useTextSelection';
 import SelectionToolbar from './SelectionToolbar';
 import { useTheme } from '../../context/ThemeContext';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../types';
+import { getUserData } from '../../userStore/userData';
 
 const SelectionContext = createContext(null);
 
@@ -48,9 +51,31 @@ export const SelectionToolbarProvider = ({ children, onAiAction }) => {
           clearSelection();
           break;
         case 'speak': {
-          const utterance = new SpeechSynthesisUtterance(text);
-          window.speechSynthesis.speak(utterance);
-          toast.success('Speaking text...');
+          toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-select-tts' });
+          axios
+            .post(
+              apis.synthesize,
+              {
+                text: text,
+                languageCode: 'en-US',
+                voiceName: 'en-US-Chirp3-HD-Autonoe',
+              },
+              {
+                responseType: 'arraybuffer',
+                headers: { Authorization: `Bearer ${getUserData()?.token}` },
+              }
+            )
+            .then(res => {
+              const blob = new Blob([res.data], { type: 'audio/mpeg' });
+              const url = URL.createObjectURL(blob);
+              const audio = new Audio(url);
+              audio.play();
+              toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-select-tts' });
+            })
+            .catch(err => {
+              console.error('Chirp 3 TTS error:', err);
+              toast.error('Chirp 3 HD audio failed', { id: 'chirp-select-tts' });
+            });
           break;
         }
         case 'download': {

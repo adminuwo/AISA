@@ -434,13 +434,8 @@ export const PersonalizationProvider = ({ children }) => {
             { duration: reminder.voice && reminder.voice !== 'none' ? 60000 : 5000 }
           );
 
-          // 3. Speak Voice if selected
-          if (reminder.voice && reminder.voice !== 'none') {
-            speakReminder(reminder.title, reminder.voice, reminder._id);
-          } else {
-            const utterance = new SpeechSynthesisUtterance(`Reminder: ${reminder.title}`);
-            window.speechSynthesis.speak(utterance);
-          }
+          // 3. Speak Voice (Chirp 3 HD)
+          speakReminder(reminder.title, reminder.voice || 'en-US-Chirp3-HD-Autonoe', reminder._id);
 
           // 4. Update the reminder in the backend
           try {

@@ -56,6 +56,8 @@ import {
   Menu,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../../types';
 import { generateChatResponse } from '../../../services/geminiService';
 import { apiService } from '../../../services/apiService';
 import { mapCaseToForm } from '../services/activeModuleService';
@@ -739,22 +741,47 @@ const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdate
   const autosaveTimerRef = useRef(null);
   // ──────────────────────────────────────────────────────────────────────────────
 
-  const handleSpeechSummary = () => {
+  const handleSpeechSummary = async () => {
     if (!strategyResult) return;
 
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+        } catch (e) {}
+      }
       setIsSpeaking(false);
       return;
     }
 
     const textToSpeak = `Litigation Strategy for ${caseTitle || 'this case'}. Winning probability is ${strategyResult.stats?.winningProbability} percent. AI Recommendation is ${strategyResult.finalOpinion?.reasoning || strategyResult.strategies?.primary?.description || 'Proceed with trial'}`;
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
+    toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-strategy' });
+    try {
+      const response = await axios.post(
+        apis.synthesize,
+        {
+          text: textToSpeak,
+          languageCode: 'en-US',
+          voiceName: 'en-US-Chirp3-HD-Autonoe',
+        },
+        {
+          responseType: 'arraybuffer',
+          headers: { Authorization: `Bearer ${getUserData()?.token}` },
+        }
+      );
+      const blob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.onended = () => setIsSpeaking(false);
+      audio.onerror = () => setIsSpeaking(false);
+      setIsSpeaking(true);
+      await audio.play();
+      toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-strategy' });
+    } catch (err) {
+      setIsSpeaking(false);
+      toast.error('Chirp 3 HD audio failed', { id: 'chirp-strategy' });
+    }
   };
 
   useEffect(() => {

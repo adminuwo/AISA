@@ -126,14 +126,8 @@ const Dashboard = () => {
       { duration: 60000 }
     ); // Longer duration for looping alert
 
-    // 3. Audio Speech immediately
-    if (task.voice && task.voice !== 'none') {
-      speakReminder(task.title, task.voice, task._id);
-    } else {
-      const text = `Time for your task: ${task.title}.`;
-      const utterance = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(utterance);
-    }
+    // 3. Audio Speech immediately via Chirp 3 HD
+    speakReminder(task.title, task.voice || 'en-US-Chirp3-HD-Autonoe', task._id);
   };
 
   const fetchTasks = async () => {

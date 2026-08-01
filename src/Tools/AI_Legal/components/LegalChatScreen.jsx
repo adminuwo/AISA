@@ -48,6 +48,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { searchAndFilterCases, getFilterOptions } from '../data/caseDatabase';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../../types';
+import { getUserData } from '../../../userStore/userData';
 import { useLocation } from 'react-router-dom';
 import { legalService } from '../services/legalService';
 import { apiService } from '../../../services/apiService';
@@ -279,6 +282,8 @@ const AiResponseCard = ({
   const [activeShareMenu, setActiveShareMenu] = useState(false);
   const [liked, setLiked] = useState(null); // 'like' | 'dislike' | null
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const audioRef = useRef(null);
 
   const triggerPromptAction = promptPrefix => {
     const precedingText = msg.text.slice(0, 100) + '...';
@@ -411,23 +416,48 @@ const AiResponseCard = ({
     printWindow.document.close();
   };
 
-  const handleReadAloud = () => {
-    if ('speechSynthesis' in window) {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        toast.success('Voice reading stopped.');
-        return;
+  const handleReadAloud = async () => {
+    if (isReading) {
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+        } catch (e) {}
       }
-      const resolvedText = getDisplayText(msg.text);
-      const textToRead = resolvedText.replace(
-        /###|##|#|\[\!IMPORTANT\]|\[\!WARNING\]|\[\!CASE\]|\[\!STATUTE\]|\*\*|\*/g,
-        ''
+      setIsReading(false);
+      toast.success('Chirp 3 HD reading stopped.');
+      return;
+    }
+    const resolvedText = getDisplayText(msg.text);
+    const textToRead = resolvedText.replace(
+      /###|##|#|\[\!IMPORTANT\]|\[\!WARNING\]|\[\!CASE\]|\[\!STATUTE\]|\*\*|\*/g,
+      ''
+    );
+    toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-legal-chat' });
+    try {
+      const res = await axios.post(
+        apis.synthesize,
+        {
+          text: textToRead,
+          languageCode: 'en-US',
+          voiceName: 'en-US-Chirp3-HD-Autonoe',
+        },
+        {
+          responseType: 'arraybuffer',
+          headers: { Authorization: `Bearer ${getUserData()?.token}` },
+        }
       );
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      window.speechSynthesis.speak(utterance);
-      toast.success('Reading report aloud...');
-    } else {
-      toast.error('Speech synthesis is not supported on this browser.');
+      const blob = new Blob([res.data], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      if (audioRef) audioRef.current = audio;
+      audio.onended = () => setIsReading(false);
+      audio.onerror = () => setIsReading(false);
+      setIsReading(true);
+      await audio.play();
+      toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-legal-chat' });
+    } catch (err) {
+      setIsReading(false);
+      toast.error('Chirp 3 HD audio failed', { id: 'chirp-legal-chat' });
     }
   };
 
