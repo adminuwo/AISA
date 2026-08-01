@@ -832,31 +832,55 @@ const ChatBubble = React.memo(
                         <div
                           className={`collapsible-container ${msg.content && msg.content.length > 350 && msg.id !== typingMessageId && expandedMessages?.[msg.id] === false ? 'collapsed-message' : ''}`}
                         >
-                          {!(msg.imageUrl && (msg.content === 'Action processed.' || msg.content === 'Generated Image')) && (
-                          <ReactMarkdown
-                            className="select-text"
-                            remarkPlugins={[remarkGfm]}
-                            urlTransform={value => value}
-                            components={{
-                              a: ({ href, children }) => {
-                                const text = children?.toString() || '';
-                                if (href && href.startsWith('action:')) {
-                                  const isLocked = text.includes('🔒') || text.includes('Unlock');
-                                  if (text.startsWith('ActionCard|')) {
-                                    const parts = text.split('|');
-                                    const title = parts[1] || '';
-                                    const desc = parts[2] || '';
-                                    const actionLabel = (parts[3] || 'Open').replace(
-                                      /^Action:\s*/i,
-                                      ''
-                                    );
+                          {!(
+                            msg.imageUrl &&
+                            (msg.content === 'Action processed.' ||
+                              msg.content === 'Generated Image')
+                          ) && (
+                            <ReactMarkdown
+                              className="select-text"
+                              remarkPlugins={[remarkGfm]}
+                              urlTransform={value => value}
+                              components={{
+                                a: ({ href, children }) => {
+                                  const text = children?.toString() || '';
+                                  if (href && href.startsWith('action:')) {
+                                    const isLocked = text.includes('🔒') || text.includes('Unlock');
+                                    if (text.startsWith('ActionCard|')) {
+                                      const parts = text.split('|');
+                                      const title = parts[1] || '';
+                                      const desc = parts[2] || '';
+                                      const actionLabel = (parts[3] || 'Open').replace(
+                                        /^Action:\s*/i,
+                                        ''
+                                      );
+                                      return (
+                                        <ActionCard
+                                          title={title}
+                                          desc={desc}
+                                          action={actionLabel}
+                                          link={href}
+                                          isLocked={isLocked}
+                                          onClick={e => {
+                                            e.preventDefault();
+                                            const toolKey = href.replace('action:', '');
+                                            setCurrentMode('LEGAL_TOOLKIT');
+                                            const toolName = TOOL_NAMES[toolKey] || toolKey;
+                                            if (isLocked) {
+                                              window.dispatchEvent(
+                                                new CustomEvent('premium_required', {
+                                                  detail: { toolName },
+                                                })
+                                              );
+                                              return;
+                                            }
+                                            activateToolWithTypingEffect(toolKey, toolName);
+                                          }}
+                                        />
+                                      );
+                                    }
                                     return (
-                                      <ActionCard
-                                        title={title}
-                                        desc={desc}
-                                        action={actionLabel}
-                                        link={href}
-                                        isLocked={isLocked}
+                                      <button
                                         onClick={e => {
                                           e.preventDefault();
                                           const toolKey = href.replace('action:', '');
@@ -872,179 +896,159 @@ const ChatBubble = React.memo(
                                           }
                                           activateToolWithTypingEffect(toolKey, toolName);
                                         }}
+                                        className={`inline-flex mt-2 items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 ${isLocked ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20' : 'bg-gradient-to-r from-primary/10 to-primary-dark/10 border border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40'}`}
+                                      >
+                                        {children}
+                                        <ChevronRight className="w-4 h-4 ml-1 opacity-70" />
+                                      </button>
+                                    );
+                                  }
+                                  const isInternal = href && href.startsWith('/');
+                                  return (
+                                    <a
+                                      href={href}
+                                      onClick={e => {
+                                        if (isInternal) {
+                                          e.preventDefault();
+                                          navigate(href);
+                                        }
+                                      }}
+                                      className="text-primary hover:underline font-bold cursor-pointer"
+                                      target={isInternal ? '_self' : '_blank'}
+                                      rel={isInternal ? '' : 'noopener noreferrer'}
+                                    >
+                                      {children}
+                                    </a>
+                                  );
+                                },
+                                p: ({ children }) => <p>{children}</p>,
+                                ul: ({ children }) => (
+                                  <ul className="list-disc pl-5 space-y-1.5">{children}</ul>
+                                ),
+                                ol: ({ children }) => (
+                                  <ol className="list-decimal pl-5 space-y-1.5">{children}</ol>
+                                ),
+                                li: ({ children }) => <li>{children}</li>,
+                                h1: ({ children }) => (
+                                  <h1 className="font-bold tracking-tight">{children}</h1>
+                                ),
+                                h2: ({ children }) => (
+                                  <h2 className="font-bold tracking-tight">{children}</h2>
+                                ),
+                                h3: ({ children }) => (
+                                  <h3 className="font-bold tracking-tight">{children}</h3>
+                                ),
+                                strong: ({ children }) => <strong>{children}</strong>,
+                                table: ({ children }) => (
+                                  <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg bg-surface/30 backdrop-blur-sm">
+                                    <table className="w-full border-collapse text-sm">
+                                      {children}
+                                    </table>
+                                  </div>
+                                ),
+                                thead: ({ children }) => (
+                                  <thead className="bg-primary/10 border-b border-border/50">
+                                    {children}
+                                  </thead>
+                                ),
+                                tbody: ({ children }) => (
+                                  <tbody className="divide-y divide-border/30">{children}</tbody>
+                                ),
+                                tr: ({ children }) => (
+                                  <tr className="transition-colors hover:bg-white/3">{children}</tr>
+                                ),
+                                th: ({ children }) => (
+                                  <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-primary">
+                                    {children}
+                                  </th>
+                                ),
+                                td: ({ children }) => (
+                                  <td className="px-4 py-3 text-sm text-maintext leading-relaxed">
+                                    {children}
+                                  </td>
+                                ),
+                                mark: ({ children }) => (
+                                  <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">
+                                    {children}
+                                  </mark>
+                                ),
+                                code: ({ node, inline, className, children, ...props }) => {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const lang = match ? match[1] : '';
+                                  const codeValue = String(children).replace(/\n$/, '');
+                                  const isUser = msg.role === 'user';
+                                  if (!inline) {
+                                    return (
+                                      <CodeBlock
+                                        lang={lang}
+                                        codeValue={codeValue}
+                                        isUser={isUser}
+                                        {...props}
                                       />
                                     );
                                   }
                                   return (
-                                    <button
-                                      onClick={e => {
-                                        e.preventDefault();
-                                        const toolKey = href.replace('action:', '');
-                                        setCurrentMode('LEGAL_TOOLKIT');
-                                        const toolName = TOOL_NAMES[toolKey] || toolKey;
-                                        if (isLocked) {
-                                          window.dispatchEvent(
-                                            new CustomEvent('premium_required', {
-                                              detail: { toolName },
-                                            })
-                                          );
-                                          return;
-                                        }
-                                        activateToolWithTypingEffect(toolKey, toolName);
-                                      }}
-                                      className={`inline-flex mt-2 items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 ${isLocked ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20' : 'bg-gradient-to-r from-primary/10 to-primary-dark/10 border border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40'}`}
+                                    <code
+                                      className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-primary font-bold mx-0.5 text-xs translate-y-[-1px] inline-block"
+                                      {...props}
                                     >
                                       {children}
-                                      <ChevronRight className="w-4 h-4 ml-1 opacity-70" />
-                                    </button>
+                                    </code>
                                   );
-                                }
-                                const isInternal = href && href.startsWith('/');
-                                return (
-                                  <a
-                                    href={href}
-                                    onClick={e => {
-                                      if (isInternal) {
-                                        e.preventDefault();
-                                        navigate(href);
-                                      }
-                                    }}
-                                    className="text-primary hover:underline font-bold cursor-pointer"
-                                    target={isInternal ? '_self' : '_blank'}
-                                    rel={isInternal ? '' : 'noopener noreferrer'}
-                                  >
-                                    {children}
-                                  </a>
-                                );
-                              },
-                              p: ({ children }) => <p>{children}</p>,
-                              ul: ({ children }) => (
-                                <ul className="list-disc pl-5 space-y-1.5">{children}</ul>
-                              ),
-                              ol: ({ children }) => (
-                                <ol className="list-decimal pl-5 space-y-1.5">{children}</ol>
-                              ),
-                              li: ({ children }) => <li>{children}</li>,
-                              h1: ({ children }) => (
-                                <h1 className="font-bold tracking-tight">{children}</h1>
-                              ),
-                              h2: ({ children }) => (
-                                <h2 className="font-bold tracking-tight">{children}</h2>
-                              ),
-                              h3: ({ children }) => (
-                                <h3 className="font-bold tracking-tight">{children}</h3>
-                              ),
-                              strong: ({ children }) => <strong>{children}</strong>,
-                              table: ({ children }) => (
-                                <div className="overflow-x-auto my-4 rounded-xl border border-border/50 shadow-lg bg-surface/30 backdrop-blur-sm">
-                                  <table className="w-full border-collapse text-sm">
-                                    {children}
-                                  </table>
-                                </div>
-                              ),
-                              thead: ({ children }) => (
-                                <thead className="bg-primary/10 border-b border-border/50">
-                                  {children}
-                                </thead>
-                              ),
-                              tbody: ({ children }) => (
-                                <tbody className="divide-y divide-border/30">{children}</tbody>
-                              ),
-                              tr: ({ children }) => (
-                                <tr className="transition-colors hover:bg-white/3">{children}</tr>
-                              ),
-                              th: ({ children }) => (
-                                <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-primary">
-                                  {children}
-                                </th>
-                              ),
-                              td: ({ children }) => (
-                                <td className="px-4 py-3 text-sm text-maintext leading-relaxed">
-                                  {children}
-                                </td>
-                              ),
-                              mark: ({ children }) => (
-                                <mark className="bg-[#5555ff] text-white px-1 py-0.5 rounded-sm">
-                                  {children}
-                                </mark>
-                              ),
-                              code: ({ node, inline, className, children, ...props }) => {
-                                const match = /language-(\w+)/.exec(className || '');
-                                const lang = match ? match[1] : '';
-                                const codeValue = String(children).replace(/\n$/, '');
-                                const isUser = msg.role === 'user';
-                                if (!inline) {
+                                },
+                                img: ({ node, ...props }) => {
+                                  const isDownloading = isDownloadingUrl === props.src;
                                   return (
-                                    <CodeBlock
-                                      lang={lang}
-                                      codeValue={codeValue}
-                                      isUser={isUser}
-                                      {...props}
-                                    />
-                                  );
-                                }
-                                return (
-                                  <code
-                                    className="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-primary font-bold mx-0.5 text-xs translate-y-[-1px] inline-block"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </code>
-                                );
-                              },
-                              img: ({ node, ...props }) => {
-                                const isDownloading = isDownloadingUrl === props.src;
-                                return (
-                                  <div className="relative my-4 group/img-container max-w-full">
-                                    <div
-                                      className="relative group/image overflow-hidden aspect-auto max-w-[500px] cursor-zoom-in w-fit"
-                                      onClick={() =>
-                                        setViewingDoc({
-                                          url: props.src,
-                                          type: 'image',
-                                          name: 'AI Image',
-                                        })
-                                      }
-                                    >
-                                      {msg.role === 'model' && (
-                                        <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/img-container:opacity-100 transition-opacity duration-500">
-                                          <div className="flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest">
-                                              AISA™ Generated Asset
-                                            </span>
+                                    <div className="relative my-4 group/img-container max-w-full">
+                                      <div
+                                        className="relative group/image overflow-hidden aspect-auto max-w-[500px] cursor-zoom-in w-fit"
+                                        onClick={() =>
+                                          setViewingDoc({
+                                            url: props.src,
+                                            type: 'image',
+                                            name: 'AI Image',
+                                          })
+                                        }
+                                      >
+                                        {msg.role === 'model' && (
+                                          <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent z-10 flex justify-between items-center opacity-0 group-hover/img-container:opacity-100 transition-opacity duration-500">
+                                            <div className="flex items-center gap-2">
+                                              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                                              <span className="text-[10px] font-bold text-white uppercase tracking-widest">
+                                                AISA™ Generated Asset
+                                              </span>
+                                            </div>
                                           </div>
-                                        </div>
-                                      )}
-                                      <img
-                                        src={props.src}
-                                        alt={props.alt || 'AI Image'}
-                                        className="max-w-full h-auto object-contain"
-                                      />
+                                        )}
+                                        <img
+                                          src={props.src}
+                                          alt={props.alt || 'AI Image'}
+                                          className="max-w-full h-auto object-contain"
+                                        />
+                                      </div>
+                                      <button
+                                        onClick={() =>
+                                          handleDownload(props.src, `AISA_gen_${Date.now()}.png`)
+                                        }
+                                        disabled={isDownloading}
+                                        className="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
+                                      >
+                                        {isDownloading ? (
+                                          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                          <Download className="w-4 h-4" />
+                                        )}
+                                        <span className="text-[10px] font-bold uppercase">
+                                          {isDownloading ? 'Downloading...' : 'Download'}
+                                        </span>
+                                      </button>
                                     </div>
-                                    <button
-                                      onClick={() =>
-                                        handleDownload(props.src, `AISA_gen_${Date.now()}.png`)
-                                      }
-                                      disabled={isDownloading}
-                                      className="absolute bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
-                                    >
-                                      {isDownloading ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                      ) : (
-                                        <Download className="w-4 h-4" />
-                                      )}
-                                      <span className="text-[10px] font-bold uppercase">
-                                        {isDownloading ? 'Downloading...' : 'Download'}
-                                      </span>
-                                    </button>
-                                  </div>
-                                );
-                              },
-                            }}
-                          >
-                            {transformLegalActionsLocal(msg.content || msg.text || '')}
-                          </ReactMarkdown>
+                                  );
+                                },
+                              }}
+                            >
+                              {transformLegalActionsLocal(msg.content || msg.text || '')}
+                            </ReactMarkdown>
                           )}
                         </div>
 

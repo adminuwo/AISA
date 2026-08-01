@@ -4,7 +4,13 @@ import { reportErrorToBackend } from '../services/incidentReporter';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null, showDetails: false, copied: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      showDetails: false,
+      copied: false,
+    };
   }
 
   handleCopyLog = () => {

@@ -1,13 +1,4 @@
-import {
-  Search,
-  Globe,
-  ImagePlus,
-  Wand2,
-  Code,
-  FileText,
-  Scale,
-  TrendingUp,
-} from 'lucide-react';
+import { Search, Globe, ImagePlus, Wand2, Code, FileText, Scale, TrendingUp } from 'lucide-react';
 import { MODES } from './modeDetection';
 
 export const FEEDBACK_PROMPTS = {
@@ -73,31 +64,97 @@ export const TOOL_PLACEHOLDERS = {
 export const TOOL_PRICING = {
   chat: {
     models: [
-      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Free chat model' },
+      {
+        id: 'gemini-flash',
+        name: 'AISA™ Flash',
+        price: 0,
+        speed: 'Fast',
+        description: 'Free chat model',
+      },
     ],
   },
   image: {
     models: [
-      { id: 'gemini-3.1-flash-image', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest model — fastest Gemini image generation' },
-      { id: 'gemini-3-pro-image', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade scene understanding & generation' },
-      { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable production image generation' },
+      {
+        id: 'gemini-3.1-flash-image',
+        name: 'AISA™ Gemini 3.1 Flash',
+        price: 45,
+        speed: 'Fast',
+        description: 'Latest model — fastest Gemini image generation',
+      },
+      {
+        id: 'gemini-3-pro-image',
+        name: 'AISA™ Gemini 3 Pro',
+        price: 75,
+        speed: 'Pro',
+        description: 'Pro-grade scene understanding & generation',
+      },
+      {
+        id: 'gemini-2.5-flash-image',
+        name: 'AISA™ Gemini 2.5 Flash',
+        price: 30,
+        speed: 'Stable',
+        description: 'Stable & reliable production image generation',
+      },
     ],
     editModels: [
-      { id: 'gemini-3.1-flash-image', name: 'AISA™ Gemini 3.1 Flash', price: 45, speed: 'Fast', description: 'Latest model — fastest AI image editing' },
-      { id: 'gemini-3-pro-image', name: 'AISA™ Gemini 3 Pro', price: 75, speed: 'Pro', description: 'Pro-grade image editing with rich scene understanding' },
-      { id: 'gemini-2.5-flash-image', name: 'AISA™ Gemini 2.5 Flash', price: 30, speed: 'Stable', description: 'Stable & reliable — production-ready image edits' },
+      {
+        id: 'gemini-3.1-flash-image',
+        name: 'AISA™ Gemini 3.1 Flash',
+        price: 45,
+        speed: 'Fast',
+        description: 'Latest model — fastest AI image editing',
+      },
+      {
+        id: 'gemini-3-pro-image',
+        name: 'AISA™ Gemini 3 Pro',
+        price: 75,
+        speed: 'Pro',
+        description: 'Pro-grade image editing with rich scene understanding',
+      },
+      {
+        id: 'gemini-2.5-flash-image',
+        name: 'AISA™ Gemini 2.5 Flash',
+        price: 30,
+        speed: 'Stable',
+        description: 'Stable & reliable — production-ready image edits',
+      },
     ],
   },
   document: {
     models: [
-      { id: 'gemini-3.5-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Basic document analysis' },
-      { id: 'gemini-pro', name: 'AISA™ Pro', price: 20, speed: 'Medium', description: 'Advanced document processing' },
-      { id: 'gpt4', name: 'AISA™ Premium', price: 30, speed: 'Medium', description: 'Premium document analysis' },
+      {
+        id: 'gemini-3.5-flash',
+        name: 'AISA™ Flash',
+        price: 0,
+        speed: 'Fast',
+        description: 'Basic document analysis',
+      },
+      {
+        id: 'gemini-pro',
+        name: 'AISA™ Pro',
+        price: 20,
+        speed: 'Medium',
+        description: 'Advanced document processing',
+      },
+      {
+        id: 'gpt4',
+        name: 'AISA™ Premium',
+        price: 30,
+        speed: 'Medium',
+        description: 'Premium document analysis',
+      },
     ],
   },
   voice: {
     models: [
-      { id: 'gemini-flash', name: 'AISA™ Flash', price: 0, speed: 'Fast', description: 'Standard voice recognition' },
+      {
+        id: 'gemini-flash',
+        name: 'AISA™ Flash',
+        price: 0,
+        speed: 'Fast',
+        description: 'Standard voice recognition',
+      },
     ],
   },
 };
@@ -149,7 +206,7 @@ export const LEGAL_TOOLS_WITH_WORKSPACE = new Set([
   'legal_hearings',
 ]);
 
-export const transformLegalActions = (content) => {
+export const transformLegalActions = content => {
   if (!content) return '';
 
   const actionRegex =
@@ -160,32 +217,86 @@ export const transformLegalActions = (content) => {
   });
 };
 
-export const getModeInfo = (mode) => {
+export const getModeInfo = mode => {
   switch (mode) {
     case MODES.DEEP_SEARCH:
-      return { label: 'AI Deep Search', icon: Search, color: 'text-sky-500', bg: 'bg-sky-500/10', border: 'border-sky-500/20' };
+      return {
+        label: 'AI Deep Search',
+        icon: Search,
+        color: 'text-sky-500',
+        bg: 'bg-sky-500/10',
+        border: 'border-sky-500/20',
+      };
     case MODES.WEB_SEARCH:
-      return { label: 'AI Web Search', icon: Globe, color: 'text-cyan-500', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' };
+      return {
+        label: 'AI Web Search',
+        icon: Globe,
+        color: 'text-cyan-500',
+        bg: 'bg-cyan-500/10',
+        border: 'border-cyan-500/20',
+      };
     case MODES.IMAGE_GENERATION:
-      return { label: 'AI Image Generation', icon: ImagePlus, color: 'text-violet-500', bg: 'bg-violet-500/10', border: 'border-violet-500/20' };
+      return {
+        label: 'AI Image Generation',
+        icon: ImagePlus,
+        color: 'text-violet-500',
+        bg: 'bg-violet-500/10',
+        border: 'border-violet-500/20',
+      };
     case MODES.IMAGE_EDIT:
-      return { label: 'AI Magic Edit', icon: Wand2, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' };
+      return {
+        label: 'AI Magic Edit',
+        icon: Wand2,
+        color: 'text-rose-500',
+        bg: 'bg-rose-500/10',
+        border: 'border-rose-500/20',
+      };
     case MODES.CODING_HELP:
-      return { label: 'AI Code Writer', icon: Code, color: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' };
+      return {
+        label: 'AI Code Writer',
+        icon: Code,
+        color: 'text-indigo-500',
+        bg: 'bg-indigo-500/10',
+        border: 'border-indigo-500/20',
+      };
     case MODES.DOCUMENT_CONVERT:
-      return { label: 'AI Doc Convert', icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
+      return {
+        label: 'AI Doc Convert',
+        icon: FileText,
+        color: 'text-blue-500',
+        bg: 'bg-blue-500/10',
+        border: 'border-blue-500/20',
+      };
     case MODES.FILE_ANALYSIS:
-      return { label: 'AI File Analysis', icon: Search, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
+      return {
+        label: 'AI File Analysis',
+        icon: Search,
+        color: 'text-blue-500',
+        bg: 'bg-blue-500/10',
+        border: 'border-blue-500/20',
+      };
     case MODES.LEGAL_TOOLKIT:
-      return { label: 'AI Legal™', icon: Scale, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-600/10 dark:bg-indigo-400/10', border: 'border-indigo-600/20 dark:border-indigo-400/20' };
+      return {
+        label: 'AI Legal™',
+        icon: Scale,
+        color: 'text-indigo-600 dark:text-indigo-400',
+        bg: 'bg-indigo-600/10 dark:bg-indigo-400/10',
+        border: 'border-indigo-600/20 dark:border-indigo-400/20',
+      };
     case MODES.CASHFLOW:
-      return { label: 'AI CashFlow', icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' };
+      return {
+        label: 'AI CashFlow',
+        icon: TrendingUp,
+        color: 'text-emerald-500',
+        bg: 'bg-emerald-500/10',
+        border: 'border-emerald-500/20',
+      };
     default:
       return null;
   }
 };
 
-export const cleanTextForTTS = (text) => {
+export const cleanTextForTTS = text => {
   if (!text) return '';
   return text
     .replace(

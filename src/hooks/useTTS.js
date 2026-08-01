@@ -23,7 +23,7 @@ export const useTTS = ({ currentLang }) => {
         audioRef.current.pause();
         audioRef.current = null;
       }
-      urls.forEach((url) => {
+      urls.forEach(url => {
         try {
           URL.revokeObjectURL(url);
         } catch (e) {
@@ -59,21 +59,21 @@ export const useTTS = ({ currentLang }) => {
 
   const resumeSpeaking = useCallback(() => {
     if (audioRef.current && audioRef.current.paused) {
-      audioRef.current.play().catch((e) => console.error('[useTTS] Resume failed:', e));
+      audioRef.current.play().catch(e => console.error('[useTTS] Resume failed:', e));
       setIsPaused(false);
     }
   }, []);
 
   const executeSpeak = useCallback(
     async (text, language, msgId, attachments = []) => {
-      return new Promise(async (resolve) => {
+      return new Promise(async resolve => {
         currentSpeechResolverRef.current = resolve;
         try {
           let audioBlob = null;
           const readableAttachment =
             attachments && attachments.length > 0
               ? attachments.find(
-                  (a) =>
+                  a =>
                     a.type &&
                     (a.type.includes('pdf') ||
                       a.type.includes('word') ||
@@ -91,7 +91,7 @@ export const useTTS = ({ currentLang }) => {
               const fileRes = await fetch(readableAttachment.url);
               const fileBlob = await fileRes.blob();
 
-              const base64Data = await new Promise((res) => {
+              const base64Data = await new Promise(res => {
                 const reader = new FileReader();
                 reader.onloadend = () => res(reader.result.split(',')[1]);
                 reader.readAsDataURL(fileBlob);
@@ -180,7 +180,7 @@ export const useTTS = ({ currentLang }) => {
             resolve();
           };
 
-          audio.onerror = (e) => {
+          audio.onerror = e => {
             console.error('[useTTS] Audio playback error:', e);
             URL.revokeObjectURL(audioUrl);
             objectURLsRef.current.delete(audioUrl);
@@ -188,7 +188,7 @@ export const useTTS = ({ currentLang }) => {
             resolve();
           };
 
-          audio.play().catch((err) => {
+          audio.play().catch(err => {
             console.error('[useTTS] Play failed:', err);
             currentSpeechResolverRef.current = null;
             resolve();

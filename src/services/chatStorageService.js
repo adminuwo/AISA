@@ -161,7 +161,13 @@ export const chatStorageService = {
       const meta = (await idbGet(`chat_meta_${sessionId}`)) || {};
 
       // If we have local data, return it immediately to avoid "late load"
-      if (local && Array.isArray(local) && local.length > 0) {
+      // BUT if the last message is a user message, we must check the server for the AI response
+      if (
+        local &&
+        Array.isArray(local) &&
+        local.length > 0 &&
+        local[local.length - 1].role !== 'user'
+      ) {
         console.log(`[STORAGE] Returning local history for ${sessionId} (Instant Load)`);
         return {
           messages: local,

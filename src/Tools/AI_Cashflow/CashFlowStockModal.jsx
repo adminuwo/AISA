@@ -25,6 +25,7 @@ import {
   Minimize2,
   Lock,
   Unlock,
+  MessageSquare,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
@@ -670,6 +671,17 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button
+                  onClick={() => {
+                    onClose();
+                    window.location.href = '/dashboard/cashflow/chat';
+                  }}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs transition-all border border-white/20 shadow-md"
+                  title="Chat with AI CashFlow Copilot"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Launch Chatbot</span>
+                </button>
                 <button
                   onClick={() => setIsMaximized(!isMaximized)}
                   className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-white/90 hover:text-white group transition-transform"

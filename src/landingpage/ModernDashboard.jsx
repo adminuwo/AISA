@@ -73,7 +73,7 @@ const ModernDashboard = ({
   const isDark = useIsDark();
   const [internalCategory, setInternalCategory] = useState('business');
   const activeCategory = externalCategory !== undefined ? externalCategory : internalCategory;
-  const setActiveCategory = (cat) => {
+  const setActiveCategory = cat => {
     setInternalCategory(cat);
     if (onCategoryChange) onCategoryChange(cat);
   };

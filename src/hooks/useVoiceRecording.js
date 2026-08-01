@@ -52,9 +52,9 @@ export const useVoiceRecording = ({ currentLang, onTranscriptComplete }) => {
       setIsListening(true);
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = event => {
       const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript)
+        .map(result => result[0].transcript)
         .join('');
       transcriptRef.current = transcript;
     };
@@ -68,7 +68,7 @@ export const useVoiceRecording = ({ currentLang, onTranscriptComplete }) => {
       isManualStopRef.current = false;
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = event => {
       console.error('[useVoiceRecording] Speech error:', event.error);
       setIsListening(false);
       isManualStopRef.current = true;

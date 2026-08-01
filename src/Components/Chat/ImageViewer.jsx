@@ -9,28 +9,28 @@ export const ImageViewer = React.memo(({ src, alt }) => {
   const [lastTouchDistance, setLastTouchDistance] = useState(null);
   const imgRef = useRef(null);
 
-  const handleZoomIn = () => setScale((s) => Math.min(s + 0.5, 5));
-  const handleZoomOut = () => setScale((s) => Math.max(s - 0.5, 1));
+  const handleZoomIn = () => setScale(s => Math.min(s + 0.5, 5));
+  const handleZoomOut = () => setScale(s => Math.max(s - 0.5, 1));
   const handleReset = () => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = e => {
     e.preventDefault();
     e.stopPropagation();
     const delta = e.deltaY > 0 ? -0.2 : 0.2;
-    setScale((s) => Math.min(Math.max(1, s + delta), 5));
+    setScale(s => Math.min(Math.max(1, s + delta), 5));
   };
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = e => {
     if (scale > 1) {
       setIsDragging(true);
       setStartPos({ x: e.clientX - position.x, y: e.clientY - position.y });
     }
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = e => {
     if (isDragging && scale > 1) {
       e.preventDefault();
       setPosition({
@@ -42,7 +42,7 @@ export const ImageViewer = React.memo(({ src, alt }) => {
 
   const handleMouseUp = () => setIsDragging(false);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = e => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
         e.touches[0].pageX - e.touches[1].pageX,
@@ -58,14 +58,14 @@ export const ImageViewer = React.memo(({ src, alt }) => {
     }
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = e => {
     if (e.touches.length === 2 && lastTouchDistance) {
       const dist = Math.hypot(
         e.touches[0].pageX - e.touches[1].pageX,
         e.touches[0].pageY - e.touches[1].pageY
       );
       const delta = dist / lastTouchDistance;
-      setScale((s) => Math.min(Math.max(1, s * delta), 5));
+      setScale(s => Math.min(Math.max(1, s * delta), 5));
       setLastTouchDistance(dist);
     } else if (e.touches.length === 1 && isDragging && scale > 1) {
       e.preventDefault();
@@ -90,7 +90,7 @@ export const ImageViewer = React.memo(({ src, alt }) => {
       {/* Zoom Controls */}
       <div
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 border border-white/10 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <button
           onClick={handleZoomOut}
@@ -139,7 +139,7 @@ export const ImageViewer = React.memo(({ src, alt }) => {
           }}
           className="max-w-full max-h-full object-contain pointer-events-auto"
           draggable={false}
-          onError={(e) => {
+          onError={e => {
             if (src && !e.target.dataset.retried) {
               e.target.dataset.retried = 'true';
               const isSignedUrl = src?.includes('X-Goog-Signature');
@@ -150,7 +150,7 @@ export const ImageViewer = React.memo(({ src, alt }) => {
             } else {
               e.target.src = `https://placehold.co/800x600/333/eee?text=Image+Loading+Failed%0AClick+to+Retry`;
               e.target.style.cursor = 'pointer';
-              e.target.onclick = (event) => {
+              e.target.onclick = event => {
                 event.stopPropagation();
                 const isSignedUrl = src?.includes('X-Goog-Signature');
                 e.target.src = isSignedUrl

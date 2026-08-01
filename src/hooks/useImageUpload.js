@@ -9,7 +9,7 @@ export const useImageUpload = () => {
   const photosInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  const processFile = useCallback((file) => {
+  const processFile = useCallback(file => {
     if (!file) return;
 
     let fileName = file.name || `file_${Date.now()}`;
@@ -38,11 +38,11 @@ export const useImageUpload = () => {
     const fileWithMetadata = new File([file], fileName, {
       type: fileType || 'application/octet-stream',
     });
-    setSelectedFiles((prev) => [...prev, fileWithMetadata]);
+    setSelectedFiles(prev => [...prev, fileWithMetadata]);
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFilePreviews((prev) => [
+      setFilePreviews(prev => [
         ...prev,
         {
           url: reader.result,
@@ -57,37 +57,34 @@ export const useImageUpload = () => {
   }, []);
 
   const handleFileSelect = useCallback(
-    (e) => {
+    e => {
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
-      files.forEach((file) => processFile(file));
+      files.forEach(file => processFile(file));
     },
     [processFile]
   );
 
-  const handleRemoveFile = useCallback(
-    (id) => {
-      if (id) {
-        setFilePreviews((prev) => {
-          const previewToRemove = prev.find((p) => p.id === id);
-          if (previewToRemove) {
-            setSelectedFiles((sf) => sf.filter((f) => f.name !== previewToRemove.name));
-          }
-          return prev.filter((p) => p.id !== id);
-        });
-      } else {
-        setSelectedFiles([]);
-        setFilePreviews([]);
-      }
-      if (uploadInputRef.current) uploadInputRef.current.value = '';
-      if (driveInputRef.current) driveInputRef.current.value = '';
-      if (photosInputRef.current) photosInputRef.current.value = '';
-    },
-    []
-  );
+  const handleRemoveFile = useCallback(id => {
+    if (id) {
+      setFilePreviews(prev => {
+        const previewToRemove = prev.find(p => p.id === id);
+        if (previewToRemove) {
+          setSelectedFiles(sf => sf.filter(f => f.name !== previewToRemove.name));
+        }
+        return prev.filter(p => p.id !== id);
+      });
+    } else {
+      setSelectedFiles([]);
+      setFilePreviews([]);
+    }
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    if (driveInputRef.current) driveInputRef.current.value = '';
+    if (photosInputRef.current) photosInputRef.current.value = '';
+  }, []);
 
   const handlePaste = useCallback(
-    (e) => {
+    e => {
       const items = e.clipboardData?.items;
       const files = e.clipboardData?.files;
       let handled = false;
@@ -105,7 +102,7 @@ export const useImageUpload = () => {
       }
 
       if (!handled && files && files.length > 0) {
-        Array.from(files).forEach((file) => {
+        Array.from(files).forEach(file => {
           processFile(file);
           handled = true;
         });

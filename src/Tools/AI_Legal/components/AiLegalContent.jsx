@@ -838,7 +838,14 @@ const AiLegalContent = ({
       <div className="w-full px-4 sm:px-6 md:px-10 lg:px-12 pt-5 sm:pt-6 pb-4 sm:pb-5 flex items-center justify-between shrink-0 border-b border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-[#0B1020]/70 backdrop-blur-xl z-10 sticky top-0">
         <div className="flex items-center gap-3.5">
           <button
-            onClick={onBack}
+            onClick={() => {
+              console.log('[AiLegalContent] Back button clicked! onBack is:', onBack);
+              if (onBack) {
+                onBack();
+              } else {
+                console.warn('[AiLegalContent] onBack is undefined!');
+              }
+            }}
             className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
           >
             <ArrowLeft className="text-slate-600 dark:text-slate-400" />

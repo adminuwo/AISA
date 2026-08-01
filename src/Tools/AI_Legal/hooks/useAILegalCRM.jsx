@@ -31,6 +31,7 @@ export const useAILegalCRM = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const normalizedPath = location.pathname.replace(/\/$/, '');
 
   const legalCases = allProjects.filter(p => p.isLegalCase);
   const [isNewCaseModalOpen, setIsNewCaseModalOpen] = useState(false);
@@ -47,7 +48,7 @@ export const useAILegalCRM = ({
 
   // ─── Direct Case Dashboard Route Handler ───
   useEffect(() => {
-    if (location.pathname === '/dashboard/legal') {
+    if (normalizedPath === '/dashboard/legal') {
       // Set all states atomically to prevent flash of blank/wrong content
       if (currentProjectId !== null) setCurrentProjectId(null);
       if (currentCase !== null) setCurrentCase(null);
@@ -84,7 +85,7 @@ export const useAILegalCRM = ({
   };
 
   const handleBackToDashboard = () => {
-    if (location.pathname === '/dashboard/legal') {
+    if (normalizedPath === '/dashboard/legal') {
       handleDashboardBack();
       return;
     }
@@ -520,7 +521,7 @@ export const useAILegalCRM = ({
 
       try {
         const response = await apiService.getProject(currentProjectId);
-        if (location.pathname === '/dashboard/legal') return;
+        if (normalizedPath === '/dashboard/legal') return;
 
         if (response) {
           if (currentCase?._id !== response._id) setCurrentCase(response);
@@ -531,7 +532,7 @@ export const useAILegalCRM = ({
             }
             if (legalView !== 'PRECEDENTS') {
               if (legalView !== 'CHAT') setLegalView('CHAT');
-              if (location.pathname === '/dashboard/chat/new') {
+              if (normalizedPath === '/dashboard/chat/new') {
                 try {
                   const data = await apiService.getCaseSessions(currentProjectId);
                   const sessions = Array.isArray(data) ? data : data?.sessions || [];
