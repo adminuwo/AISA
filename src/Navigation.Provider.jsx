@@ -48,6 +48,8 @@ const VALID_ROUTE_PATTERNS = [
   '/dashboard/ai-base',
   '/dashboard/admin',
   '/dashboard/security',
+  '/dashboard/cashflow',
+  '/dashboard/cashflow/chat',
 ];
 
 export const isAllowedRoute = pathname => {
@@ -109,6 +111,12 @@ const AiLegalContentRoute = lazy(() =>
 );
 const LegalChatScreenRoute = lazy(() =>
   import('./pages/Chat').then(m => ({ default: m.LegalChatScreenRoute }))
+);
+const CashFlowChatScreenRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.CashFlowChatScreenRoute }))
+);
+const AiCashFlowContentRoute = lazy(() =>
+  import('./pages/Chat').then(m => ({ default: m.AiCashFlowContentRoute }))
 );
 const DraftMakerRoute = lazy(() =>
   import('./pages/Chat').then(m => ({ default: m.DraftMakerRoute }))
@@ -330,17 +338,19 @@ const DashboardLayout = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const isLegalWorkspace =
-    currentMode === 'LEGAL_TOOLKIT' || location.pathname === '/dashboard/cases';
+    currentMode === 'LEGAL_TOOLKIT' ||
+    currentMode === 'CASHFLOW' ||
+    location.pathname.startsWith('/dashboard/legal') ||
+    location.pathname.startsWith('/dashboard/cases') ||
+    location.pathname.startsWith('/dashboard/case/') ||
+    location.pathname.startsWith('/dashboard/cashflow');
   const isMobile = window.innerWidth < 768;
   const searchParams = new URLSearchParams(location.search);
   const tool = searchParams.get('tool');
   const hideNavbarTools = ['legal_my_case', 'legal_precedents', 'my-case', 'legal-precedents'];
 
   // Jaha navbar NAHI chahiye
-  const isHiddenTool =
-    currentMode === 'LEGAL_TOOLKIT' ||
-    hideNavbarTools.includes(tool) ||
-    location.pathname === '/dashboard/cases';
+  const isHiddenTool = isLegalWorkspace || hideNavbarTools.includes(tool);
 
   // Navbar is hidden if it's a restricted tool view, regardless of device.
   const allowNavbar = !isHiddenTool;
@@ -770,6 +780,24 @@ const NavigateProvider = () => {
               element={
                 <CardErrorBoundary cardName="Hearings Timeline Manager" toolModule="LEGAL_TOOLKIT">
                   <HearingsRoute />
+                </CardErrorBoundary>
+              }
+            />
+
+            {/* AI CashFlow Nested Routes */}
+            <Route
+              path="cashflow"
+              element={
+                <CardErrorBoundary cardName="AI CashFlow Financial Dashboard" toolModule="CASHFLOW">
+                  <AiCashFlowContentRoute />
+                </CardErrorBoundary>
+              }
+            />
+            <Route
+              path="cashflow/chat"
+              element={
+                <CardErrorBoundary cardName="AI CashFlow Financial Copilot" toolModule="CASHFLOW">
+                  <CashFlowChatScreenRoute />
                 </CardErrorBoundary>
               }
             />

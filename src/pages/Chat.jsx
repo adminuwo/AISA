@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
-import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useOutletContext, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Send,
@@ -85,6 +85,7 @@ import { chatStorageService } from '../services/chatStorageService';
 import { useLanguage } from '../context/LanguageContext';
 import { useUserStore } from '../userStore/useUserStore';
 
+
 import Loader from '../Components/Loader/Loader';
 import toast from 'react-hot-toast';
 import LiveAI from '../Components/LiveAI';
@@ -112,6 +113,10 @@ const LegalResearch = lazy(() => import('../Tools/AI_Legal/components/LegalResea
 const ComplianceCenter = lazy(() => import('../Tools/AI_Legal/components/ComplianceCenter').catch(() => ({ default: () => null })));
 const HearingManagement = lazy(() => import('../Tools/AI_Legal/components/HearingManagement').catch(() => ({ default: () => null })));
 const LegalChatScreen = lazy(() => import('../Tools/AI_Legal/components/LegalChatScreen').catch(() => ({ default: () => null })));
+const CashFlowChatScreen = lazy(() => import('../Tools/AI_Cashflow/components/CashFlowChatScreen').catch(() => ({ default: () => null })));
+const AiCashFlowContent = lazy(() => import('../Tools/AI_Cashflow/components/AiCashFlowContent').catch(() => ({ default: () => null })));
+
+
 
 import axios from 'axios';
 import { apis, API } from '../types';
@@ -441,6 +446,7 @@ const Chat = () => {
         let currentSid = activeSessionId;
         if (currentSid === 'new') {
           currentSid = await chatStorageService.createSession(currentProjectId);
+          useGenerationStore.getState().transitionChatId('new', currentSid);
           navigate(`/dashboard/chat/${currentSid}`, { replace: true });
         }
         await chatStorageService.saveMessage(currentSid, userMsg, null, currentProjectId);
@@ -448,8 +454,14 @@ const Chat = () => {
         const aiMsgId = (Date.now() + 1).toString();
         setTypingMessageId(aiMsgId);
 
+        // Sanitize history: exclude messages with empty content (failed/interrupted AI responses)
+        // to prevent "model output must contain output text" Gemini errors on follow-ups
+        const cleanHistory = messages.filter(
+          (m) => (m.content || '').trim() || (m.text || '').trim()
+        );
+
         const responseData = await generateChatResponse(
-          messages,
+          cleanHistory,
           messageText,
           '',
           filePreviews,
@@ -475,7 +487,7 @@ const Chat = () => {
             mode: currentMode,
             suggestions: responseData.suggestions || [],
           };
-          setMessages((prev) => [...prev, aiMsg]);
+          setMessages((prev) => [...prev, aiMsg], currentSid);
           await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
         }
       } catch (err) {
@@ -1105,11 +1117,43 @@ const Chat = () => {
     saveEdit,
   ]);
 
+  const handleUpdateCase = useCallback((updated) => {
+    setCurrentCase(updated);
+    setAllProjects((prev) => {
+      const exists = prev.some((p) => p._id === updated._id);
+      if (exists) return prev.map((p) => (p._id === updated._id ? updated : p));
+      return [updated, ...prev];
+    });
+    if (updated?._id) {
+      setCurrentProjectId(updated._id);
+      localStorage.setItem('aisa_active_project_id', updated._id);
+    }
+  }, [setCurrentCase, setAllProjects, setCurrentProjectId]);
+
+  const contextValue = {
+    isDarkMode: effectiveDarkMode,
+    setSelectedLegalTool,
+    currentCase,
+    setCurrentCase,
+    allProjects,
+    setAllProjects,
+    setCurrentProjectId,
+    setMessages,
+    setLegalView,
+    handleBackToDashboard,
+    onUpdateCase: handleUpdateCase,
+  };
+
+  const isLegalWorkspaceActive =
+    (location.pathname.startsWith('/dashboard/legal') || location.pathname.startsWith('/dashboard/cashflow')) &&
+    !location.pathname.includes('/cases/');
+
   return (
     <SelectionToolbarProvider>
       <div className="flex flex-col h-full w-full bg-mainbg select-none relative overflow-hidden">
-        {/* Render Workspace for Dedicated Legal Tools */}
-        {modeState.selectedLegalTool && LEGAL_TOOLS_WITH_WORKSPACE.has(modeState.selectedLegalTool.id) ? (
+        {isLegalWorkspaceActive ? (
+          <Outlet context={contextValue} />
+        ) : modeState.selectedLegalTool && LEGAL_TOOLS_WITH_WORKSPACE.has(modeState.selectedLegalTool.id) ? (
           renderActiveLegalToolWorkspace()
         ) : (
           <div className="flex-1 flex flex-col w-full h-full min-h-0 relative">
@@ -1533,3 +1577,35 @@ export const LegalChatScreenRoute = () => {
     </motion.div>
   );
 };
+
+export const CashFlowChatScreenRoute = () => {
+  return (
+    <motion.div
+      key="cashflow-chat-workspace"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
+    >
+      <CashFlowChatScreen />
+    </motion.div>
+  );
+};
+
+export const AiCashFlowContentRoute = () => {
+  return (
+    <motion.div
+      key="cashflow-dashboard-workspace"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex-1 flex flex-col w-full select-text min-h-0 h-full overflow-y-auto"
+    >
+      <AiCashFlowContent />
+    </motion.div>
+  );
+};
+
+

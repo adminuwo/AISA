@@ -87,7 +87,7 @@ function chatModeReducer(state, action) {
 export const useChatModeReducer = () => {
   const [modeState, dispatch] = useReducer(chatModeReducer, initialModeState);
 
-  const activateMode = useCallback((modeName) => {
+  const activateMode = useCallback(modeName => {
     dispatch({ type: 'ACTIVATE_MODE', payload: modeName });
   }, []);
 
@@ -103,7 +103,7 @@ export const useChatModeReducer = () => {
     dispatch({ type: 'CLOSE_LEGAL_TOOLKIT' });
   }, []);
 
-  const setCashFlowMode = useCallback((enabled) => {
+  const setCashFlowMode = useCallback(enabled => {
     dispatch({ type: 'SET_CASHFLOW_MODE', payload: enabled });
   }, []);
 

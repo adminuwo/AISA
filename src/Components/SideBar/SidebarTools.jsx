@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import {
   Sparkles,
   Brain,
@@ -23,7 +25,9 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useIsDark } from '../../context/ThemeContext';
 
 const SidebarTools = ({ onToolSelect, activeToolId }) => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
+
   const isDark = useIsDark();
   const [expandedCategories, setExpandedCategories] = useState({
     create: true,
@@ -156,7 +160,14 @@ const SidebarTools = ({ onToolSelect, activeToolId }) => {
                     return (
                       <button
                         key={tool.id}
-                        onClick={() => onToolSelect(tool.id)}
+                        onClick={() => {
+                          if (tool.id === 'ai_cashflow') {
+                            navigate('/dashboard/cashflow');
+                          } else if (onToolSelect) {
+                            onToolSelect(tool.id);
+                          }
+                        }}
+
                         className={`flex items-center justify-between w-full px-3 py-2 rounded-xl transition-all duration-300 group/tool ${
                           isActive
                             ? 'bg-primary/10 text-primary shadow-sm'

@@ -65,6 +65,8 @@ import {
   Download,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../../types';
 import { generateChatResponse } from '../../../services/geminiService';
 import { apiService } from '../../../services/apiService';
 import { mapCaseToForm } from '../services/activeModuleService';
@@ -2762,17 +2764,43 @@ JSON Schema:
     }
   };
 
-  const handleSpeechSummary = () => {
+  const handleSpeechSummary = async () => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+        } catch (e) {}
+      }
       setIsSpeaking(false);
     } else if (auditResult) {
       const text = `Contract Audit Summary for ${contractTitle}. Classification: ${auditResult.summary?.contractType}. Overall compliance is ${auditResult.stats?.complianceScore} percent. Risk classification is ${auditResult.stats?.reviewStatus}. Opinion: ${auditResult.finalOpinion?.reasoning}`;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
+      toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-contract' });
+      try {
+        const response = await axios.post(
+          apis.synthesize,
+          {
+            text: text,
+            languageCode: 'en-US',
+            voiceName: 'en-US-Chirp3-HD-Autonoe',
+          },
+          {
+            responseType: 'arraybuffer',
+            headers: { Authorization: `Bearer ${getUserData()?.token}` },
+          }
+        );
+        const blob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
+        setIsSpeaking(true);
+        await audio.play();
+        toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-contract' });
+      } catch (err) {
+        setIsSpeaking(false);
+        toast.error('Chirp 3 HD audio failed', { id: 'chirp-contract' });
+      }
     }
   };
 

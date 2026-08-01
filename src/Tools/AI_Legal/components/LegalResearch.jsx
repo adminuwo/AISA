@@ -31,6 +31,9 @@ import {
   Star,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../../types';
+import { getUserData } from '../../../userStore/userData';
 import { generateChatResponse } from '../../../services/geminiService';
 import { apiService } from '../../../services/apiService';
 import { useActiveCase } from '../context/ActiveCaseContext';
@@ -540,18 +543,43 @@ const LegalResearch = ({ currentCase, onBack, theme, allProjects = [], onUpdateC
     }
   };
 
-  const handleSpeech = text => {
+  const handleSpeech = async text => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      if (speechUtterance) {
+        try {
+          speechUtterance.pause();
+        } catch (e) {}
+      }
       setIsSpeaking(false);
     } else {
       const cleanText = text.replace(/[#*`]/g, '');
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      setSpeechUtterance(utterance);
-      setIsSpeaking(true);
+      toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-legal' });
+      try {
+        const response = await axios.post(
+          apis.synthesize,
+          {
+            text: cleanText,
+            languageCode: 'en-US',
+            voiceName: 'en-US-Chirp3-HD-Autonoe',
+          },
+          {
+            responseType: 'arraybuffer',
+            headers: { Authorization: `Bearer ${getUserData()?.token}` },
+          }
+        );
+        const blob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
+        setSpeechUtterance(audio);
+        setIsSpeaking(true);
+        await audio.play();
+        toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-legal' });
+      } catch (err) {
+        setIsSpeaking(false);
+        toast.error('Chirp 3 HD audio failed', { id: 'chirp-legal' });
+      }
     }
   };
 

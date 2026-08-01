@@ -3,14 +3,14 @@ import { useRef, useCallback, useEffect } from 'react';
 export const useObjectURLManager = () => {
   const urlsRef = useRef(new Set());
 
-  const createURL = useCallback((blob) => {
+  const createURL = useCallback(blob => {
     if (!blob) return null;
     const url = URL.createObjectURL(blob);
     urlsRef.current.add(url);
     return url;
   }, []);
 
-  const revokeURL = useCallback((url) => {
+  const revokeURL = useCallback(url => {
     if (url && urlsRef.current.has(url)) {
       URL.revokeObjectURL(url);
       urlsRef.current.delete(url);
@@ -20,7 +20,7 @@ export const useObjectURLManager = () => {
   useEffect(() => {
     const urls = urlsRef.current;
     return () => {
-      urls.forEach((url) => {
+      urls.forEach(url => {
         try {
           URL.revokeObjectURL(url);
         } catch (e) {

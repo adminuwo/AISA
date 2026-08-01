@@ -5,7 +5,10 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useUserStore } from '../../userStore/useUserStore';
 import { logo } from '../../constants';
 import LegalLogo from '../../Tools/AI_Legal/components/LegalLogo';
-import { TOOL_PRICING as DEFAULT_TOOL_PRICING, TOOL_PLACEHOLDERS as DEFAULT_TOOL_PLACEHOLDERS } from '../../utils/chatHelpers';
+import {
+  TOOL_PRICING as DEFAULT_TOOL_PRICING,
+  TOOL_PLACEHOLDERS as DEFAULT_TOOL_PLACEHOLDERS,
+} from '../../utils/chatHelpers';
 import { MODES as DEFAULT_MODES } from '../../utils/modeDetection';
 
 import {
@@ -191,10 +194,12 @@ export const ChatInput = ({
   const isInputExpanded = propIsInputExpanded !== undefined ? propIsInputExpanded : internalIsInputExpanded;
   const setIsInputExpanded = propSetIsInputExpanded || setInternalIsInputExpanded;
 
-  const isAttachMenuOpen = externalAttachMenuOpen !== undefined ? externalAttachMenuOpen : internalAttachMenuOpen;
+  const isAttachMenuOpen =
+    externalAttachMenuOpen !== undefined ? externalAttachMenuOpen : internalAttachMenuOpen;
   const setIsAttachMenuOpen = externalSetIsAttachMenuOpen || setInternalAttachMenuOpen;
 
-  const isToolsMenuOpen = externalToolsMenuOpen !== undefined ? externalToolsMenuOpen : internalToolsMenuOpen;
+  const isToolsMenuOpen =
+    externalToolsMenuOpen !== undefined ? externalToolsMenuOpen : internalToolsMenuOpen;
   const setIsToolsMenuOpen = externalSetIsToolsMenuOpen || setInternalToolsMenuOpen;
 
   const normMode = (currentMode || '').toUpperCase();
@@ -211,7 +216,7 @@ export const ChatInput = ({
 
   const isDark = useIsDark();
   const { t } = useLanguage();
-  const tglState = useUserStore((state) => state.toggles);
+  const tglState = useUserStore(state => state.toggles);
 
   const getAgentCapabilities = (agentName, category) => {
     const name = (agentName || '').toLowerCase();
@@ -279,12 +284,18 @@ export const ChatInput = ({
         style={{ padding: '0.5rem 1rem calc(4px + env(safe-area-inset-bottom, 0px)) 1rem' }}
       >
         <div className="max-w-4xl mx-auto w-full pointer-events-auto">
-
           {/* ── Active Tool Mode Badge Row ── */}
           <AnimatePresence>
-            {(isWebSearch || isDeepSearch || isImageGeneration || isVoiceMode ||
-              isAudioConvertMode || isDocumentConvert || isCodeWriter ||
-              isMagicEditing || isFileAnalysis || isCashFlowMode ||
+            {(isWebSearch ||
+              isDeepSearch ||
+              isImageGeneration ||
+              isVoiceMode ||
+              isAudioConvertMode ||
+              isDocumentConvert ||
+              isCodeWriter ||
+              isMagicEditing ||
+              isFileAnalysis ||
+              isCashFlowMode ||
               normMode === 'LEGAL_TOOLKIT') && (
               <motion.div
                 key="active-tool-badge-container"
@@ -300,11 +311,15 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
                       <ImageIcon size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">IMAGE GEN</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      IMAGE GEN
+                    </span>
                     <div className="w-px h-3.5 bg-indigo-200 dark:bg-indigo-700/80 mx-0.5" />
                     <button
                       type="button"
-                      onClick={() => setIsMagicSettingsOpen && setIsMagicSettingsOpen(!isMagicSettingsOpen)}
+                      onClick={() =>
+                        setIsMagicSettingsOpen && setIsMagicSettingsOpen(!isMagicSettingsOpen)
+                      }
                       className="flex items-center gap-1 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-white transition-colors"
                     >
                       <span>{imageAspectRatio}</span>
@@ -330,7 +345,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-cyan-600 text-white flex items-center justify-center shrink-0">
                       <Globe size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">WEB SEARCH</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      WEB SEARCH
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -351,7 +368,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0">
                       <Search size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">DEEP SEARCH</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      DEEP SEARCH
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -372,7 +391,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">
                       <Headphones size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">AUDIO CONVERT</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      AUDIO CONVERT
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -393,7 +414,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                       <FileText size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">DOC CONVERT</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      DOC CONVERT
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -414,7 +437,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
                       <Code size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">CODE WRITER</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      CODE WRITER
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -435,7 +460,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
                       <Wand2 size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">EDIT IMAGE</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      EDIT IMAGE
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -455,7 +482,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
                       <TrendingUp size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">AI CASHFLOW</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      AI CASHFLOW
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -476,7 +505,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
                       <Scale size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">AI LEGAL</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      AI LEGAL
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -496,7 +527,9 @@ export const ChatInput = ({
                     <div className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
                       <Paperclip size={11} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">FILE ANALYSIS</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      FILE ANALYSIS
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -514,12 +547,10 @@ export const ChatInput = ({
             )}
           </AnimatePresence>
 
-
           <form
             onSubmit={handleSendMessage}
             className="relative w-full flex flex-col transition-all duration-300 p-1 z-[1002] aisa-chat-input-wrapper bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-zinc-800 rounded-[28px] sm:rounded-[32px] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none overflow-visible"
           >
-
             {/* Internal File Preview Area */}
             {(filePreviews.length > 0 || longTextPreview) && (
               <div className="flex flex-wrap gap-4 px-3 py-2 mb-1">
@@ -834,7 +865,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Generate Image')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isImageGeneration;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.IMAGE_GENERATION : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.IMAGE_GENERATION : MODES.NORMAL_CHAT);
                           if (newMode) {
                             toast.success('Image Generation Mode Enabled');
                           }
@@ -867,7 +899,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Web Search')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isWebSearch;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.WEB_SEARCH : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.WEB_SEARCH : MODES.NORMAL_CHAT);
                           if (newMode) {
                             toast.success('Real-Time Web Search Active');
                           }
@@ -900,7 +933,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Deep Search')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isDeepSearch;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.DEEP_SEARCH : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.DEEP_SEARCH : MODES.NORMAL_CHAT);
                           if (newMode) {
                             toast.success('Deep Search Mode Enabled');
                           }
@@ -933,7 +967,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Convert to Audio')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isAudioConvertMode;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.AUDIO_CONVERT : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.AUDIO_CONVERT : MODES.NORMAL_CHAT);
                           if (newMode) {
                             toast.success('Convert to Audio Mode Active');
                           }
@@ -966,7 +1001,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Document Converter')) return;
                           setIsToolsMenuOpen(false);
                           const nextState = !isDocumentConvert;
-                          if (setCurrentMode) setCurrentMode(nextState ? MODES.DOCUMENT_CONVERT : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(nextState ? MODES.DOCUMENT_CONVERT : MODES.NORMAL_CHAT);
                           if (nextState) {
                             uploadInputRef?.current?.click();
                             toast.success('Document Converter Mode Active');
@@ -1000,7 +1036,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Code Writer')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isCodeWriter;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.CODING_HELP : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.CODING_HELP : MODES.NORMAL_CHAT);
                           if (newMode) {
                             toast.success('Code Writer Mode Enabled');
                           }
@@ -1033,7 +1070,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('Edit Image')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isMagicEditing;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.IMAGE_EDIT : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.IMAGE_EDIT : MODES.NORMAL_CHAT);
 
                           if (newMode && !editRefImageState && messages.length > 0) {
                             const lastImg = [...messages].reverse().find(m => m.imageUrl);
@@ -1077,7 +1115,8 @@ export const ChatInput = ({
                           if (!checkPremiumTool('AI CashFlow')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isCashFlowMode;
-                          if (setCurrentMode) setCurrentMode(newMode ? MODES.CASHFLOW : MODES.NORMAL_CHAT);
+                          if (setCurrentMode)
+                            setCurrentMode(newMode ? MODES.CASHFLOW : MODES.NORMAL_CHAT);
                           if (newMode) {
                             setIsStockModalOpen && setIsStockModalOpen(true);
                             toast.success('AI CashFlow Explorer Active');
@@ -1115,7 +1154,8 @@ export const ChatInput = ({
 
                           if (!isCurrentlyLegal) {
                             if (setCurrentMode) setCurrentMode(MODES.LEGAL_TOOLKIT);
-                            if (setSelectedLegalTool) setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
+                            if (setSelectedLegalTool)
+                              setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
                             if (setLegalView) setLegalView('DASHBOARD');
                             if (setCurrentCase) setCurrentCase(null);
                             if (setCurrentProjectId) setCurrentProjectId(null);
@@ -1286,7 +1326,11 @@ export const ChatInput = ({
                         e.preventDefault();
                         e.stopPropagation();
                         if (gen?.isGenerating || isLoading) return;
-                        if (inputValue.trim() || (filePreviews && filePreviews.length > 0) || longTextPreview) {
+                        if (
+                          inputValue.trim() ||
+                          (filePreviews && filePreviews.length > 0) ||
+                          longTextPreview
+                        ) {
                           handleSendMessage && handleSendMessage(e);
                         }
                       }
@@ -1360,7 +1404,8 @@ export const ChatInput = ({
 
                 {!isListening && !inputValue && (
                   <>
-                    {getAgentCapabilities(activeAgent?.agentName, activeAgent?.category).canVoice && (
+                    {getAgentCapabilities(activeAgent?.agentName, activeAgent?.category)
+                      .canVoice && (
                       <div className="relative">
                         <motion.button
                           type="button"
@@ -1377,7 +1422,7 @@ export const ChatInput = ({
                   </>
                 )}
 
-                {(gen?.isGenerating || isLoading) ? (
+                {gen?.isGenerating || isLoading ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -1401,7 +1446,9 @@ export const ChatInput = ({
                       disabled={
                         gen?.isGenerating ||
                         isLoading ||
-                        (!inputValue.trim() && (!filePreviews || filePreviews.length === 0) && !longTextPreview)
+                        (!inputValue.trim() &&
+                          (!filePreviews || filePreviews.length === 0) &&
+                          !longTextPreview)
                       }
                       onMouseEnter={() => setIsSendHovered && setIsSendHovered(true)}
                       onMouseLeave={() => setIsSendHovered && setIsSendHovered(false)}

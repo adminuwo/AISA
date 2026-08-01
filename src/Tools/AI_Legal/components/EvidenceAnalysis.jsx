@@ -41,6 +41,9 @@ import {
   Check,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../../types';
+import { getUserData } from '../../../userStore/userData';
 import { generateChatResponse } from '../../../services/geminiService';
 import { apiService } from '../../../services/apiService';
 import { consumePrefillIntent, mapCaseToForm } from '../services/activeModuleService';
@@ -2495,18 +2498,44 @@ JSON Schema:
     toast.success('Copied to clipboard!');
   };
 
-  // Text to Speech voice synthesis
-  const handleSpeechSynthesis = text => {
+  // Text to Speech voice synthesis using Chirp 3 HD
+  const handleSpeechSynthesis = async text => {
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      if (speechAudioRef?.current) {
+        try {
+          speechAudioRef.current.pause();
+        } catch (e) {}
+      }
       setIsSpeaking(false);
     } else {
-      const clean = text.replace(/[#*`\n]/g, ' ');
-      const u = new SpeechSynthesisUtterance(clean.substring(0, 1500)); // Limit to prevent freeze
-      u.onend = () => setIsSpeaking(false);
-      u.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(u);
-      setIsSpeaking(true);
+      const clean = text.replace(/[#*`\n]/g, ' ').substring(0, 2000);
+      toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-evidence' });
+      try {
+        const response = await axios.post(
+          apis.synthesize,
+          {
+            text: clean,
+            languageCode: 'en-US',
+            voiceName: 'en-US-Chirp3-HD-Autonoe',
+          },
+          {
+            responseType: 'arraybuffer',
+            headers: { Authorization: `Bearer ${getUserData()?.token}` },
+          }
+        );
+        const blob = new Blob([response.data], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        speechAudioRef.current = audio;
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
+        setIsSpeaking(true);
+        await audio.play();
+        toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-evidence' });
+      } catch (err) {
+        setIsSpeaking(false);
+        toast.error('Chirp 3 HD audio failed', { id: 'chirp-evidence' });
+      }
     }
   };
 

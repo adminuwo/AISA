@@ -48,6 +48,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { searchAndFilterCases, getFilterOptions } from '../data/caseDatabase';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { apis } from '../../../types';
+import { getUserData } from '../../../userStore/userData';
 import { useLocation } from 'react-router-dom';
 import { legalService } from '../services/legalService';
 import { apiService } from '../../../services/apiService';
@@ -70,6 +73,21 @@ STRICT RULES:
 - Never fabricate citations or statutes. If no citation is found, write Citation Not Available.
 - Respond in the same language as the user's prompt (e.g. Hindi, English).
 - Always use the legal styling callouts: [!IMPORTANT], [!WARNING], [!CASE], and [!STATUTE] inside markdown blockquotes to structure critical callouts.
+
+STANDALONE APP PROMOTION RULES (CONVERSATIONAL GUIDELINE):
+- You should make users aware that a dedicated standalone **AI Legal™ Application** exists whenever it is genuinely relevant to their conversation (e.g., preparing legal documents, contract drafting, notice generation, legal research, multiple legal documents, long conversations, case organization, document management, court preparation, legal compliance workflows, client management, ongoing legal projects).
+- Never interrupt the legal explanation simply to advertise it. The legal response must remain the primary focus.
+- Never use aggressive marketing language. Present it as an optional productivity enhancement. Use natural conversational language like: "If you're working on legal matters regularly...", "For a more complete legal workspace...", "If you frequently prepare legal documents...", "You may also find our standalone AI Legal application useful...".
+- Do not repeat the promotion if it has already been mentioned in the current conversation. Mention it only when it adds value.
+- Never refuse assistance inside AISA or tell users they must switch. The standalone application is only an optional recommendation.
+- When relevant, append a short recommendation after the legal answer using the following example style:
+  ---
+  **Helpful Tip**
+  If you regularly work with legal documents, contracts, notices, or ongoing legal matters, you may also find our standalone **AI Legal™ Application** useful. It provides a dedicated legal workspace designed for more comprehensive legal workflows while your current AI Legal assistant inside AISA remains available for everyday legal assistance.
+  📲 **Download AI Legal™ App on Google Play Store**: [Get AI Legal™ on Google Play Store](https://play.google.com/store/apps/details?id=com.uwo.ailegal&pcampaignid=web_share)
+  ---
+- Do NOT promote it for simple greetings, thank you messages, yes/no questions, casual conversation, unrelated topics, or very short legal questions where promotion feels forced.
+- Preserve all existing behavior, response formats, citations, and legal reasoning.
 `;
 
 const formatMarkdownForParsing = text => {
@@ -264,6 +282,8 @@ const AiResponseCard = ({
   const [activeShareMenu, setActiveShareMenu] = useState(false);
   const [liked, setLiked] = useState(null); // 'like' | 'dislike' | null
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [isReading, setIsReading] = useState(false);
+  const audioRef = useRef(null);
 
   const triggerPromptAction = promptPrefix => {
     const precedingText = msg.text.slice(0, 100) + '...';
@@ -396,23 +416,48 @@ const AiResponseCard = ({
     printWindow.document.close();
   };
 
-  const handleReadAloud = () => {
-    if ('speechSynthesis' in window) {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        toast.success('Voice reading stopped.');
-        return;
+  const handleReadAloud = async () => {
+    if (isReading) {
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+        } catch (e) {}
       }
-      const resolvedText = getDisplayText(msg.text);
-      const textToRead = resolvedText.replace(
-        /###|##|#|\[\!IMPORTANT\]|\[\!WARNING\]|\[\!CASE\]|\[\!STATUTE\]|\*\*|\*/g,
-        ''
+      setIsReading(false);
+      toast.success('Chirp 3 HD reading stopped.');
+      return;
+    }
+    const resolvedText = getDisplayText(msg.text);
+    const textToRead = resolvedText.replace(
+      /###|##|#|\[\!IMPORTANT\]|\[\!WARNING\]|\[\!CASE\]|\[\!STATUTE\]|\*\*|\*/g,
+      ''
+    );
+    toast.loading('Generating Chirp 3 HD audio...', { id: 'chirp-legal-chat' });
+    try {
+      const res = await axios.post(
+        apis.synthesize,
+        {
+          text: textToRead,
+          languageCode: 'en-US',
+          voiceName: 'en-US-Chirp3-HD-Autonoe',
+        },
+        {
+          responseType: 'arraybuffer',
+          headers: { Authorization: `Bearer ${getUserData()?.token}` },
+        }
       );
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      window.speechSynthesis.speak(utterance);
-      toast.success('Reading report aloud...');
-    } else {
-      toast.error('Speech synthesis is not supported on this browser.');
+      const blob = new Blob([res.data], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      if (audioRef) audioRef.current = audio;
+      audio.onended = () => setIsReading(false);
+      audio.onerror = () => setIsReading(false);
+      setIsReading(true);
+      await audio.play();
+      toast.success('Playing Chirp 3 HD audio...', { id: 'chirp-legal-chat' });
+    } catch (err) {
+      setIsReading(false);
+      toast.error('Chirp 3 HD audio failed', { id: 'chirp-legal-chat' });
     }
   };
 
@@ -1939,11 +1984,15 @@ Please continue the conversation naturally using this context. Never ask the use
 
     try {
       const apiHistory = messages
-        .filter(m => !m.isIntro)
+        // Exclude intro messages, failed messages, stopped messages, and still-streaming messages
+        // Any of these can have empty text which crashes Gemini with "model output must contain output text"
+        .filter(m => !m.isIntro && !m.isFailed && !m.isStopped && !m.isStreaming)
         .map(m => ({
           role: m.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: m.fullPromptText || m.text }],
-        }));
+          parts: [{ text: m.fullPromptText || m.text || '' }],
+        }))
+        // Final safety: remove any entries with empty content
+        .filter(m => m.parts[0].text && m.parts[0].text.trim());
 
       let apiAttachments = currentAttachments.map(att => ({
         url: att.dataUrl,
@@ -2175,11 +2224,14 @@ THINK IN TARGET LANGUAGE:
     try {
       const precedingHistory = messages
         .slice(0, userMsgIdx)
-        .filter(m => !m.isIntro)
+        // Exclude intro messages, failed messages, stopped messages, and still-streaming messages
+        .filter(m => !m.isIntro && !m.isFailed && !m.isStopped && !m.isStreaming)
         .map(m => ({
           role: m.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: m.fullPromptText || m.text }],
-        }));
+          parts: [{ text: m.fullPromptText || m.text || '' }],
+        }))
+        // Final safety: remove any entries with empty content
+        .filter(m => m.parts[0].text && m.parts[0].text.trim());
 
       let systemInstruction = LEGAL_SYSTEM_INSTRUCTION;
       if (currentCase) {
