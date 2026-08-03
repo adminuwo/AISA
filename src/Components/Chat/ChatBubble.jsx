@@ -633,6 +633,7 @@ const ChatBubble = React.memo(
       <div
         key={msg.id}
         data-message-id={msg.id}
+        data-message-role={msg.role}
         className={`chatgpt-message-row group ${msg.role === 'user' ? 'user-row mb-0 sm:mb-6' : 'ai-row mb-0 sm:mb-8'} ${idx === 0 ? 'mt-1 lg:mt-2' : ''}`}
         onClick={e => {
           const selectionText = window.getSelection().toString();

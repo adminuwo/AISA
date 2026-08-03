@@ -194,6 +194,17 @@ export const ChatInput = ({
   const isInputExpanded = propIsInputExpanded !== undefined ? propIsInputExpanded : internalIsInputExpanded;
   const setIsInputExpanded = propSetIsInputExpanded || setInternalIsInputExpanded;
 
+  React.useEffect(() => {
+    if (!inputValue || !inputValue.trim()) {
+      if (typeof setIsInputExpanded === 'function') {
+        setIsInputExpanded(false);
+      }
+      if (inputRef && inputRef.current) {
+        inputRef.current.style.height = 'auto';
+      }
+    }
+  }, [inputValue, setIsInputExpanded, inputRef]);
+
   const isAttachMenuOpen =
     externalAttachMenuOpen !== undefined ? externalAttachMenuOpen : internalAttachMenuOpen;
   const setIsAttachMenuOpen = externalSetIsAttachMenuOpen || setInternalAttachMenuOpen;
@@ -548,7 +559,11 @@ export const ChatInput = ({
           </AnimatePresence>
 
           <form
-            onSubmit={handleSendMessage}
+            onSubmit={e => {
+              if (typeof setIsInputExpanded === 'function') setIsInputExpanded(false);
+              if (inputRef && inputRef.current) inputRef.current.style.height = 'auto';
+              handleSendMessage && handleSendMessage(e);
+            }}
             className="relative w-full flex flex-col transition-all duration-300 p-1 z-[1002] aisa-chat-input-wrapper bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-zinc-800 rounded-[28px] sm:rounded-[32px] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none overflow-visible"
           >
             {/* Internal File Preview Area */}
@@ -1290,8 +1305,14 @@ export const ChatInput = ({
                     disabled={gen?.isGenerating || isLoading || isLimitReached}
                     onChange={e => {
                       const val = e.target.value;
-                      if (!val && typeof setIsAutoPreviewDisabled === 'function') {
-                        setIsAutoPreviewDisabled(false);
+                      if (!val || !val.trim()) {
+                        if (typeof setIsAutoPreviewDisabled === 'function') {
+                          setIsAutoPreviewDisabled(false);
+                        }
+                        if (typeof setIsInputExpanded === 'function') {
+                          setIsInputExpanded(false);
+                        }
+                        e.target.style.height = 'auto';
                       }
                       const lineCount = val.split('\n').length;
 
@@ -1306,7 +1327,9 @@ export const ChatInput = ({
                         if (typeof setInputValue === 'function') setInputValue(val);
                         if (!isInputExpanded) {
                           e.target.style.height = 'auto';
-                          e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+                          if (val) {
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+                          }
                         }
                       }
                     }}
@@ -1331,6 +1354,10 @@ export const ChatInput = ({
                           (filePreviews && filePreviews.length > 0) ||
                           longTextPreview
                         ) {
+                          if (typeof setIsInputExpanded === 'function') {
+                            setIsInputExpanded(false);
+                          }
+                          if (e.target) e.target.style.height = 'auto';
                           handleSendMessage && handleSendMessage(e);
                         }
                       }

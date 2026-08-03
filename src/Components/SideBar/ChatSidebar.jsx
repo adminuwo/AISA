@@ -368,7 +368,9 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   const filteredSessions = useMemo(() => {
     if (!Array.isArray(sessions)) return [];
     const query = searchQuery.toLowerCase();
-    return sessions.filter(session => session.title?.toLowerCase().includes(query));
+    return [...sessions]
+      .filter(session => session.title?.toLowerCase().includes(query))
+      .sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
   }, [sessions, searchQuery]);
 
   const hasHistory = Array.isArray(sessions) && sessions.length > 0;

@@ -424,6 +424,7 @@ const Chat = () => {
 
       setIsLoading(true);
       setInputValue('');
+      setIsInputExpanded(false);
       const userMsgId = Date.now().toString();
       const userMsg = {
         id: userMsgId,

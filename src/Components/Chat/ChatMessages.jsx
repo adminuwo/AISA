@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import ChatBubble from './ChatBubble';
 import AisaTypingIndicator from '../AisaTypingIndicator';
 import { logo } from '../../constants';
@@ -46,10 +46,58 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
     handleCopyImage,
   } = listProps;
 
+  const containerRef = useRef(null);
+  const prevMessagesCountRef = useRef(messages.length);
+  const prevIsLoadingRef = useRef(isLoading);
+
   const isTypingIndicatorActive = isLoading && typingMessageId;
 
+  // Scroll to align the latest user prompt at the top of the chat area
+  const scrollToLatestUserPrompt = useCallback(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const userMsgElements = container.querySelectorAll('[data-message-role="user"]');
+    if (userMsgElements.length === 0) return;
+
+    const latestUserMsg = userMsgElements[userMsgElements.length - 1];
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = latestUserMsg.getBoundingClientRect();
+    const relativeTop = elementRect.top - containerRect.top + container.scrollTop;
+
+    // Position top of user prompt bubble near the top of the viewport
+    container.scrollTo({
+      top: Math.max(0, relativeTop - 16),
+      behavior: 'smooth',
+    });
+  }, []);
+
+  useEffect(() => {
+    const isNewMessage = messages.length > prevMessagesCountRef.current;
+    const isLoadingStarted = isLoading && !prevIsLoadingRef.current;
+
+    if (isNewMessage || isLoadingStarted) {
+      scrollToLatestUserPrompt();
+      const t1 = setTimeout(scrollToLatestUserPrompt, 50);
+      const t2 = setTimeout(scrollToLatestUserPrompt, 150);
+
+      prevMessagesCountRef.current = messages.length;
+      prevIsLoadingRef.current = isLoading;
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+
+    prevMessagesCountRef.current = messages.length;
+    prevIsLoadingRef.current = isLoading;
+  }, [messages.length, isLoading, scrollToLatestUserPrompt]);
+
   return (
-    <div className="flex-1 w-full h-full min-h-0 overflow-y-auto custom-scrollbar px-3 sm:px-6 py-4 relative">
+    <div
+      ref={containerRef}
+      className="flex-1 w-full h-full min-h-0 overflow-y-auto custom-scrollbar px-3 sm:px-6 py-4 relative"
+    >
       {messages.map((msg, index) => (
         <ChatBubble
           key={msg.id || index}
@@ -99,7 +147,7 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
       ))}
 
       {isTypingIndicatorActive && (
-        <div className="chatgpt-message-row ai-row group mb-6 sm:mb-8">
+        <div className="chatgpt-message-row ai-row group mb-6 sm:mb-8" data-message-role="model-thinking">
           <div className="chatgpt-message-content select-text">
             <div className="chatgpt-avatar-container w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               <div className="w-8 h-8 rounded-full flex items-center justify-center">
@@ -113,8 +161,14 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
         </div>
       )}
 
-      {/* Bottom spacer for floating input bar */}
-      <div className="h-32 sm:h-40 shrink-0 pointer-events-none" />
+      {/* Empty space below prompt & thinking indicator to ensure smooth top alignment and clean response area */}
+      <div
+        className={`shrink-0 pointer-events-none transition-all duration-300 ${
+          isTypingIndicatorActive
+            ? 'h-[calc(100vh-220px)] min-h-[450px]'
+            : 'h-32 sm:h-40'
+        }`}
+      />
     </div>
   );
 });

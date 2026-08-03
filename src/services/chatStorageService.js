@@ -2,6 +2,7 @@ import axios from 'axios';
 import { API } from '../types';
 import { getUserData } from '../userStore/userData';
 import { getDeviceFingerprint } from '../utils/deviceHelper';
+import { useUserStore } from '../userStore/useUserStore';
 
 const API_BASE_URL = API;
 
@@ -201,7 +202,69 @@ export const chatStorageService = {
     }
   },
 
+  touchSession(sessionId, title = null, projectId = null, extraProps = {}, messageContent = null) {
+    if (!sessionId || sessionId === 'new') return;
+    try {
+      const store = useUserStore.getState();
+      if (!store || typeof store.setSessions !== 'function') return;
+
+      const sessions = Array.isArray(store.sessions) ? [...store.sessions] : [];
+      const now = Date.now();
+      const index = sessions.findIndex(s => s.sessionId === sessionId);
+
+      let finalTitle = title;
+      if (!finalTitle || finalTitle === 'New Chat') {
+        if (index !== -1 && sessions[index].title && sessions[index].title !== 'New Chat') {
+          finalTitle = sessions[index].title;
+        } else if (messageContent) {
+          const words = messageContent.trim().split(/\s+/);
+          finalTitle = words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '');
+        } else {
+          finalTitle = 'New Chat';
+        }
+      }
+
+      if (index !== -1) {
+        const existing = sessions[index];
+        const updated = {
+          ...existing,
+          ...extraProps,
+          title: finalTitle,
+          lastModified: now,
+          projectId: projectId !== undefined && projectId !== null ? projectId : existing.projectId,
+        };
+        sessions.splice(index, 1);
+        sessions.unshift(updated);
+      } else {
+        const newSession = {
+          sessionId,
+          title: finalTitle,
+          lastModified: now,
+          projectId: projectId || null,
+          ...extraProps,
+        };
+        sessions.unshift(newSession);
+      }
+
+      store.setSessions(sessions);
+    } catch (e) {
+      console.error('[STORAGE] touchSession error:', e);
+    }
+  },
+
   async saveMessage(sessionId, message, title, projectId = null) {
+    // 0. Update active session position to TOP in real-time store as soon as user submits query
+    this.touchSession(
+      sessionId,
+      title,
+      projectId,
+      {
+        detectedMode: message?.mode,
+        activeTool: message?.activeTool,
+      },
+      message?.role === 'user' ? message?.content : null
+    );
+
     // 1. Always save to Local (IndexedDB) for instant UI updates & offline backup
     try {
       const historyKey = `chat_history_${sessionId}`;
@@ -286,6 +349,16 @@ export const chatStorageService = {
   },
 
   async deleteSession(sessionId) {
+    // 0. Remove from Zustand store immediately
+    try {
+      const store = useUserStore.getState();
+      if (store && store.setSessions && Array.isArray(store.sessions)) {
+        store.setSessions(store.sessions.filter(s => s.sessionId !== sessionId));
+      }
+    } catch (e) {
+      console.error('[STORAGE] State session delete failed:', e);
+    }
+
     // 1. Remove from local IndexedDB
     try {
       await idbDel(`chat_history_${sessionId}`);
@@ -409,11 +482,15 @@ export const chatStorageService = {
   },
 
   async updateSessionTitle(sessionId, title) {
+    // 0. Update in Zustand store immediately so title and position update in real-time
+    this.touchSession(sessionId, title);
+
     // 1. Update Local (IndexedDB)
     try {
       const metaKey = `chat_meta_${sessionId}`;
       const existingMeta = (await idbGet(metaKey)) || {};
       const meta = {
+        ...existingMeta,
         ...existingMeta,
         title: title,
         lastModified: Date.now(),
