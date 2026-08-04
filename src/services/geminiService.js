@@ -106,12 +106,19 @@ export const generateChatResponse = async (
     // Return full response data (includes reply and potentially conversion data)
     return result.data;
   } catch (error) {
+    if (
+      axios.isCancel(error) ||
+      error?.name === 'CanceledError' ||
+      error?.code === 'ERR_CANCELED'
+    ) {
+      return null;
+    }
     console.error('Gemini API Error:', error);
 
     // Handle credit / plan errors
     if (error.response?.status === 403) {
       const code = error.response?.data?.code;
-      const message = error.response?.data?.message;
+      const message = error.response?.data?.message || error.response?.data?.error;
 
       if (code === 'OUT_OF_CREDITS') {
         // Fire event to show CreditUpsellPopup
@@ -128,7 +135,10 @@ export const generateChatResponse = async (
     }
 
     if (error.response?.status === 429) {
-      const detail = error.response?.data?.details || error.response?.data?.error;
+      const detail =
+        error.response?.data?.details ||
+        error.response?.data?.error ||
+        error.response?.data?.message;
       if (detail) return `System Busy (429): ${detail}`;
       return 'The A-Series system is currently busy (Quota limit reached). Please wait 60 seconds and try again.';
     }
@@ -137,6 +147,9 @@ export const generateChatResponse = async (
     }
     if (error.response?.data?.error === 'LIMIT_REACHED') {
       return { error: 'LIMIT_REACHED', reason: error.response.data.reason };
+    }
+    if (error.response?.data?.message) {
+      return error.response.data.message;
     }
     // Return backend error message if available
     if (error.response?.data?.error) {

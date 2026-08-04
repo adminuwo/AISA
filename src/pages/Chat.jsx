@@ -1136,12 +1136,14 @@ const Chat = () => {
     setSelectedLegalTool,
     currentCase,
     setCurrentCase,
-    allProjects,
+    allProjects: Array.isArray(allProjects) ? allProjects : [],
+    cases: Array.isArray(allProjects) ? allProjects : [],
     setAllProjects,
     setCurrentProjectId,
     setMessages,
     setLegalView,
     handleBackToDashboard,
+    onBack: handleBackToDashboard,
     onUpdateCase: handleUpdateCase,
   };
 
@@ -1398,17 +1400,26 @@ export const LegalPrecedentsRoute = () => {
       exit={{ opacity: 0 }}
       className="flex-1 flex flex-col w-full h-full min-h-0"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_research_assistant">
-        <LegalPrecedents
-          projectId={context?.projectId}
-          onBack={context?.onBack}
-          cases={context?.cases}
-          onSelectCase={context?.onSelectCase}
-          onUpdateCase={context?.onUpdateCase}
-          onCreateCase={context?.onCreateCase}
-          onUseInArgument={context?.onUseInArgument}
-        />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_research_assistant">
+          <LegalPrecedents
+            projectId={context?.projectId}
+            onBack={context?.handleBackToDashboard || context?.onBack}
+            cases={context?.cases || context?.allProjects || []}
+            allProjects={context?.allProjects || []}
+            onSelectCase={context?.setCurrentCase}
+            onUpdateCase={context?.onUpdateCase}
+            onCreateCase={context?.onCreateCase}
+            onUseInArgument={context?.onUseInArgument}
+          />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1424,9 +1435,17 @@ export const DraftMakerRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_draft_maker">
-        <DraftMaker {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_draft_maker">
+          <DraftMaker {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1442,9 +1461,17 @@ export const ArgumentBuilderRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_argument_builder">
-        <ArgumentBuilder {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_argument_builder">
+          <ArgumentBuilder {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1460,9 +1487,17 @@ export const CasePredictorRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_case_predictor">
-        <CasePredictor {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_case_predictor">
+          <CasePredictor {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1478,9 +1513,17 @@ export const ContractReviewRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_contract_analyzer">
-        <ContractReview {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_contract_analyzer">
+          <ContractReview {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1496,9 +1539,17 @@ export const EvidenceAnalysisRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_evidence_checker">
-        <EvidenceAnalysis {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_evidence_checker">
+          <EvidenceAnalysis {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1514,9 +1565,17 @@ export const StrategyEngineRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_strategy_engine">
-        <StrategyEngine {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_strategy_engine">
+          <StrategyEngine {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1532,9 +1591,17 @@ export const ComplianceRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_compliance_checker">
-        <ComplianceCenter {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_compliance_checker">
+          <ComplianceCenter {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1550,9 +1617,17 @@ export const HearingsRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_hearings">
-        <HearingManagement {...context} />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_hearings">
+          <HearingManagement {...context} />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };
@@ -1568,13 +1643,21 @@ export const LegalChatScreenRoute = () => {
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col w-full select-text min-h-0 h-full"
     >
-      <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_my_case">
-        <LegalChatScreen
-          onBack={context?.handleBackToDashboard}
-          currentCase={context?.currentCase}
-          onUpdateCase={context?.onUpdateCase}
-        />
-      </ActiveCaseProvider>
+      <Suspense
+        fallback={
+          <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+            <Loader />
+          </div>
+        }
+      >
+        <ActiveCaseProvider currentCase={context?.currentCase} activeModuleId="legal_my_case">
+          <LegalChatScreen
+            onBack={context?.handleBackToDashboard}
+            currentCase={context?.currentCase}
+            onUpdateCase={context?.onUpdateCase}
+          />
+        </ActiveCaseProvider>
+      </Suspense>
     </motion.div>
   );
 };

@@ -673,7 +673,14 @@ const HINDI_DICT = {
     'वर्ड दस्तावेज़ संक्षेप सफलतापूर्वक डाउनलोड हो गया!',
 };
 
-const ArgumentBuilder = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
+const ArgumentBuilder = ({
+  currentCase,
+  onBack,
+  theme,
+  allProjects: rawAllProjects = [],
+  onUpdateCase,
+}) => {
+  const allProjects = Array.isArray(rawAllProjects) ? rawAllProjects : [];
   const { toolkitLanguage, setToolkitLanguage } = useLanguage();
   const t = useCallback(
     text => {

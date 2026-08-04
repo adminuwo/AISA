@@ -67,7 +67,8 @@ export const truncateText = (text, maxLength = 120) => {
 const LegalPrecedents = ({
   projectId: initialProjectId,
   onBack,
-  cases = [],
+  cases: propCases = [],
+  allProjects: propAllProjects = [],
   onSelectCase,
   onCreateCase,
   onUseInArgument,
@@ -75,6 +76,29 @@ const LegalPrecedents = ({
 }) => {
   const { toolkitLanguage, setToolkitLanguage, tLegal: t } = useLanguage();
   const currentLang = toolkitLanguage;
+  const storeProjects = useUserStore(state => state.activeProjects) || [];
+  const setActiveProjects = useUserStore(state => state.setActiveProjects);
+
+  const cases =
+    Array.isArray(propCases) && propCases.length > 0
+      ? propCases
+      : Array.isArray(propAllProjects) && propAllProjects.length > 0
+        ? propAllProjects
+        : storeProjects;
+
+  useEffect(() => {
+    if ((!cases || cases.length === 0) && setActiveProjects) {
+      apiService
+        .getProjects()
+        .then(all => {
+          if (all && Array.isArray(all)) {
+            setActiveProjects(all);
+          }
+        })
+        .catch(err => console.error('[LegalPrecedents] Failed to fetch cases:', err));
+    }
+  }, []);
+
   const [mode, setMode] = useState('CURRENT'); // 'CURRENT' or 'MANUAL'
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId || null); // Use initialProjectId if provided
   const [query, setQuery] = useState('');

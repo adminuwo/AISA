@@ -2069,6 +2069,25 @@ THINK IN TARGET LANGUAGE:
         currentCase?._id || null
       );
 
+      if (!response) {
+        setIsTyping(false);
+        setGenerationState('idle');
+        return;
+      }
+
+      if (typeof response === 'object' && response.error) {
+        setIsTyping(false);
+        setGenerationState('idle');
+        if (
+          response.error !== 'OUT_OF_CREDITS' &&
+          response.error !== 'PREMIUM_ONLY' &&
+          response.error !== 'LIMIT_REACHED'
+        ) {
+          toast.error(response.message || 'Error communicating with AI assistant');
+        }
+        return;
+      }
+
       let responseText = '';
       if (typeof response === 'string') responseText = response;
       else if (response?.reply) responseText = response.reply;
@@ -2295,6 +2314,25 @@ THINK IN TARGET LANGUAGE:
         chatIdRef.current,
         currentCase?._id || null
       );
+
+      if (!response) {
+        setIsTyping(false);
+        setGenerationState('idle');
+        return;
+      }
+
+      if (typeof response === 'object' && response.error) {
+        setIsTyping(false);
+        setGenerationState('idle');
+        if (
+          response.error !== 'OUT_OF_CREDITS' &&
+          response.error !== 'PREMIUM_ONLY' &&
+          response.error !== 'LIMIT_REACHED'
+        ) {
+          toast.error(response.message || 'Error communicating with AI assistant');
+        }
+        return;
+      }
 
       let responseText = '';
       if (typeof response === 'string') responseText = response;
@@ -2672,6 +2710,25 @@ THINK IN TARGET LANGUAGE:
           newId,
           currentCase?._id || null
         );
+
+        if (!response) {
+          setIsTyping(false);
+          setGenerationState('idle');
+          return;
+        }
+
+        if (typeof response === 'object' && response.error) {
+          setIsTyping(false);
+          setGenerationState('idle');
+          if (
+            response.error !== 'OUT_OF_CREDITS' &&
+            response.error !== 'PREMIUM_ONLY' &&
+            response.error !== 'LIMIT_REACHED'
+          ) {
+            toast.error(response.message || 'Error communicating with AI assistant');
+          }
+          return;
+        }
 
         let responseText =
           typeof response === 'string'
