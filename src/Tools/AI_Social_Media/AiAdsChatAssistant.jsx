@@ -4,6 +4,7 @@ import { Send, X, MessageSquare, Loader2, Sparkles, AlertCircle } from 'lucide-r
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import { getUserData } from '../../userStore/userData';
+import { generateAiAdChatResponse } from '../../services/aiAdService';
 
 const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
   const [messages, setMessages] = useState([
@@ -30,68 +31,49 @@ const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
     if (!input.trim()) return;
 
     const userMessage = { role: 'user', text: input };
+    
+    // Map messages correctly for geminiService (history needs role: 'user'|'model' and content: string)
+    const chatHistory = messages.map(m => ({
+      role: m.role === 'ai' ? 'model' : 'user',
+      content: m.text
+    }));
+    
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/ai-ad/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          content: input,
-          history: messages.map(m => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: m.text }] })),
-          sessionId: sessionId.current
-        })
-      });
+      const systemInstruction = "You are the AI ADS™ Co-pilot for AISA. Help the user brainstorm ad copy, define target audiences, and strategize their ad campaigns.";
+      let aiText = '';
+      let isFirstChunk = true;
 
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Your plan doesn't include access to the AI ADS Co-pilot. Please upgrade.");
-        }
-        throw new Error('Failed to fetch response');
+      const response = await generateAiAdChatResponse(
+        chatHistory,
+        input,
+        systemInstruction,
+        sessionId.current, // sessionId
+        (chunk) => {
+          if (isFirstChunk) {
+            setMessages(prev => [...prev, { role: 'ai', text: '' }]);
+            isFirstChunk = false;
+          }
+          aiText += chunk;
+          setMessages(prev => {
+            const newMsgs = [...prev];
+            newMsgs[newMsgs.length - 1].text = aiText;
+            return newMsgs;
+          });
+        },
+        null // abortSignal
+      );
+
+      if (response && response.error) {
+        throw new Error(response.message || response.error);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let done = false;
-      let aiText = '';
-
-      setMessages(prev => [...prev, { role: 'ai', text: '' }]);
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        if (value) {
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const dataStr = line.slice(6);
-              if (dataStr === '[DONE]') {
-                done = true;
-                break;
-              }
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.text) {
-                  aiText += data.text;
-                  setMessages(prev => {
-                    const newMsgs = [...prev];
-                    newMsgs[newMsgs.length - 1].text = aiText;
-                    return newMsgs;
-                  });
-                }
-              } catch (e) {
-                // Ignore parse errors on partial chunks
-              }
-            }
-          }
-        }
+      // If streaming wasn't used or fell back, and we didn't update chunks
+      if (response && response.reply && !aiText) {
+        setMessages(prev => [...prev, { role: 'ai', text: response.reply }]);
       }
     } catch (error) {
       console.error('Chat error:', error);
