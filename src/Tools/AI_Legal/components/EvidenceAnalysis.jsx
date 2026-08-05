@@ -768,7 +768,14 @@ const EVIDENCE_TYPES = [
   'Other',
 ];
 
-const EvidenceAnalysis = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
+const EvidenceAnalysis = ({
+  currentCase,
+  onBack,
+  theme,
+  allProjects: rawAllProjects = [],
+  onUpdateCase,
+}) => {
+  const allProjects = Array.isArray(rawAllProjects) ? rawAllProjects : [];
   const { toolkitLanguage, setToolkitLanguage } = useLanguage();
   const isDark = theme === 'dark';
   // Workspace context states

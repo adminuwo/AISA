@@ -587,7 +587,14 @@ const generatePath = val => {
   return `M0,${p1} L25,${p2} L50,${p3} L75,${p4} L100,${20 - num * 0.13}`;
 };
 
-const StrategyEngine = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
+const StrategyEngine = ({
+  currentCase,
+  onBack,
+  theme,
+  allProjects: rawAllProjects = [],
+  onUpdateCase,
+}) => {
+  const allProjects = Array.isArray(rawAllProjects) ? rawAllProjects : [];
   const { toolkitLanguage, setToolkitLanguage, tLegal: t } = useLanguage();
   const isDark = theme === 'dark';
 

@@ -308,7 +308,14 @@ Section 9. Governing Law: Subject to Courts of Delhi.`;
   };
 };
 
-const ContractReview = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
+const ContractReview = ({
+  currentCase,
+  onBack,
+  theme,
+  allProjects: rawAllProjects = [],
+  onUpdateCase,
+}) => {
+  const allProjects = Array.isArray(rawAllProjects) ? rawAllProjects : [];
   const { toolkitLanguage, setToolkitLanguage, tLegal: t } = useLanguage();
   const isDark = theme === 'dark';
 

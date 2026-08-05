@@ -818,7 +818,14 @@ const renderCleanLegalDraft = (text, isDark, draftPlaceholders = [], placeholder
   );
 };
 
-const DraftMaker = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
+const DraftMaker = ({
+  currentCase,
+  onBack,
+  theme,
+  allProjects: rawAllProjects = [],
+  onUpdateCase,
+}) => {
+  const allProjects = Array.isArray(rawAllProjects) ? rawAllProjects : [];
   const isDark = theme === 'dark';
 
   // ── Responsive layout hooks ──
@@ -3873,18 +3880,20 @@ CRITICAL PROMPT DIRECTIVE:
           <>
             <div className="flex items-center gap-2 min-w-0 select-none">
               <button
-                onClick={
-                  step === 'SELECT'
-                    ? onBack
-                    : () => {
-                        if (step === 'FORM') {
-                          setInputSource(null);
-                          setStep('SELECT');
-                        } else {
-                          setStep('SELECT');
-                        }
-                      }
-                }
+                onClick={() => {
+                  if (step === 'SELECT') {
+                    if (typeof onBack === 'function') {
+                      onBack();
+                    } else {
+                      window.location.href = '/dashboard/legal';
+                    }
+                  } else if (step === 'FORM') {
+                    setInputSource(null);
+                    setStep('SELECT');
+                  } else {
+                    setStep('SELECT');
+                  }
+                }}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors border-none bg-transparent cursor-pointer text-slate-500 shrink-0"
               >
                 <ChevronLeft size={20} className="text-slate-600 dark:text-slate-400" />

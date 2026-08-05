@@ -56,7 +56,14 @@ const categories = [
   { id: 'Arb', title: 'Arbitration & Mediation', icon: Scale, count: '6,450 files' },
 ];
 
-const LegalResearch = ({ currentCase, onBack, theme, allProjects = [], onUpdateCase }) => {
+const LegalResearch = ({
+  currentCase,
+  onBack,
+  theme,
+  allProjects: rawAllProjects = [],
+  onUpdateCase,
+}) => {
+  const allProjects = Array.isArray(rawAllProjects) ? rawAllProjects : [];
   const isDark = theme === 'dark';
   const linkedCaseIdRef = useRef(currentCase?._id || '');
 
