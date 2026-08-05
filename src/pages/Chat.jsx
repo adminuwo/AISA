@@ -1260,6 +1260,9 @@ const Chat = () => {
               isAutoPreviewDisabled={isAutoPreviewDisabled}
               setIsAutoPreviewDisabled={setIsAutoPreviewDisabled}
               isLoading={isLoading}
+              setIsLoading={setIsLoading}
+              activeSessionId={activeSessionId}
+              getSessionLock={getSessionLock}
               handleSendMessage={handleSendMessage}
               onSend={handleSendMessage}
               onVoiceClick={handleVoiceInput}
