@@ -937,17 +937,82 @@ const Chat = () => {
   const [messageFeedback, setMessageFeedback] = useState({});
   const [downloadedMessages, setDownloadedMessages] = useState({});
 
-  const handleMessageDelete = useCallback((msgId) => {
-    setMessages((prev) => prev.filter((m) => m.id !== msgId && m._id !== msgId));
-    toast.success('Message deleted');
-  }, [setMessages]);
+  const handleMessageDelete = useCallback(
+    (msgId) => {
+      let removedMsgIds = [];
+      setMessages((prev) => {
+        const targetIndex = prev.findIndex((m) => m.id === msgId || m._id === msgId);
+        if (targetIndex === -1) {
+          removedMsgIds = [msgId];
+          return prev.filter((m) => m.id !== msgId && m._id !== msgId);
+        }
 
-  const handleMessageUndo = useCallback((msg) => {
-    const contentToRestore = msg.content || msg.text || '';
-    setInputValue(contentToRestore);
-    setMessages((prev) => prev.filter((m) => m.id !== msg.id && m._id !== msg.id));
-    toast.info('Message restored to input');
-  }, [setInputValue, setMessages]);
+        const targetMsg = prev[targetIndex];
+        const idsToRemove = new Set([targetMsg.id, targetMsg._id].filter(Boolean));
+
+        // If deleting a user message prompt, also remove all consecutive response messages following it
+        if (targetMsg.role === 'user') {
+          for (let i = targetIndex + 1; i < prev.length; i++) {
+            const nextMsg = prev[i];
+            if (nextMsg.role === 'user') break;
+            if (nextMsg.id) idsToRemove.add(nextMsg.id);
+            if (nextMsg._id) idsToRemove.add(nextMsg._id);
+          }
+        }
+
+        removedMsgIds = Array.from(idsToRemove);
+        return prev.filter((m) => !idsToRemove.has(m.id) && !idsToRemove.has(m._id));
+      });
+
+      if (activeSessionId && activeSessionId !== 'new') {
+        removedMsgIds.forEach((id) => {
+          chatStorageService.deleteMessage(activeSessionId, id).catch(() => {});
+        });
+      }
+      toast.success('Message deleted');
+    },
+    [activeSessionId, setMessages]
+  );
+
+  const handleMessageUndo = useCallback(
+    (msg) => {
+      const contentToRestore = msg.content || msg.text || '';
+      setInputValue(contentToRestore);
+      let removedMsgIds = [];
+      setMessages((prev) => {
+        const targetIndex = prev.findIndex(
+          (m) => m.id === msg.id || m._id === msg.id || m.id === msg._id || m._id === msg._id
+        );
+        if (targetIndex === -1) {
+          removedMsgIds = [msg.id || msg._id].filter(Boolean);
+          return prev.filter((m) => m.id !== msg.id && m._id !== msg.id);
+        }
+
+        const targetMsg = prev[targetIndex];
+        const idsToRemove = new Set([targetMsg.id, targetMsg._id].filter(Boolean));
+
+        if (targetMsg.role === 'user') {
+          for (let i = targetIndex + 1; i < prev.length; i++) {
+            const nextMsg = prev[i];
+            if (nextMsg.role === 'user') break;
+            if (nextMsg.id) idsToRemove.add(nextMsg.id);
+            if (nextMsg._id) idsToRemove.add(nextMsg._id);
+          }
+        }
+
+        removedMsgIds = Array.from(idsToRemove);
+        return prev.filter((m) => !idsToRemove.has(m.id) && !idsToRemove.has(m._id));
+      });
+
+      if (activeSessionId && activeSessionId !== 'new') {
+        removedMsgIds.forEach((id) => {
+          chatStorageService.deleteMessage(activeSessionId, id).catch(() => {});
+        });
+      }
+      toast.info('Message restored to input');
+    },
+    [activeSessionId, setInputValue, setMessages]
+  );
 
   const startEditing = useCallback((msg) => {
     setEditingMessageId(msg.id || msg._id);

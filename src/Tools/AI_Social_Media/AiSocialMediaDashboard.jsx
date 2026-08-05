@@ -80,7 +80,8 @@ import toast from 'react-hot-toast';
 import { apiService } from '../../services/apiService';
 import { API } from '../../types.js';
 import { getUserData, updateUser } from '../../userStore/userData';
-
+import AiAdsChatAssistant from './AiAdsChatAssistant';
+import StandaloneAdsAppBanner from './StandaloneAdsAppBanner';
 /**
  * Safely wraps a URL through the backend media proxy.
  * If the URL is already a proxy URL (contains /api/media/proxy?url=), it is returned as-is
@@ -223,6 +224,8 @@ const CustomSelect = ({
 const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin }) => {
   const [currentUser, setCurrentUser] = useState(getUserData());
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isAiAdsChatOpen, setIsAiAdsChatOpen] = useState(false);
+  const [showStandaloneBanner, setShowStandaloneBanner] = useState(true);
 
   // Single source of truth: URL determines the active tab
   const activeTab = searchParams.get('tab') || 'overview';
@@ -7758,6 +7761,11 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                           className={`flex-1 ${activeTab === 'generation' ? 'p-4 lg:p-10' : 'p-6 lg:p-12 pb-32'} relative mesh-bg`}
                           data-lenis-prevent
                         >
+                          {showStandaloneBanner && (
+                            <div className="mb-6">
+                              <StandaloneAdsAppBanner onClose={() => setShowStandaloneBanner(false)} />
+                            </div>
+                          )}
                           {renderContent()}
                         </main>
                       </div>
@@ -7900,6 +7908,11 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                       )}
                     </>
                   )}
+                  <AiAdsChatAssistant 
+                    isOpen={isAiAdsChatOpen} 
+                    onClose={() => setIsAiAdsChatOpen(false)} 
+                    onToggle={() => setIsAiAdsChatOpen(!isAiAdsChatOpen)} 
+                  />
                 </Dialog.Panel>
               </Transition.Child>
             </div>

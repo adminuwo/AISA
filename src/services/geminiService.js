@@ -16,7 +16,8 @@ export const generateChatResponse = async (
   userMsgId = null,
   aiMsgId = null,
   aspectRatio = null,
-  modelId = null
+  modelId = null,
+  onTokenChunk = null
 ) => {
   try {
     const token = getUserData()?.token;
@@ -96,6 +97,21 @@ export const generateChatResponse = async (
     const isSearchMode = mode === 'DEEP_SEARCH' || mode === 'web_search' || mode === 'SEARCH';
     const requestTimeout = isSearchMode ? 180000 : 60000;
 
+    // Try SSE streaming if callback is provided or for standard text prompts
+    if (onTokenChunk) {
+      try {
+        const streamRes = await generateChatResponseStream(
+          history, currentMessage, systemInstruction, attachments, language,
+          onTokenChunk, abortSignal, mode, sessionId, projectId, userMsgId, aiMsgId, aspectRatio, modelId
+        );
+        if (streamRes && (streamRes.reply || streamRes.text)) {
+          return streamRes;
+        }
+      } catch (streamErr) {
+        console.warn('[geminiService] Stream failed, falling back to POST:', streamErr.message);
+      }
+    }
+
     const result = await axios.post(apis.chatAgent, payload, {
       headers: headers,
       signal: abortSignal,
@@ -114,12 +130,10 @@ export const generateChatResponse = async (
       const message = error.response?.data?.message;
 
       if (code === 'OUT_OF_CREDITS') {
-        // Fire event to show CreditUpsellPopup
         window.dispatchEvent(new Event('out_of_credits'));
         return { error: 'OUT_OF_CREDITS', message };
       }
       if (code === 'PREMIUM_ONLY') {
-        // Fire event to show PremiumUpsellModal
         window.dispatchEvent(
           new CustomEvent('premium_required', { detail: { toolName: 'this feature' } })
         );
@@ -136,18 +150,103 @@ export const generateChatResponse = async (
       return 'Please [Log In](/login) to your AISA™ account to continue chatting.';
     }
     if (error.response?.data?.error === 'LIMIT_REACHED') {
-      return { error: 'LIMIT_REACHED', reason: error.response.data.reason };
+      throw error;
     }
-    // Return backend error message if available
-    if (error.response?.data?.error) {
-      const details = error.response.data.details ? ` - ${error.response.data.details}` : '';
-      return `System Message: ${error.response.data.error}${details}`;
+    if (error.response?.status === 403 && error.response?.data?.code === 'QUOTA_EXCEEDED') {
+      throw error;
     }
-    if (error.response?.data?.details) {
-      return `System Error: ${error.response.data.details}`;
-    }
-    return 'Sorry, I am having trouble connecting to the A-Series network right now. Please check your connection.';
+
+    return {
+      reply: "I'm having trouble connecting right now. Please try again in a moment.",
+    };
   }
+};
+
+/**
+ * Stream AI Chat Response using Server-Sent Events (SSE)
+ */
+export const generateChatResponseStream = async (
+  history,
+  currentMessage,
+  systemInstruction,
+  attachments,
+  language,
+  onTokenChunk,
+  abortSignal = null,
+  mode = null,
+  sessionId = null,
+  projectId = null,
+  userMsgId = null,
+  aiMsgId = null,
+  aspectRatio = null,
+  modelId = null
+) => {
+  const token = getUserData()?.token;
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Device-Fingerprint': getDeviceFingerprint(),
+  };
+  if (token && token !== 'undefined' && token !== 'null') {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const payload = {
+    content: currentMessage,
+    history: history.length > 50 ? history.slice(-50) : history,
+    systemInstruction: (systemInstruction || '').trim(),
+    language,
+    mode,
+    sessionId,
+    projectId,
+    userMsgId,
+    aiMsgId,
+    aspectRatio,
+    modelId,
+  };
+
+  const streamEndpoint = apis.chatAgentStream || (apis.chatAgent.endsWith('/') ? `${apis.chatAgent}stream` : `${apis.chatAgent}/stream`);
+
+  const response = await fetch(streamEndpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+    signal: abortSignal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`SSE stream HTTP error: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let accumulatedText = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split('\n');
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const dataStr = line.replace('data: ', '').trim();
+        if (dataStr === '[DONE]') break;
+
+        try {
+          const parsed = JSON.parse(dataStr);
+          if (parsed.text) {
+            accumulatedText += parsed.text;
+            if (onTokenChunk) onTokenChunk(accumulatedText);
+          }
+        } catch (e) {
+          // Raw text chunk fallback
+        }
+      }
+    }
+  }
+
+  return { reply: accumulatedText, text: accumulatedText };
 };
 
 /**

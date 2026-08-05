@@ -1051,6 +1051,11 @@ const ChatBubble = React.memo(
                               {transformLegalActionsLocal(msg.content || msg.text || '')}
                             </ReactMarkdown>
                           )}
+                          {(msg.id === typingMessageId || msg.isStreaming) && (
+                            <span className="inline-flex items-center ml-1.5 align-middle">
+                              <span className="w-2.5 h-4.5 bg-gradient-to-t from-indigo-600 via-purple-500 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 rounded-sm animate-pulse shadow-sm shadow-indigo-500/50 inline-block align-middle" />
+                            </span>
+                          )}
                         </div>
 
                         {(msg.content || msg.text) &&
