@@ -1215,6 +1215,7 @@ const EvidenceAnalysis = ({
   const [isComparisonExpanded, setIsComparisonExpanded] = useState(false);
 
   const reportRef = useRef(null);
+  const speechAudioRef = useRef(null); // holds the currently playing Chirp 3 HD audio
 
   // ── On mount: Load history and prefill intent ──
   useEffect(() => {
@@ -2786,7 +2787,7 @@ JSON Schema:
         <p><strong>${t('Origin Device')}:</strong> ${forensic.metadata?.device || 'N/A'}</p>
         <p><strong>${t('Internal Timestamp')}:</strong> ${forensic.metadata?.timestamp || 'N/A'}</p>
         <p><strong>${t('GPS Coordinates')}:</strong> ${forensic.metadata?.gps || 'N/A'}</p>
-        <p><strong>${t('Pixel/Tamper Flag')}:</strong> ${forensic.metadata?.tamperingDetected ? t(tamperingDetected) : 'N/A'}</p>
+        <p><strong>${t('Pixel/Tamper Flag')}:</strong> ${t(forensic.metadata?.tamperingDetected || 'N/A')}</p>
         <p><strong>${t('EXIF Raw')}:</strong> ${forensic.metadata?.exifData || 'N/A'}</p>
 
         <div class="section-title">${t('4. Court Admissibility Reasons')}</div>

@@ -746,6 +746,7 @@ const StrategyEngine = ({
   const [pendingNotesClose, setPendingNotesClose] = useState(false); // unsaved-changes guard
   const [expandedNoteId, setExpandedNoteId] = useState(null); // expanded card id
   const autosaveTimerRef = useRef(null);
+  const audioRef = useRef(null); // holds the currently playing Chirp 3 HD summary audio
   // ──────────────────────────────────────────────────────────────────────────────
 
   const handleSpeechSummary = async () => {

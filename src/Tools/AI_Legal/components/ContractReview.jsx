@@ -682,6 +682,7 @@ const ContractReview = ({
   const [activeCameraIndex, setActiveCameraIndex] = useState(0);
 
   const contextChangeRef = useRef(null);
+  const audioRef = useRef(null); // holds the currently playing Chirp 3 HD summary audio
   const stableContextChange = useCallback(async ctx => {
     if (contextChangeRef.current) {
       await contextChangeRef.current(ctx);

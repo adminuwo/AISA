@@ -1146,7 +1146,6 @@ const MonthlyReportsTab = () => {
   const handleExportExcel = () => {
     if (!report || !report.invoices) return;
     try {
-      const XLSX = window.XLSX || require('xlsx');
       // Build worksheet data
       const header = [
         'Invoice #',

@@ -3,11 +3,11 @@ import { getDeviceFingerprint } from '../utils/deviceHelper';
 import { getUserData } from '../userStore/userData';
 import { apis } from '../types';
 
-const AI_AD_API = '/api/ai-ad';
+const AI_AD_API = `${apis.baseUrl}/ai-ad`;
 
 /**
  * generateAiAdChatResponse
- * Dedicated service for interacting with the AI Ads Co-pilot.
+ * Dedicated service for interacting with the Capilot AI ADS™ Chat Bot.
  */
 export const generateAiAdChatResponse = async (
   history,
@@ -47,7 +47,7 @@ export const generateAiAdChatResponse = async (
 
       if (!response.ok || !response.body) {
         if (response.status === 403) {
-           return { error: 'PREMIUM_ONLY', message: "Your plan doesn't include access to the AI ADS Co-pilot. Please upgrade." };
+           return { error: 'PREMIUM_ONLY', message: "Your plan doesn't include access to Capilot AI ADS Chat Bot. Please upgrade." };
         }
         throw new Error(`SSE stream HTTP error: ${response.status}`);
       }
@@ -55,13 +55,16 @@ export const generateAiAdChatResponse = async (
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let accumulatedText = '';
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        // Last entry may be an incomplete line split across reads — keep it for the next iteration
+        buffer = lines.pop();
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
@@ -82,7 +85,7 @@ export const generateAiAdChatResponse = async (
           }
         }
       }
-      return { text: accumulatedText };
+      return { text: accumulatedText, reply: accumulatedText };
     } catch (streamErr) {
       console.warn('[aiAdService] Stream failed:', streamErr.message);
       // Optional fallback to normal axios POST could go here

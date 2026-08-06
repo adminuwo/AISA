@@ -10,7 +10,7 @@ const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
   const [messages, setMessages] = useState([
     {
       role: 'ai',
-      text: "Hi! I'm your AI ADS™ Co-pilot. I can help you brainstorm ad copy, define your target audience, and strategize your next campaign. How can I help you today?",
+      text: "Hi! I'm Capilot AI ADS™ Chat Bot. I can help you brainstorm ad copy, define your target audience, and strategize your next campaign. How can I help you today?",
     }
   ]);
   const [input, setInput] = useState('');
@@ -43,7 +43,7 @@ const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
     setIsTyping(true);
 
     try {
-      const systemInstruction = "You are the AI ADS™ Co-pilot for AISA. Help the user brainstorm ad copy, define target audiences, and strategize their ad campaigns.";
+      const systemInstruction = "You are Capilot AI ADS™ Chat Bot for AISA. Help the user brainstorm ad copy, define target audiences, and strategize their ad campaigns.";
       let aiText = '';
       let isFirstChunk = true;
 
@@ -72,8 +72,17 @@ const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
       }
 
       // If streaming wasn't used or fell back, and we didn't update chunks
-      if (response && response.reply && !aiText) {
-        setMessages(prev => [...prev, { role: 'ai', text: response.reply }]);
+      const fallbackText = response?.text || response?.reply;
+      if (fallbackText && !aiText) {
+        setMessages(prev => [...prev, { role: 'ai', text: fallbackText }]);
+      }
+
+      // Streaming completed but produced no text at all (e.g. every chunk failed to parse)
+      if (!fallbackText && !aiText) {
+        setMessages(prev => [
+          ...prev,
+          { role: 'ai', text: "⚠️ I didn't receive a response. Please try again." },
+        ]);
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -113,7 +122,7 @@ const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">AI ADS™ Co-pilot</h3>
+                  <h3 className="text-white font-semibold text-sm">Capilot AI ADS™ Chat Bot</h3>
                   <p className="text-emerald-400 text-xs flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Online
                   </p>
@@ -132,7 +141,7 @@ const AiAdsChatAssistant = ({ isOpen, onClose, onToggle }) => {
                     className={`max-w-[85%] p-3 rounded-2xl text-sm ${
                       msg.role === 'user'
                         ? 'bg-blue-600 text-white rounded-br-none'
-                        : 'bg-slate-800 text-slate-200 border border-slate-700/50 rounded-bl-none prose prose-sm prose-p:text-slate-200 prose-headings:text-white prose-strong:text-white prose-a:text-blue-400 prose-li:text-slate-200 [&>p]:text-slate-200 [&_p]:text-slate-200 max-w-none'
+                        : 'bg-slate-800 text-slate-200 border border-slate-700/50 rounded-bl-none prose prose-sm prose-invert prose-p:text-slate-200 prose-headings:text-white prose-a:text-blue-400 prose-li:text-slate-200 [&>p]:text-slate-200 [&_p]:text-slate-200 [&_strong]:text-indigo-300 [&_strong]:font-bold [&_b]:text-indigo-300 max-w-none'
                     }`}
                   >
                     {msg.role === 'user' ? (

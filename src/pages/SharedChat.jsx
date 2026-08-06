@@ -33,6 +33,7 @@ import {
   Wand2,
   Scale,
   TrendingUp,
+  Code,
 } from 'lucide-react';
 import Loader from '../Components/Loader/Loader';
 import { getModeIcon, getModeName, MODES } from '../utils/modeDetection';

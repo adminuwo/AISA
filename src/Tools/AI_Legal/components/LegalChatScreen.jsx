@@ -1982,6 +1982,7 @@ Please continue the conversation naturally using this context. Never ask the use
     abortControllerRef.current = new AbortController();
     isStreamingRef.current = true;
 
+    let promptText;
     try {
       const apiHistory = messages
         // Exclude intro messages, failed messages, stopped messages, and still-streaming messages
@@ -2000,7 +2001,7 @@ Please continue the conversation naturally using this context. Never ask the use
         type: att.type?.startsWith('image/') ? 'image' : 'document',
       }));
 
-      let promptText = hiddenContextText || text;
+      promptText = hiddenContextText || text;
       if (currentAttachments.length > 0) {
         const fileNames = currentAttachments.map(a => a.name).join(', ');
         promptText = `[Attached Files: ${fileNames}]\n${promptText || 'Please analyze these attachments.'}`;

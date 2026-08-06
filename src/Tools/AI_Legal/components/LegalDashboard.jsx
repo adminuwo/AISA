@@ -84,6 +84,7 @@ import LanguageToggle from './shared/LanguageToggle';
 import FullScreenCaseAssistant from './FullScreenCaseAssistant';
 import { chatStorageService } from '../../../services/chatStorageService';
 import useOutputLanguage from '../hooks/useOutputLanguage';
+import { exportToPDF } from '../utils/exportToPDF';
 import './LegalDashboard.responsive.css';
 
 const detectPreferredLanguage = (query, history, uiLanguage) => {
@@ -1050,7 +1051,7 @@ const ModuleCard = React.memo(({ module: m, isActive, onSelect }) => {
             : 'bg-slate-100 dark:bg-zinc-800',
         ].join(' ')}
       >
-        {getModuleIcon(m.id)}
+        {m.icon}
       </div>
 
       {/* Name + description â€” pointer-events: none */}
@@ -4429,7 +4430,7 @@ const CaseDetailView = ({
             ...h,
             orderDocumentId: newDoc.id,
             orderDocumentName: newDoc.name,
-            orderDocumentUri: fileUri,
+            orderDocumentUri: fileBase64Uri,
             orderDecision: 'Notice of motion returnable on 15 Aug 2026. Ad-interim stay granted.',
             orderNextHearingDate: nextHearingSuggestedDate,
             orderDirections: 'Respondent directed to file written statement within 4 weeks.',
@@ -4541,6 +4542,18 @@ const CaseDetailView = ({
       console.error(e);
       toast.error('Failed to delete hearing');
     }
+  };
+
+  const handleToggleBookmarkCitation = citation => {
+    setCaseData(prev => {
+      const existing = prev.savedCitations || [];
+      const matches = c =>
+        citation.type === 'statute' ? c.section === citation.section : c.citation === citation.citation;
+      const isSaved = existing.some(matches);
+      const updated = isSaved ? existing.filter(c => !matches(c)) : [...existing, citation];
+      toast.success(isSaved ? 'Citation removed from bookmarks' : 'Citation bookmarked');
+      return { ...prev, savedCitations: updated };
+    });
   };
 
   const handleSaveNotes = async () => {
@@ -10293,7 +10306,7 @@ INSTRUCTIONS:
                             <ClipboardList size={12} />
                           </button>
                           <button
-                            onClick={() => handleDeleteContract(doc)}
+                            onClick={() => setDeleteConfirmContract(doc)}
                             className="p-1 text-slate-400 hover:text-red-500 rounded"
                             title="Delete"
                           >

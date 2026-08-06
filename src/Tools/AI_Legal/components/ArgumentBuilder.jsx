@@ -2332,6 +2332,13 @@ DO NOT TRANSLATE (keep exactly as-is in original English characters):
     toast.success('Draft duplicated in history!');
   };
 
+  const handleDeleteHistoryItem = itemId => {
+    const updated = recentDrafts.filter(h => h.id !== itemId);
+    setRecentDrafts(updated);
+    localStorage.setItem('aisa_recent_arguments_drafts', JSON.stringify(updated));
+    toast.success('Draft removed from history!');
+  };
+
   const sortedAndFilteredHistory = useMemo(() => {
     let list = recentDrafts.filter(h => {
       const caseName = getHistoryItemCaseName(h).toLowerCase();

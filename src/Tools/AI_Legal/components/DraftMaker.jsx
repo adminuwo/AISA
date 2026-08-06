@@ -7596,7 +7596,7 @@ CRITICAL PROMPT DIRECTIVE:
                       {
                         id: 'TXT',
                         label: 'TXT Plain',
-                        action: handleDownload,
+                        action: handleExportTXT,
                         icon: <Download size={14} />,
                       },
                     ].map(item => (
@@ -7842,7 +7842,7 @@ CRITICAL PROMPT DIRECTIVE:
                   {[
                     { label: 'PDF', action: handleExportPDF, icon: <FileDown size={16} /> },
                     { label: 'DOCX', action: handleExportDOCX, icon: <FileCheck size={16} /> },
-                    { label: 'TXT', action: handleDownload, icon: <FileText size={16} /> },
+                    { label: 'TXT', action: handleExportTXT, icon: <FileText size={16} /> },
                   ].map(fmt => (
                     <button
                       key={fmt.label}

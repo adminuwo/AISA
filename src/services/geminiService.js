@@ -238,18 +238,21 @@ export const generateChatResponseStream = async (
   const reader = response.body.getReader();
   const decoder = new TextDecoder('utf-8');
   let accumulatedText = '';
+  let buffer = '';
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = chunk.split('\n');
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    // Last entry may be an incomplete line split across reads — keep it for the next iteration
+    buffer = lines.pop();
 
     for (const line of lines) {
       if (line.startsWith('data: ')) {
         const dataStr = line.replace('data: ', '').trim();
-        if (dataStr === '[DONE]') break;
+        if (dataStr === '[DONE]') continue;
 
         try {
           const parsed = JSON.parse(dataStr);

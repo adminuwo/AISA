@@ -221,7 +221,7 @@
 
   .prose {
     max-width: 700px !important;
-    color: hsl(var(--foreground)) !important;
+    color: hsl(var(--foreground));
     font-size: 14px !important;
     line-height: 1.55 !important;
   }
@@ -252,7 +252,7 @@
   .prose h2,
   .prose h3,
   .prose h4 {
-    color: hsl(var(--foreground)) !important;
+    color: hsl(var(--foreground));
     font-weight: 700 !important;
     margin-top: 1.5em !important;
     margin-bottom: 0.75em !important;
@@ -271,7 +271,7 @@
   }
 
   .prose strong {
-    color: hsl(var(--foreground)) !important;
+    color: hsl(var(--foreground));
     font-weight: 700 !important;
   }
 
@@ -306,7 +306,77 @@
     border-left: 4px solid hsl(var(--primary) / 0.2) !important;
     padding-left: 1.5em !important;
     font-style: italic !important;
-    color: hsl(var(--foreground)) !important;
+    color: hsl(var(--foreground));
+  }
+
+  /* Inverted Prose Styling for Dark Backgrounds / Dark Mode / Chatbots */
+  .prose-invert,
+  .prose.prose-invert,
+  .dark .prose {
+    color: #e2e8f0 !important;
+  }
+
+  .prose-invert h1,
+  .prose-invert h2,
+  .prose-invert h3,
+  .prose-invert h4,
+  .prose.prose-invert h1,
+  .prose.prose-invert h2,
+  .prose.prose-invert h3,
+  .prose.prose-invert h4,
+  .dark .prose h1,
+  .dark .prose h2,
+  .dark .prose h3,
+  .dark .prose h4 {
+    color: #ffffff !important;
+  }
+
+  .prose-invert strong,
+  .prose-invert b,
+  .prose.prose-invert strong,
+  .prose.prose-invert b,
+  .dark .prose strong,
+  .dark .prose b {
+    color: #818cf8 !important; /* Vibrant Indigo-300 for bold highlights */
+    font-weight: 700 !important;
+  }
+
+  .prose-invert p,
+  .prose-invert span,
+  .prose-invert li,
+  .prose.prose-invert p,
+  .prose.prose-invert span,
+  .prose.prose-invert li,
+  .dark .prose p,
+  .dark .prose span,
+  .dark .prose li {
+    color: #e2e8f0 !important;
+  }
+
+  .prose-invert li::before,
+  .prose.prose-invert li::before,
+  .dark .prose li::before {
+    color: #818cf8 !important;
+  }
+
+  .prose-invert a,
+  .prose.prose-invert a,
+  .dark .prose a {
+    color: #60a5fa !important;
+  }
+
+  .prose-invert blockquote,
+  .prose.prose-invert blockquote,
+  .dark .prose blockquote {
+    color: #cbd5e1 !important;
+    border-left-color: #3b82f6 !important;
+  }
+
+  .prose-invert code,
+  .prose.prose-invert code,
+  .dark .prose code {
+    color: #93c5fd !important;
+    background-color: rgba(30, 41, 59, 0.8) !important;
   }
 }
 
