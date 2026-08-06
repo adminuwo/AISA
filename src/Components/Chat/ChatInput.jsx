@@ -185,25 +185,59 @@ export const ChatInput = ({
   const [internalIsAutoPreviewDisabled, setInternalIsAutoPreviewDisabled] = React.useState(false);
   const [internalIsInputExpanded, setInternalIsInputExpanded] = React.useState(false);
 
-  const longTextPreview = propLongTextPreview !== undefined ? propLongTextPreview : internalLongTextPreview;
+  const longTextPreview =
+    propLongTextPreview !== undefined ? propLongTextPreview : internalLongTextPreview;
   const setLongTextPreview = propSetLongTextPreview || setInternalLongTextPreview;
 
-  const isAutoPreviewDisabled = propIsAutoPreviewDisabled !== undefined ? propIsAutoPreviewDisabled : internalIsAutoPreviewDisabled;
+  const isAutoPreviewDisabled =
+    propIsAutoPreviewDisabled !== undefined
+      ? propIsAutoPreviewDisabled
+      : internalIsAutoPreviewDisabled;
   const setIsAutoPreviewDisabled = propSetIsAutoPreviewDisabled || setInternalIsAutoPreviewDisabled;
 
-  const isInputExpanded = propIsInputExpanded !== undefined ? propIsInputExpanded : internalIsInputExpanded;
+  const isInputExpanded =
+    propIsInputExpanded !== undefined ? propIsInputExpanded : internalIsInputExpanded;
   const setIsInputExpanded = propSetIsInputExpanded || setInternalIsInputExpanded;
 
-  React.useEffect(() => {
+  // ─── Internal textarea ref (always reliable) ───────────────────────────
+  // ROOT CAUSE FIX: Chat.jsx never passed `inputRef` as a prop to ChatInput,
+  // so `inputRef` was always `undefined` here. Every DOM height reset via
+  // `inputRef.current.style.height` was a silent no-op.
+  //
+  // Solution: maintain our own `internalTextareaRef` that is ALWAYS defined,
+  // and merge it with the optional external `inputRef` prop via a callback ref.
+  const internalTextareaRef = React.useRef(null);
+
+  // Callback ref: forwards to both the internal ref and the external prop ref
+  const mergedRef = React.useCallback(
+    node => {
+      internalTextareaRef.current = node;
+      if (inputRef) {
+        if (typeof inputRef === 'function') inputRef(node);
+        else if (typeof inputRef === 'object' && inputRef !== null) inputRef.current = node;
+      }
+    },
+    [inputRef]
+  );
+
+  // Helper: reset textarea to single-line height (call this after every send)
+  const resetTextareaHeight = React.useCallback(() => {
+    const el = internalTextareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto'; // let browser recalculate from content
+    el.style.height = '38px'; // pin to single-line minimum
+  }, []);
+
+  // ✅ FIX: useLayoutEffect fires synchronously BEFORE the browser paints,
+  // ensuring the textarea height collapses atomically with inputValue clearing.
+  React.useLayoutEffect(() => {
     if (!inputValue || !inputValue.trim()) {
       if (typeof setIsInputExpanded === 'function') {
         setIsInputExpanded(false);
       }
-      if (inputRef && inputRef.current) {
-        inputRef.current.style.height = 'auto';
-      }
+      resetTextareaHeight();
     }
-  }, [inputValue, setIsInputExpanded, inputRef]);
+  }, [inputValue, setIsInputExpanded, resetTextareaHeight]);
 
   const isAttachMenuOpen =
     externalAttachMenuOpen !== undefined ? externalAttachMenuOpen : internalAttachMenuOpen;
@@ -560,8 +594,9 @@ export const ChatInput = ({
 
           <form
             onSubmit={e => {
+              // Imperatively collapse textarea before React state settles
               if (typeof setIsInputExpanded === 'function') setIsInputExpanded(false);
-              if (inputRef && inputRef.current) inputRef.current.style.height = 'auto';
+              resetTextareaHeight();
               handleSendMessage && handleSendMessage(e);
             }}
             className="relative w-full flex flex-col transition-all duration-300 p-1 z-[1002] aisa-chat-input-wrapper bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-zinc-800 rounded-[28px] sm:rounded-[32px] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:shadow-none overflow-visible"
@@ -1300,7 +1335,7 @@ export const ChatInput = ({
                 <div className="relative w-full group">
                   <textarea
                     id="chat-input"
-                    ref={inputRef}
+                    ref={mergedRef}
                     value={inputValue}
                     disabled={gen?.isGenerating || isLoading || isLimitReached}
                     onChange={e => {
@@ -1339,9 +1374,11 @@ export const ChatInput = ({
 
                       if (!isInputExpanded && (lineCount > 8 || pastedText.length > 400)) {
                         e.preventDefault();
-                        if (typeof setLongTextPreview === 'function') setLongTextPreview(pastedText);
+                        if (typeof setLongTextPreview === 'function')
+                          setLongTextPreview(pastedText);
                         if (typeof setInputValue === 'function') setInputValue('');
-                        if (typeof setIsAutoPreviewDisabled === 'function') setIsAutoPreviewDisabled(false);
+                        if (typeof setIsAutoPreviewDisabled === 'function')
+                          setIsAutoPreviewDisabled(false);
                       }
                     }}
                     onKeyDown={e => {
@@ -1357,7 +1394,8 @@ export const ChatInput = ({
                           if (typeof setIsInputExpanded === 'function') {
                             setIsInputExpanded(false);
                           }
-                          if (e.target) e.target.style.height = 'auto';
+                          // Reset height synchronously before React re-renders
+                          resetTextareaHeight();
                           handleSendMessage && handleSendMessage(e);
                         }
                       }
@@ -1452,19 +1490,22 @@ export const ChatInput = ({
                 {gen?.isGenerating || isLoading ? (
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={e => {
+                      e?.preventDefault?.();
+                      e?.stopPropagation?.();
                       gen?.abort?.();
                       if (abortControllerRef?.current) abortControllerRef.current.abort();
-                      setIsLoading && setIsLoading(false);
+                      if (typeof setIsLoading === 'function') setIsLoading(false);
                       if (getSessionLock && activeSessionId) {
                         const chatLock = getSessionLock(activeSessionId);
                         if (chatLock) chatLock.locked = false;
                       }
                     }}
-                    className="w-[36px] h-[36px] rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 transition-all"
+                    className="w-[36px] h-[36px] rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 transition-all cursor-pointer relative z-30"
                     style={{ backgroundColor: 'var(--color-primary)' }}
+                    title="Stop generation"
                   >
-                    <div className="w-[12px] h-[12px] bg-white rounded-sm" />
+                    <div className="w-[12px] h-[12px] bg-white rounded-sm pointer-events-none" />
                   </button>
                 ) : (
                   <div className="flex items-center gap-[6px] relative">
@@ -1477,12 +1518,26 @@ export const ChatInput = ({
                           (!filePreviews || filePreviews.length === 0) &&
                           !longTextPreview)
                       }
+                      onClick={e => {
+                        if (
+                          !gen?.isGenerating &&
+                          !isLoading &&
+                          (inputValue.trim() ||
+                            (filePreviews && filePreviews.length > 0) ||
+                            longTextPreview)
+                        ) {
+                          e.preventDefault();
+                          if (typeof setIsInputExpanded === 'function') setIsInputExpanded(false);
+                          resetTextareaHeight();
+                          handleSendMessage && handleSendMessage(e);
+                        }
+                      }}
                       onMouseEnter={() => setIsSendHovered && setIsSendHovered(true)}
                       onMouseLeave={() => setIsSendHovered && setIsSendHovered(false)}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       title={t('send')}
-                      className={`w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] rounded-full flex items-center justify-center transition-all shadow-lg relative overflow-visible z-20 text-white`}
+                      className={`w-[30px] h-[30px] sm:w-[34px] sm:h-[34px] rounded-full flex items-center justify-center transition-all shadow-lg relative overflow-visible z-20 text-white cursor-pointer`}
                       style={{
                         background: `linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))`,
                         boxShadow: isSendHovered

@@ -1253,8 +1253,8 @@ const ChatBubble = React.memo(
             )}
 
             {msg.role === 'user' ? (
-              <div className="mt-3 pt-2 border-t border-slate-200/30 dark:border-white/10 flex items-center justify-end gap-3 w-full">
-                <div className="flex items-center gap-3">
+              <div className="mt-2 pt-2 border-t border-slate-200/30 dark:border-white/10 flex items-center justify-end gap-2 flex-wrap max-w-full">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleMessageDelete(msg.id)}

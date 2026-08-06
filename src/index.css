@@ -1183,9 +1183,11 @@ html.lenis body {
   width: auto !important;
   flex: 0 1 auto !important; /* Shrink-wrap content wrapper */
   max-width: 70% !important;
+  min-width: 0 !important; /* Prevent flex blowout */
   margin-left: auto !important; /* Push to the right */
   position: relative;
   transition: all 0.2s ease-in-out;
+  overflow: visible; /* Children like toolbar must remain visible */
 }
 
 .ai-row .chatgpt-text {
