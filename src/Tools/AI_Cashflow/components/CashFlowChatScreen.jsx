@@ -34,7 +34,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { generateChatResponse } from '../../../services/geminiService';
+import { generateCashflowChatResponse } from '../../../services/aiCashflowService';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useTTS } from '../../../hooks/useTTS';
@@ -110,6 +110,7 @@ export default function CashFlowChatScreen() {
   const [copiedId, setCopiedId] = useState(null);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
+  const sessionIdRef = useRef(`cashflow_${Date.now()}`);
 
   const { speakingMessageId, speakResponse, stopSpeaking } = useTTS({
     currentLang: language || 'English',
@@ -146,45 +147,89 @@ export default function CashFlowChatScreen() {
       const promptWithPersona = `[USER PROFILE: Category = ${activeIdentityObj?.title}, Primary Goal = ${activeGoalObj?.title}]\n\n${textToSend}`;
 
       const historyForApi = messages
-        .filter(m => !m.isFailed && !m.isStopped)
+        .filter(m => !m.isFailed && !m.isStopped && !m.isIntro)
         .map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
+          role: m.sender === 'user' ? 'user' : 'model',
           content: m.text,
         }));
 
-      const response = await generateChatResponse(
+      let aiText = '';
+      let isFirstChunk = true;
+      const aiMsgId = 'ai-' + Date.now();
+
+      const response = await generateCashflowChatResponse(
         historyForApi,
         promptWithPersona,
         '',
-        [],
-        language || 'English',
-        null,
-        'CASHFLOW'
+        sessionIdRef.current,
+        chunk => {
+          if (isFirstChunk) {
+            setMessages(prev => [
+              ...prev,
+              { id: aiMsgId, sender: 'ai', text: '', timestamp: new Date() },
+            ]);
+            isFirstChunk = false;
+          }
+          aiText += chunk;
+          setMessages(prev => {
+            const updated = [...prev];
+            const idx = updated.findIndex(m => m.id === aiMsgId);
+            if (idx !== -1) {
+              updated[idx] = { ...updated[idx], text: aiText };
+            }
+            return updated;
+          });
+        }
       );
 
-      let responseText = '';
-      if (typeof response === 'string') responseText = response;
-      else if (response?.reply) responseText = response.reply;
-      else if (response?.data?.reply) responseText = response.data.reply;
-      else if (response?.text) responseText = response.text;
-
-      if (!responseText) {
-        responseText =
-          'I have processed your financial query. Let me know if you would like deeper cashflow modeling, salary negotiation advice, or investment analytics!';
+      if (response?.error) {
+        if (response.error === 'AUTH_REQUIRED') {
+          setMessages(prev => [
+            ...prev,
+            {
+              id: 'err-' + Date.now(),
+              sender: 'ai',
+              text: '🔐 Your session has expired. Please refresh the page and log in again to continue.',
+              timestamp: new Date(),
+            },
+          ]);
+          setIsTyping(false);
+          return;
+        }
+        throw new Error(response.message || response.error);
       }
 
-      const aiMsgId = 'ai-' + Date.now();
-      const aiMsg = {
-        id: aiMsgId,
-        sender: 'ai',
-        text: responseText,
-        timestamp: new Date(),
-      };
+      const fallbackText = response?.text || response?.reply;
+      if (fallbackText && !aiText) {
+        setMessages(prev => [
+          ...prev,
+          { id: aiMsgId, sender: 'ai', text: fallbackText, timestamp: new Date() },
+        ]);
+      }
 
-      setMessages(prev => [...prev, aiMsg]);
+      if (!fallbackText && !aiText) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: 'err-' + Date.now(),
+            sender: 'ai',
+            text: "⚠️ I didn't receive a response. Please try again.",
+            timestamp: new Date(),
+          },
+        ]);
+      }
     } catch (err) {
       console.error('[CashFlowChat] API Error:', err);
       toast.error('Failed to get AI response. Please try again.');
+      setMessages(prev => [
+        ...prev,
+        {
+          id: 'err-' + Date.now(),
+          sender: 'ai',
+          text: `⚠️ Something went wrong: ${err.message}. Please try again.`,
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -238,9 +283,14 @@ export default function CashFlowChatScreen() {
                   Copilot
                 </span>
               </h1>
-              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Financial Intelligence OS & Wealth Layer
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Financial Intelligence OS & Wealth Layer
+                </p>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  DOMAIN LOCKED · AI CASHFLOW EXPERT
+                </span>
+              </div>
             </div>
           </div>
         </div>

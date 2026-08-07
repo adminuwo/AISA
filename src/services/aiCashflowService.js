@@ -3,13 +3,13 @@ import { getDeviceFingerprint } from '../utils/deviceHelper';
 import { getUserData } from '../userStore/userData';
 import { apis } from '../types';
 
-const AI_AD_API = `${apis.baseUrl}/ai-ad`;
+const CASHFLOW_API = apis.cashflow?.chat || `${apis.baseUrl}/cashflow/chat`;
 
 /**
- * generateAiAdChatResponse
- * Dedicated service for interacting with the Capilot AI ADS™ Chat Bot.
+ * generateCashflowChatResponse
+ * Dedicated service for interacting with the AI CashFlow™ Personal Bot via SSE streaming.
  */
-export const generateAiAdChatResponse = async (
+export const generateCashflowChatResponse = async (
   history,
   currentMessage,
   systemInstruction,
@@ -40,7 +40,7 @@ export const generateAiAdChatResponse = async (
     sessionId,
   };
 
-  const streamEndpoint = `${AI_AD_API}/chat`;
+  const streamEndpoint = CASHFLOW_API;
 
   if (onTokenChunk) {
     try {
@@ -61,7 +61,7 @@ export const generateAiAdChatResponse = async (
         if (response.status === 403) {
           return {
             error: 'PREMIUM_ONLY',
-            message: "Your plan doesn't include access to Capilot AI ADS Chat Bot. Please upgrade.",
+            message: "Your plan doesn't include access to AI CashFlow Copilot. Please upgrade.",
           };
         }
         throw new Error(`SSE stream HTTP error: ${response.status}`);
@@ -78,7 +78,7 @@ export const generateAiAdChatResponse = async (
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        // Last entry may be an incomplete line split across reads — keep it for the next iteration
+        // Last entry may be an incomplete line split across reads — keep it for next iteration
         buffer = lines.pop();
 
         for (const line of lines) {
@@ -102,8 +102,7 @@ export const generateAiAdChatResponse = async (
       }
       return { text: accumulatedText, reply: accumulatedText };
     } catch (streamErr) {
-      console.warn('[aiAdService] Stream failed:', streamErr.message);
-      // Optional fallback to normal axios POST could go here
+      console.warn('[aiCashflowService] Stream failed:', streamErr.message);
       throw streamErr;
     }
   }

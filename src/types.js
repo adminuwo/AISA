@@ -121,6 +121,12 @@ const apis = {
     posts: `${API}/ai-ad/posts`,
     status: `${API}/ai-ad/status`,
   },
+  cashflow: {
+    chat: `${API}/cashflow/chat`,
+    search: `${API}/cashflow/search`,
+    quote: `${API}/cashflow/quote`,
+    analyze: `${API}/cashflow/analyze`,
+  },
   imageProxy: `${API}/image/proxy`,
   precedents: `${API}/precedents`,
   baseUrl: API,
