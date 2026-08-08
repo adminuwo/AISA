@@ -43,7 +43,7 @@ import {
   Square,
   MicOff,
 } from 'lucide-react';
-import { generateChatResponse } from '../../../services/geminiService';
+import { generateLegalChatResponse } from '../../../services/aiLegalChatService';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { searchAndFilterCases, getFilterOptions } from '../data/caseDatabase';
@@ -2007,77 +2007,52 @@ Please continue the conversation naturally using this context. Never ask the use
         promptText = `[Attached Files: ${fileNames}]\n${promptText || 'Please analyze these attachments.'}`;
       }
 
-      let systemInstruction = LEGAL_SYSTEM_INSTRUCTION;
-      if (currentCase) {
-        systemInstruction += `\n\nContext for the current case:\n`;
-        systemInstruction += `- Case ID: ${currentCase.id || currentCase._id}\n`;
-        systemInstruction += `- Case Name: ${currentCase.title || currentCase.name || 'N/A'}\n`;
-        systemInstruction += `- Case Description: ${currentCase.summary || currentCase.description || 'N/A'}\n`;
-      }
-      const detectedLanguage = detectPreferredLanguage(promptText, messages, toolkitLanguage);
-      const isSwitch = isLanguageSwitchQuery(promptText) ? 'Yes' : 'No';
-      systemInstruction += `
-\n\n### DYNAMIC LANGUAGE SWITCH & CONTEXT CONTINUITY:
-- Current UI Language: ${toolkitLanguage === 'Hindi' ? 'Hindi' : 'English'}
-- Conversation Preferred Language: ${detectedLanguage}
-- Is User Query a Language/Translation Switch: ${isSwitch}
+      // ─── NEW ISOLATED PATH ──────────────────────────────────────────────────
+      // Uses /api/legal/chat which goes through aiOrchestrator with domain='LEGAL'.
+      // The backend handles the system prompt (legalPrompts.js) and language dynamically.
+      // Real-time SSE streaming — tokens arrive token-by-token via onTokenChunk.
+      // ────────────────────────────────────────────────────────────────────────
+      const aiMsgId = 'ai-' + Date.now();
+      const streamingAiMsg = {
+        id: aiMsgId,
+        text: '',
+        sender: 'ai',
+        timestamp: new Date(),
+        isStreaming: true,
+        fullPromptText: '',
+      };
+      setIsTyping(false);
+      setMessages(prev => [...prev, streamingAiMsg]);
 
-STRICT RULE FOR LANGUAGE SWITCH (IF YES):
-- DO NOT answer the language switch request message directly (e.g. do not say "Sure, I can translate", do not show greetings/intro, do not show current date/time, and do not show legal disclaimers).
-- Instead, take the IMMEDIATELY PREVIOUS assistant response or the active legal topic, and REGENERATE it entirely in the Conversation Preferred Language.
-- Maintain the exact same formatting, same headings, same citations, same analysis structure, and same reasoning. Only the language is changed.
+      let streamedText = '';
 
-GREETINGS & DISCLAIMER ONCE RULE (STRICT):
-- Display greetings (e.g., "Hello Admin"), current date/time, legal disclaimer, and assistant introduction ONLY ONCE at the absolute beginning of the conversation.
-- NEVER repeat or print them on follow-up messages, language-switch requests, or context continuation requests. Keep follow-up responses direct, focused, and starting immediately with the content.
-
-LEGAL TERMINOLOGY IN HINDI:
-- When responding in Hindi, use professional Indian legal terms:
-  - Evidence -> साक्ष्य
-  - Court -> न्यायालय
-  - Judgment -> निर्णय
-  - Petitioner -> याचिकाकर्ता
-  - Respondent -> प्रतिवादी
-  - Appeal -> अपील
-  - Legal Notice -> कानूनी नोटिस
-  - Contract -> अनुबंध
-  - Clause -> धारा
-  - Agreement -> समझौता
-  - Relief -> राहत
-  - Jurisdiction -> अधिकार क्षेत्र
-  - Proceedings -> कार्यवाही
-  - Affidavit -> शपथपत्र
-  - Witness -> गवाह
-  - Cross Examination -> जिरह
-  - Supreme Court -> उच्चतम न्यायालय
-  - High Court -> उच्च न्यायालय
-  - District Court -> जिला न्यायालय
-
-THINK IN TARGET LANGUAGE:
-- Generate directly in the target language (Hindi or English). Do not translate post-hoc.
-- Do not mix Hindi and English in the same sentence.
-`;
-
-      const response = await generateChatResponse(
+      const response = await generateLegalChatResponse(
         apiHistory,
         promptText,
-        systemInstruction,
-        apiAttachments,
-        detectedLanguage,
-        abortControllerRef.current.signal,
-        'LEGAL_TOOLKIT',
         chatIdRef.current,
-        currentCase?._id || null
+        chunkText => {
+          // Real-time token chunk — update the AI message as tokens arrive
+          streamedText += chunkText;
+          if (!isStreamingRef.current) return;
+          setMessages(prev =>
+            prev.map(m => {
+              if (m.id === aiMsgId) {
+                return { ...m, text: streamedText, fullPromptText: streamedText };
+              }
+              return m;
+            })
+          );
+          setTimeout(scrollToBottom, 50);
+        },
+        abortControllerRef.current.signal
       );
 
       if (!response) {
-        setIsTyping(false);
         setGenerationState('idle');
         return;
       }
 
       if (typeof response === 'object' && response.error) {
-        setIsTyping(false);
         setGenerationState('idle');
         if (
           response.error !== 'OUT_OF_CREDITS' &&
@@ -2089,53 +2064,14 @@ THINK IN TARGET LANGUAGE:
         return;
       }
 
-      let responseText = '';
-      if (typeof response === 'string') responseText = response;
-      else if (response?.reply) responseText = response.reply;
-      else if (response?.data?.reply) responseText = response.data.reply;
-      else if (response?.text) responseText = response.text;
+      // Use accumulated streamed text or fallback from response
+      const responseText = streamedText || response?.reply || response?.text || '';
       if (!responseText) throw new Error('Empty response received from LLM.');
 
-      // Hide the loader before typewriter starts
-      setIsTyping(false);
-
-      const aiMsgId = 'ai-' + Date.now();
-      const aiMsg = {
-        id: aiMsgId,
-        text: '',
-        sender: 'ai',
-        timestamp: new Date(),
-        isStreaming: true,
-        fullPromptText: responseText,
-      };
-      setMessages(prev => [...prev, aiMsg]);
-
-      const words = responseText.split(' ');
-      let currentText = '';
-
-      for (let j = 0; j < words.length; j++) {
-        if (!isStreamingRef.current) {
-          break;
-        }
-        currentText += (j === 0 ? '' : ' ') + words[j];
-
-        setMessages(prev =>
-          prev.map(m => {
-            if (m.id === aiMsgId) {
-              return { ...m, text: currentText };
-            }
-            return m;
-          })
-        );
-
-        await new Promise(resolve => setTimeout(resolve, 30));
-      }
-
       const wasStopped = !isStreamingRef.current;
-      const finalText = wasStopped ? currentText : responseText;
       const finalAiMsg = {
         id: aiMsgId,
-        text: finalText,
+        text: wasStopped ? streamedText : responseText,
         sender: 'ai',
         timestamp: new Date(),
         isStreaming: false,
@@ -2196,11 +2132,11 @@ THINK IN TARGET LANGUAGE:
     }
   };
 
+  // Use a React ref instead of a window global to expose sendMessage
+  // to internal components (e.g. AiResponseCard prompt actions).
+  // This avoids polluting window and prevents external script injection.
   useEffect(() => {
-    window.__aisa_legal_send_message = text => sendMessage(text);
-    return () => {
-      delete window.__aisa_legal_send_message;
-    };
+    sendMessageRef.current = text => sendMessage(text);
   }, [sendMessage]);
 
   const handleRegenerateMessage = async msgId => {
@@ -2253,67 +2189,39 @@ THINK IN TARGET LANGUAGE:
         // Final safety: remove any entries with empty content
         .filter(m => m.parts[0].text && m.parts[0].text.trim());
 
-      let systemInstruction = LEGAL_SYSTEM_INSTRUCTION;
-      if (currentCase) {
-        systemInstruction += `\n\nContext for the current case:\n`;
-        systemInstruction += `- Case ID: ${currentCase.id || currentCase._id}\n`;
-        systemInstruction += `- Case Name: ${currentCase.title || currentCase.name || 'N/A'}\n`;
-        systemInstruction += `- Case Description: ${currentCase.summary || currentCase.description || 'N/A'}\n`;
-      }
-      const detectedLanguage = detectPreferredLanguage(promptText, messages, toolkitLanguage);
-      const isSwitch = isLanguageSwitchQuery(promptText) ? 'Yes' : 'No';
-      systemInstruction += `
-\n\n### DYNAMIC LANGUAGE SWITCH & CONTEXT CONTINUITY:
-- Current UI Language: ${toolkitLanguage === 'Hindi' ? 'Hindi' : 'English'}
-- Conversation Preferred Language: ${detectedLanguage}
-- Is User Query a Language/Translation Switch: ${isSwitch}
+      const regenAiMsgId = 'ai-regen-' + suffixId;
+      const regenStreamingMsg = {
+        id: regenAiMsgId,
+        sender: 'ai',
+        text: '',
+        timestamp: new Date(),
+        isStreaming: true,
+        fullPromptText: '',
+      };
+      setMessages(prev => prev.map(m => (m.id === statusCardId ? { ...m, status: 'success' } : m)));
+      setIsRegenerating(false);
+      setIsTyping(false);
+      setMessages(prev => [...prev, regenStreamingMsg]);
 
-STRICT RULE FOR LANGUAGE SWITCH (IF YES):
-- DO NOT answer the language switch request message directly (e.g. do not say "Sure, I can translate", do not show greetings/intro, do not show current date/time, and do not show legal disclaimers).
-- Instead, take the IMMEDIATELY PREVIOUS assistant response or the active legal topic, and REGENERATE it entirely in the Conversation Preferred Language.
-- Maintain the exact same formatting, same headings, same citations, same analysis structure, and same reasoning. Only the language is changed.
+      let regenStreamedText = '';
 
-GREETINGS & DISCLAIMER ONCE RULE (STRICT):
-- Display greetings (e.g., "Hello Admin"), current date/time, legal disclaimer, and assistant introduction ONLY ONCE at the absolute beginning of the conversation.
-- NEVER repeat or print them on follow-up messages, language-switch requests, or context continuation requests. Keep follow-up responses direct, focused, and starting immediately with the content.
-
-LEGAL TERMINOLOGY IN HINDI:
-- When responding in Hindi, use professional Indian legal terms:
-  - Evidence -> साक्ष्य
-  - Court -> न्यायालय
-  - Judgment -> निर्णय
-  - Petitioner -> याचिकाकर्ता
-  - Respondent -> प्रतिवादी
-  - Appeal -> अपील
-  - Legal Notice -> कानूनी नोटिस
-  - Contract -> अनुबंध
-  - Clause -> धारा
-  - Agreement -> समझौता
-  - Relief -> राहत
-  - Jurisdiction -> अधिकार क्षेत्र
-  - Proceedings -> कार्यवाही
-  - Affidavit -> शपथपत्र
-  - Witness -> गवाह
-  - Cross Examination -> जिरह
-  - Supreme Court -> उच्चतम न्यायालय
-  - High Court -> उच्च न्यायालय
-  - District Court -> जिला न्यायालय
-
-THINK IN TARGET LANGUAGE:
-- Generate directly in the target language (Hindi or English). Do not translate post-hoc.
-- Do not mix Hindi and English in the same sentence.
-`;
-
-      const response = await generateChatResponse(
+      const response = await generateLegalChatResponse(
         precedingHistory,
         promptText,
-        systemInstruction,
-        [],
-        detectedLanguage,
-        abortControllerRef.current.signal,
-        'LEGAL_TOOLKIT',
         chatIdRef.current,
-        currentCase?._id || null
+        chunkText => {
+          regenStreamedText += chunkText;
+          if (!isStreamingRef.current) return;
+          setMessages(prev =>
+            prev.map(m => {
+              if (m.id === regenAiMsgId) {
+                return { ...m, text: regenStreamedText, fullPromptText: regenStreamedText };
+              }
+              return m;
+            })
+          );
+        },
+        abortControllerRef.current.signal
       );
 
       if (!response) {
@@ -2335,63 +2243,15 @@ THINK IN TARGET LANGUAGE:
         return;
       }
 
-      let responseText = '';
-      if (typeof response === 'string') responseText = response;
-      else if (response?.reply) responseText = response.reply;
-      else if (response?.data?.reply) responseText = response.data.reply;
-      else if (response?.text) responseText = response.text;
+      const responseText = regenStreamedText || response?.reply || response?.text || '';
       if (!responseText) throw new Error('Empty response received from LLM.');
 
-      setMessages(prev =>
-        prev.map(m => {
-          if (m.id === statusCardId) {
-            return { ...m, status: 'success' };
-          }
-          return m;
-        })
-      );
-      setIsRegenerating(false);
-      setIsTyping(false);
-
-      const newAiMsgId = 'ai-regen-' + suffixId;
-      const newAiMsg = {
-        id: newAiMsgId,
-        sender: 'ai',
-        text: '',
-        timestamp: new Date(),
-        isStreaming: true,
-        fullPromptText: responseText,
-      };
-      setMessages(prev => [...prev, newAiMsg]);
-
-      const words = responseText.split(' ');
-      let currentText = '';
-
-      for (let j = 0; j < words.length; j++) {
-        if (!isStreamingRef.current) {
-          break;
-        }
-        currentText += (j === 0 ? '' : ' ') + words[j];
-
-        setMessages(prev =>
-          prev.map(m => {
-            if (m.id === newAiMsgId) {
-              return { ...m, text: currentText };
-            }
-            return m;
-          })
-        );
-
-        await new Promise(resolve => setTimeout(resolve, 30));
-      }
-
       const wasStopped = !isStreamingRef.current;
-      const finalText = wasStopped ? currentText : responseText;
 
       const finalAiMsg = {
-        id: newAiMsgId,
+        id: regenAiMsgId,
         sender: 'ai',
-        text: finalText,
+        text: wasStopped ? regenStreamedText : responseText,
         timestamp: new Date(),
         isStreaming: false,
         isStopped: wasStopped,
@@ -2407,7 +2267,7 @@ THINK IN TARGET LANGUAGE:
       };
 
       const finalMsgs = messagesRef.current.map(m => {
-        if (m.id === newAiMsgId) {
+        if (m.id === regenAiMsgId) {
           return finalAiMsg;
         }
         return m;
@@ -2415,7 +2275,7 @@ THINK IN TARGET LANGUAGE:
       const hasStatusCard = finalMsgs.some(m => m.id === statusCardId);
       const withStatus = hasStatusCard ? finalMsgs : [...finalMsgs, successStatusMsg];
 
-      const exists = withStatus.some(m => m.id === newAiMsgId);
+      const exists = withStatus.some(m => m.id === regenAiMsgId);
       const safeFinalMsgs = exists ? withStatus : [...withStatus, finalAiMsg];
 
       setMessages(safeFinalMsgs);
