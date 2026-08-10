@@ -288,7 +288,7 @@ const MagicToolSettingsCard = ({
 
                           return (
                             <motion.div
-                              key={model.id || model.name || idx}
+                              key={model?.id || model?.name || `model-card-${idx}`}
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{

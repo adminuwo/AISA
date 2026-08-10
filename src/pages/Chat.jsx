@@ -485,22 +485,36 @@ const Chat = () => {
           }
         );
 
-        if (responseData && (responseData.reply || responseData.imageUrl)) {
-          const aiMsg = {
-            id: aiMsgId,
-            role: 'model',
-            content: responseData.reply || 'Generated Image',
-            imageUrl: responseData.imageUrl || null,
-            timestamp: new Date(),
-            projectId: currentProjectId,
-            mode: currentMode,
-            suggestions: responseData.suggestions || [],
-          };
-          setMessages((prev) => {
-            const filtered = prev.filter((m) => m.id !== aiMsgId);
-            return [...filtered, aiMsg];
-          }, currentSid);
-          await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
+        if (responseData) {
+          const replyText =
+            typeof responseData === 'string'
+              ? responseData
+              : responseData.reply ||
+                responseData.text ||
+                responseData.data ||
+                responseData.message ||
+                '';
+
+          if (replyText || responseData.imageUrl || responseData.videoUrl) {
+            const aiMsg = {
+              id: aiMsgId,
+              role: 'model',
+              content: replyText || (responseData.imageUrl ? 'Generated Image' : 'Generated Video'),
+              imageUrl: responseData.imageUrl || null,
+              videoUrl: responseData.videoUrl || null,
+              timestamp: new Date(),
+              projectId: currentProjectId,
+              mode: responseData.detectedMode || currentMode,
+              suggestions: responseData.suggestions || [],
+              isRealTime: Boolean(responseData.isRealTime),
+              sources: Array.isArray(responseData.sources) ? responseData.sources : [],
+            };
+            setMessages((prev) => {
+              const filtered = prev.filter((m) => m.id !== aiMsgId);
+              return [...filtered, aiMsg];
+            }, currentSid);
+            await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
+          }
         }
       } catch (err) {
         console.error('[Chat] Send message failed:', err);
