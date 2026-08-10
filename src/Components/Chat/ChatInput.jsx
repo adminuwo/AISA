@@ -178,6 +178,7 @@ export const ChatInput = ({
   onRemoveFile,
   handleDocToVoiceSelect = () => {},
   handleVoiceInput = () => {},
+  isVoiceSettingsOpen,
   setIsVoiceSettingsOpen = () => {},
   audioVoiceName,
 }) => {
@@ -447,9 +448,12 @@ export const ChatInput = ({
                     <div className="w-px h-3.5 bg-violet-200 dark:bg-violet-700/80 mx-0.5" />
                     <button
                       type="button"
-                      onClick={() =>
-                        setIsVoiceSettingsOpen && setIsVoiceSettingsOpen(!isVoiceSettingsOpen)
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (setIsVoiceSettingsOpen) {
+                          setIsVoiceSettingsOpen(!isVoiceSettingsOpen);
+                        }
+                      }}
                       className="flex items-center gap-1.5 text-[10px] font-extrabold text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-white transition-colors"
                     >
                       <Sliders size={11} strokeWidth={2.5} />
