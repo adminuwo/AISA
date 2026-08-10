@@ -1273,6 +1273,7 @@ Please continue the conversation naturally using this context. Never ask the use
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const sendMessageRef = useRef(null);
 
   const abortControllerRef = useRef(null);
   const isStreamingRef = useRef(false);
@@ -2132,11 +2133,14 @@ Please continue the conversation naturally using this context. Never ask the use
     }
   };
 
-  // Use a React ref instead of a window global to expose sendMessage
-  // to internal components (e.g. AiResponseCard prompt actions).
-  // This avoids polluting window and prevents external script injection.
+  // Expose sendMessage via both a ref (for internal use) and a window global
+  // (for backward compatibility with AiResponseCard's triggerPromptAction).
   useEffect(() => {
     sendMessageRef.current = text => sendMessage(text);
+    window.__aisa_legal_send_message = text => sendMessage(text);
+    return () => {
+      window.__aisa_legal_send_message = null;
+    };
   }, [sendMessage]);
 
   const handleRegenerateMessage = async msgId => {
