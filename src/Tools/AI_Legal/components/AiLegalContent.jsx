@@ -37,7 +37,10 @@ import {
   ShieldCheck,
   Workflow,
   NotebookPen,
+  Lock,
+  Crown,
 } from 'lucide-react';
+import { useIsFreePlan, triggerUpgradeModal } from '../../../hooks/useIsFreePlan';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Transition, Dialog } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
@@ -569,7 +572,16 @@ const AiLegalContent = ({
     }
   }, [loadDashboardData, loadSavedTools, currentCase]);
 
+  const isFreePlan = useIsFreePlan();
+
   const handleToolPress = tool => {
+    if (isFreePlan && tool.id !== 'legal_general_chat') {
+      triggerUpgradeModal(
+        tool.title || 'AI Legal™ Module',
+        'My Case CRM, Draft Maker, Argument Builder, Legal Precedent Search, Evidence Analysis, Contract Review, Case Predictor, and Strategy Engine require a paid subscription. Upgrade your plan to unlock full AI Legal™ features.'
+      );
+      return;
+    }
     setSelectedTool(tool);
     launchModule(tool);
   };
@@ -871,6 +883,27 @@ const AiLegalContent = ({
         </div>
       </div>
 
+      {/* Free Plan Lock Notification Banner */}
+      {isFreePlan && (
+        <div className="mx-4 sm:mx-6 md:mx-10 lg:mx-12 mt-4 bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5 text-amber-500 text-xs sm:text-sm font-black uppercase tracking-wider">
+            <Lock className="w-4 h-4 shrink-0" />
+            <span>Free Subscription — General Legal Chat Enabled | Modules Locked</span>
+          </div>
+          <button
+            onClick={() =>
+              triggerUpgradeModal(
+                'AI Legal™ Modules',
+                'Upgrade your plan to unlock My Case CRM, Draft Maker, Evidence Analysis, Contract Review, Case Predictor & Strategy Engine.'
+              )
+            }
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[10px] sm:text-[11px] font-black uppercase hover:shadow-md transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <Crown className="w-3.5 h-3.5" /> Upgrade Plan
+          </button>
+        </div>
+      )}
+
       {/* Content Area */}
       <div className="px-4 sm:px-6 md:px-10 lg:px-12 py-5 sm:py-6 space-y-5 sm:space-y-6">
         {/* Hero Card - General Legal Chat */}
@@ -995,12 +1028,17 @@ const AiLegalContent = ({
                       </div>
                     </div>
 
-                    {/* Desktop Action: Open → */}
-                    <div className="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-violet-600 dark:text-violet-400 mt-2">
-                      <span>Open</span>
-                      <span className="transform group-hover:translate-x-1 transition-transform duration-300">
-                        →
-                      </span>
+                    {/* Desktop Action: Open → or Upgrade */}
+                    <div className="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold mt-2">
+                      {isFreePlan ? (
+                        <span className="text-amber-500 flex items-center gap-1">
+                          <Lock size={12} /> Upgrade to Unlock
+                        </span>
+                      ) : (
+                        <span className="text-violet-600 dark:text-violet-400 flex items-center gap-1">
+                          Open <span className="transform group-hover:translate-x-1 transition-transform duration-300">→</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Mobile Compact Layout Wrapper (< sm) */}
@@ -1029,9 +1067,14 @@ const AiLegalContent = ({
                       </div>
 
                       {/* Right Column */}
-                      <div className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 shrink-0 pt-1 self-start">
-                        <span>Open</span>
-                        <span>→</span>
+                      <div className="flex items-center gap-1 text-xs font-semibold shrink-0 pt-1 self-start">
+                        {isFreePlan ? (
+                          <span className="text-amber-500 flex items-center gap-1">
+                            <Lock size={11} /> Upgrade
+                          </span>
+                        ) : (
+                          <span className="text-violet-600 dark:text-violet-400">Open →</span>
+                        )}
                       </div>
                     </div>
                   </div>

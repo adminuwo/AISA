@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../context/LanguageContext';
-import { Globe } from 'lucide-react';
+import { useIsFreePlan, triggerUpgradeModal } from '../../hooks/useIsFreePlan';
 
 export const PREMIUM_TOOLS = t => [
   {
@@ -105,7 +105,8 @@ export const PREMIUM_TOOLS = t => [
 ];
 
 const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect, t }) => {
-  const isUnlocked = true; // All legal tools are now available for ALL tiers (Free included)
+  const isFreePlan = useIsFreePlan();
+  const isUnlocked = !isFreePlan;
   const Icon = tool.icon;
   const [showWorkflow, setShowWorkflow] = useState(false);
 
@@ -113,8 +114,14 @@ const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect, t }
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       onClick={() => {
+        if (isFreePlan) {
+          triggerUpgradeModal(
+            tool.name || 'AI Legal™ Module',
+            'My Case CRM, Draft Maker, Evidence Analysis, Contract Review, Case Predictor & Strategy Engine require a paid subscription. Upgrade your plan to unlock full AI Legal™ features.'
+          );
+          return;
+        }
         if (isUnlocked) {
-          // If selecting a sub-tool, we want to ensure we're in the right mode for the 'Activated' screen
           onSelect(tool, isUnlocked);
         }
       }}

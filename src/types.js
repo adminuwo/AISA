@@ -57,10 +57,25 @@ export const AppRoute = {
   ADMIN_DASHBOARD: '/dashboard/admin',
 };
 
-const API =
-  window._env_?.VITE_AISA_BACKEND_API ||
-  import.meta.env.VITE_AISA_BACKEND_API ||
-  'http://localhost:8080/api';
+export const getApiBaseUrl = () => {
+  let envUrl =
+    window._env_?.VITE_AISA_BACKEND_API ||
+    import.meta.env.VITE_AISA_BACKEND_API ||
+    'http://localhost:8080/api';
+
+  if (typeof window !== 'undefined' && window.location) {
+    const currentHost = window.location.hostname;
+    if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+      envUrl = envUrl.replace(/localhost|127\.0\.0\.1/g, currentHost);
+      if (envUrl.startsWith('https://' + currentHost)) {
+        envUrl = envUrl.replace('https://', 'http://');
+      }
+    }
+  }
+  return envUrl;
+};
+
+const API = getApiBaseUrl();
 
 console.log('API', API);
 

@@ -98,6 +98,29 @@ export const chatStorageService = {
       });
       const dbSessions = Array.isArray(response.data) ? response.data : [];
 
+      // Combine IndexedDB local metadata sessions to preserve instant local history
+      try {
+        const keys = await idbGetAllKeys();
+        for (const key of keys) {
+          if (key.startsWith('chat_meta_')) {
+            const sId = key.replace('chat_meta_', '');
+            if (!dbSessions.some(s => s.sessionId === sId)) {
+              const meta = (await idbGet(key)) || {};
+              dbSessions.push({
+                sessionId: sId,
+                title: meta.title || 'New Chat',
+                lastModified: meta.lastModified || Date.now(),
+                projectId: meta.projectId || null,
+                detectedMode: meta.detectedMode || 'NORMAL_CHAT',
+                activeTool: meta.activeTool || null,
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[STORAGE] Failed to combine IndexedDB sessions', e);
+      }
+
       // Requirement: Temporarily combine guestChats + userChats in UI to avoid flicker
       const guestChatsRaw = localStorage.getItem('guestChats');
       if (guestChatsRaw) {
@@ -224,6 +247,15 @@ export const chatStorageService = {
         }
       }
 
+      const metaKey = `chat_meta_${sessionId}`;
+      const metaObj = {
+        title: finalTitle,
+        lastModified: now,
+        projectId: projectId || null,
+        ...extraProps,
+      };
+      idbSet(metaKey, metaObj).catch(() => {});
+
       if (index !== -1) {
         const existing = sessions[index];
         const updated = {
@@ -345,6 +377,8 @@ export const chatStorageService = {
       if (error.response?.data?.error === 'LIMIT_REACHED') {
         throw error; // Re-throw to handle in UI
       }
+    } finally {
+      window.dispatchEvent(new Event('chat-session-created'));
     }
   },
 

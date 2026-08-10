@@ -84,6 +84,7 @@ import AiAdsChatAssistant from './AiAdsChatAssistant';
 import StandaloneAdsAppBanner from './StandaloneAdsAppBanner';
 import { useDashboardState } from './hooks/useDashboardState';
 import { toProxyUrl, TwitterXIcon } from './dashboardShared';
+import { useIsFreePlan, triggerUpgradeModal } from '../../hooks/useIsFreePlan';
 
 const ensureStringId = id => {
   if (!id) return id;
@@ -92,6 +93,7 @@ const ensureStringId = id => {
 };
 
 const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin }) => {
+  const isFreePlan = useIsFreePlan();
   const {
     searchParams,
     setSearchParams,
@@ -560,6 +562,13 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                                 <button
                                   key={tab.id}
                                   onClick={() => {
+                                    if (isFreePlan && tab.id !== 'overview') {
+                                      triggerUpgradeModal(
+                                        `AI ADS™ (${tab.name})`,
+                                        'Brand Setup, Content Calendar, Content Generation, and Ad Campaign Sync are reserved for paid plan subscribers. Upgrade your plan to unlock all AI ADS™ dashboard features.'
+                                      );
+                                      return;
+                                    }
                                     if (!tab.comingSoon) {
                                       setActiveTab(tab.id);
                                       setIsMobileMenuOpen(false);
@@ -603,11 +612,13 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
                                       </span>
                                     )}
                                   </div>
-                                  {(!tab.comingSoon || !isSidebarCollapsed) && tab.comingSoon && (
+                                  {isFreePlan && tab.id !== 'overview' ? (
+                                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                  ) : (!tab.comingSoon || !isSidebarCollapsed) && tab.comingSoon ? (
                                     <span className="text-[7px] font-black bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded text-slate-500 uppercase">
                                       Soon
                                     </span>
-                                  )}
+                                  ) : null}
                                 </button>
                               );
                             })}
@@ -617,6 +628,27 @@ const AiSocialMediaDashboard = ({ isOpen, onClose, userPlan, isPremium, isAdmin 
 
                       {/* Main Content Area */}
                       <div className="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-zinc-950 relative">
+                        {/* Free Plan Lock Notification Banner */}
+                        {isFreePlan && (
+                          <div className="bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border-b border-amber-500/30 px-6 py-2 flex items-center justify-between z-[101] shrink-0">
+                            <div className="flex items-center gap-2 text-amber-500 text-[11px] sm:text-xs font-black uppercase tracking-wider">
+                              <Lock className="w-3.5 h-3.5 shrink-0" />
+                              <span>Free Plan Active — Chat Assistant Enabled | Dashboard Features Locked</span>
+                            </div>
+                            <button
+                              onClick={() =>
+                                triggerUpgradeModal(
+                                  'AI ADS™ Dashboard',
+                                  'Brand Setup, Content Calendar, Content Generation, and Campaign Sync are reserved for paid subscribers. Upgrade your plan to unlock full AI ADS™ features.'
+                                )
+                              }
+                              className="px-3 py-1 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[10px] sm:text-[11px] font-black uppercase hover:shadow-md transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                            >
+                              <Crown className="w-3.5 h-3.5" /> Upgrade Plan
+                            </button>
+                          </div>
+                        )}
+
                         {/* Header */}
                         <header className="sticky top-0 h-16 lg:h-24 bg-white/80 dark:bg-[#080808]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-4 lg:px-10 flex items-center justify-between z-[100] shrink-0">
                           <div className="flex items-center gap-2 lg:gap-4">

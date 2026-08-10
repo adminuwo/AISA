@@ -1,16 +1,15 @@
 import { getDeviceFingerprint } from '../utils/deviceHelper';
 import { getUserData } from '../userStore/userData';
-import { apis } from '../types';
+import { getApiBaseUrl } from '../types';
 
-const LEGAL_CHAT_API = `${apis.baseUrl}/legal/chat`;
+const LEGAL_CHAT_API = `${getApiBaseUrl()}/chat/stream`;
 
 /**
  * generateLegalChatResponse
  * Dedicated service for interacting with the AI Legal™ Chat Bot.
  *
- * Routes to /api/legal/chat which uses aiOrchestrator with domain='LEGAL'.
- * This bypasses the global AISA platform prompt and uses the domain-isolated
- * legal system prompt from legalPrompts.js — same architecture as CashFlow and Ads.
+ * Routes to /api/chat/stream with mode='LEGAL_TOOLKIT'.
+ * Uses domain-isolated legal system prompt from legalPrompts.js.
  */
 export const generateLegalChatResponse = async (
   history,
@@ -39,8 +38,7 @@ export const generateLegalChatResponse = async (
     content: currentMessage,
     history: history.length > 50 ? history.slice(-50) : history,
     sessionId,
-    // Note: systemInstruction is NOT sent — the backend uses its own domain-isolated
-    // prompt from legalPrompts.js, same as the CashFlow and Ads architecture.
+    mode: 'LEGAL_TOOLKIT',
   };
 
   if (onTokenChunk) {

@@ -26,6 +26,7 @@ import {
   Lock,
   Unlock,
   MessageSquare,
+  Crown,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
@@ -35,6 +36,7 @@ import AISnapshot from '../../landingpage/AISnapshot';
 import { io } from 'socket.io-client';
 import apiService from '../../services/apiService';
 import AiCashflowChatAssistant from './components/AiCashflowChatAssistant';
+import { useIsFreePlan, triggerUpgradeModal } from '../../hooks/useIsFreePlan';
 
 const baseURL =
   window._env_?.VITE_AISA_BACKEND_API ||
@@ -170,6 +172,7 @@ const isIndianSymbol = symbol => {
 };
 
 const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStock }) => {
+  const isFreePlan = useIsFreePlan();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -847,6 +850,27 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
               </div>
             </div>
 
+            {/* Free Plan Lock Notification Banner */}
+            {isFreePlan && (
+              <div className="bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border-b border-amber-500/30 px-4 sm:px-8 py-2.5 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2 text-amber-500 text-[11px] sm:text-xs font-black uppercase tracking-wider">
+                  <Lock className="w-4 h-4 shrink-0" />
+                  <span>Free Plan Active — Assistant Chat Enabled | Other Features Locked</span>
+                </div>
+                <button
+                  onClick={() =>
+                    triggerUpgradeModal(
+                      'AI CashFlow™ Features',
+                      'Stock charts, live market news, advisory reports, and financial research are locked on the Free plan. Upgrade your plan to access full AI CashFlow™ features.'
+                    )
+                  }
+                  className="px-3 py-1 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[10px] sm:text-[11px] font-black uppercase hover:shadow-md transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                >
+                  <Crown className="w-3.5 h-3.5" /> Upgrade Plan
+                </button>
+              </div>
+            )}
+
             {/* Tab Navigation */}
             <div className="px-2 sm:px-8 border-b border-gray-100 dark:border-white/5 flex items-center gap-3 sm:gap-10 overflow-x-auto no-scrollbar bg-white dark:bg-[#161B2E] shrink-0">
               {[
@@ -863,15 +887,26 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
                   Advisory: 'advisory',
                   'Research and recommendation': 'research',
                 };
-                const isUnlocked = unlockedTabs.includes(tabMap[tab]);
+                const isUnlocked = !isFreePlan && unlockedTabs.includes(tabMap[tab]);
                 return (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab)}
+                    onClick={() => {
+                      if (isFreePlan) {
+                        triggerUpgradeModal(
+                          `AI CashFlow™ (${tab})`,
+                          'Interactive charts, news, advisory reports, and research recommendations require a paid subscription. Upgrade your plan to unlock full AI CashFlow™ tools.'
+                        );
+                        return;
+                      }
+                      setActiveTab(tab);
+                    }}
                     className={`py-3 sm:py-5 text-[10px] sm:text-[14px] font-black whitespace-nowrap transition-all border-b-2 tracking-wide uppercase flex items-center gap-1.5 ${activeTab === tab ? 'text-[#5154ff] border-[#5154ff]' : 'text-gray-400 dark:text-zinc-500 border-transparent hover:text-gray-600 dark:hover:text-zinc-300'}`}
                   >
                     {tab}
-                    {isUnlocked ? (
+                    {isFreePlan ? (
+                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                    ) : isUnlocked ? (
                       <Unlock className="w-3.5 h-3.5 text-emerald-500" />
                     ) : (
                       <Lock className="w-3.5 h-3.5 text-gray-400/80" />

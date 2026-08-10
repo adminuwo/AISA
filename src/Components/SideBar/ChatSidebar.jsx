@@ -90,8 +90,10 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   // Persist currentProjectId to localStorage
   useEffect(() => {
     if (currentProjectId) {
+      localStorage.setItem('aisa_active_project_id', currentProjectId);
       localStorage.setItem('currentProjectId', currentProjectId);
     } else {
+      localStorage.removeItem('aisa_active_project_id');
       localStorage.removeItem('currentProjectId');
     }
   }, [currentProjectId]);
@@ -100,7 +102,8 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const data = await chatStorageService.getSessions(searchQuery ? null : currentProjectId);
+        const targetProj = searchQuery || currentProjectId === 'default' || currentProjectId === 'all' ? null : currentProjectId;
+        const data = await chatStorageService.getSessions(targetProj);
         if (Array.isArray(data)) {
           setSessions(data);
         }

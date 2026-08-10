@@ -1,9 +1,8 @@
+import { getApiBaseUrl } from '../types';
+
 const getAvatarUrl = user => {
   if (!user || !user.email) return '';
-  let baseUrl =
-    window._env_?.VITE_AISA_BACKEND_API ||
-    import.meta.env.VITE_AISA_BACKEND_API ||
-    'http://127.0.0.1:8080/api';
+  let baseUrl = getApiBaseUrl();
   // Remove /api suffix to get the base host for the proxy avatar URL
   if (baseUrl.endsWith('/api')) {
     baseUrl = baseUrl.slice(0, -4);
@@ -36,6 +35,9 @@ export const setUserData = data => {
 
   // Update primary user
   localStorage.setItem('user', JSON.stringify(finalData));
+  if (token && token !== 'undefined' && token !== 'null') {
+    localStorage.setItem('token', token);
+  }
 
   // Clear guest chat limit count upon login
   localStorage.removeItem('aisa_guest_chat_count');
