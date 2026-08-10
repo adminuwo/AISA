@@ -84,6 +84,7 @@ import { generateChatResponse, generateFollowUpPrompts } from '../services/gemin
 import { chatStorageService } from '../services/chatStorageService';
 import { useLanguage } from '../context/LanguageContext';
 import { useUserStore } from '../userStore/useUserStore';
+import useCreditStore from '../userStore/useCreditStore';
 
 
 import Loader from '../Components/Loader/Loader';
@@ -522,6 +523,9 @@ const Chat = () => {
             setIsLoading(false);
             typingMessageIdRef.current = null;
             setTypingMessageId(null);
+
+            useCreditStore.getState().incrementLocal('chat');
+            useCreditStore.getState().syncCredits();
 
             await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
           }
