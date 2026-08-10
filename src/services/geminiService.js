@@ -95,10 +95,23 @@ export const generateChatResponse = async (
     // Deep Search runs a 3-step pipeline (Gemini plan → Tavily → Gemini synthesis)
     // which can take 35–90s. Use 180s for search modes, 60s for everything else.
     const isSearchMode = mode === 'DEEP_SEARCH' || mode === 'web_search' || mode === 'SEARCH';
-    const requestTimeout = isSearchMode ? 180000 : 60000;
 
-    // Try SSE streaming if callback is provided or for standard text prompts
-    if (onTokenChunk) {
+    // Image generation, image editing, and document conversion need the regular
+    // endpoint: it parses the model's action JSON and executes the corresponding
+    // pipeline before returning an image URL or converted file. The SSE endpoint
+    // streams that JSON as display text, which prevents the action from running.
+    const requiresCompletedResponse = [
+      'IMAGE_GENERATION',
+      'IMAGE_GEN',
+      'IMAGE_EDIT',
+      'DOCUMENT_CONVERT',
+      'FILE_CONVERSION',
+    ].includes(mode);
+
+    const requestTimeout = isSearchMode || requiresCompletedResponse ? 180000 : 60000;
+
+    // Stream normal text answers, but wait for a complete response for actions.
+    if (onTokenChunk && !requiresCompletedResponse) {
       try {
         const streamRes = await generateChatResponseStream(
           history, currentMessage, systemInstruction, attachments, language,
@@ -208,10 +221,60 @@ export const generateChatResponseStream = async (
     headers.Authorization = `Bearer ${token}`;
   }
 
+  let finalMessage = currentMessage;
+  const images = [];
+  const documents = [];
+
+  // Streaming is the default chat path. Include attachments here as well as in
+  // the non-streaming fallback so uploaded files reach the AI in both cases.
+  if (attachments && Array.isArray(attachments)) {
+    attachments.forEach(attachment => {
+      if (attachment.url && attachment.url.startsWith('data:')) {
+        const base64Data = attachment.url.split(',')[1];
+        const mimeType = attachment.url.substring(
+          attachment.url.indexOf(':') + 1,
+          attachment.url.indexOf(';')
+        );
+
+        if (attachment.type === 'image' || mimeType.startsWith('image/')) {
+          images.push({ mimeType, base64Data, name: attachment.name });
+        } else {
+          documents.push({
+            mimeType: mimeType || 'application/octet-stream',
+            base64Data,
+            name: attachment.name,
+          });
+        }
+      } else if (attachment.url) {
+        const isImage =
+          attachment.type === 'image' ||
+          (attachment.name && /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(attachment.name)) ||
+          attachment.mimeType?.startsWith('image/');
+
+        if (isImage) {
+          images.push({
+            url: attachment.url,
+            name: attachment.name,
+            mimeType: attachment.mimeType,
+          });
+        } else {
+          documents.push({
+            url: attachment.url,
+            name: attachment.name,
+            mimeType: attachment.mimeType,
+          });
+        }
+        finalMessage += `\n[Shared File: ${attachment.name || 'Link'} - ${attachment.url}]`;
+      }
+    });
+  }
+
   const payload = {
-    content: currentMessage,
+    content: finalMessage,
     history: history.length > 50 ? history.slice(-50) : history,
     systemInstruction: (systemInstruction || '').trim(),
+    image: images,
+    document: documents,
     language,
     mode,
     sessionId,

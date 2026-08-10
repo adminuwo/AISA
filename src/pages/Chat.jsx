@@ -96,6 +96,7 @@ import { useLegalToolCredits } from '../hooks/useLegalToolCredits';
 // Lazy loaded feature components
 const ImageEditor = lazy(() => import('../Tools/AI_Image_Generator/ImageEditor').catch(() => ({ default: () => null })));
 import ModelSelector from '../Components/ModelSelector';
+import VoiceSettingsModal from '../Components/VoiceSettingsModal';
 const MagicToolSettingsCard = lazy(() => import('../Tools/MagicTools/MagicToolSettingsCard').catch(() => ({ default: () => null })));
 const CashFlowStockModal = lazy(() => import('../Tools/AI_Cashflow/CashFlowStockModal').catch(() => ({ default: () => null })));
 const CashFlowChartWidget = lazy(() => import('../Tools/AI_Cashflow/CashFlowChartWidget').catch(() => ({ default: () => null })));
@@ -1336,11 +1337,24 @@ const Chat = () => {
               setImageModelId={setImageModelId}
               isMagicSettingsOpen={isMagicSettingsOpen}
               setIsMagicSettingsOpen={setIsMagicSettingsOpen}
+              audioVoiceName={audioVoiceName}
+              isVoiceSettingsOpen={isVoiceSettingsOpen}
+              setIsVoiceSettingsOpen={setIsVoiceSettingsOpen}
             />
           </div>
         )}
 
         {/* Global Modals */}
+        <VoiceSettingsModal
+          isOpen={isVoiceSettingsOpen}
+          onClose={() => setIsVoiceSettingsOpen(false)}
+          voiceName={audioVoiceName}
+          setVoiceName={setAudioVoiceName}
+          speed={audioSpeed}
+          setSpeed={setAudioSpeed}
+          pitch={audioPitch}
+          setPitch={setAudioPitch}
+        />
         <Suspense fallback={null}>
           <PremiumUpsellModal />
           {renderNewCaseModal()}
