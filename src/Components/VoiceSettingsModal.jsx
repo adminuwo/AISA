@@ -1,16 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Headphones, Sliders, Volume2, Sparkles, Check, Globe } from 'lucide-react';
+import { X, Headphones, Sliders, Volume2, Sparkles, Check, Globe, Mic } from 'lucide-react';
 
-const VOICE_OPTIONS = [
-  { id: 'en-US-Chirp3-HD-Autonoe', name: 'Autonoe', gender: 'Female', desc: 'Warm, natural & clear (HD)', lang: 'English (US)' },
-  { id: 'en-US-Chirp3-HD-Puck', name: 'Puck', gender: 'Male', desc: 'Energetic & articulate (HD)', lang: 'English (US)' },
-  { id: 'en-US-Chirp3-HD-Fenrir', name: 'Fenrir', gender: 'Male', desc: 'Deep & authoritative', lang: 'English (US)' },
-  { id: 'en-US-Chirp3-HD-Kore', name: 'Kore', gender: 'Female', desc: 'Gentle & expressive', lang: 'English (US)' },
-  { id: 'hi-IN-Neural2-A', name: 'Ananya', gender: 'Female', desc: 'Fluent Hindi & Hinglish', lang: 'Hindi (IN)' },
-  { id: 'hi-IN-Neural2-B', name: 'Aarav', gender: 'Male', desc: 'Professional Hindi', lang: 'Hindi (IN)' },
+const VOICE_CATEGORIES = [
+  { id: 'chirp', label: '🌟 Chirp3 HD Studio' },
+  { id: 'indian', label: '🇮🇳 Hindi & Indian Accent' },
+  { id: 'global', label: '🌍 Global Accents' },
 ];
+
+const VOICE_OPTIONS = {
+  chirp: [
+    { id: 'en-US-Chirp3-HD-Autonoe', name: 'Autonoe', gender: 'Female', desc: 'Warm, natural & clear (HD)', lang: 'English (US)' },
+    { id: 'en-US-Chirp3-HD-Puck', name: 'Puck', gender: 'Male', desc: 'Energetic & articulate (HD)', lang: 'English (US)' },
+    { id: 'en-US-Chirp3-HD-Fenrir', name: 'Fenrir', gender: 'Male', desc: 'Deep & authoritative', lang: 'English (US)' },
+    { id: 'en-US-Chirp3-HD-Kore', name: 'Kore', gender: 'Female', desc: 'Gentle & expressive', lang: 'English (US)' },
+    { id: 'en-US-Chirp3-HD-Aoede', name: 'Aoede', gender: 'Female', desc: 'Professional news anchor', lang: 'English (US)' },
+    { id: 'en-US-Chirp3-HD-Charon', name: 'Charon', gender: 'Male', desc: 'Narrator & podcast style', lang: 'English (US)' },
+  ],
+  indian: [
+    { id: 'hi-IN-Neural2-A', name: 'Ananya', gender: 'Female', desc: 'Fluent Hindi & Hinglish', lang: 'Hindi (IN)' },
+    { id: 'hi-IN-Neural2-B', name: 'Aarav', gender: 'Male', desc: 'Professional Hindi', lang: 'Hindi (IN)' },
+    { id: 'en-IN-Neural2-A', name: 'Priya', gender: 'Female', desc: 'Indian English Accent', lang: 'English (IN)' },
+    { id: 'en-IN-Neural2-B', name: 'Rohan', gender: 'Male', desc: 'Indian English Accent', lang: 'English (IN)' },
+    { id: 'hi-IN-Wavenet-D', name: 'Swara', gender: 'Female', desc: 'Expressive Hindi Storyteller', lang: 'Hindi (IN)' },
+    { id: 'hi-IN-Wavenet-C', name: 'Kabir', gender: 'Male', desc: 'Deep Hindi Broadcaster', lang: 'Hindi (IN)' },
+  ],
+  global: [
+    { id: 'en-GB-Neural2-A', name: 'Charlotte', gender: 'Female', desc: 'Elegant British Accent', lang: 'English (UK)' },
+    { id: 'en-GB-Neural2-B', name: 'Oliver', name2: 'Oliver', gender: 'Male', desc: 'Classic British Accent', lang: 'English (UK)' },
+    { id: 'en-AU-Neural2-A', name: 'Isla', gender: 'Female', desc: 'Natural Australian Accent', lang: 'English (AU)' },
+    { id: 'en-US-Journey-F', name: 'Journey Female', gender: 'Female', desc: 'Ultra-realistic Conversational', lang: 'English (US)' },
+    { id: 'en-US-Journey-D', name: 'Journey Male', gender: 'Male', desc: 'Ultra-realistic Conversational', lang: 'English (US)' },
+    { id: 'en-US-Studio-O', name: 'Studio Master', gender: 'Female', desc: 'Broadcaster Studio Grade', lang: 'English (US)' },
+  ],
+};
 
 const SPEED_OPTIONS = [
   { value: 0.8, label: '0.8x (Slow)' },
@@ -35,6 +59,8 @@ const VoiceSettingsModal = ({
   pitch,
   setPitch,
 }) => {
+  const [activeCategory, setActiveCategory] = useState('chirp');
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -45,6 +71,8 @@ const VoiceSettingsModal = ({
   }, [isOpen]);
 
   if (typeof document === 'undefined') return null;
+
+  const currentVoiceList = VOICE_OPTIONS[activeCategory] || VOICE_OPTIONS.chirp;
 
   return createPortal(
     <AnimatePresence>
@@ -58,7 +86,7 @@ const VoiceSettingsModal = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden"
+            className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-zinc-800/80 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent">
@@ -72,7 +100,7 @@ const VoiceSettingsModal = ({
                   </h3>
                   <p className="text-[11px] font-bold text-violet-600 dark:text-violet-400 flex items-center gap-1 uppercase tracking-wider">
                     <Sparkles size={11} />
-                    AI Voice Studio
+                    AI Voice Studio (18+ Voices)
                   </p>
                 </div>
               </div>
@@ -85,30 +113,51 @@ const VoiceSettingsModal = ({
               </button>
             </div>
 
+            {/* Category Tabs */}
+            <div className="px-6 pt-4 flex gap-1.5 border-b border-slate-100 dark:border-zinc-800/80 overflow-x-auto no-scrollbar">
+              {VOICE_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border-b-2 ${
+                    activeCategory === cat.id
+                      ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 border-transparent hover:bg-slate-50 dark:hover:bg-zinc-800/50'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
             {/* Content */}
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-              {/* Voice Selection */}
+            <div className="p-6 space-y-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
+              {/* Voice Selection Grid */}
               <div>
                 <label className="block text-xs font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                   <Volume2 size={13} className="text-violet-500" />
-                  Select Voice Persona
+                  Select Voice Persona ({currentVoiceList.length} Available)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {VOICE_OPTIONS.map((v) => {
+                  {currentVoiceList.map((v) => {
                     const isSelected = (voiceName || 'en-US-Chirp3-HD-Autonoe') === v.id;
                     return (
                       <button
                         key={v.id}
                         type="button"
                         onClick={() => setVoiceName && setVoiceName(v.id)}
-                        className={`text-left p-3 rounded-2xl border transition-all flex flex-col justify-between relative ${
+                        className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between relative ${
                           isSelected
-                            ? 'bg-violet-50 dark:bg-violet-950/40 border-violet-500 text-violet-950 dark:text-violet-100 shadow-sm ring-1 ring-violet-500'
+                            ? 'bg-violet-50 dark:bg-violet-950/40 border-violet-500 text-violet-950 dark:text-violet-100 shadow-sm ring-2 ring-violet-500/20'
                             : 'bg-slate-50/50 dark:bg-zinc-800/40 border-slate-200/80 dark:border-zinc-700/60 hover:border-violet-300 dark:hover:border-violet-700 text-slate-800 dark:text-zinc-200'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-extrabold">{v.name}</span>
+                          <span className="text-xs font-black flex items-center gap-1.5">
+                            <Mic size={12} className={isSelected ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'} />
+                            {v.name}
+                          </span>
                           {isSelected && (
                             <span className="w-4 h-4 rounded-full bg-violet-600 text-white flex items-center justify-center">
                               <Check size={10} strokeWidth={3} />
@@ -118,7 +167,7 @@ const VoiceSettingsModal = ({
                         <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium leading-tight">
                           {v.desc}
                         </span>
-                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 mt-2 block">
+                        <span className="text-[9px] font-extrabold text-violet-600 dark:text-violet-400 mt-2.5 block">
                           {v.gender} • {v.lang}
                         </span>
                       </button>
