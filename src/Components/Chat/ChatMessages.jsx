@@ -56,7 +56,8 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
       ((m.content || m.text || '').trim().length > 0 || m.imageUrl)
   );
 
-  const isTypingIndicatorActive = isLoading && typingMessageId && !hasModelResponseStarted;
+  const isTypingIndicatorActive =
+    (isLoading || typingMessageId) && !hasModelResponseStarted;
 
   // Scroll to align the latest user prompt at the top of the chat area
   const scrollToLatestUserPrompt = useCallback(() => {
@@ -85,6 +86,7 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
       scrollToLatestUserPrompt();
       const t1 = setTimeout(scrollToLatestUserPrompt, 50);
       const t2 = setTimeout(scrollToLatestUserPrompt, 150);
+      const t3 = setTimeout(scrollToLatestUserPrompt, 300);
 
       prevMessagesCountRef.current = messages.length;
       prevIsLoadingRef.current = isLoading;
@@ -92,6 +94,7 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
+        clearTimeout(t3);
       };
     }
 
@@ -170,8 +173,8 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
       {/* Empty space below prompt & thinking indicator to ensure smooth top alignment and clean response area */}
       <div
         className={`shrink-0 pointer-events-none transition-all duration-300 ${
-          isTypingIndicatorActive
-            ? 'h-[calc(100vh-220px)] min-h-[450px]'
+          isTypingIndicatorActive || isLoading || typingMessageId
+            ? 'h-[calc(100vh-200px)] min-h-[500px]'
             : 'h-32 sm:h-40'
         }`}
       />
