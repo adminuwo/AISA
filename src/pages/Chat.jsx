@@ -450,7 +450,9 @@ const Chat = () => {
           useGenerationStore.getState().transitionChatId('new', currentSid);
           navigate(`/dashboard/chat/${currentSid}`, { replace: true });
         }
-        await chatStorageService.saveMessage(currentSid, userMsg, null, currentProjectId);
+        chatStorageService.saveMessage(currentSid, userMsg, null, currentProjectId).catch((err) => {
+          console.error('[Chat] Background save userMsg error:', err);
+        });
 
         const aiMsgId = (Date.now() + 1).toString();
         setTypingMessageId(aiMsgId);
