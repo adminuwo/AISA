@@ -252,7 +252,10 @@ export const generateChatResponseStream = async (
     for (const line of lines) {
       if (line.startsWith('data: ')) {
         const dataStr = line.replace('data: ', '').trim();
-        if (dataStr === '[DONE]') continue;
+        if (dataStr === '[DONE]') {
+          reader.cancel().catch(() => {});
+          break;
+        }
 
         try {
           const parsed = JSON.parse(dataStr);

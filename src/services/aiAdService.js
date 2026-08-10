@@ -84,7 +84,10 @@ export const generateAiAdChatResponse = async (
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const dataStr = line.slice(6);
-            if (dataStr === '[DONE]') continue;
+            if (dataStr === '[DONE]') {
+              reader.cancel().catch(() => {});
+              break;
+            }
             try {
               const data = JSON.parse(dataStr);
               if (data.error) {
