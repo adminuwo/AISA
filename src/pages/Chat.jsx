@@ -513,6 +513,14 @@ const Chat = () => {
               const filtered = prev.filter((m) => m.id !== aiMsgId);
               return [...filtered, aiMsg];
             }, currentSid);
+
+            useGenerationStore.getState().completeGeneration(currentSid);
+            useGenerationStore.getState().completeGeneration('new');
+            isLoadingRef.current = false;
+            setIsLoading(false);
+            typingMessageIdRef.current = null;
+            setTypingMessageId(null);
+
             await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
           }
         }
