@@ -172,12 +172,16 @@ export const ChatInput = ({
   TOOL_PLACEHOLDERS = DEFAULT_TOOL_PLACEHOLDERS,
   MODES = DEFAULT_MODES,
   handleSendMessage = () => {},
-  handleRemoveFile = () => {},
-  handleFileSelect = () => {},
+  handleRemoveFile: propHandleRemoveFile,
+  handleFileSelect: propHandleFileSelect,
+  onFileSelect,
+  onRemoveFile,
   handleDocToVoiceSelect = () => {},
   handleVoiceInput = () => {},
   setIsVoiceSettingsOpen = () => {},
 }) => {
+  const handleFileSelect = propHandleFileSelect || onFileSelect || (() => {});
+  const handleRemoveFile = propHandleRemoveFile || onRemoveFile || (() => {});
   const [internalAttachMenuOpen, setInternalAttachMenuOpen] = React.useState(false);
   const [internalToolsMenuOpen, setInternalToolsMenuOpen] = React.useState(false);
 

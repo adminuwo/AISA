@@ -1309,7 +1309,9 @@ const Chat = () => {
               isListening={isListening}
               selectedFiles={selectedFiles}
               filePreviews={filePreviews}
+              handleRemoveFile={handleRemoveFile}
               onRemoveFile={handleRemoveFile}
+              handleFileSelect={handleFileSelect}
               onFileSelect={handleFileSelect}
               uploadInputRef={uploadInputRef}
               placeholder={TOOL_PLACEHOLDERS[currentMode] || 'Ask AISA anything...'}
