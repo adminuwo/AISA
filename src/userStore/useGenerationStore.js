@@ -236,42 +236,42 @@ export const useGenerationStore = create((set, get) => ({
 
   /** Called when generation completes successfully */
   completeGeneration: chatId => {
-    _abortControllers.delete(chatId);
+    if (chatId) _abortControllers.delete(chatId);
+    _abortControllers.delete('new');
     set(state => {
-      const prev = state.generations[chatId];
-      if (!prev) return state;
-      return {
-        generations: {
-          ...state.generations,
-          [chatId]: {
-            ...prev,
+      const nextGenerations = { ...state.generations };
+      Object.keys(nextGenerations).forEach(id => {
+        if (nextGenerations[id]) {
+          nextGenerations[id] = {
+            ...nextGenerations[id],
             isGenerating: false,
             completedAt: Date.now(),
             typingMessageId: null,
-          },
-        },
-      };
+          };
+        }
+      });
+      return { generations: nextGenerations };
     });
   },
 
   /** Called when generation fails */
   failGeneration: (chatId, error) => {
-    _abortControllers.delete(chatId);
+    if (chatId) _abortControllers.delete(chatId);
+    _abortControllers.delete('new');
     set(state => {
-      const prev = state.generations[chatId];
-      if (!prev) return state;
-      return {
-        generations: {
-          ...state.generations,
-          [chatId]: {
-            ...prev,
+      const nextGenerations = { ...state.generations };
+      ['new', chatId].forEach(id => {
+        if (id && nextGenerations[id]) {
+          nextGenerations[id] = {
+            ...nextGenerations[id],
             isGenerating: false,
             error: typeof error === 'string' ? error : (error?.message ?? 'Unknown error'),
             completedAt: Date.now(),
             typingMessageId: null,
-          },
-        },
-      };
+          };
+        }
+      });
+      return { generations: nextGenerations };
     });
   },
 

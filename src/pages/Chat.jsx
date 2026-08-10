@@ -455,6 +455,11 @@ const Chat = () => {
         const aiMsgId = (Date.now() + 1).toString();
         setTypingMessageId(aiMsgId);
 
+        useGenerationStore.getState().startGeneration(currentSid, {
+          loadingText: 'AISA is thinking...',
+          typingMessageId: aiMsgId,
+        });
+
         // Sanitize history: exclude messages with empty content (failed/interrupted AI responses)
         // to prevent "model output must contain output text" Gemini errors on follow-ups
         const cleanHistory = messages.filter(
@@ -474,7 +479,10 @@ const Chat = () => {
           userMsgId,
           aiMsgId,
           imageAspectRatio,
-          imageModelId
+          imageModelId,
+          (accumulatedText) => {
+            useGenerationStore.getState().setPartialResponse(currentSid, accumulatedText, aiMsgId);
+          }
         );
 
         if (responseData && (responseData.reply || responseData.imageUrl)) {
@@ -488,14 +496,22 @@ const Chat = () => {
             mode: currentMode,
             suggestions: responseData.suggestions || [],
           };
-          setMessages((prev) => [...prev, aiMsg], currentSid);
+          setMessages((prev) => {
+            const filtered = prev.filter((m) => m.id !== aiMsgId);
+            return [...filtered, aiMsg];
+          }, currentSid);
           await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
         }
       } catch (err) {
         console.error('[Chat] Send message failed:', err);
+        useGenerationStore.getState().failGeneration(currentSid, err);
         toast.error('Failed to send message');
       } finally {
+        useGenerationStore.getState().completeGeneration(currentSid);
+        useGenerationStore.getState().completeGeneration('new');
+        isLoadingRef.current = false;
         setIsLoading(false);
+        typingMessageIdRef.current = null;
         setTypingMessageId(null);
       }
     },
@@ -573,14 +589,10 @@ const Chat = () => {
         });
       }
     } else {
-      if (isLoadingRef.current) {
-        isLoadingRef.current = false;
-        setIsLoading(false);
-      }
-      if (typingMessageIdRef.current) {
-        typingMessageIdRef.current = null;
-        setTypingMessageId(null);
-      }
+      isLoadingRef.current = false;
+      setIsLoading(false);
+      typingMessageIdRef.current = null;
+      setTypingMessageId(null);
     }
   }, [gen.isGenerating, gen.partialResponse, gen.typingMessageId, setMessages]);
 

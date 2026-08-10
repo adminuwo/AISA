@@ -50,7 +50,13 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
   const prevMessagesCountRef = useRef(messages.length);
   const prevIsLoadingRef = useRef(isLoading);
 
-  const isTypingIndicatorActive = isLoading && typingMessageId;
+  const hasModelResponseStarted = messages.some(
+    (m) =>
+      (m.id === typingMessageId || m.role === 'model') &&
+      ((m.content || m.text || '').trim().length > 0 || m.imageUrl)
+  );
+
+  const isTypingIndicatorActive = isLoading && typingMessageId && !hasModelResponseStarted;
 
   // Scroll to align the latest user prompt at the top of the chat area
   const scrollToLatestUserPrompt = useCallback(() => {
