@@ -217,17 +217,7 @@ export const useDashboardState = ({ isOpen, userPlan, isPremium, isAdmin } = {})
     customMessage: '',
   });
 
-  useEffect(() => {
-    const handler = e => {
-      setLocalPremiumModal({
-        open: true,
-        toolName: e.detail?.toolName || 'Premium Feature',
-        customMessage: e.detail?.customMessage || '',
-      });
-    };
-    window.addEventListener('premium_required', handler);
-    return () => window.removeEventListener('premium_required', handler);
-  }, []);
+  // Global CreditUpsellPopup handles premium_required events
 
   // Form State
   const [isSaving, setIsSaving] = useState(false);
@@ -829,11 +819,17 @@ export const useDashboardState = ({ isOpen, userPlan, isPremium, isAdmin } = {})
         throw new Error(res.message || 'Server returned failure');
       }
     } catch (error) {
-      console.error('[Onboarding] Complete onboarding failed:', error?.response?.data || error?.message || error);
+      console.error(
+        '[Onboarding] Complete onboarding failed:',
+        error?.response?.data || error?.message || error
+      );
       const serverMsg = error?.response?.data?.message || error?.message;
 
       // Auto-retry once on network/timeout errors
-      if (retryCount === 0 && (error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK' || !serverMsg)) {
+      if (
+        retryCount === 0 &&
+        (error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK' || !serverMsg)
+      ) {
         console.warn('[Onboarding] Auto-retrying launch...');
         setIsOnboardingSaving(false);
         setTimeout(() => handleCompleteOnboarding(null, 1), 2000);
@@ -7180,7 +7176,6 @@ export const useDashboardState = ({ isOpen, userPlan, isPremium, isAdmin } = {})
     }
   };
 
-  
   return {
     searchParams,
     setSearchParams,
@@ -7393,6 +7388,6 @@ export const useDashboardState = ({ isOpen, userPlan, isPremium, isAdmin } = {})
     renderOnboardingGuideModal,
     renderOnboardingUI,
     renderDirectSynthesisPage,
-    renderContent
+    renderContent,
   };
 };

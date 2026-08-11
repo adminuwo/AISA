@@ -127,7 +127,6 @@ import { copyText } from '../utils/clipboard';
 import { getUserData, clearUser } from '../userStore/userData';
 import { usePersonalization } from '../context/PersonalizationContext';
 import OnboardingModal from '../Components/OnboardingModal';
-import PremiumUpsellModal from '../Components/PremiumUpsellModal';
 const MagicImageEditModal = lazy(() => import('../Tools/AI_Image_Generator/MagicImageEditModal').catch(() => ({ default: () => null })));
 const AiSocialMediaDashboard = lazy(() => import('../Tools/AI_Social_Media/AiSocialMediaDashboard').catch(() => ({ default: () => null })));
 import DeleteConfirmModal from '../Components/DeleteConfirmModal';
@@ -1413,7 +1412,6 @@ const Chat = () => {
           setPitch={setAudioPitch}
         />
         <Suspense fallback={null}>
-          <PremiumUpsellModal />
           {renderNewCaseModal()}
           <MagicToolSettingsCard
             isOpen={isMagicSettingsOpen}

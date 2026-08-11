@@ -182,9 +182,14 @@ const CreditUpsellPopup = () => {
               {popupData?.title || 'Plan Limit Reached'}
             </h3>
             <p className="text-white/50 text-sm mb-6 leading-relaxed">
-              {popupData?.description}{' '}
-              <span className="text-amber-400 font-bold">Upgrade your plan</span> to get higher
-              limits and unlock all premium AISA features instantly.
+              {popupData?.description}
+              {!popupData?.description?.includes('Upgrade your plan') && (
+                <>
+                  {' '}
+                  <span className="text-amber-400 font-bold">Upgrade your plan</span> to get higher
+                  limits and unlock all premium AISA features instantly.
+                </>
+              )}
             </p>
 
             {/* Feature bullets */}
