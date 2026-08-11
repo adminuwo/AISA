@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   motion,
   AnimatePresence,
@@ -124,11 +125,13 @@ const MagicToolSettingsCard = ({
     'bg-purple-50/90',
   ];
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[1200] flex items-center justify-center p-3 sm:p-4 bg-slate-950/40 dark:bg-black/60 backdrop-blur-[6px] sm:backdrop-blur-[8px] overflow-y-auto lg:!left-[280px] modal-open-indicator"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 dark:bg-black/80 backdrop-blur-md overflow-y-auto modal-open-indicator"
           onClick={e => e.target === e.currentTarget && onClose()}
         >
           {/* Main animated container */}
@@ -417,7 +420,8 @@ const MagicToolSettingsCard = ({
           }
         }
       `}</style>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

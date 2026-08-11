@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -140,7 +141,9 @@ const CreditUpsellPopup = () => {
   const IconComponent = ICON_MAP[popupData?.action] || AlertTriangle;
   const isExpired = popupData?.code === 'PLAN_EXPIRED';
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -224,7 +227,8 @@ const CreditUpsellPopup = () => {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
