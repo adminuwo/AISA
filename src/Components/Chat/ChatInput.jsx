@@ -457,7 +457,13 @@ export const ChatInput = ({
                       className="flex items-center gap-1.5 text-[10px] font-extrabold text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-white transition-colors"
                     >
                       <Sliders size={11} strokeWidth={2.5} />
-                      <span>{audioVoiceName?.replace(/^.*?-/, '') || 'Voice Settings'}</span>
+                      <span>
+                        {audioVoiceName
+                          ? audioVoiceName.includes('-Chirp3-HD-')
+                            ? audioVoiceName.split('-Chirp3-HD-')[1]
+                            : audioVoiceName.split('-').pop()
+                          : 'Voice Settings'}
+                      </span>
                       <ChevronDown size={11} />
                     </button>
                     <button
@@ -1407,17 +1413,17 @@ export const ChatInput = ({
                         e.preventDefault();
                         e.stopPropagation();
                         if (gen?.isGenerating || isLoading) return;
+                        const textToSend = (inputValue || longTextPreview || '').trim();
                         if (
-                          inputValue.trim() ||
-                          (filePreviews && filePreviews.length > 0) ||
-                          longTextPreview
+                          textToSend ||
+                          (filePreviews && filePreviews.length > 0)
                         ) {
                           if (typeof setIsInputExpanded === 'function') {
                             setIsInputExpanded(false);
                           }
                           // Reset height synchronously before React re-renders
                           resetTextareaHeight();
-                          handleSendMessage && handleSendMessage(e);
+                          handleSendMessage && handleSendMessage(e, textToSend);
                         }
                       }
                     }}
@@ -1540,17 +1546,17 @@ export const ChatInput = ({
                           !longTextPreview)
                       }
                       onClick={e => {
+                        const textToSend = (inputValue || longTextPreview || '').trim();
                         if (
                           !gen?.isGenerating &&
                           !isLoading &&
-                          (inputValue.trim() ||
-                            (filePreviews && filePreviews.length > 0) ||
-                            longTextPreview)
+                          (textToSend ||
+                            (filePreviews && filePreviews.length > 0))
                         ) {
                           e.preventDefault();
                           if (typeof setIsInputExpanded === 'function') setIsInputExpanded(false);
                           resetTextareaHeight();
-                          handleSendMessage && handleSendMessage(e);
+                          handleSendMessage && handleSendMessage(e, textToSend);
                         }
                       }}
                       onMouseEnter={() => setIsSendHovered && setIsSendHovered(true)}

@@ -415,8 +415,8 @@ const Chat = () => {
   const handleSendMessage = useCallback(
     async (e, overrideText = null) => {
       if (e) e.preventDefault();
-      const messageText = overrideText !== null ? overrideText : inputValue;
-      if (!messageText.trim() && filePreviews.length === 0) return;
+      const messageText = (overrideText !== null ? overrideText : (inputValue || longTextPreview || '')).trim();
+      if (!messageText && filePreviews.length === 0) return;
 
       const user = getUserData();
       if (!user?.token) {
@@ -426,6 +426,7 @@ const Chat = () => {
 
       setIsLoading(true);
       setInputValue('');
+      setLongTextPreview(null);
       setIsInputExpanded(false);
       const userMsgId = Date.now().toString();
       const userMsg = {
@@ -445,8 +446,8 @@ const Chat = () => {
       setMessages((prev) => [...prev, userMsg]);
       handleRemoveFile();
 
+      let currentSid = activeSessionId;
       try {
-        let currentSid = activeSessionId;
         if (currentSid === 'new') {
           currentSid = await chatStorageService.createSession(currentProjectId);
           useGenerationStore.getState().transitionChatId('new', currentSid);
@@ -457,6 +458,54 @@ const Chat = () => {
         });
 
         const aiMsgId = (Date.now() + 1).toString();
+
+        // Audio Convert is a text-to-speech tool, not a chat prompt.  Previously
+        // it went through generateChatResponse(), so users heard a model answer
+        // instead of the text they pasted.
+        if (currentMode === MODES.AUDIO_CONVERT) {
+          const audioMsg = {
+            id: aiMsgId,
+            role: 'model',
+            content: 'Generating your audio…',
+            speechText: messageText,
+            timestamp: new Date(),
+            projectId: currentProjectId,
+            mode: MODES.AUDIO_CONVERT,
+            suggestions: [],
+          };
+
+          setMessages((prev) => [...prev, audioMsg]);
+          await chatStorageService.saveMessage(currentSid, audioMsg, null, currentProjectId);
+          speakResponse(messageText, null, aiMsgId, [], null, null, null, audioBlob => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const encodedAudio = String(reader.result || '').split(',')[1];
+              if (!encodedAudio) return;
+
+              const readyAudioMsg = {
+                ...audioMsg,
+                content: 'Your audio is ready.',
+                conversion: {
+                  file: encodedAudio,
+                  mimeType: audioBlob.type || 'audio/wav',
+                  fileName: 'AISA-generated-audio.wav',
+                  fileSize: `${Math.max(1, Math.round(audioBlob.size / 1024))} KB`,
+                  charCount: messageText.length,
+                },
+              };
+
+              setMessages(prev =>
+                prev.map(message => (message.id === aiMsgId ? readyAudioMsg : message))
+              );
+              chatStorageService
+                .saveMessage(currentSid, readyAudioMsg, null, currentProjectId)
+                .catch(err => console.error('[Chat] Failed to save generated audio:', err));
+            };
+            reader.readAsDataURL(audioBlob);
+          });
+          return;
+        }
+
         setTypingMessageId(aiMsgId);
 
         useGenerationStore.getState().startGeneration(currentSid, {
@@ -526,9 +575,14 @@ const Chat = () => {
             setTypingMessageId(null);
 
             useCreditStore.getState().incrementLocal('chat');
-            useCreditStore.getState().syncCredits();
-
             await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
+
+            // Auto-trigger voice audio playback in AUDIO CONVERT or VOICE mode
+            if (replyText && currentMode === 'VOICE') {
+              setTimeout(() => {
+                speakResponse(replyText, null, aiMsgId, []);
+              }, 100);
+            }
           }
         }
       } catch (err) {
@@ -796,6 +850,9 @@ const Chat = () => {
   const [isMagicSettingsOpen, setIsMagicSettingsOpen] = useState(false);
   const { speakingMessageId, isPaused, speakResponse, stopSpeaking, pauseSpeaking, resumeSpeaking } = useTTS({
     currentLang,
+    voiceName: audioVoiceName,
+    speed: audioSpeed,
+    pitch: audioPitch,
   });
 
   const handleVoiceTranscriptComplete = useCallback((text) => {

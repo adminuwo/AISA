@@ -5,7 +5,7 @@ import { apis } from '../types';
 import { getUserData } from '../userStore/userData';
 import { cleanTextForTTS } from '../utils/chatHelpers';
 
-export const useTTS = ({ currentLang }) => {
+export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) => {
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const audioRef = useRef(null);
@@ -65,11 +65,44 @@ export const useTTS = ({ currentLang }) => {
   }, []);
 
   const executeSpeak = useCallback(
-    async (text, language, msgId, attachments = []) => {
+    async (
+      text,
+      language,
+      msgId,
+      attachments = [],
+      reqVoiceName = null,
+      reqSpeed = null,
+      reqPitch = null,
+      onAudioReady = null
+    ) => {
       return new Promise(async resolve => {
         currentSpeechResolverRef.current = resolve;
         try {
           let audioBlob = null;
+          let activeVoiceName = (typeof reqVoiceName === 'string' && reqVoiceName) ? reqVoiceName : (typeof voiceName === 'string' && voiceName ? voiceName : 'en-US-Chirp3-HD-Autonoe');
+          if (typeof activeVoiceName === 'string' && activeVoiceName.startsWith('XA-Chirp3-HD-')) {
+            activeVoiceName = activeVoiceName.replace(/^XA-Chirp3-HD-/, 'ar-XA-Chirp3-HD-');
+          }
+          const activeSpeed = reqSpeed !== null && reqSpeed !== undefined ? reqSpeed : speed;
+          const activePitch = reqPitch !== null && reqPitch !== undefined ? reqPitch : pitch;
+
+          // Extract language code from voiceName if available
+          let targetLang = 'en-US';
+          if (activeVoiceName && activeVoiceName.includes('-Chirp3-HD-')) {
+            targetLang = activeVoiceName.split('-Chirp3-HD-')[0];
+            if (targetLang === 'XA') targetLang = 'ar-XA';
+          } else {
+            const langMap = {
+              Hindi: 'hi-IN',
+              English: 'en-US',
+              Spanish: 'es-ES',
+              French: 'fr-FR',
+              German: 'de-DE',
+              Japanese: 'ja-JP',
+            };
+            targetLang = langMap[language || currentLang] || 'en-US';
+          }
+
           const readableAttachment =
             attachments && attachments.length > 0
               ? attachments.find(
@@ -103,8 +136,10 @@ export const useTTS = ({ currentLang }) => {
                 {
                   fileData: base64Data,
                   mimeType: readableAttachment.type || 'application/pdf',
-                  languageCode: null,
-                  gender: 'FEMALE',
+                  languageCode: targetLang,
+                  voiceName: activeVoiceName,
+                  speakingRate: activeSpeed,
+                  pitch: activePitch,
                   introText: headerText,
                 },
                 {
@@ -114,7 +149,7 @@ export const useTTS = ({ currentLang }) => {
               );
 
               audioBlob = new Blob([response.data], {
-                type: response.headers['content-type'] || 'audio/mpeg',
+                type: response.headers['content-type'] || 'audio/wav',
               });
               toast.dismiss('voice-loading');
             } else {
@@ -129,31 +164,24 @@ export const useTTS = ({ currentLang }) => {
                 return;
               }
 
-              const langMap = {
-                Hindi: 'hi-IN',
-                English: 'en-US',
-                Spanish: 'es-ES',
-                French: 'fr-FR',
-                German: 'de-DE',
-                Japanese: 'ja-JP',
-              };
-              const targetLang = langMap[language || currentLang] || 'en-US';
-
+              const token = getUserData()?.token || localStorage.getItem('token');
               const response = await axios.post(
                 apis.synthesize,
                 {
                   text: cleanText,
                   languageCode: targetLang,
-                  gender: 'FEMALE',
+                  voiceName: activeVoiceName,
+                  speakingRate: activeSpeed,
+                  pitch: activePitch,
                 },
                 {
                   responseType: 'arraybuffer',
-                  headers: { Authorization: `Bearer ${getUserData()?.token}` },
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
                 }
               );
 
               audioBlob = new Blob([response.data], {
-                type: response.headers['content-type'] || 'audio/mpeg',
+                type: response.headers['content-type'] || 'audio/wav',
               });
             }
 
@@ -163,6 +191,15 @@ export const useTTS = ({ currentLang }) => {
           }
 
           if (!audioBlob) {
+            resolve();
+            return;
+          }
+
+          // Audio Convert renders its own player. Hand the generated audio back
+          // to that player instead of creating a second, hidden browser player.
+          if (typeof onAudioReady === 'function') {
+            onAudioReady(audioBlob);
+            currentSpeechResolverRef.current = null;
             resolve();
             return;
           }
@@ -202,7 +239,7 @@ export const useTTS = ({ currentLang }) => {
         }
       });
     },
-    [currentLang]
+    [currentLang, voiceName, speed, pitch]
   );
 
   const processQueue = useCallback(async () => {
@@ -217,7 +254,11 @@ export const useTTS = ({ currentLang }) => {
       currentItem.text,
       currentItem.language,
       currentItem.msgId,
-      currentItem.attachments
+      currentItem.attachments,
+      currentItem.voiceName,
+      currentItem.speed,
+      currentItem.pitch,
+      currentItem.onAudioReady
     );
 
     speechQueueRef.current.shift();
@@ -232,7 +273,16 @@ export const useTTS = ({ currentLang }) => {
   }, [executeSpeak]);
 
   const speakResponse = useCallback(
-    (text, language, msgId, attachments = []) => {
+    (
+      text,
+      language,
+      msgId,
+      attachments = [],
+      reqVoiceName = null,
+      reqSpeed = null,
+      reqPitch = null,
+      onAudioReady = null
+    ) => {
       if (speakingMessageId === msgId) {
         if (isPaused) {
           resumeSpeaking();
@@ -243,7 +293,16 @@ export const useTTS = ({ currentLang }) => {
       }
 
       stopSpeaking();
-      speechQueueRef.current = [{ text, language, msgId, attachments }];
+      speechQueueRef.current = [{
+        text,
+        language,
+        msgId,
+        attachments,
+        voiceName: reqVoiceName,
+        speed: reqSpeed,
+        pitch: reqPitch,
+        onAudioReady,
+      }];
       processQueue();
     },
     [speakingMessageId, isPaused, resumeSpeaking, pauseSpeaking, stopSpeaking, processQueue]

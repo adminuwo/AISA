@@ -348,8 +348,9 @@ const CustomAudioPlayer = ({ src, file, mimeType, fileName, fileSize, charCount 
     <div
       className="rounded-2xl overflow-hidden mb-2 p-3.5 w-full text-white"
       style={{
-        background: 'linear-gradient(135deg, rgba(20,20,40,0.95) 0%, rgba(30,20,60,0.95) 100%)',
-        border: '1px solid rgba(139,92,246,0.2)',
+        background: 'linear-gradient(135deg, #3b0764 0%, #7e22ce 56%, #6d28d9 100%)',
+        border: '1px solid rgba(216,180,254,0.35)',
+        boxShadow: '0 12px 28px rgba(109,40,217,0.22)',
       }}
     >
       <audio ref={audioRef} src={audioUrl} preload="metadata" style={{ display: 'none' }} />
@@ -1327,11 +1328,10 @@ const ChatBubble = React.memo(
                               <button
                                 onClick={() =>
                                   speakResponse(
-                                    msg.content,
+                                    msg.speechText || msg.content || msg.text,
                                     null,
                                     msgIdentifier,
-                                    msg.attachments || [],
-                                    true
+                                    msg.attachments || []
                                   )
                                 }
                                 className={`transition-colors p-1 rounded ${isSpeaking ? 'text-primary bg-primary/10' : 'text-subtext hover:text-primary hover:bg-surface-hover'}`}
