@@ -114,8 +114,20 @@ export const generateChatResponse = async (
     if (onTokenChunk && !requiresCompletedResponse) {
       try {
         const streamRes = await generateChatResponseStream(
-          history, currentMessage, systemInstruction, attachments, language,
-          onTokenChunk, abortSignal, mode, sessionId, projectId, userMsgId, aiMsgId, aspectRatio, modelId
+          history,
+          currentMessage,
+          systemInstruction,
+          attachments,
+          language,
+          onTokenChunk,
+          abortSignal,
+          mode,
+          sessionId,
+          projectId,
+          userMsgId,
+          aiMsgId,
+          aspectRatio,
+          modelId
         );
         if (streamRes && (streamRes.reply || streamRes.text)) {
           return streamRes;
@@ -148,17 +160,18 @@ export const generateChatResponse = async (
     if (error.response?.status === 403) {
       const code = error.response?.data?.code;
       const message = error.response?.data?.message || error.response?.data?.error;
+      const toolName = error.response?.data?.toolName || mode || 'Deep Search';
 
-      if (code === 'OUT_OF_CREDITS') {
-        window.dispatchEvent(new Event('out_of_credits'));
-        return { error: 'OUT_OF_CREDITS', message };
-      }
-      if (code === 'PREMIUM_ONLY') {
-        window.dispatchEvent(
-          new CustomEvent('premium_required', { detail: { toolName: 'this feature' } })
-        );
-        return { error: 'PREMIUM_ONLY', message };
-      }
+      window.dispatchEvent(
+        new CustomEvent('quota_exceeded', {
+          detail: {
+            code: code || 'PLAN_RESTRICTED',
+            toolName,
+            customMessage: message,
+          },
+        })
+      );
+      throw error;
     }
 
     if (error.response?.status === 429) {
@@ -285,7 +298,9 @@ export const generateChatResponseStream = async (
     modelId,
   };
 
-  const streamEndpoint = apis.chatAgentStream || (apis.chatAgent.endsWith('/') ? `${apis.chatAgent}stream` : `${apis.chatAgent}/stream`);
+  const streamEndpoint =
+    apis.chatAgentStream ||
+    (apis.chatAgent.endsWith('/') ? `${apis.chatAgent}stream` : `${apis.chatAgent}/stream`);
 
   const response = await fetch(streamEndpoint, {
     method: 'POST',
@@ -295,6 +310,20 @@ export const generateChatResponseStream = async (
   });
 
   if (!response.ok || !response.body) {
+    if (response.status === 403) {
+      try {
+        const errorData = await response.json();
+        window.dispatchEvent(
+          new CustomEvent('quota_exceeded', {
+            detail: {
+              code: errorData.code || 'PLAN_RESTRICTED',
+              toolName: errorData.toolName || mode || 'Deep Search',
+              customMessage: errorData.message || errorData.error,
+            },
+          })
+        );
+      } catch (e) {}
+    }
     throw new Error(`SSE stream HTTP error: ${response.status}`);
   }
 

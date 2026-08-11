@@ -134,6 +134,7 @@ import { getSubscriptionDetails } from '../services/pricingService';
 import IntentSuggestionBanner from '../Components/IntentSuggestionBanner';
 import { detectIntent, mapModeToToolState } from '../services/intentService';
 import LoginRequiredModal from '../Components/LoginRequiredModal';
+import useIsFreePlan, { triggerUpgradeModal } from '../hooks/useIsFreePlan';
 
 import FuturisticToolCards from '../landingpage/FuturisticToolCards';
 import ModernDashboard from '../landingpage/ModernDashboard';
@@ -242,6 +243,8 @@ const Chat = () => {
   const user = getUserData();
   const isAdmin = user?.token && (user?.role === 'admin' || user?.email === 'admin@uwo24.com');
 
+  const isFreePlan = useIsFreePlan();
+
   const checkPremiumTool = useCallback(
     (toolName) => {
       if (!user?.token) {
@@ -249,21 +252,16 @@ const Chat = () => {
         return false;
       }
       if (user.email === 'admin@uwo24.com' || isAdminUser) return true;
-      if (isPremiumUser === null) return true;
-      if (!isPremiumUser) {
-        window.dispatchEvent(
-          new CustomEvent('premium_required', {
-            detail: {
-              toolName,
-              customMessage: `${toolName} is not available on the Free plan. Please upgrade to unlock all tools.`,
-            },
-          })
+      if (isFreePlan || isPremiumUser === false) {
+        triggerUpgradeModal(
+          toolName,
+          `${toolName} is not available on your current plan. Upgrade your plan to access.`
         );
         return false;
       }
       return true;
     },
-    [user, isAdminUser, isPremiumUser]
+    [user, isAdminUser, isFreePlan, isPremiumUser]
   );
 
   const handleCopyImage = useCallback(async (imageUrl) => {
@@ -420,6 +418,25 @@ const Chat = () => {
       const user = getUserData();
       if (!user?.token) {
         window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName: 'Chat' } }));
+        return;
+      }
+
+      const normMode = (currentMode || '').toUpperCase();
+      const isRestrictedMode = [
+        'DEEP_SEARCH',
+        'WEB_SEARCH',
+        'SEARCH',
+        'CODE_WRITER',
+        'CODING_HELP',
+        'LEGAL_TOOLKIT',
+      ].includes(normMode);
+
+      if (isRestrictedMode && isFreePlan && !isAdmin) {
+        const modeLabel = (normMode === 'DEEP_SEARCH' || normMode === 'DEEPSEARCH') ? 'Deep Search' : 'Web Search';
+        triggerUpgradeModal(
+          modeLabel,
+          `${modeLabel} is not available on your current plan. Upgrade your plan to access in-depth research and tools.`
+        );
         return;
       }
 
@@ -691,6 +708,7 @@ const Chat = () => {
     (toolId) => {
       switch (toolId) {
         case 'legal':
+          if (!checkPremiumTool('AI Legal')) break;
           activateMode(MODES.LEGAL_TOOLKIT);
           setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
           setLegalView('DASHBOARD');
@@ -698,11 +716,13 @@ const Chat = () => {
           toast.success('AI Legal Enabled ⚖️');
           break;
         case 'ai_cashflow':
+          if (!checkPremiumTool('AI CashFlow')) break;
           activateMode(MODES.CASHFLOW);
           setIsStockModalOpen(true);
           toast.success('AI CashFlow Explorer Active');
           break;
         case 'aiad_agent':
+          if (!checkPremiumTool('AI Ad Agent')) break;
           setIsSocialMediaDashboardOpen(true);
           toast.success('AI ADS™ Active');
           break;
@@ -711,6 +731,7 @@ const Chat = () => {
           toast.success('Image Generation Mode Enabled');
           break;
         case 'edit_image':
+          if (!checkPremiumTool('Edit Image')) break;
           activateMode(MODES.IMAGE_EDIT);
           toast.success('Image Editing Enabled');
           break;
@@ -719,14 +740,17 @@ const Chat = () => {
           toast.success('Convert to Audio Mode Active');
           break;
         case 'web_search':
+          if (!checkPremiumTool('Web Search')) break;
           activateMode(MODES.WEB_SEARCH);
           toast.success('Real-Time Web Search Active');
           break;
         case 'deep_search':
+          if (!checkPremiumTool('Deep Search')) break;
           activateMode(MODES.DEEP_SEARCH);
           toast.success('Deep Search Mode Enabled');
           break;
         case 'code':
+          if (!checkPremiumTool('Code Writer')) break;
           activateMode(MODES.CODING_HELP);
           toast.success('Code Writer Mode Enabled');
           break;
@@ -744,7 +768,7 @@ const Chat = () => {
           break;
       }
     },
-    [activateMode, navigate, setLegalView, setSelectedLegalTool, uploadInputRef]
+    [activateMode, checkPremiumTool, navigate, setLegalView, setSelectedLegalTool, uploadInputRef]
   );
 
   const { handleToolUsage } = useLegalToolCredits();
