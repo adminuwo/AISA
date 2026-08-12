@@ -421,14 +421,12 @@ const Chat = () => {
         return;
       }
 
-      const normMode = (currentMode || '').toUpperCase();
       const isRestrictedMode = [
         'DEEP_SEARCH',
         'WEB_SEARCH',
         'SEARCH',
         'CODE_WRITER',
         'CODING_HELP',
-        'LEGAL_TOOLKIT',
       ].includes(normMode);
 
       if (isRestrictedMode && isFreePlan && !isAdmin) {
@@ -708,7 +706,6 @@ const Chat = () => {
     (toolId) => {
       switch (toolId) {
         case 'legal':
-          if (!checkPremiumTool('AI Legal')) break;
           activateMode(MODES.LEGAL_TOOLKIT);
           setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
           setLegalView('DASHBOARD');
@@ -716,13 +713,11 @@ const Chat = () => {
           toast.success('AI Legal Enabled ⚖️');
           break;
         case 'ai_cashflow':
-          if (!checkPremiumTool('AI CashFlow')) break;
           activateMode(MODES.CASHFLOW);
           setIsStockModalOpen(true);
           toast.success('AI CashFlow Explorer Active');
           break;
         case 'aiad_agent':
-          if (!checkPremiumTool('AI Ad Agent')) break;
           setIsSocialMediaDashboardOpen(true);
           toast.success('AI ADS™ Active');
           break;

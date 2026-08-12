@@ -1189,7 +1189,6 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (!checkPremiumTool('AI CashFlow')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isCashFlowMode;
                           if (setCurrentMode)
@@ -1224,7 +1223,6 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (!checkPremiumTool('AI Legal')) return;
                           setIsToolsMenuOpen(false);
 
                           const isCurrentlyLegal = currentMode === MODES.LEGAL_TOOLKIT;
@@ -1274,7 +1272,6 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (!checkPremiumTool('AI Ad Agent')) return;
                           setIsToolsMenuOpen(false);
                           setIsSocialMediaDashboardOpen(true);
                           setActiveTool('aiad_agent');
