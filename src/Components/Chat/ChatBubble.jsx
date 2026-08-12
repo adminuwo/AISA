@@ -494,7 +494,7 @@ const ChatBubble = React.memo(
       !!msg.imageUrl ||
       !!msg.videoUrl;
 
-    // System log row (tool activation banners)
+    // System log row (tool activationBanners)
     if (msg.isSystemLog) {
       return (
         <div className="w-full flex justify-center">
