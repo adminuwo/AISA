@@ -79,7 +79,12 @@ export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) 
         currentSpeechResolverRef.current = resolve;
         try {
           let audioBlob = null;
-          let activeVoiceName = (typeof reqVoiceName === 'string' && reqVoiceName) ? reqVoiceName : (typeof voiceName === 'string' && voiceName ? voiceName : 'en-US-Chirp3-HD-Autonoe');
+          let activeVoiceName =
+            typeof reqVoiceName === 'string' && reqVoiceName
+              ? reqVoiceName
+              : typeof voiceName === 'string' && voiceName
+                ? voiceName
+                : 'en-US-Chirp3-HD-Autonoe';
           if (typeof activeVoiceName === 'string' && activeVoiceName.startsWith('XA-Chirp3-HD-')) {
             activeVoiceName = activeVoiceName.replace(/^XA-Chirp3-HD-/, 'ar-XA-Chirp3-HD-');
           }
@@ -293,16 +298,18 @@ export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) 
       }
 
       stopSpeaking();
-      speechQueueRef.current = [{
-        text,
-        language,
-        msgId,
-        attachments,
-        voiceName: reqVoiceName,
-        speed: reqSpeed,
-        pitch: reqPitch,
-        onAudioReady,
-      }];
+      speechQueueRef.current = [
+        {
+          text,
+          language,
+          msgId,
+          attachments,
+          voiceName: reqVoiceName,
+          speed: reqSpeed,
+          pitch: reqPitch,
+          onAudioReady,
+        },
+      ];
       processQueue();
     },
     [speakingMessageId, isPaused, resumeSpeaking, pauseSpeaking, stopSpeaking, processQueue]

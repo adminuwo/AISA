@@ -24,7 +24,7 @@ const StandaloneAdsAppBanner = ({ onClose }) => {
               <Sparkles className="w-8 h-8 text-white" />
             </div>
           </div>
-          
+
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -34,11 +34,13 @@ const StandaloneAdsAppBanner = ({ onClose }) => {
                 Under Progress
               </span>
             </div>
-            
+
             <p className="text-slate-300 mb-4 max-w-2xl text-sm leading-relaxed">
-              We're building the ultimate autonomous advertising engine. Soon, you'll be able to instantly deploy these campaigns directly to Meta & Google, with live pixel tracking and autonomous ROAS optimization.
+              We're building the ultimate autonomous advertising engine. Soon, you'll be able to
+              instantly deploy these campaigns directly to Meta & Google, with live pixel tracking
+              and autonomous ROAS optimization.
             </p>
-            
+
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2 text-xs text-indigo-200 bg-indigo-950/50 px-3 py-1.5 rounded-lg border border-indigo-500/20">
                 <Target className="w-3.5 h-3.5" />
@@ -54,7 +56,7 @@ const StandaloneAdsAppBanner = ({ onClose }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex-shrink-0 mt-4 md:mt-0">
             <button className="flex items-center gap-2 px-6 py-3 bg-white text-indigo-900 font-semibold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg">
               Get Notified
@@ -62,7 +64,7 @@ const StandaloneAdsAppBanner = ({ onClose }) => {
             </button>
           </div>
         </div>
-        
+
         {/* Decorative background elements */}
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500/10 blur-3xl rounded-full pointer-events-none" />

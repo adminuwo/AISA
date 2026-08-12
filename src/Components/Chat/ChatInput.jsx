@@ -448,7 +448,7 @@ export const ChatInput = ({
                     <div className="w-px h-3.5 bg-violet-200 dark:bg-violet-700/80 mx-0.5" />
                     <button
                       type="button"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         if (setIsVoiceSettingsOpen) {
                           setIsVoiceSettingsOpen(!isVoiceSettingsOpen);
@@ -1411,10 +1411,7 @@ export const ChatInput = ({
                         e.stopPropagation();
                         if (gen?.isGenerating || isLoading) return;
                         const textToSend = (inputValue || longTextPreview || '').trim();
-                        if (
-                          textToSend ||
-                          (filePreviews && filePreviews.length > 0)
-                        ) {
+                        if (textToSend || (filePreviews && filePreviews.length > 0)) {
                           if (typeof setIsInputExpanded === 'function') {
                             setIsInputExpanded(false);
                           }
@@ -1547,8 +1544,7 @@ export const ChatInput = ({
                         if (
                           !gen?.isGenerating &&
                           !isLoading &&
-                          (textToSend ||
-                            (filePreviews && filePreviews.length > 0))
+                          (textToSend || (filePreviews && filePreviews.length > 0))
                         ) {
                           e.preventDefault();
                           if (typeof setIsInputExpanded === 'function') setIsInputExpanded(false);

@@ -51,12 +51,12 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
   const prevIsLoadingRef = useRef(isLoading);
 
   const currentGeneratingMsg = typingMessageId
-    ? messages.find((m) => m.id === typingMessageId)
+    ? messages.find(m => m.id === typingMessageId)
     : null;
 
   const hasCurrentModelResponseStarted = currentGeneratingMsg
-    ? ((currentGeneratingMsg.content || currentGeneratingMsg.text || '').trim().length > 0 ||
-        Boolean(currentGeneratingMsg.imageUrl))
+    ? (currentGeneratingMsg.content || currentGeneratingMsg.text || '').trim().length > 0 ||
+      Boolean(currentGeneratingMsg.imageUrl)
     : false;
 
   const isTypingIndicatorActive =
@@ -159,7 +159,10 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
       ))}
 
       {isTypingIndicatorActive && (
-        <div className="chatgpt-message-row ai-row group mb-6 sm:mb-8" data-message-role="model-thinking">
+        <div
+          className="chatgpt-message-row ai-row group mb-6 sm:mb-8"
+          data-message-role="model-thinking"
+        >
           <div className="chatgpt-message-content select-text">
             <div className="chatgpt-avatar-container w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               <div className="w-8 h-8 rounded-full flex items-center justify-center">

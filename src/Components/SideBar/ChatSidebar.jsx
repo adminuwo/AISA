@@ -102,7 +102,10 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const targetProj = searchQuery || currentProjectId === 'default' || currentProjectId === 'all' ? null : currentProjectId;
+        const targetProj =
+          searchQuery || currentProjectId === 'default' || currentProjectId === 'all'
+            ? null
+            : currentProjectId;
         const data = await chatStorageService.getSessions(targetProj);
         if (Array.isArray(data)) {
           setSessions(data);

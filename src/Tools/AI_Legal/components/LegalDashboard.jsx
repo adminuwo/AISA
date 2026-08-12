@@ -4548,7 +4548,9 @@ const CaseDetailView = ({
     setCaseData(prev => {
       const existing = prev.savedCitations || [];
       const matches = c =>
-        citation.type === 'statute' ? c.section === citation.section : c.citation === citation.citation;
+        citation.type === 'statute'
+          ? c.section === citation.section
+          : c.citation === citation.citation;
       const isSaved = existing.some(matches);
       const updated = isSaved ? existing.filter(c => !matches(c)) : [...existing, citation];
       toast.success(isSaved ? 'Citation removed from bookmarks' : 'Citation bookmarked');

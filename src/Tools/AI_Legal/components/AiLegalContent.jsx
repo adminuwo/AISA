@@ -1036,7 +1036,10 @@ const AiLegalContent = ({
                         </span>
                       ) : (
                         <span className="text-violet-600 dark:text-violet-400 flex items-center gap-1">
-                          Open <span className="transform group-hover:translate-x-1 transition-transform duration-300">→</span>
+                          Open{' '}
+                          <span className="transform group-hover:translate-x-1 transition-transform duration-300">
+                            →
+                          </span>
                         </span>
                       )}
                     </div>

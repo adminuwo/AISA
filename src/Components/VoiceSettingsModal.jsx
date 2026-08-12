@@ -128,7 +128,12 @@ export const CHIRP3_MALE_VOICES = [
   { id: 'Fenrir', name: 'Fenrir', desc: 'Deep & authoritative', tag: 'Authoritative' },
   { id: 'Iapetus', name: 'Iapetus', desc: 'Rich & expressive voice', tag: 'Rich' },
   { id: 'Orus', name: 'Orus', desc: 'Strong & engaging speaker', tag: 'Strong' },
-  { id: 'Rasalgethi', name: 'Rasalgethi', desc: 'Warm, conversational tone', tag: 'Conversational' },
+  {
+    id: 'Rasalgethi',
+    name: 'Rasalgethi',
+    desc: 'Warm, conversational tone',
+    tag: 'Conversational',
+  },
   { id: 'Sadachbia', name: 'Sadachbia', desc: 'Bold & professional', tag: 'Bold' },
   { id: 'Sadaltager', name: 'Sadaltager', desc: 'Smooth & steady presenter', tag: 'Steady' },
   { id: 'Schedar', name: 'Schedar', desc: 'Rich & classic narrator', tag: 'Classic' },
@@ -138,20 +143,92 @@ export const CHIRP3_MALE_VOICES = [
 
 const OTHER_VOICES = {
   indian: [
-    { id: 'hi-IN-Neural2-A', name: 'Ananya', gender: 'Female', desc: 'Fluent Hindi & Hinglish', lang: 'Hindi (IN)' },
-    { id: 'hi-IN-Neural2-B', name: 'Aarav', gender: 'Male', desc: 'Professional Hindi', lang: 'Hindi (IN)' },
-    { id: 'en-IN-Neural2-A', name: 'Priya', gender: 'Female', desc: 'Indian English Accent', lang: 'English (IN)' },
-    { id: 'en-IN-Neural2-B', name: 'Rohan', gender: 'Male', desc: 'Indian English Accent', lang: 'English (IN)' },
-    { id: 'hi-IN-Wavenet-D', name: 'Swara', gender: 'Female', desc: 'Expressive Hindi Storyteller', lang: 'Hindi (IN)' },
-    { id: 'hi-IN-Wavenet-C', name: 'Kabir', gender: 'Male', desc: 'Deep Hindi Broadcaster', lang: 'Hindi (IN)' },
+    {
+      id: 'hi-IN-Neural2-A',
+      name: 'Ananya',
+      gender: 'Female',
+      desc: 'Fluent Hindi & Hinglish',
+      lang: 'Hindi (IN)',
+    },
+    {
+      id: 'hi-IN-Neural2-B',
+      name: 'Aarav',
+      gender: 'Male',
+      desc: 'Professional Hindi',
+      lang: 'Hindi (IN)',
+    },
+    {
+      id: 'en-IN-Neural2-A',
+      name: 'Priya',
+      gender: 'Female',
+      desc: 'Indian English Accent',
+      lang: 'English (IN)',
+    },
+    {
+      id: 'en-IN-Neural2-B',
+      name: 'Rohan',
+      gender: 'Male',
+      desc: 'Indian English Accent',
+      lang: 'English (IN)',
+    },
+    {
+      id: 'hi-IN-Wavenet-D',
+      name: 'Swara',
+      gender: 'Female',
+      desc: 'Expressive Hindi Storyteller',
+      lang: 'Hindi (IN)',
+    },
+    {
+      id: 'hi-IN-Wavenet-C',
+      name: 'Kabir',
+      gender: 'Male',
+      desc: 'Deep Hindi Broadcaster',
+      lang: 'Hindi (IN)',
+    },
   ],
   global: [
-    { id: 'en-GB-Neural2-A', name: 'Charlotte', gender: 'Female', desc: 'Elegant British Accent', lang: 'English (UK)' },
-    { id: 'en-GB-Neural2-B', name: 'Oliver', gender: 'Male', desc: 'Classic British Accent', lang: 'English (UK)' },
-    { id: 'en-AU-Neural2-A', name: 'Isla', gender: 'Female', desc: 'Natural Australian Accent', lang: 'English (AU)' },
-    { id: 'en-US-Journey-F', name: 'Journey Female', gender: 'Female', desc: 'Ultra-realistic Conversational', lang: 'English (US)' },
-    { id: 'en-US-Journey-D', name: 'Journey Male', gender: 'Male', desc: 'Ultra-realistic Conversational', lang: 'English (US)' },
-    { id: 'en-US-Studio-O', name: 'Studio Master', gender: 'Female', desc: 'Broadcaster Studio Grade', lang: 'English (US)' },
+    {
+      id: 'en-GB-Neural2-A',
+      name: 'Charlotte',
+      gender: 'Female',
+      desc: 'Elegant British Accent',
+      lang: 'English (UK)',
+    },
+    {
+      id: 'en-GB-Neural2-B',
+      name: 'Oliver',
+      gender: 'Male',
+      desc: 'Classic British Accent',
+      lang: 'English (UK)',
+    },
+    {
+      id: 'en-AU-Neural2-A',
+      name: 'Isla',
+      gender: 'Female',
+      desc: 'Natural Australian Accent',
+      lang: 'English (AU)',
+    },
+    {
+      id: 'en-US-Journey-F',
+      name: 'Journey Female',
+      gender: 'Female',
+      desc: 'Ultra-realistic Conversational',
+      lang: 'English (US)',
+    },
+    {
+      id: 'en-US-Journey-D',
+      name: 'Journey Male',
+      gender: 'Male',
+      desc: 'Ultra-realistic Conversational',
+      lang: 'English (US)',
+    },
+    {
+      id: 'en-US-Studio-O',
+      name: 'Studio Master',
+      gender: 'Female',
+      desc: 'Broadcaster Studio Grade',
+      lang: 'English (US)',
+    },
   ],
 };
 
@@ -174,67 +251,67 @@ const PITCH_OPTIONS = [
 
 const SAMPLE_TEXTS = {
   // South Asian
-  'hi-IN': "नमस्ते! मैं आपके लिए बोलूंगा। यह आवाज कैसी लग रही है?",
-  'en-IN': "Hi! I’ll be speaking for you. How does it sound?",
-  'bn-IN': "হ্যালো! আমি আপনার জন্য কথা বলব। এটি কেমন শোনাচ্ছে?",
-  'gu-IN': "નમસ્તે! હું તમારા માટે બોલીશ. આ અવાજ કેવો લાગે છે?",
-  'kn-IN': "ನಮಸ್ಕಾರ! ನಾನು ನಿಮಗಾಗಿ ಮಾತನಾಡುತ್ತೇನೆ. ಇದು ಹೇಗೆ ಕೇಳಿಸುತ್ತದೆ?",
-  'ml-IN': "ഹലോ! ഞാൻ നിങ്ങൾക്കായി സംസാരിക്കും. ഇത് എങ്ങനെ കേൾക്കുന്നു?",
-  'mr-IN': "नमस्कार! मी तुमच्यासाठी बोलेन. हा आवाज कसा वाटतोय?",
-  'pa-IN': "ਸਤਿ ਸ਼੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡੇ ਲਈ ਬੋਲਾਂਗਾ। ਇਹ ਆਵਾਜ਼ ਕਿਵੇਂ ਲੱਗ ਰਹੀ ਹੈ?",
-  'ta-IN': "வணக்கம்! நான் உங்களுக்காகப் பேசுவேன். இது எப்படி கேட்கிறது?",
-  'te-IN': "నమస్కారం! నేను మీ కోసం మాట్లాడతాను. ఇది ఎలా ఉంది?",
-  'ur-IN': "سلام! میں آپ کے لیے بات کروں گا۔ یہ آواز کیسی لگ رہی ہے؟",
+  'hi-IN': 'नमस्ते! मैं आपके लिए बोलूंगा। यह आवाज कैसी लग रही है?',
+  'en-IN': 'Hi! I’ll be speaking for you. How does it sound?',
+  'bn-IN': 'হ্যালো! আমি আপনার জন্য কথা বলব। এটি কেমন শোনাচ্ছে?',
+  'gu-IN': 'નમસ્તે! હું તમારા માટે બોલીશ. આ અવાજ કેવો લાગે છે?',
+  'kn-IN': 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮಗಾಗಿ ಮಾತನಾಡುತ್ತೇನೆ. ಇದು ಹೇಗೆ ಕೇಳಿಸುತ್ತದೆ?',
+  'ml-IN': 'ഹലോ! ഞാൻ നിങ്ങൾക്കായി സംസാരിക്കും. ഇത് എങ്ങനെ കേൾക്കുന്നു?',
+  'mr-IN': 'नमस्कार! मी तुमच्यासाठी बोलेन. हा आवाज कसा वाटतोय?',
+  'pa-IN': 'ਸਤਿ ਸ਼੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡੇ ਲਈ ਬੋਲਾਂਗਾ। ਇਹ ਆਵਾਜ਼ ਕਿਵੇਂ ਲੱਗ ਰਹੀ ਹੈ?',
+  'ta-IN': 'வணக்கம்! நான் உங்களுக்காகப் பேசுவேன். இது எப்படி கேட்கிறது?',
+  'te-IN': 'నమస్కారం! నేను మీ కోసం మాట్లాడతాను. ఇది ఎలా ఉంది?',
+  'ur-IN': 'سلام! میں آپ کے لیے بات کروں گا۔ یہ آواز کیسی لگ رہی ہے؟',
 
   // Americas
-  'en-US': "Hi! I’ll be speaking for you. How does it sound?",
-  'es-US': "¡Hola! Hablaré por ti. ¿Cómo se escucha?",
-  'fr-CA': "Bonjour! Je vais parler pour vous. Comment ça sonne?",
-  'pt-BR': "Olá! Eu vou falar por você. Como soa?",
+  'en-US': 'Hi! I’ll be speaking for you. How does it sound?',
+  'es-US': '¡Hola! Hablaré por ti. ¿Cómo se escucha?',
+  'fr-CA': 'Bonjour! Je vais parler pour vous. Comment ça sonne?',
+  'pt-BR': 'Olá! Eu vou falar por você. Como soa?',
 
   // Europe
-  'en-GB': "Hi! I’ll be speaking for you. How does it sound?",
-  'fr-FR': "Bonjour! Je vais parler pour vous. Comment ça sonne?",
-  'de-DE': "Hallo! Ich werde für Sie sprechen. Wie klingt das?",
-  'it-IT': "Ciao! Parlerò io per te. Come suona?",
-  'es-ES': "¡Hola! Hablaré por ti. ¿Cómo suena?",
-  'nl-NL': "Hallo! Ik zal voor je spreken. Hoe klinkt het?",
-  'nl-BE': "Hallo! Ik zal voor u spreken. Hoe klinkt het?",
-  'pl-PL': "Cześć! Będę mówić w Twoim imieniu. Jak to brzmi?",
-  'ru-RU': "Привет! Я буду говорить за вас. Как это звучит?",
-  'bg-BG': "Здравейте! Аз ще говоря вместо вас. Как звучи?",
-  'cs-CZ': "Ahoj! Budu mluvit za vás. Jak to zní?",
-  'da-DK': "Hej! Jeg vil tale for dig. Hvordan lyder det?",
-  'et-EE': "Tere! Räägin Sinu eest. Kuidas see kõlab?",
-  'fi-FI': "Hei! Puhun puolestasi. Miltä tämä kuulostaa?",
-  'el-GR': "Γεια σας! Θα μιλήσω για εσάς. Πώς ακούγεται;",
-  'hr-HR': "Bok! Govorit ću umjesto vas. Kako to zvuči?",
-  'hu-HU': "Szia! Beszélni fogok helyetted. Hogy hangzik?",
-  'lt-LT': "Labas! Kalbėsiu už tave. Kaip tai skamba?",
-  'lv-LV': "Sveiki! Es runāšu jūsu vārdā. Kā tas skan?",
-  'nb-NO': "Hei! Jeg skal snakke for deg. Hvordan høres det ut?",
-  'ro-RO': "Salut! Voi vorbi pentru tine. Cum sună?",
-  'sk-SK': "Ahoj! Budem hovoriť za vás. Ako to znie?",
-  'sl-SI': "Živijo! Govoril bom namesto vas. Kako se sliši?",
-  'sr-RS': "Здраво! Говорићу уместо вас. Како то звучи?",
-  'sv-SE': "Hej! Jag kommer att tala för dig. Hur låter det?",
-  'uk-UA': "Привіт! Я буду говорити за вас. Як це лунає?",
+  'en-GB': 'Hi! I’ll be speaking for you. How does it sound?',
+  'fr-FR': 'Bonjour! Je vais parler pour vous. Comment ça sonne?',
+  'de-DE': 'Hallo! Ich werde für Sie sprechen. Wie klingt das?',
+  'it-IT': 'Ciao! Parlerò io per te. Come suona?',
+  'es-ES': '¡Hola! Hablaré por ti. ¿Cómo suena?',
+  'nl-NL': 'Hallo! Ik zal voor je spreken. Hoe klinkt het?',
+  'nl-BE': 'Hallo! Ik zal voor u spreken. Hoe klinkt het?',
+  'pl-PL': 'Cześć! Będę mówić w Twoim imieniu. Jak to brzmi?',
+  'ru-RU': 'Привет! Я буду говорить за вас. Как это звучит?',
+  'bg-BG': 'Здравейте! Аз ще говоря вместо вас. Как звучи?',
+  'cs-CZ': 'Ahoj! Budu mluvit za vás. Jak to zní?',
+  'da-DK': 'Hej! Jeg vil tale for dig. Hvordan lyder det?',
+  'et-EE': 'Tere! Räägin Sinu eest. Kuidas see kõlab?',
+  'fi-FI': 'Hei! Puhun puolestasi. Miltä tämä kuulostaa?',
+  'el-GR': 'Γεια σας! Θα μιλήσω για εσάς. Πώς ακούγεται;',
+  'hr-HR': 'Bok! Govorit ću umjesto vas. Kako to zvuči?',
+  'hu-HU': 'Szia! Beszélni fogok helyetted. Hogy hangzik?',
+  'lt-LT': 'Labas! Kalbėsiu už tave. Kaip tai skamba?',
+  'lv-LV': 'Sveiki! Es runāšu jūsu vārdā. Kā tas skan?',
+  'nb-NO': 'Hei! Jeg skal snakke for deg. Hvordan høres det ut?',
+  'ro-RO': 'Salut! Voi vorbi pentru tine. Cum sună?',
+  'sk-SK': 'Ahoj! Budem hovoriť za vás. Ako to znie?',
+  'sl-SI': 'Živijo! Govoril bom namesto vas. Kako se sliši?',
+  'sr-RS': 'Здраво! Говорићу уместо вас. Како то звучи?',
+  'sv-SE': 'Hej! Jag kommer att tala för dig. Hur låter det?',
+  'uk-UA': 'Привіт! Я буду говорити за вас. Як це лунає?',
 
   // Middle East & Africa
-  'ar-XA': "مرحباً! سأتحدث نيابة عنك. كيف يبدو هذا الصوت؟",
-  'he-IL': "שלום! אני אדבר עבורך. איך זה נשמע?",
-  'sw-KE': "Hujambo! Nitakuzungumzia. Inasikikaje?",
-  'tr-TR': "Merhaba! Sizin için konuşacağım. Kulağa nasıl geliyor?",
+  'ar-XA': 'مرحباً! سأتحدث نيابة عنك. كيف يبدو هذا الصوت؟',
+  'he-IL': 'שלום! אני אדבר עבורך. איך זה נשמע?',
+  'sw-KE': 'Hujambo! Nitakuzungumzia. Inasikikaje?',
+  'tr-TR': 'Merhaba! Sizin için konuşacağım. Kulağa nasıl geliyor?',
 
   // East & Southeast Asia & Oceania
-  'cmn-CN': "你好！我将为您说话。听起来怎么样？",
-  'yue-HK': "你好！我會為你說話。聽起來點樣？",
-  'ja-JP': "こんにちは！あなたに代わってお話しします。どのように聞こえますか？",
-  'ko-KR': "안녕하세요! 당신을 대신해 말할게요. 어떻게 들리나요?",
-  'id-ID': "Halo! Saya akan berbicara untuk Anda. Bagaimana kedengarannya?",
-  'th-TH': "สวัสดีครับ! ผมจะพูดแทนคุณ เสียงเป็นอย่างไรบ้างครับ?",
-  'vi-VN': "Xin chào! Tôi sẽ nói thay bạn. Nghe như thế nào?",
-  'en-AU': "Hi! I’ll be speaking for you. How does it sound?",
+  'cmn-CN': '你好！我将为您说话。听起来怎么样？',
+  'yue-HK': '你好！我會為你說話。聽起來點樣？',
+  'ja-JP': 'こんにちは！あなたに代わってお話しします。どのように聞こえますか？',
+  'ko-KR': '안녕하세요! 당신을 대신해 말할게요. 어떻게 들리나요?',
+  'id-ID': 'Halo! Saya akan berbicara untuk Anda. Bagaimana kedengarannya?',
+  'th-TH': 'สวัสดีครับ! ผมจะพูดแทนคุณ เสียงเป็นอย่างไรบ้างครับ?',
+  'vi-VN': 'Xin chào! Tôi sẽ nói thay bạn. Nghe như thế nào?',
+  'en-AU': 'Hi! I’ll be speaking for you. How does it sound?',
 };
 
 const VoiceSettingsModal = ({
@@ -273,8 +350,8 @@ const VoiceSettingsModal = ({
           setSelectedLang(`${parts[0]}-${parts[1]}`);
         }
         setSelectedPersona(voiceName);
-        if (OTHER_VOICES.indian.some((v) => v.id === voiceName)) setActiveTab('indian');
-        else if (OTHER_VOICES.global.some((v) => v.id === voiceName)) setActiveTab('global');
+        if (OTHER_VOICES.indian.some(v => v.id === voiceName)) setActiveTab('indian');
+        else if (OTHER_VOICES.global.some(v => v.id === voiceName)) setActiveTab('global');
       }
     }
   }, [voiceName, isOpen]);
@@ -296,28 +373,28 @@ const VoiceSettingsModal = ({
   if (typeof document === 'undefined') return null;
 
   // Find all languages matching search query
-  const allLanguagesList = CHIRP3_LANGUAGES.flatMap((cat) =>
-    cat.languages.map((l) => ({ ...l, category: cat.category }))
+  const allLanguagesList = CHIRP3_LANGUAGES.flatMap(cat =>
+    cat.languages.map(l => ({ ...l, category: cat.category }))
   );
   const currentLangObj =
-    allLanguagesList.find((l) => l.code === selectedLang) ||
-    allLanguagesList.find((l) => l.code === 'en-US');
+    allLanguagesList.find(l => l.code === selectedLang) ||
+    allLanguagesList.find(l => l.code === 'en-US');
 
-  const filteredLanguages = CHIRP3_LANGUAGES.map((cat) => ({
+  const filteredLanguages = CHIRP3_LANGUAGES.map(cat => ({
     ...cat,
     languages: cat.languages.filter(
-      (l) =>
+      l =>
         l.name.toLowerCase().includes(langSearch.toLowerCase()) ||
         l.code.toLowerCase().includes(langSearch.toLowerCase()) ||
         l.country.toLowerCase().includes(langSearch.toLowerCase())
     ),
-  })).filter((cat) => cat.languages.length > 0);
+  })).filter(cat => cat.languages.length > 0);
 
   // Find current selected persona info
   const allChirpPersonas = [...CHIRP3_FEMALE_VOICES, ...CHIRP3_MALE_VOICES];
   const currentPersonaObj =
-    allChirpPersonas.find((p) => p.id === selectedPersona) || CHIRP3_FEMALE_VOICES[0];
-  const isFemalePersona = CHIRP3_FEMALE_VOICES.some((v) => v.id === selectedPersona);
+    allChirpPersonas.find(p => p.id === selectedPersona) || CHIRP3_FEMALE_VOICES[0];
+  const isFemalePersona = CHIRP3_FEMALE_VOICES.some(v => v.id === selectedPersona);
 
   // Construct full voice ID
   const getFullVoiceId = (personaId = selectedPersona, langCode = selectedLang) => {
@@ -345,8 +422,7 @@ const VoiceSettingsModal = ({
       setIsLoadingSample(true);
       const fullVoiceId = getFullVoiceId();
       const sampleText =
-        SAMPLE_TEXTS[selectedLang] ||
-        `Hi! I’ll be speaking for you. How does it sound?`;
+        SAMPLE_TEXTS[selectedLang] || `Hi! I’ll be speaking for you. How does it sound?`;
 
       const token = getUserData()?.token || localStorage.getItem('token');
       const res = await axios.post(
@@ -414,7 +490,7 @@ const VoiceSettingsModal = ({
       {isOpen && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 dark:bg-black/80 backdrop-blur-md overflow-y-auto"
-          onClick={(e) => e.target === e.currentTarget && onClose()}
+          onClick={e => e.target === e.currentTarget && onClose()}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -497,20 +573,20 @@ const VoiceSettingsModal = ({
                             type="text"
                             placeholder="Search 53 languages..."
                             value={langSearch}
-                            onChange={(e) => setLangSearch(e.target.value)}
+                            onChange={e => setLangSearch(e.target.value)}
                             className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-zinc-800 text-xs font-bold rounded-xl border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:text-white"
                           />
                         </div>
                       </div>
 
                       <div className="overflow-y-auto p-2 space-y-3 flex-1 custom-scrollbar">
-                        {filteredLanguages.map((group) => (
+                        {filteredLanguages.map(group => (
                           <div key={group.category}>
                             <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest px-2.5 mb-1 block">
                               IN {group.category}
                             </span>
                             <div className="space-y-0.5">
-                              {group.languages.map((lang) => {
+                              {group.languages.map(lang => {
                                 const isSel = selectedLang === lang.code;
                                 return (
                                   <button
@@ -611,7 +687,7 @@ const VoiceSettingsModal = ({
                           <span>♀</span> FEMALE VOICES ({CHIRP3_FEMALE_VOICES.length})
                         </label>
                         <div className="space-y-1">
-                          {CHIRP3_FEMALE_VOICES.map((v) => {
+                          {CHIRP3_FEMALE_VOICES.map(v => {
                             const isSel = activeTab === 'chirp' && selectedPersona === v.id;
                             return (
                               <button
@@ -660,7 +736,7 @@ const VoiceSettingsModal = ({
                           <span>♂</span> MALE VOICES ({CHIRP3_MALE_VOICES.length})
                         </label>
                         <div className="space-y-1">
-                          {CHIRP3_MALE_VOICES.map((v) => {
+                          {CHIRP3_MALE_VOICES.map(v => {
                             const isSel = activeTab === 'chirp' && selectedPersona === v.id;
                             return (
                               <button
@@ -716,7 +792,7 @@ const VoiceSettingsModal = ({
                   SPEED
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {SPEED_OPTIONS.map((s) => {
+                  {SPEED_OPTIONS.map(s => {
                     const isSel = (speed || 1.0) === s.value;
                     return (
                       <button
@@ -742,9 +818,12 @@ const VoiceSettingsModal = ({
                   VOICE PITCH
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {PITCH_OPTIONS.map((p) => {
+                  {PITCH_OPTIONS.map(p => {
                     const currentPitch = pitch || 0;
-                    const isSel = currentPitch === p.value || (p.value > 0 && currentPitch > 0) || (p.value < 0 && currentPitch < 0);
+                    const isSel =
+                      currentPitch === p.value ||
+                      (p.value > 0 && currentPitch > 0) ||
+                      (p.value < 0 && currentPitch < 0);
                     return (
                       <button
                         key={p.value}
@@ -777,7 +856,10 @@ const VoiceSettingsModal = ({
                 ) : isPlayingSample ? (
                   <Square size={14} className="fill-violet-600 text-violet-600" />
                 ) : (
-                  <Play size={14} className="fill-slate-600 text-slate-600 dark:fill-zinc-300 dark:text-zinc-300" />
+                  <Play
+                    size={14}
+                    className="fill-slate-600 text-slate-600 dark:fill-zinc-300 dark:text-zinc-300"
+                  />
                 )}
                 <span>{isPlayingSample ? 'Stop Sample' : 'Play Sample'}</span>
               </button>
