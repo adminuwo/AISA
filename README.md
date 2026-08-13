@@ -64,7 +64,7 @@ Instead of baking variables into the static JS files at build time, the deployme
    ```
 2. Run the container:
    ```bash
-   docker run -p 8080:8080 -e VITE_AISA_BACKEND_API="http://api.aisa24.com/api" aisa-frontend
+   docker run -p 8080:8080 -e VITE_AISA_BACKEND_API="https://aisa24.com/api" aisa-frontend
    ```
 
 ---

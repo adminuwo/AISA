@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { apiService } from '../../services/apiService';
+import { getApiBaseUrl } from '../../types';
 import toast from 'react-hot-toast';
 import DeleteConfirmModal from '../../Components/DeleteConfirmModal';
 
@@ -450,10 +451,7 @@ const KnowledgeManagement = () => {
                         onClick={() => {
                           const user = JSON.parse(localStorage.getItem('user') || '{}');
                           const token = user.token || '';
-                          const baseUrl =
-                            window._env_?.VITE_AISA_BACKEND_API ||
-                            import.meta.env.VITE_AISA_BACKEND_API ||
-                            'http://127.0.0.1:8080/api';
+                          const baseUrl = getApiBaseUrl();
                           window.open(
                             `${baseUrl}/aibase/knowledge/download/${item.id}?token=${token}`,
                             '_blank'

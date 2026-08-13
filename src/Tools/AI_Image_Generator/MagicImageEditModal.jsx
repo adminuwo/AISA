@@ -13,11 +13,9 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { getApiBaseUrl } from '../../types';
 
-const baseURL =
-  window._env_?.VITE_AISA_BACKEND_API ||
-  import.meta.env.VITE_AISA_BACKEND_API ||
-  'http://127.0.0.1:8080/api';
+const baseURL = getApiBaseUrl();
 
 const MagicImageEditModal = ({ isOpen, onClose, onCreditDeduction }) => {
   const [selectedImage, setSelectedImage] = useState(null);
