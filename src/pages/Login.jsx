@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
 import { logo } from '../constants';
 import { chatStorageService } from '../services/chatStorageService';
-import UWOLoginModal from '../components/UWOLoginModal';
+import UWOLoginModal from '../Components/UWOLoginModal';
 
 const Login = () => {
   const navigate = useNavigate();
