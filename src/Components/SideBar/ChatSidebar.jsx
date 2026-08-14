@@ -884,15 +884,21 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                               </div>
                             )}
 
-                            {session.projectId && (
-                              <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-primary/10 border border-primary/20">
-                                <Folder className="w-2.5 h-2.5 text-primary" />
-                                <span className="text-[9px] font-bold text-primary truncate max-w-[60px]">
-                                  {projects.find(p => p._id === session.projectId)?.name ||
-                                    'Personal'}
-                                </span>
-                              </div>
-                            )}
+                            {(() => {
+                              const matchedProject = projects.find(p => p._id === session.projectId);
+                              if (!matchedProject || !matchedProject.name || matchedProject.name.toLowerCase() === 'personal' || matchedProject.name.toLowerCase() === 'default') {
+                                return null;
+                              }
+                              return (
+                                <div className="flex items-center gap-1 px-1.5 py-[1px] rounded-md bg-primary/10 border border-primary/20">
+                                  <Folder className="w-2.5 h-2.5 text-primary" />
+                                  <span className="text-[9px] font-bold text-primary truncate max-w-[60px]">
+                                    {matchedProject.name}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+
                           </div>
                         </div>
 
