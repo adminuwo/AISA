@@ -14,6 +14,7 @@ import { chatStorageService } from '../services/chatStorageService';
 import PrivacyPolicyModal from '../landingpage/PolicyModals/PrivacyPolicyModal';
 import TermsOfServiceModal from '../landingpage/PolicyModals/TermsOfServiceModal';
 import CookiePolicyModal from '../landingpage/PolicyModals/CookiePolicyModal';
+import UWOLoginModal from '../components/UWOLoginModal';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const Signup = () => {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isCookieOpen, setIsCookieOpen] = useState(false);
+  const [showUwoModal, setShowUwoModal] = useState(false);
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -328,9 +330,7 @@ const Signup = () => {
               <div className="flex-1 h-px bg-white/20 dark:bg-slate-700/50" />
             </div>
 
-            <div
-              className={`grid grid-cols-2 gap-3 ${!agreedToTerms ? 'opacity-50 pointer-events-none' : ''}`}
-            >
+            <div className="grid grid-cols-3 gap-2">
               {/* Google Signup Button */}
               <motion.button
                 type="button"
@@ -394,6 +394,20 @@ const Signup = () => {
                   Apple ID
                 </span>
               </motion.button>
+
+              {/* UWO SSO Button */}
+              <motion.button
+                type="button"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowUwoModal(true)}
+                className="group relative flex flex-col items-center justify-center p-2 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 shadow-sm transition-all hover:shadow-md cursor-pointer"
+              >
+                <div className="text-lg mb-0.5">⚡</div>
+                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter">
+                  UWO SSO
+                </span>
+              </motion.button>
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10 dark:border-slate-800/50 text-center text-xs font-bold text-slate-400 tracking-wide uppercase relative">
@@ -421,6 +435,41 @@ const Signup = () => {
       <TermsOfServiceModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
       <PrivacyPolicyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
       <CookiePolicyModal isOpen={isCookieOpen} onClose={() => setIsCookieOpen(false)} />
+
+      {/* UWO Central SSO Login Popup Modal */}
+      <UWOLoginModal
+        isOpen={showUwoModal}
+        onClose={() => setShowUwoModal(false)}
+        appCode="aisa"
+        apiKey="key_aisa_live_master_2026"
+        onSuccess={data => {
+          toast.success('Authenticated with UWO Platform!');
+          const uUser = data.user || {};
+          const formattedUser = {
+            id: uUser.id || uUser._id,
+            _id: uUser.id || uUser._id,
+            email: uUser.email,
+            name: uUser.name || uUser.email?.split('@')[0] || 'User',
+            token: data.access_token,
+            role: uUser.role || 'user',
+          };
+
+          setUserData(formattedUser);
+          setUserRecoil({ user: formattedUser });
+          if (formattedUser.id) localStorage.setItem('userId', formattedUser.id);
+          if (data.access_token) localStorage.setItem('token', data.access_token);
+          localStorage.setItem('uwo_access_token', data.access_token);
+          localStorage.setItem('uwo_user', JSON.stringify(formattedUser));
+
+          const from = location.state?.from || AppRoute.DASHBOARD || '/chat';
+          navigate(from, { replace: true });
+          try {
+            chatStorageService.mergeGuestChats();
+          } catch (e) {
+            console.log('mergeGuestChats:', e);
+          }
+        }}
+      />
     </div>
   );
 };

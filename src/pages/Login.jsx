@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
 import { logo } from '../constants';
 import { chatStorageService } from '../services/chatStorageService';
+import UWOLoginModal from '../components/UWOLoginModal';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Login = () => {
   const [error, setError] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [socialVerifying, setSocialVerifying] = useState(null);
+  const [showUwoModal, setShowUwoModal] = useState(false);
 
   // Consent Modal States
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -347,7 +349,7 @@ const Login = () => {
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-2 mb-4">
             {/* Google Login Button */}
             <motion.button
               whileHover={{ y: -2, scale: 1.02 }}
@@ -409,6 +411,19 @@ const Login = () => {
               </svg>
               <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
                 Apple ID
+              </span>
+            </motion.button>
+
+            {/* UWO SSO Button */}
+            <motion.button
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowUwoModal(true)}
+              className="group relative flex flex-col items-center justify-center p-2 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 shadow-sm transition-all hover:shadow-md"
+            >
+              <div className="text-lg mb-0.5">⚡</div>
+              <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter">
+                UWO SSO
               </span>
             </motion.button>
           </div>
@@ -619,6 +634,42 @@ const Login = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* UWO Central SSO Login Popup Modal */}
+      <UWOLoginModal
+        isOpen={showUwoModal}
+        onClose={() => setShowUwoModal(false)}
+        appCode="aisa"
+        apiKey="key_aisa_live_master_2026"
+        onSuccess={data => {
+          toast.success('Authenticated with UWO Platform!');
+          const uUser = data.user || {};
+          const formattedUser = {
+            id: uUser.id || uUser._id,
+            _id: uUser.id || uUser._id,
+            email: uUser.email,
+            name: uUser.name || uUser.email?.split('@')[0] || 'User',
+            token: data.access_token,
+            role: uUser.role || 'user',
+          };
+
+          setUserData(formattedUser);
+          setUserRecoil({ user: formattedUser });
+          if (formattedUser.id) localStorage.setItem('userId', formattedUser.id);
+          if (data.access_token) localStorage.setItem('token', data.access_token);
+          localStorage.setItem('uwo_access_token', data.access_token);
+          localStorage.setItem('uwo_user', JSON.stringify(formattedUser));
+          autoAcceptCookies();
+
+          const from = location.state?.from || AppRoute.DASHBOARD || '/chat';
+          navigate(from, { replace: true });
+          try {
+            chatStorageService.mergeGuestChats();
+          } catch (e) {
+            console.log('mergeGuestChats:', e);
+          }
+        }}
+      />
     </div>
   );
 };

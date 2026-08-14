@@ -75,11 +75,34 @@ export const getApiBaseUrl = () => {
   return envUrl;
 };
 
+export const getUnifiedApiBaseUrl = () => {
+  let envUrl =
+    window._env_?.VITE_UNIFIED_BACKEND_API ||
+    import.meta.env.VITE_UNIFIED_BACKEND_API ||
+    'http://localhost:8000/api';
+
+  if (typeof window !== 'undefined' && window.location) {
+    const currentHost = window.location.hostname;
+    if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+      envUrl = envUrl.replace(/localhost|127\.0\.0\.1/g, currentHost);
+      if (envUrl.startsWith('https://' + currentHost)) {
+        envUrl = envUrl.replace('https://', 'http://');
+      }
+    }
+  }
+  return envUrl;
+};
+
 const API = getApiBaseUrl();
+const UNIFIED_API = getUnifiedApiBaseUrl();
 
 console.log('API', API);
 
 const apis = {
+  unifiedAuth: {
+    register: `${UNIFIED_API}/auth/register`,
+    login: `${UNIFIED_API}/auth/login`,
+  },
   resetPassword: `${API}/auth/reset-password-otp`,
   user: `${API}/user`,
   profile: `${API}/user/profile`,
