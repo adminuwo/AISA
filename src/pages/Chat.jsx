@@ -356,9 +356,11 @@ const Chat = () => {
     if (!sessionId || sessionId === 'new') {
       hydratedSessionRef.current = null;
       setMessages([]);
+      setIsHydrating(false);
       return;
     }
     if (hydratedSessionRef.current === sessionId) return;
+
 
     const existingMessages = useGenerationStore.getState().messagesByChat[sessionId];
     if (existingMessages && existingMessages.length > 0) {
@@ -1337,8 +1339,15 @@ const Chat = () => {
           renderActiveLegalToolWorkspace()
         ) : (
           <div className="flex-1 flex flex-col w-full h-full min-h-0 relative">
-            {/* Virtualized Message List */}
-            {messages.length > 0 ? (
+            {/* Session Loading / Hydrating Loader */}
+            {isHydrating || isSessionLoading ? (
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh] gap-3">
+                <Loader />
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-zinc-500 animate-pulse">
+                  Loading Session...
+                </span>
+              </div>
+            ) : messages.length > 0 ? (
               <ChatMessages messages={messages} listProps={listProps} />
             ) : (
               <ChatWelcome
@@ -1358,6 +1367,7 @@ const Chat = () => {
                 }}
               />
             )}
+
 
             {/* Bottom Input Section */}
             <ChatInput
