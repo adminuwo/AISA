@@ -415,12 +415,6 @@ const Chat = () => {
       const messageText = (overrideText !== null ? overrideText : (inputValue || longTextPreview || '')).trim();
       if (!messageText && filePreviews.length === 0) return;
 
-      const user = getUserData();
-      if (!user?.token) {
-        window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName: 'Chat' } }));
-        return;
-      }
-
       const isRestrictedMode = [
         'DEEP_SEARCH',
         'WEB_SEARCH',
@@ -428,6 +422,7 @@ const Chat = () => {
         'CODE_WRITER',
         'CODING_HELP',
       ].includes(normMode);
+
 
       if (isRestrictedMode && isFreePlan && !isAdmin) {
         const modeLabel = (normMode === 'DEEP_SEARCH' || normMode === 'DEEPSEARCH') ? 'Deep Search' : 'Web Search';
@@ -1496,6 +1491,8 @@ const Chat = () => {
             sessionId={activeSessionId}
           />
         )}
+        <LoginRequiredModal />
+
         {/* Document/Image Viewer Lightbox Modal */}
         {viewingDoc && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
