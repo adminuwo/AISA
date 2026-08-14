@@ -14,7 +14,8 @@ import { chatStorageService } from '../services/chatStorageService';
 import PrivacyPolicyModal from '../landingpage/PolicyModals/PrivacyPolicyModal';
 import TermsOfServiceModal from '../landingpage/PolicyModals/TermsOfServiceModal';
 import CookiePolicyModal from '../landingpage/PolicyModals/CookiePolicyModal';
-import UWOLoginModal from '../components/UWOLoginModal';
+import UWOLoginModal from '../Components/UWOLoginModal';
+
 
 const Signup = () => {
   const navigate = useNavigate();
