@@ -11,13 +11,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleLogin } from '@react-oauth/google';
 import { logo } from '../constants';
 import { chatStorageService } from '../services/chatStorageService';
-import UWOLoginModal from '../components/UWOLoginModal';
+import UWOLoginModal from '../Components/UWOLoginModal';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const setUserRecoil = useUserStore(state => state.setUser);
+  const setUserRecoil = useUserStore((state) => state.setUser);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -112,8 +112,6 @@ const Login = () => {
       return;
     }
 
-    // sso_token is now handled globally in Navigation.Provider.jsx via SSOInterceptor
-
     if (isSocialAuth && token && userId) {
       toast.success(`Successfully authenticated as ${userName}!`);
 
@@ -181,6 +179,7 @@ const Login = () => {
       const errorMessage = err.response?.data?.error || err.message || t('serverError');
       setMessage(errorMessage);
     } finally {
+
       setLoading(false);
     }
   };
@@ -191,14 +190,12 @@ const Login = () => {
     setMessage(null);
 
     try {
-      // Get user info from Google using the access token
       const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       });
 
       const { email, name, picture } = userInfoRes.data;
 
-      // Send to our backend
       const payload = {
         credential: tokenResponse.access_token,
         email,
@@ -250,15 +247,15 @@ const Login = () => {
 
   return (
     <div className="min-h-screen w-screen flex flex-col items-center justify-center relative overflow-x-hidden bg-[#f8fafc] dark:bg-[#020617] aisa-scalable-text p-4 md:p-8">
-      {/* Background Blobs - STATIC */}
+      {/* Background Blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden text-black dark:text-white">
         <div className="absolute top-[-5%] right-[-5%] w-[40%] h-[40%] bg-primary/20 dark:bg-primary/10 blur-[100px] rounded-full" />
         <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-primary/20 dark:bg-primary/10 blur-[100px] rounded-full" />
       </div>
 
-      {/* Content Container - Vertically Centered */}
+      {/* Content Container */}
       <div className="relative w-full max-w-[400px] flex flex-col items-center z-50 transform -translate-y-2">
-        {/* Canonical Logo - Scaled for all devices */}
+        {/* Canonical Logo */}
         <div className="w-full flex justify-center mb-3 shrink-0">
           <img
             src={logo}
@@ -269,7 +266,6 @@ const Login = () => {
 
         {/* Main Glass Card */}
         <div className="relative w-full overflow-hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-[64px] border border-white dark:border-white/10 p-5 sm:p-6 rounded-[2.5rem] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.15)] text-center group/card scale-[0.9] sm:scale-100 origin-top">
-          {/* Glossy Reflection Effect */}
           <div className="absolute -top-[100%] -left-[100%] w-[300%] h-[300%] bg-gradient-to-br from-white/10 via-transparent to-transparent rotate-45 pointer-events-none" />
 
           <div className="text-center mb-4 relative">
@@ -300,7 +296,7 @@ const Login = () => {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 className="w-full bg-white/20 dark:bg-slate-800/20 border border-white/30 dark:border-white/5 rounded-xl py-3 pl-12 pr-4 text-slate-700 dark:text-white placeholder-slate-400/70 focus:outline-none transition-all font-medium text-sm backdrop-blur-md"
                 required
@@ -312,7 +308,7 @@ const Login = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••"
                 className="w-full bg-white/20 dark:bg-slate-800/20 border border-white/30 dark:border-white/5 rounded-xl py-3 pl-12 pr-12 text-slate-700 dark:text-white placeholder-slate-400/70 focus:outline-none transition-all font-medium text-sm tracking-[0.3em] backdrop-blur-md"
                 required
@@ -431,7 +427,6 @@ const Login = () => {
           <div className="mt-3">
             <Link
               to="/forgot-password"
-              opacity={0.6}
               className="text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors uppercase tracking-widest"
             >
               Forgot Password?
@@ -465,7 +460,6 @@ const Login = () => {
             className="fixed inset-0 z-[100] flex items-center justify-center bg-[#f8fafc]/80 dark:bg-[#020617]/90 backdrop-blur-xl"
           >
             <div className="relative p-10 max-w-[320px] w-full text-center">
-              {/* Animated Glow */}
               <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full animate-pulse" />
 
               <div className="relative space-y-6">
@@ -506,6 +500,7 @@ const Login = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* HIGH-FIDELITY CONSENT MODAL DIALOG */}
       <AnimatePresence>
         {showConsentModal && (
@@ -529,12 +524,11 @@ const Login = () => {
               </p>
 
               <div className="space-y-4 mb-6 text-left">
-                {/* Terms and conditions check */}
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={modalAgreedToTerms}
-                    onChange={e => setModalAgreedToTerms(e.target.checked)}
+                    onChange={(e) => setModalAgreedToTerms(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
                     style={{
                       width: '16px',
@@ -551,19 +545,18 @@ const Login = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-bold"
-                      onClick={e => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Terms & Conditions
                     </a>
                   </span>
                 </label>
 
-                {/* Privacy policy check */}
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={modalAcknowledgedPrivacy}
-                    onChange={e => setModalAcknowledgedPrivacy(e.target.checked)}
+                    onChange={(e) => setModalAcknowledgedPrivacy(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
                     style={{
                       width: '16px',
@@ -580,19 +573,18 @@ const Login = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-bold"
-                      onClick={e => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Privacy Policy
                     </a>
                   </span>
                 </label>
 
-                {/* Marketing Updates */}
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={modalMarketingOptIn}
-                    onChange={e => setModalMarketingOptIn(e.target.checked)}
+                    onChange={(e) => setModalMarketingOptIn(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
                     style={{
                       width: '16px',
@@ -641,7 +633,7 @@ const Login = () => {
         onClose={() => setShowUwoModal(false)}
         appCode="aisa"
         apiKey="key_aisa_live_master_2026"
-        onSuccess={data => {
+        onSuccess={(data) => {
           toast.success('Authenticated with UWO Platform!');
           const uUser = data.user || {};
           const formattedUser = {

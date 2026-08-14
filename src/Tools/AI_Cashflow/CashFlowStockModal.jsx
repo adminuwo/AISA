@@ -37,11 +37,9 @@ import { io } from 'socket.io-client';
 import apiService from '../../services/apiService';
 import AiCashflowChatAssistant from './components/AiCashflowChatAssistant';
 import { useIsFreePlan, triggerUpgradeModal } from '../../hooks/useIsFreePlan';
+import { getApiBaseUrl } from '../../types';
 
-const baseURL =
-  window._env_?.VITE_AISA_BACKEND_API ||
-  import.meta.env.VITE_AISA_BACKEND_API ||
-  'http://127.0.0.1:8080/api';
+const baseURL = getApiBaseUrl();
 
 const PRESET_STOCKS = [
   { symbol: 'TCS.BSE', name: 'Tata Consultancy', region: 'IN' },

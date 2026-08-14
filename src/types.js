@@ -58,21 +58,38 @@ export const AppRoute = {
 };
 
 export const getApiBaseUrl = () => {
-  let envUrl =
+  const envUrl =
     window._env_?.VITE_AISA_BACKEND_API ||
     import.meta.env.VITE_AISA_BACKEND_API ||
-    'http://localhost:8080/api';
+    import.meta.env.VITE_BACKEND_API ||
+    import.meta.env.VITE_API_URL;
 
-  if (typeof window !== 'undefined' && window.location) {
+  let url = '';
+
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
+    url = envUrl.trim().replace(/\/+$/, '');
+  } else if (typeof window !== 'undefined' && window.location) {
     const currentHost = window.location.hostname;
-    if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-      envUrl = envUrl.replace(/localhost|127\.0\.0\.1/g, currentHost);
-      if (envUrl.startsWith('https://' + currentHost)) {
-        envUrl = envUrl.replace('https://', 'http://');
-      }
+    const protocol = window.location.protocol || 'http:';
+
+    if (!currentHost || currentHost === 'localhost' || currentHost === '127.0.0.1') {
+      url = 'http://localhost:8080/api';
+    } else {
+      const port = window.location.port ? `:${window.location.port}` : '';
+      url = `${protocol}//${currentHost}${port}/api`;
+    }
+  } else {
+    url = 'http://localhost:8080/api';
+  }
+
+  // Force HTTPS when the current page is served over HTTPS to prevent Mixed Content errors
+  if (typeof window !== 'undefined' && window.location?.protocol === 'https:') {
+    if (url.startsWith('http://') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+      url = url.replace(/^http:\/\//i, 'https://');
     }
   }
-  return envUrl;
+
+  return url;
 };
 
 export const getUnifiedApiBaseUrl = () => {
@@ -96,7 +113,7 @@ export const getUnifiedApiBaseUrl = () => {
 const API = getApiBaseUrl();
 const UNIFIED_API = getUnifiedApiBaseUrl();
 
-console.log('API', API);
+console.info('[API Base URL]:', API);
 
 const apis = {
   unifiedAuth: {
