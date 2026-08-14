@@ -773,7 +773,7 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                   <NavLink to={`/dashboard/chat/${session.sessionId}`} onClick={onClose}>
                     {({ isActive }) => (
                       <div
-                        className={`sidebar-chat-item group/item transition-colors duration-150 mx-2 cursor-pointer
+                        className={`sidebar-chat-item group/item transition-all duration-500 mx-2 cursor-pointer
                         ${
                           isActive
                             ? isDark
@@ -785,16 +785,16 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                         }
                       `}
                       >
-                        <div
-                          className={`absolute left-1 top-3 bottom-3 w-[3px] rounded-full transition-all duration-150 ${
-                            isActive
-                              ? 'bg-primary opacity-100 shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]'
-                              : isDark
-                                ? 'bg-white/10 opacity-20 group-hover/item:opacity-60'
-                                : 'bg-slate-300/80 opacity-30 group-hover/item:opacity-60'
-                          }`}
-                        />
-
+                        {isActive ? (
+                          <motion.div
+                            layoutId="activeIndicator"
+                            className="absolute left-1 top-3 bottom-3 w-[3px] bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]"
+                          />
+                        ) : (
+                          <div
+                            className={`absolute left-1 top-3 bottom-3 w-[3px] rounded-full transition-all duration-300 group-hover/item:opacity-60 ${isDark ? 'bg-white/10 opacity-20' : 'bg-slate-300/80 opacity-30'}`}
+                          />
+                        )}
                         <div className="sidebar-chat-title-group text-left flex-1 min-w-0">
                           <div className="sidebar-chat-title flex items-center gap-1.5">
                             {session.activeTool?.startsWith('legal_') ? (
@@ -885,8 +885,15 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                             )}
 
                             {(() => {
-                              const matchedProject = projects.find(p => p._id === session.projectId);
-                              if (!matchedProject || !matchedProject.name || matchedProject.name.toLowerCase() === 'personal' || matchedProject.name.toLowerCase() === 'default') {
+                              const matchedProject = projects.find(
+                                p => p._id === session.projectId
+                              );
+                              if (
+                                !matchedProject ||
+                                !matchedProject.name ||
+                                matchedProject.name.toLowerCase() === 'personal' ||
+                                matchedProject.name.toLowerCase() === 'default'
+                              ) {
                                 return null;
                               }
                               return (
@@ -898,7 +905,6 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
                                 </div>
                               );
                             })()}
-
                           </div>
                         </div>
 
