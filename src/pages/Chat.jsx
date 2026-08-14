@@ -415,23 +415,24 @@ const Chat = () => {
       const messageText = (overrideText !== null ? overrideText : (inputValue || longTextPreview || '')).trim();
       if (!messageText && filePreviews.length === 0) return;
 
+      const normalizedMode = (currentMode || '').toUpperCase();
       const isRestrictedMode = [
         'DEEP_SEARCH',
         'WEB_SEARCH',
         'SEARCH',
         'CODE_WRITER',
         'CODING_HELP',
-      ].includes(normMode);
-
+      ].includes(normalizedMode);
 
       if (isRestrictedMode && isFreePlan && !isAdmin) {
-        const modeLabel = (normMode === 'DEEP_SEARCH' || normMode === 'DEEPSEARCH') ? 'Deep Search' : 'Web Search';
+        const modeLabel = (normalizedMode === 'DEEP_SEARCH' || normalizedMode === 'DEEPSEARCH') ? 'Deep Search' : 'Web Search';
         triggerUpgradeModal(
           modeLabel,
           `${modeLabel} is not available on your current plan. Upgrade your plan to access in-depth research and tools.`
         );
         return;
       }
+
 
       setIsLoading(true);
       setInputValue('');
