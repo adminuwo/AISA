@@ -186,12 +186,7 @@ export const chatStorageService = {
 
       // If we have local data, return it immediately to avoid "late load"
       // BUT if the last message is a user message, we must check the server for the AI response
-      if (
-        local &&
-        Array.isArray(local) &&
-        local.length > 0 &&
-        local[local.length - 1].role !== 'user'
-      ) {
+      if (local && Array.isArray(local) && local.length > 0) {
         console.log(`[STORAGE] Returning local history for ${sessionId} (Instant Load)`);
         return {
           messages: local,
@@ -201,6 +196,7 @@ export const chatStorageService = {
           activeTool: meta.activeTool || null,
         };
       }
+
     } catch (localErr) {
       console.warn('[STORAGE] Local fetch failed, falling back to network:', localErr);
     }

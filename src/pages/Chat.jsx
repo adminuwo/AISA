@@ -351,6 +351,14 @@ const Chat = () => {
   const gen = useChatGeneration(activeSessionId);
   const { updateWorkspace, getWorkspace } = useCaseWorkspaceStore();
 
+  const prevSessionIdRef = useRef(sessionId);
+  if (prevSessionIdRef.current !== sessionId) {
+    prevSessionIdRef.current = sessionId;
+    if (sessionId && sessionId !== 'new') {
+      setIsHydrating(true);
+    }
+  }
+
   const hydratedSessionRef = useRef(null);
   useEffect(() => {
     if (!sessionId || sessionId === 'new') {
@@ -359,26 +367,16 @@ const Chat = () => {
       setIsHydrating(false);
       return;
     }
-    if (hydratedSessionRef.current === sessionId) return;
 
-
-    const existingMessages = useGenerationStore.getState().messagesByChat[sessionId];
-    if (existingMessages && existingMessages.length > 0) {
-      hydratedSessionRef.current = sessionId;
-      setIsHydrating(false);
-      return;
-    }
-
-    setIsHydrating(true);
     hydratedSessionRef.current = sessionId;
+    setIsHydrating(true);
 
     chatStorageService
       .getHistory(sessionId)
       .then((data) => {
         const msgs = Array.isArray(data?.messages) ? data.messages : Array.isArray(data) ? data : [];
-        if (msgs.length > 0) {
-          setMessages(msgs);
-        }
+        setMessages(msgs, sessionId);
+
         const rawProjId = data?.projectId || data?.caseId;
         const projId = rawProjId && rawProjId !== 'null' && rawProjId !== 'undefined' ? rawProjId : 'default';
         if (projId && projId !== currentProjectId) {
@@ -393,6 +391,7 @@ const Chat = () => {
         setIsHydrating(false);
       });
   }, [sessionId, currentProjectId, setCurrentProjectId, setMessages]);
+
 
 
   const {
