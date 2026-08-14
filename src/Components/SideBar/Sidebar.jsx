@@ -139,7 +139,8 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
         .then(res => res.data)
         .catch(err => {
           console.error(err);
-          if (err.status == 401) clearUser();
+          if (err.response && err.response.status === 401) clearUser();
+
           return null;
         }),
       getSubscriptionDetails().catch(err => {

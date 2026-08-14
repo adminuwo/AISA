@@ -58,57 +58,54 @@ export const AppRoute = {
 };
 
 export const getApiBaseUrl = () => {
+  // 1. On live/production browser domains (not localhost), always route through the current origin /api
+  if (typeof window !== 'undefined' && window.location) {
+    const currentHost = window.location.hostname;
+    const protocol = window.location.protocol || 'https:';
+
+    if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+      const port = window.location.port ? `:${window.location.port}` : '';
+      return `${protocol}//${currentHost}${port}/api`;
+    }
+  }
+
+  // 2. Otherwise use explicit environment variable (local dev)
   const envUrl =
     window._env_?.VITE_AISA_BACKEND_API ||
     import.meta.env.VITE_AISA_BACKEND_API ||
     import.meta.env.VITE_BACKEND_API ||
     import.meta.env.VITE_API_URL;
 
-  let url = '';
-
   if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
-    url = envUrl.trim().replace(/\/+$/, '');
-  } else if (typeof window !== 'undefined' && window.location) {
-    const currentHost = window.location.hostname;
-    const protocol = window.location.protocol || 'http:';
-
-    if (!currentHost || currentHost === 'localhost' || currentHost === '127.0.0.1') {
-      url = 'http://localhost:8080/api';
-    } else {
-      const port = window.location.port ? `:${window.location.port}` : '';
-      url = `${protocol}//${currentHost}${port}/api`;
-    }
-  } else {
-    url = 'http://localhost:8080/api';
+    return envUrl.trim().replace(/\/+$/, '');
   }
 
-  // Force HTTPS when the current page is served over HTTPS to prevent Mixed Content errors
-  if (typeof window !== 'undefined' && window.location?.protocol === 'https:') {
-    if (url.startsWith('http://') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
-      url = url.replace(/^http:\/\//i, 'https://');
-    }
-  }
-
-  return url;
+  return 'http://localhost:8080/api';
 };
 
 export const getUnifiedApiBaseUrl = () => {
-  let envUrl =
+  const envUrl =
     window._env_?.VITE_UNIFIED_BACKEND_API ||
-    import.meta.env.VITE_UNIFIED_BACKEND_API ||
-    'http://localhost:8000/api';
+    import.meta.env.VITE_UNIFIED_BACKEND_API;
 
   if (typeof window !== 'undefined' && window.location) {
     const currentHost = window.location.hostname;
+    // On production/live domains, default to the live Unified Platform Cloud Run backend
     if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-      envUrl = envUrl.replace(/localhost|127\.0\.0\.1/g, currentHost);
-      if (envUrl.startsWith('https://' + currentHost)) {
-        envUrl = envUrl.replace('https://', 'http://');
+      if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+        return envUrl.trim().replace(/\/+$/, '');
       }
+      return 'https://unified-dashboard-977864306871.asia-south1.run.app/api';
     }
   }
-  return envUrl;
+
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+
+  return 'http://localhost:8000/api';
 };
+
 
 const API = getApiBaseUrl();
 const UNIFIED_API = getUnifiedApiBaseUrl();
