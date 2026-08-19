@@ -85,8 +85,13 @@ export const generateLegalChatResponse = async (
         buffer = lines.pop();
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6);
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(':')) {
+            // Skip keep-alive ping comments and empty lines
+            continue;
+          }
+          if (trimmed.startsWith('data: ')) {
+            const dataStr = trimmed.slice(6);
             if (dataStr === '[DONE]') {
               reader.cancel().catch(() => {});
               break;
@@ -106,6 +111,27 @@ export const generateLegalChatResponse = async (
           }
         }
       }
+
+      // Process any remaining data left in the buffer after the stream ends.
+      // The last SSE line may not end with a newline, so it stays in the buffer.
+      if (buffer.trim()) {
+        const remainingLine = buffer.trim();
+        if (remainingLine.startsWith('data: ')) {
+          const dataStr = remainingLine.slice(6);
+          if (dataStr !== '[DONE]') {
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.text) {
+                accumulatedText += data.text;
+                onTokenChunk(data.text);
+              }
+            } catch (e) {
+              // Ignore parse errors on partial JSON chunks
+            }
+          }
+        }
+      }
+
       return { text: accumulatedText, reply: accumulatedText };
     } catch (streamErr) {
       console.warn('[aiLegalChatService] Stream failed:', streamErr.message);

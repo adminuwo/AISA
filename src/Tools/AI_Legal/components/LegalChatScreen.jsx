@@ -511,236 +511,240 @@ const AiResponseCard = ({
       </div>
 
       {/* Expanded Interactive Action Bar */}
-      {!msg.isIntro && !msg.isStopped && !msg.isFailed && (
-        <div className="border-t border-slate-100 mt-6 pt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[11px] font-bold text-slate-500">
-          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
-            <button
-              onClick={() => handleFeedback('like')}
-              className={`p-1.5 rounded transition-all hover:bg-slate-200 ${liked === 'like' ? 'text-green-600 bg-green-50' : 'text-slate-400'}`}
-              title="Helpful Answer"
-            >
-              <ThumbsUp size={13} />
-            </button>
-            <button
-              onClick={() => handleFeedback('dislike')}
-              className={`p-1.5 rounded transition-all hover:bg-slate-200 ${liked === 'dislike' ? 'text-red-600 bg-red-50' : 'text-slate-400'}`}
-              title="Not Helpful Answer"
-            >
-              <ThumbsDown size={13} />
-            </button>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={handleCopyText}
-              className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
-              title="Copy text"
-            >
-              {copied ? <Check size={13} /> : <Copy size={13} />}
-              <span className="hidden sm:inline">Copy</span>
-            </button>
-
-            <button
-              onClick={handleReadAloud}
-              className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
-              title="Read Aloud"
-            >
-              <Volume2 size={13} />
-              <span className="hidden sm:inline">Read Aloud</span>
-            </button>
-
-            <button
-              onClick={() => handleRegenerateMessage(msg.id)}
-              className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
-              title="Regenerate strategy"
-            >
-              <RotateCcw size={13} />
-              <span className="hidden sm:inline">Regenerate</span>
-            </button>
-
-            {/* Download Dropdown */}
-            <div className="relative">
+      {!msg.isIntro &&
+        !msg.isStopped &&
+        !msg.isFailed &&
+        !msg.isStreaming &&
+        Boolean(msg.text && msg.text.trim()) && (
+          <div className="border-t border-slate-100 mt-6 pt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[11px] font-bold text-slate-500">
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
               <button
-                onClick={() => setActiveDownloadMenu(prev => !prev)}
-                className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
-                title="Export file"
+                onClick={() => handleFeedback('like')}
+                className={`p-1.5 rounded transition-all hover:bg-slate-200 ${liked === 'like' ? 'text-green-600 bg-green-50' : 'text-slate-400'}`}
+                title="Helpful Answer"
               >
-                <Download size={13} />
-                <span className="hidden sm:inline">Export</span>
+                <ThumbsUp size={13} />
               </button>
-              {activeDownloadMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setActiveDownloadMenu(false)}
-                  />
-                  <div className="absolute right-0 bottom-full mb-2 z-20 w-32 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5">
-                    <button
-                      onClick={() => {
-                        handleDownloadTxt();
-                        setActiveDownloadMenu(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                    >
-                      TXT bare text
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleDownloadDoc();
-                        setActiveDownloadMenu(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                    >
-                      DOCX document
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleExportPDF();
-                        setActiveDownloadMenu(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                    >
-                      PDF print file
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                onClick={() => handleFeedback('dislike')}
+                className={`p-1.5 rounded transition-all hover:bg-slate-200 ${liked === 'dislike' ? 'text-red-600 bg-red-50' : 'text-slate-400'}`}
+                title="Not Helpful Answer"
+              >
+                <ThumbsDown size={13} />
+              </button>
             </div>
 
-            {/* Share Link Dropdown */}
-            <div className="relative">
+            <div className="flex flex-wrap items-center gap-3">
               <button
-                onClick={() => setActiveShareMenu(prev => !prev)}
+                onClick={handleCopyText}
                 className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
-                title="Share options"
+                title="Copy text"
               >
-                <Share2 size={13} />
-                <span className="hidden sm:inline">Share</span>
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                <span className="hidden sm:inline">Copy</span>
               </button>
-              {activeShareMenu && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setActiveShareMenu(false)} />
-                  <div className="absolute right-0 bottom-full mb-2 z-20 w-36 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5">
-                    <button
-                      onClick={() => {
-                        handleShareEmail();
-                        setActiveShareMenu(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                    >
-                      Send Email Report
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleShareLink();
-                        setActiveShareMenu(false);
-                      }}
-                      className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                    >
-                      Copy Share Link
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
 
-            {/* More Copilot Actions */}
-            <div className="relative">
               <button
-                type="button"
-                onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                className={`flex items-center gap-1 hover:text-[#4F46E5] transition-colors ${moreMenuOpen ? 'text-[#4F46E5]' : ''}`}
-                title="More legal options"
+                onClick={handleReadAloud}
+                className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
+                title="Read Aloud"
               >
-                <SlidersHorizontal size={13} />
-                <span className="hidden sm:inline">More Actions</span>
+                <Volume2 size={13} />
+                <span className="hidden sm:inline">Read Aloud</span>
               </button>
-              {moreMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setMoreMenuOpen(false)} />
-                  <div className="absolute right-0 bottom-full mb-2 z-20 w-48 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5 select-none text-left">
-                    {[
-                      {
-                        label: 'Explain this response',
-                        act: () => triggerPromptAction('Explain in detail'),
-                      },
-                      {
-                        label: 'Simplify language',
-                        act: () => triggerPromptAction('Simplify to plain English'),
-                      },
-                      {
-                        label: 'Expand logic',
-                        act: () => triggerPromptAction('Expand with more legal grounds'),
-                      },
-                      {
-                        label: 'Translate to Hindi',
-                        act: () => triggerPromptAction('Translate response to Hindi'),
-                      },
-                      {
-                        label: 'Save to Case Workspace',
-                        act: () => {
-                          toast.success('Saved to case documents!');
-                        },
-                      },
-                      {
-                        label: 'Create Pleading Draft',
-                        act: () => {
-                          toast.success('Redirecting to Draft Maker...');
-                        },
-                      },
-                      {
-                        label: 'Create Case Timeline',
-                        act: () => {
-                          toast.success('Constructing timeline...');
-                        },
-                      },
-                      {
-                        label: 'Send to Strategy Engine',
-                        act: () => {
-                          toast.success('Analyzing strategy...');
-                        },
-                      },
-                      {
-                        label: 'Open in Draft Maker',
-                        act: () => {
-                          toast.success('Opening Draft Maker editor...');
-                        },
-                      },
-                      {
-                        label: 'Add to Case Evidence',
-                        act: () => {
-                          toast.success('Added as indexed evidence.');
-                        },
-                      },
-                    ].map(item => (
+
+              <button
+                onClick={() => handleRegenerateMessage(msg.id)}
+                className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
+                title="Regenerate strategy"
+              >
+                <RotateCcw size={13} />
+                <span className="hidden sm:inline">Regenerate</span>
+              </button>
+
+              {/* Download Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveDownloadMenu(prev => !prev)}
+                  className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
+                  title="Export file"
+                >
+                  <Download size={13} />
+                  <span className="hidden sm:inline">Export</span>
+                </button>
+                {activeDownloadMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setActiveDownloadMenu(false)}
+                    />
+                    <div className="absolute right-0 bottom-full mb-2 z-20 w-32 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5">
                       <button
-                        key={item.label}
-                        type="button"
                         onClick={() => {
-                          item.act();
-                          setMoreMenuOpen(false);
+                          handleDownloadTxt();
+                          setActiveDownloadMenu(false);
                         }}
-                        className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                        className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
                       >
-                        {item.label}
+                        TXT bare text
                       </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                      <button
+                        onClick={() => {
+                          handleDownloadDoc();
+                          setActiveDownloadMenu(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                      >
+                        DOCX document
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleExportPDF();
+                          setActiveDownloadMenu(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                      >
+                        PDF print file
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
-              title="Print Report"
-            >
-              <Printer size={13} />
-              <span className="hidden sm:inline">Print</span>
-            </button>
+              {/* Share Link Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveShareMenu(prev => !prev)}
+                  className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
+                  title="Share options"
+                >
+                  <Share2 size={13} />
+                  <span className="hidden sm:inline">Share</span>
+                </button>
+                {activeShareMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setActiveShareMenu(false)} />
+                    <div className="absolute right-0 bottom-full mb-2 z-20 w-36 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5">
+                      <button
+                        onClick={() => {
+                          handleShareEmail();
+                          setActiveShareMenu(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                      >
+                        Send Email Report
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleShareLink();
+                          setActiveShareMenu(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                      >
+                        Copy Share Link
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* More Copilot Actions */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                  className={`flex items-center gap-1 hover:text-[#4F46E5] transition-colors ${moreMenuOpen ? 'text-[#4F46E5]' : ''}`}
+                  title="More legal options"
+                >
+                  <SlidersHorizontal size={13} />
+                  <span className="hidden sm:inline">More Actions</span>
+                </button>
+                {moreMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMoreMenuOpen(false)} />
+                    <div className="absolute right-0 bottom-full mb-2 z-20 w-48 rounded-xl bg-white border border-slate-200 shadow-xl p-1 flex flex-col gap-0.5 select-none text-left">
+                      {[
+                        {
+                          label: 'Explain this response',
+                          act: () => triggerPromptAction('Explain in detail'),
+                        },
+                        {
+                          label: 'Simplify language',
+                          act: () => triggerPromptAction('Simplify to plain English'),
+                        },
+                        {
+                          label: 'Expand logic',
+                          act: () => triggerPromptAction('Expand with more legal grounds'),
+                        },
+                        {
+                          label: 'Translate to Hindi',
+                          act: () => triggerPromptAction('Translate response to Hindi'),
+                        },
+                        {
+                          label: 'Save to Case Workspace',
+                          act: () => {
+                            toast.success('Saved to case documents!');
+                          },
+                        },
+                        {
+                          label: 'Create Pleading Draft',
+                          act: () => {
+                            toast.success('Redirecting to Draft Maker...');
+                          },
+                        },
+                        {
+                          label: 'Create Case Timeline',
+                          act: () => {
+                            toast.success('Constructing timeline...');
+                          },
+                        },
+                        {
+                          label: 'Send to Strategy Engine',
+                          act: () => {
+                            toast.success('Analyzing strategy...');
+                          },
+                        },
+                        {
+                          label: 'Open in Draft Maker',
+                          act: () => {
+                            toast.success('Opening Draft Maker editor...');
+                          },
+                        },
+                        {
+                          label: 'Add to Case Evidence',
+                          act: () => {
+                            toast.success('Added as indexed evidence.');
+                          },
+                        },
+                      ].map(item => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => {
+                            item.act();
+                            setMoreMenuOpen(false);
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1 hover:text-[#4F46E5] transition-colors"
+                title="Print Report"
+              >
+                <Printer size={13} />
+                <span className="hidden sm:inline">Print</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };
@@ -1939,11 +1943,24 @@ Please continue the conversation naturally using this context. Never ask the use
     const targetMsg = messages.find(m => m.id === msgId);
     if (!targetMsg) return;
 
-    // Remove the failed card
-    setMessages(prev => prev.filter(m => m.id !== msgId));
+    const targetIdx = messages.findIndex(m => m.id === msgId);
+    let userMsgIdToRemove = null;
+    for (let i = targetIdx - 1; i >= 0; i--) {
+      if (messages[i].sender === 'user') {
+        userMsgIdToRemove = messages[i].id;
+        break;
+      }
+    }
+
+    // Remove the failed card and its preceding user bubble so sendMessage doesn't create duplicate entries
+    setMessages(prev =>
+      prev.filter(m => m.id !== msgId && (!userMsgIdToRemove || m.id !== userMsgIdToRemove))
+    );
 
     // Resend using the stored raw prompts
-    sendMessage(targetMsg.failedPrompt, targetMsg.failedHiddenContext);
+    setTimeout(() => {
+      sendMessage(targetMsg.failedPrompt, targetMsg.failedHiddenContext);
+    }, 20);
   };
 
   // ─── SEND MESSAGE ──────────────────────────────────────────────────────────
@@ -1984,6 +2001,10 @@ Please continue the conversation naturally using this context. Never ask the use
     isStreamingRef.current = true;
 
     let promptText;
+    // Declare aiMsgId before try so the catch block can reference the same
+    // streaming message and update it in-place instead of leaving an orphaned
+    // empty bubble while appending a separate failed/stopped card.
+    const aiMsgId = 'ai-' + Date.now();
     try {
       const apiHistory = messages
         // Exclude intro messages, failed messages, stopped messages, and still-streaming messages
@@ -2013,7 +2034,6 @@ Please continue the conversation naturally using this context. Never ask the use
       // The backend handles the system prompt (legalPrompts.js) and language dynamically.
       // Real-time SSE streaming — tokens arrive token-by-token via onTokenChunk.
       // ────────────────────────────────────────────────────────────────────────
-      const aiMsgId = 'ai-' + Date.now();
       const streamingAiMsg = {
         id: aiMsgId,
         text: '',
@@ -2050,11 +2070,15 @@ Please continue the conversation naturally using this context. Never ask the use
 
       if (!response) {
         setGenerationState('idle');
+        // Remove the empty streaming message to avoid an orphaned empty bubble
+        setMessages(prev => prev.filter(m => m.id !== aiMsgId));
         return;
       }
 
       if (typeof response === 'object' && response.error) {
         setGenerationState('idle');
+        // Remove the empty streaming message
+        setMessages(prev => prev.filter(m => m.id !== aiMsgId));
         if (
           response.error !== 'OUT_OF_CREDITS' &&
           response.error !== 'PREMIUM_ONLY' &&
@@ -2104,28 +2128,59 @@ Please continue the conversation naturally using this context. Never ask the use
 
       if (isCancel || !isStreamingRef.current) {
         setGenerationState('stopped');
-        const aiMsgId = 'ai-stopped-' + Date.now();
-        const stoppedMsg = {
-          id: aiMsgId,
-          text: '',
-          sender: 'ai',
-          timestamp: new Date(),
-          isStopped: true,
-        };
-        setMessages(prev => [...prev, stoppedMsg]);
+        // Update the existing streaming message in-place instead of creating
+        // a new one, so we don't leave an orphaned empty bubble.
+        setMessages(prev => {
+          const hasStreaming = prev.some(m => m.id === aiMsgId);
+          if (hasStreaming) {
+            return prev.map(m =>
+              m.id === aiMsgId ? { ...m, isStreaming: false, isStopped: true } : m
+            );
+          }
+          // Fallback: if for some reason the streaming msg wasn't added yet
+          return [
+            ...prev,
+            {
+              id: aiMsgId,
+              text: '',
+              sender: 'ai',
+              timestamp: new Date(),
+              isStopped: true,
+            },
+          ];
+        });
       } else {
         setGenerationState('error');
-        const aiMsgId = 'ai-failed-' + Date.now();
-        const errorMsg = {
-          id: aiMsgId,
-          text: '',
-          sender: 'ai',
-          timestamp: new Date(),
-          isFailed: true,
-          failedPrompt: promptText,
-          failedHiddenContext: hiddenContextText,
-        };
-        setMessages(prev => [...prev, errorMsg]);
+        // Update the existing streaming message to failed state
+        setMessages(prev => {
+          const hasStreaming = prev.some(m => m.id === aiMsgId);
+          if (hasStreaming) {
+            return prev.map(m =>
+              m.id === aiMsgId
+                ? {
+                    ...m,
+                    isStreaming: false,
+                    isFailed: true,
+                    failedPrompt: promptText,
+                    failedHiddenContext: hiddenContextText,
+                  }
+                : m
+            );
+          }
+          // Fallback
+          return [
+            ...prev,
+            {
+              id: aiMsgId,
+              text: '',
+              sender: 'ai',
+              timestamp: new Date(),
+              isFailed: true,
+              failedPrompt: promptText,
+              failedHiddenContext: hiddenContextText,
+            },
+          ];
+        });
       }
     } finally {
       isStreamingRef.current = false;
