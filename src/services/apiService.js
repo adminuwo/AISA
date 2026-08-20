@@ -14,6 +14,10 @@ const apiClient = axios.create({
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   config => {
+    console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.url}`, {
+      params: config.params,
+      data: config.data,
+    });
     let token = null;
     const user = localStorage.getItem('user');
     if (user && user !== 'undefined' && user !== 'null') {
@@ -32,13 +36,25 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  error => Promise.reject(error)
+  error => {
+    console.error('[API REQUEST ERROR]', error);
+    return Promise.reject(error);
+  }
 );
 
 // Response interceptor for handling errors
 apiClient.interceptors.response.use(
-  response => response,
+  response => {
+    console.log(
+      `[API RESPONSE SUCCESS] ${response.config?.method?.toUpperCase()} ${response.config?.url} - Status: ${response.status}`
+    );
+    return response;
+  },
   error => {
+    console.error(
+      `[API RESPONSE ERROR] ${error.config?.method?.toUpperCase()} ${error.config?.url} - Status: ${error.response?.status || 'No Response'}`,
+      error.response?.data || error.message
+    );
     if (error.response?.status === 401) {
       const isMock = localStorage.getItem('token') === 'mock_token';
       if (!isMock) {

@@ -43,12 +43,15 @@ export const generateLegalChatResponse = async (
 
   if (onTokenChunk) {
     try {
+      console.log(`[aiLegalChatService STREAM REQUEST] POST ${LEGAL_CHAT_API}`, payload);
       const response = await fetch(LEGAL_CHAT_API, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
         signal: abortSignal,
       });
+
+      console.log(`[aiLegalChatService STREAM RESPONSE] Status: ${response.status}`);
 
       if (!response.ok || !response.body) {
         if (response.status === 401) {
@@ -134,18 +137,21 @@ export const generateLegalChatResponse = async (
 
       return { text: accumulatedText, reply: accumulatedText };
     } catch (streamErr) {
-      console.warn('[aiLegalChatService] Stream failed:', streamErr.message);
+      console.error('[aiLegalChatService STREAM ERROR] Stream failed:', streamErr.message);
       throw streamErr;
     }
   }
 
   // Fallback if no onTokenChunk is provided (non-streaming mode)
+  console.log(`[aiLegalChatService FALLBACK REQUEST] POST ${LEGAL_CHAT_API}`, payload);
   const result = await fetch(LEGAL_CHAT_API, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
     signal: abortSignal,
   });
+
+  console.log(`[aiLegalChatService FALLBACK RESPONSE] Status: ${result.status}`);
 
   if (!result.ok) {
     throw new Error(`Legal chat HTTP error: ${result.status}`);
