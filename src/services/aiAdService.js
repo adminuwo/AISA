@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { getDeviceFingerprint } from '../utils/deviceHelper';
 import { getUserData } from '../userStore/userData';
-import { apis } from '../types';
+import { getApiBaseUrl } from '../types';
 
-const AI_AD_API = `${apis.baseUrl}/ai-ad`;
+const getAiAdChatApi = () => `${getApiBaseUrl()}/ai-ad/chat`;
 
 /**
  * generateAiAdChatResponse
@@ -40,7 +40,7 @@ export const generateAiAdChatResponse = async (
     sessionId,
   };
 
-  const streamEndpoint = `${AI_AD_API}/chat`;
+  const streamEndpoint = getAiAdChatApi();
 
   if (onTokenChunk) {
     try {

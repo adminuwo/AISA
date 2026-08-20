@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { getDeviceFingerprint } from '../utils/deviceHelper';
 import { getUserData } from '../userStore/userData';
-import { apis } from '../types';
+import { getApiBaseUrl } from '../types';
 
-const CASHFLOW_API = apis.cashflow?.chat || `${apis.baseUrl}/cashflow/chat`;
+const getCashflowChatApi = () => `${getApiBaseUrl()}/cashflow/chat`;
 
 /**
  * generateCashflowChatResponse
@@ -40,7 +40,7 @@ export const generateCashflowChatResponse = async (
     sessionId,
   };
 
-  const streamEndpoint = CASHFLOW_API;
+  const streamEndpoint = getCashflowChatApi();
 
   if (onTokenChunk) {
     try {
