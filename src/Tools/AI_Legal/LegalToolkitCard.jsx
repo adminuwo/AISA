@@ -104,9 +104,17 @@ export const PREMIUM_TOOLS = t => [
   },
 ];
 
-const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect, t }) => {
+const ToolCard = ({
+  tool,
+  isPrimary = false,
+  size = 'md',
+  isAdmin = false,
+  onClose,
+  onSelect,
+  t,
+}) => {
   const isFreePlan = useIsFreePlan();
-  const isUnlocked = !isFreePlan;
+  const isUnlocked = isAdmin || !isFreePlan;
   const Icon = tool.icon;
   const [showWorkflow, setShowWorkflow] = useState(false);
 
@@ -114,7 +122,7 @@ const ToolCard = ({ tool, isPrimary = false, size = 'md', onClose, onSelect, t }
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       onClick={() => {
-        if (isFreePlan) {
+        if (!isAdmin && isFreePlan) {
           triggerUpgradeModal(
             tool.name || 'AI Legal™ Module',
             'My Case CRM, Draft Maker, Evidence Analysis, Contract Review, Case Predictor & Strategy Engine require a paid subscription. Upgrade your plan to unlock full AI Legal™ features.'
@@ -509,6 +517,7 @@ const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdm
                       key={tool.id}
                       tool={tool}
                       index={idx}
+                      isAdmin={isAdmin}
                       onClose={onClose}
                       onSelect={onSelect}
                       t={tLegal}

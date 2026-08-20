@@ -12,6 +12,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { logo } from '../constants';
 import { chatStorageService } from '../services/chatStorageService';
 import UWOLoginModal from '../Components/UWOLoginModal';
+import useCreditStore from '../userStore/useCreditStore';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -135,6 +136,10 @@ const Login = () => {
       autoAcceptCookies();
 
       const from = location.state?.from || AppRoute.DASHBOARD;
+      useCreditStore
+        .getState()
+        .syncCredits()
+        .catch(() => {});
       navigate(from, { replace: true });
       console.log('[LOGIN] Social auth success, initiating merge...');
       chatStorageService.mergeGuestChats();
@@ -163,6 +168,10 @@ const Login = () => {
       localStorage.setItem('token', res.data.token);
       autoAcceptCookies();
 
+      useCreditStore
+        .getState()
+        .syncCredits()
+        .catch(() => {});
       navigate(from, { replace: true });
       console.log('[LOGIN] Standard login success, initiating merge...');
       chatStorageService.mergeGuestChats();
@@ -653,6 +662,10 @@ const Login = () => {
           autoAcceptCookies();
 
           const from = location.state?.from || AppRoute.DASHBOARD || '/chat';
+          useCreditStore
+            .getState()
+            .syncCredits()
+            .catch(() => {});
           navigate(from, { replace: true });
           try {
             chatStorageService.mergeGuestChats();

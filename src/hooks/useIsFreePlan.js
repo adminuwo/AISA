@@ -8,10 +8,29 @@ export const useIsFreePlan = () => {
   const localUser = getUserData();
 
   const user = storeUser || localUser || {};
-  const rawPlan = user?.planType || user?.subscription?.planKey || storePlanKey || 'free';
+
+  // Admin users are never on a free tier
+  if (
+    user?.role === 'admin' ||
+    (user?.email && String(user.email).toLowerCase() === 'admin@uwo24.com') ||
+    storePlanKey === 'admin'
+  ) {
+    return false;
+  }
+
+  const rawPlan =
+    user?.planType ||
+    user?.subscription?.planKey ||
+    (user?.plan && user.plan !== 'Basic' ? user.plan : null) ||
+    storePlanKey ||
+    'free';
   const cleanPlan = String(rawPlan).toLowerCase();
 
-  const isFree = cleanPlan === 'free' || cleanPlan === 'plan_0' || cleanPlan === 'guest';
+  const isFree =
+    cleanPlan === 'free' ||
+    cleanPlan === 'plan_0' ||
+    cleanPlan === 'guest' ||
+    cleanPlan === 'basic';
   return isFree;
 };
 

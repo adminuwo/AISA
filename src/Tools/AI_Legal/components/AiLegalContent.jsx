@@ -41,6 +41,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { useIsFreePlan, triggerUpgradeModal } from '../../../hooks/useIsFreePlan';
+import { getUserData } from '../../../userStore/userData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Transition, Dialog } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
@@ -572,10 +573,16 @@ const AiLegalContent = ({
     }
   }, [loadDashboardData, loadSavedTools, currentCase]);
 
+  const user = getUserData();
+  const isAdmin = Boolean(
+    user?.token &&
+    (user?.role === 'admin' || String(user?.email).toLowerCase() === 'admin@uwo24.com')
+  );
   const isFreePlan = useIsFreePlan();
+  const isLocked = !isAdmin && isFreePlan;
 
   const handleToolPress = tool => {
-    if (isFreePlan && tool.id !== 'legal_general_chat') {
+    if (isLocked && tool.id !== 'legal_general_chat') {
       triggerUpgradeModal(
         tool.title || 'AI Legal™ Module',
         'My Case CRM, Draft Maker, Argument Builder, Legal Precedent Search, Evidence Analysis, Contract Review, Case Predictor, and Strategy Engine require a paid subscription. Upgrade your plan to unlock full AI Legal™ features.'
@@ -884,7 +891,7 @@ const AiLegalContent = ({
       </div>
 
       {/* Free Plan Lock Notification Banner */}
-      {isFreePlan && (
+      {isLocked && (
         <div className="mx-4 sm:mx-6 md:mx-10 lg:mx-12 mt-4 bg-gradient-to-r from-amber-500/15 via-purple-500/15 to-indigo-500/15 border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 text-amber-500 text-xs sm:text-sm font-black uppercase tracking-wider">
             <Lock className="w-4 h-4 shrink-0" />
@@ -1030,7 +1037,7 @@ const AiLegalContent = ({
 
                     {/* Desktop Action: Open → or Upgrade */}
                     <div className="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold mt-2">
-                      {isFreePlan ? (
+                      {isLocked ? (
                         <span className="text-amber-500 flex items-center gap-1">
                           <Lock size={12} /> Upgrade to Unlock
                         </span>
@@ -1071,7 +1078,7 @@ const AiLegalContent = ({
 
                       {/* Right Column */}
                       <div className="flex items-center gap-1 text-xs font-semibold shrink-0 pt-1 self-start">
-                        {isFreePlan ? (
+                        {isLocked ? (
                           <span className="text-amber-500 flex items-center gap-1">
                             <Lock size={11} /> Upgrade
                           </span>

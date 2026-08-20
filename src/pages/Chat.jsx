@@ -234,14 +234,21 @@ const Chat = () => {
         const hasSub = data?.subscription && data.subscription?.planId;
         const hasPaidPlan =
           hasSub && (data.subscription?.planId?.priceMonthly > 0 || data.subscription?.planId?.priceYearly > 0);
-        setIsPremiumUser(hasPaidPlan || data?.founderStatus || false);
-        setUserPlanName(data?.subscription?.planId?.planName || '');
+        setIsPremiumUser(
+          hasPaidPlan || data?.founderStatus || data?.plan?.planKey === 'admin' || false
+        );
+        setUserPlanName(
+          data?.subscription?.planId?.planName ||
+            (data?.plan?.planKey === 'admin' ? 'AISA Admin' : '')
+        );
       })
       .catch(() => setIsPremiumUser(false));
   }, []);
 
   const user = getUserData();
-  const isAdmin = user?.token && (user?.role === 'admin' || user?.email === 'admin@uwo24.com');
+  const isAdmin =
+    user?.token &&
+    (user?.role === 'admin' || String(user?.email).toLowerCase() === 'admin@uwo24.com');
 
   const isFreePlan = useIsFreePlan();
 

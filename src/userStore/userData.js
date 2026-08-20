@@ -39,6 +39,12 @@ export const setUserData = data => {
     localStorage.setItem('token', token);
   }
 
+  // Invalidate in-memory quota cache when user data changes (e.g. login/switch)
+  if (typeof window !== 'undefined') {
+    window.__quotaCache = null;
+    window.__quotaPromise = null;
+  }
+
   // Clear guest chat limit count upon login
   localStorage.removeItem('aisa_guest_chat_count');
 
