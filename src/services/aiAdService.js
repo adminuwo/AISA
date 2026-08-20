@@ -72,20 +72,33 @@ export const generateAiAdChatResponse = async (
       let accumulatedText = '';
       let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
+      let isDone = false;
+
+      while (!isDone) {
+        let readResult;
+        try {
+          readResult = await reader.read();
+        } catch (readErr) {
+          if (readErr.name === 'AbortError' || isDone) break;
+          throw readErr;
+        }
+
+        const { done, value } = readResult || {};
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        // Last entry may be an incomplete line split across reads — keep it for the next iteration
+        // Last entry may be an incomplete line split across reads — keep it for next iteration
         buffer = lines.pop();
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6);
+            const dataStr = line.slice(6).trim();
             if (dataStr === '[DONE]') {
-              reader.cancel().catch(() => {});
+              isDone = true;
+              try {
+                reader.cancel().catch(() => {});
+              } catch (_) {}
               break;
             }
             try {

@@ -2120,6 +2120,26 @@ Please continue the conversation naturally using this context. Never ask the use
       console.error('[LegalChatScreen] API Error:', error);
       setIsTyping(false);
 
+      // If we already accumulated text before the connection closed, treat as completed
+      if (streamedText && streamedText.trim().length > 0) {
+        const finalAiMsg = {
+          id: aiMsgId,
+          text: streamedText,
+          sender: 'ai',
+          timestamp: new Date(),
+          isStreaming: false,
+          isStopped: false,
+          fullPromptText: streamedText,
+        };
+        const finalMsgs = messagesRef.current.map(m => (m.id === aiMsgId ? finalAiMsg : m));
+        const exists = finalMsgs.some(m => m.id === aiMsgId);
+        const safeFinalMsgs = exists ? finalMsgs : [...finalMsgs, finalAiMsg];
+        setMessages(safeFinalMsgs);
+        saveChatHistory(safeFinalMsgs);
+        setGenerationState('completed');
+        return;
+      }
+
       const isCancel =
         error.name === 'AbortError' ||
         error.message === 'canceled' ||
@@ -2346,6 +2366,25 @@ Please continue the conversation naturally using this context. Never ask the use
       console.error('[LegalChatScreen] Regeneration API Error:', error);
       setIsRegenerating(false);
       setIsTyping(false);
+
+      if (regenStreamedText && regenStreamedText.trim().length > 0) {
+        const finalAiMsg = {
+          id: regenAiMsgId,
+          sender: 'ai',
+          text: regenStreamedText,
+          timestamp: new Date(),
+          isStreaming: false,
+          isStopped: false,
+          fullPromptText: regenStreamedText,
+        };
+        const finalMsgs = messagesRef.current.map(m => (m.id === regenAiMsgId ? finalAiMsg : m));
+        const exists = finalMsgs.some(m => m.id === regenAiMsgId);
+        const safeFinalMsgs = exists ? finalMsgs : [...finalMsgs, finalAiMsg];
+        setMessages(safeFinalMsgs);
+        saveChatHistory(safeFinalMsgs);
+        setGenerationState('completed');
+        return;
+      }
 
       const isCancel =
         error.name === 'AbortError' ||

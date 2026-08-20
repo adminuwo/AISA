@@ -2,7 +2,7 @@ import { getDeviceFingerprint } from '../utils/deviceHelper';
 import { getUserData } from '../userStore/userData';
 import { getApiBaseUrl } from '../types';
 
-const LEGAL_CHAT_API = `${getApiBaseUrl()}/chat/stream`;
+const getLegalChatApi = () => `${getApiBaseUrl()}/chat/stream`;
 
 /**
  * generateLegalChatResponse
@@ -41,10 +41,12 @@ export const generateLegalChatResponse = async (
     mode: 'LEGAL_TOOLKIT',
   };
 
+  const streamUrl = getLegalChatApi();
+
   if (onTokenChunk) {
     try {
-      console.log(`[aiLegalChatService STREAM REQUEST] POST ${LEGAL_CHAT_API}`, payload);
-      const response = await fetch(LEGAL_CHAT_API, {
+      console.log(`[aiLegalChatService STREAM REQUEST] POST ${streamUrl}`, payload);
+      const response = await fetch(streamUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
@@ -77,9 +79,19 @@ export const generateLegalChatResponse = async (
       const decoder = new TextDecoder('utf-8');
       let accumulatedText = '';
       let buffer = '';
+      let isDone = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
+      while (!isDone) {
+        let readResult;
+        try {
+          readResult = await reader.read();
+        } catch (readErr) {
+          // If the reader was cancelled/aborted or closed cleanly
+          if (readErr.name === 'AbortError' || isDone) break;
+          throw readErr;
+        }
+
+        const { done, value } = readResult || {};
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -94,9 +106,12 @@ export const generateLegalChatResponse = async (
             continue;
           }
           if (trimmed.startsWith('data: ')) {
-            const dataStr = trimmed.slice(6);
+            const dataStr = trimmed.slice(6).trim();
             if (dataStr === '[DONE]') {
-              reader.cancel().catch(() => {});
+              isDone = true;
+              try {
+                reader.cancel().catch(() => {});
+              } catch (_) {}
               break;
             }
             try {
@@ -116,11 +131,10 @@ export const generateLegalChatResponse = async (
       }
 
       // Process any remaining data left in the buffer after the stream ends.
-      // The last SSE line may not end with a newline, so it stays in the buffer.
       if (buffer.trim()) {
         const remainingLine = buffer.trim();
         if (remainingLine.startsWith('data: ')) {
-          const dataStr = remainingLine.slice(6);
+          const dataStr = remainingLine.slice(6).trim();
           if (dataStr !== '[DONE]') {
             try {
               const data = JSON.parse(dataStr);
@@ -143,8 +157,8 @@ export const generateLegalChatResponse = async (
   }
 
   // Fallback if no onTokenChunk is provided (non-streaming mode)
-  console.log(`[aiLegalChatService FALLBACK REQUEST] POST ${LEGAL_CHAT_API}`, payload);
-  const result = await fetch(LEGAL_CHAT_API, {
+  console.log(`[aiLegalChatService FALLBACK REQUEST] POST ${streamUrl}`, payload);
+  const result = await fetch(streamUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),

@@ -72,8 +72,18 @@ export const generateCashflowChatResponse = async (
       let accumulatedText = '';
       let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
+      let isDone = false;
+
+      while (!isDone) {
+        let readResult;
+        try {
+          readResult = await reader.read();
+        } catch (readErr) {
+          if (readErr.name === 'AbortError' || isDone) break;
+          throw readErr;
+        }
+
+        const { done, value } = readResult || {};
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -83,9 +93,12 @@ export const generateCashflowChatResponse = async (
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6);
+            const dataStr = line.slice(6).trim();
             if (dataStr === '[DONE]') {
-              reader.cancel().catch(() => {});
+              isDone = true;
+              try {
+                reader.cancel().catch(() => {});
+              } catch (_) {}
               break;
             }
             try {
