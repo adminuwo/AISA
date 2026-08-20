@@ -17,7 +17,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const setUserRecoil = useUserStore((state) => state.setUser);
+  const setUserRecoil = useUserStore(state => state.setUser);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -179,7 +179,6 @@ const Login = () => {
       const errorMessage = err.response?.data?.error || err.message || t('serverError');
       setMessage(errorMessage);
     } finally {
-
       setLoading(false);
     }
   };
@@ -296,7 +295,7 @@ const Login = () => {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 className="w-full bg-white/20 dark:bg-slate-800/20 border border-white/30 dark:border-white/5 rounded-xl py-3 pl-12 pr-4 text-slate-700 dark:text-white placeholder-slate-400/70 focus:outline-none transition-all font-medium text-sm backdrop-blur-md"
                 required
@@ -308,7 +307,7 @@ const Login = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="••••••"
                 className="w-full bg-white/20 dark:bg-slate-800/20 border border-white/30 dark:border-white/5 rounded-xl py-3 pl-12 pr-12 text-slate-700 dark:text-white placeholder-slate-400/70 focus:outline-none transition-all font-medium text-sm tracking-[0.3em] backdrop-blur-md"
                 required
@@ -528,7 +527,7 @@ const Login = () => {
                   <input
                     type="checkbox"
                     checked={modalAgreedToTerms}
-                    onChange={(e) => setModalAgreedToTerms(e.target.checked)}
+                    onChange={e => setModalAgreedToTerms(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
                     style={{
                       width: '16px',
@@ -545,7 +544,7 @@ const Login = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-bold"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
                     >
                       Terms & Conditions
                     </a>
@@ -556,7 +555,7 @@ const Login = () => {
                   <input
                     type="checkbox"
                     checked={modalAcknowledgedPrivacy}
-                    onChange={(e) => setModalAcknowledgedPrivacy(e.target.checked)}
+                    onChange={e => setModalAcknowledgedPrivacy(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
                     style={{
                       width: '16px',
@@ -573,7 +572,7 @@ const Login = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-bold"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
                     >
                       Privacy Policy
                     </a>
@@ -584,7 +583,7 @@ const Login = () => {
                   <input
                     type="checkbox"
                     checked={modalMarketingOptIn}
-                    onChange={(e) => setModalMarketingOptIn(e.target.checked)}
+                    onChange={e => setModalMarketingOptIn(e.target.checked)}
                     className="mt-0.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary w-4 h-4 shrink-0 min-w-4 min-h-4 max-w-4 max-h-4 aspect-square cursor-pointer"
                     style={{
                       width: '16px',
@@ -633,7 +632,7 @@ const Login = () => {
         onClose={() => setShowUwoModal(false)}
         appCode="aisa"
         apiKey="key_aisa_live_master_2026"
-        onSuccess={(data) => {
+        onSuccess={data => {
           toast.success('Authenticated with UWO Platform!');
           const uUser = data.user || {};
           const formattedUser = {

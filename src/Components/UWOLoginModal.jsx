@@ -19,7 +19,7 @@ export const UWOLoginModal = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -43,7 +43,7 @@ export const UWOLoginModal = ({
           if (typeof regData.detail === 'string') {
             errorText = regData.detail;
           } else if (Array.isArray(regData.detail)) {
-            errorText = regData.detail.map((d) => d.msg || d.detail || JSON.stringify(d)).join(', ');
+            errorText = regData.detail.map(d => d.msg || d.detail || JSON.stringify(d)).join(', ');
           } else if (regData.detail) {
             errorText =
               typeof regData.detail === 'object'
@@ -83,7 +83,7 @@ export const UWOLoginModal = ({
         if (typeof loginData.detail === 'string') {
           loginErr = loginData.detail;
         } else if (Array.isArray(loginData.detail)) {
-          loginErr = loginData.detail.map((d) => d.msg || d.detail).join(', ');
+          loginErr = loginData.detail.map(d => d.msg || d.detail).join(', ');
         } else if (loginData.detail) {
           loginErr =
             typeof loginData.detail === 'object'
@@ -245,7 +245,7 @@ export const UWOLoginModal = ({
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
                   placeholder="Sanskar Sharma"
                   className="w-full px-4 py-2.5 text-sm bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
@@ -260,7 +260,7 @@ export const UWOLoginModal = ({
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="sanskar@uwo24.com"
                 className="w-full px-4 py-2.5 text-sm bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
               />
@@ -274,7 +274,7 @@ export const UWOLoginModal = ({
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full px-4 py-2.5 text-sm bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
               />

@@ -84,9 +84,7 @@ export const getApiBaseUrl = () => {
 };
 
 export const getUnifiedApiBaseUrl = () => {
-  const envUrl =
-    window._env_?.VITE_UNIFIED_BACKEND_API ||
-    import.meta.env.VITE_UNIFIED_BACKEND_API;
+  const envUrl = window._env_?.VITE_UNIFIED_BACKEND_API || import.meta.env.VITE_UNIFIED_BACKEND_API;
 
   if (typeof window !== 'undefined' && window.location) {
     const currentHost = window.location.hostname;
@@ -105,7 +103,6 @@ export const getUnifiedApiBaseUrl = () => {
 
   return 'http://localhost:8000/api';
 };
-
 
 const API = getApiBaseUrl();
 const UNIFIED_API = getUnifiedApiBaseUrl();

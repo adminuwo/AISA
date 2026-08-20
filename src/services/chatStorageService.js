@@ -196,7 +196,6 @@ export const chatStorageService = {
           activeTool: meta.activeTool || null,
         };
       }
-
     } catch (localErr) {
       console.warn('[STORAGE] Local fetch failed, falling back to network:', localErr);
     }

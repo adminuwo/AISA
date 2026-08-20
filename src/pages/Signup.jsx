@@ -16,7 +16,6 @@ import TermsOfServiceModal from '../landingpage/PolicyModals/TermsOfServiceModal
 import CookiePolicyModal from '../landingpage/PolicyModals/CookiePolicyModal';
 import UWOLoginModal from '../Components/UWOLoginModal';
 
-
 const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
