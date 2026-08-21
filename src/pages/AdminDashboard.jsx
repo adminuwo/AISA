@@ -72,7 +72,7 @@ const AdminDashboard = () => {
   const renderTab = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewTab />;
+        return <OverviewTab setActiveTab={setActiveTab} />;
       case 'users':
         return <UsersTab />;
       case 'chat-sessions':
@@ -94,7 +94,7 @@ const AdminDashboard = () => {
       case 'settings':
         return <SettingsTab />;
       default:
-        return <OverviewTab />;
+        return <OverviewTab setActiveTab={setActiveTab} />;
     }
   };
 

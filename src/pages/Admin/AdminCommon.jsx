@@ -26,11 +26,14 @@ export const TabButton = ({ active, icon: Icon, label, onClick }) => (
 );
 
 // ─── Stat Card ───
-export const StatCard = ({ icon: Icon, label, value, color = 'primary', trend }) => (
+export const StatCard = ({ icon: Icon, label, value, color = 'primary', trend, onClick }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-primary/30 transition-all"
+    onClick={onClick}
+    className={`bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/30 dark:border-white/10 rounded-2xl p-5 relative overflow-hidden group hover:border-primary/30 transition-all ${
+      onClick ? 'cursor-pointer select-none' : ''
+    }`}
   >
     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     <div className="relative z-10">

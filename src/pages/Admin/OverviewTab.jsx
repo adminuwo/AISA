@@ -4,7 +4,7 @@ import { apiService } from '../../services/apiService';
 import { Activity, RefreshCw, Users, DollarSign, Headphones, CheckCircle2 } from 'lucide-react';
 import { StatCard, SectionCard } from './AdminCommon';
 
-const OverviewTab = () => {
+const OverviewTab = ({ setActiveTab }) => {
   const { t } = useLanguage();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,18 +55,25 @@ const OverviewTab = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-        <StatCard icon={Users} label={t('totalUsers')} value={stats?.totalUsers ?? 0} />
+        <StatCard
+          icon={Users}
+          label={t('totalUsers')}
+          value={stats?.totalUsers ?? 0}
+          onClick={() => setActiveTab?.('users')}
+        />
         <StatCard
           icon={Activity}
           label={t('activeSubscriptions')}
           value={stats?.activeSubscriptions ?? 0}
           color="emerald-500"
+          onClick={() => setActiveTab?.('finance')}
         />
         <StatCard
           icon={DollarSign}
           label={t('totalRevenue')}
           value={`₹${stats?.totalRevenue ?? 0}`}
           color="amber-500"
+          onClick={() => setActiveTab?.('finance')}
         />
         <StatCard
           icon={Headphones}
@@ -74,12 +81,14 @@ const OverviewTab = () => {
           value={stats?.pendingTickets ?? 0}
           color="primary"
           trend={stats?.pendingTickets > 0 ? 'Action Required' : 'All Clear'}
+          onClick={() => setActiveTab?.('helpdesk')}
         />
         <StatCard
           icon={CheckCircle2}
           label={t('resolvedQueries') || 'Resolved Queries'}
           value={stats?.resolvedTickets ?? 0}
           color="emerald-500"
+          onClick={() => setActiveTab?.('helpdesk')}
         />
       </div>
 
