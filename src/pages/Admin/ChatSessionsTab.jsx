@@ -152,6 +152,176 @@ const SessionStatusBadge = ({ status }) => {
   );
 };
 
+const LineChart = ({
+  data,
+  title,
+  icon: Icon,
+  colorClass = 'stroke-indigo-400',
+  fillColor = '#6c63ff',
+  labelColor = 'text-indigo-400',
+}) => {
+  const points = data || [];
+  const maxCount = Math.max(...points.map(d => d.count), 1);
+  const totalCount = points.reduce((acc, p) => acc + p.count, 0);
+  const avgCount = (totalCount / (points.length || 1)).toFixed(1);
+
+  const height = 150;
+  const width = 500;
+  const paddingLeft = 35;
+  const paddingRight = 15;
+  const paddingTop = 15;
+  const paddingBottom = 25;
+
+  const coords = points.map((d, i) => {
+    const x = paddingLeft + (i * (width - paddingLeft - paddingRight)) / (points.length - 1 || 1);
+    const y = height - paddingBottom - (d.count / maxCount) * (height - paddingTop - paddingBottom);
+    return { x, y, date: d.date, count: d.count };
+  });
+
+  const getBezierPath = coords => {
+    if (coords.length === 0) return '';
+    let path = `M ${coords[0].x} ${coords[0].y}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = coords[i];
+      const p1 = coords[i + 1];
+      const cp1x = p0.x + (p1.x - p0.x) / 3;
+      const cp1y = p0.y;
+      const cp2x = p0.x + (2 * (p1.x - p0.x)) / 3;
+      const cp2y = p1.y;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
+    }
+    return path;
+  };
+
+  const pathD = getBezierPath(coords);
+  const areaD =
+    coords.length > 0
+      ? `${pathD} L ${coords[coords.length - 1].x} ${height - paddingBottom} L ${coords[0].x} ${height - paddingBottom} Z`
+      : '';
+
+  const [hoveredDot, setHoveredDot] = useState(null);
+  const yTicks = [0, Math.round(maxCount / 2), maxCount];
+
+  return (
+    <div className="bg-white/40 dark:bg-[#0c0e14] backdrop-blur-xl border border-white/30 dark:border-white/5 rounded-3xl p-6 hover:border-primary/20 transition-all flex flex-col gap-4 relative group">
+      <div className="flex justify-between items-start">
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold text-subtext uppercase tracking-widest">{title}</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-maintext tracking-tight">{avgCount}</span>
+            <span className="text-[10px] font-bold text-subtext uppercase tracking-wider">
+              daily avg
+            </span>
+          </div>
+          <p className="text-xs text-subtext/80 font-medium">
+            Total {totalCount} in the last 7 days
+          </p>
+        </div>
+        <div
+          className={`p-2.5 rounded-xl bg-white/10 dark:bg-white/5 border border-white/10 ${labelColor}`}
+        >
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+
+      {hoveredDot !== null && (
+        <div
+          className="absolute bg-[#0f111a] text-white text-[9px] font-bold py-1.5 px-2 rounded-xl shadow-xl pointer-events-none z-30 transition-all duration-75 border border-white/10"
+          style={{
+            left: `${(coords[hoveredDot].x / width) * 100}%`,
+            top: `${(coords[hoveredDot].y / height) * 100}%`,
+            transform: 'translate(-50%, -120%)',
+          }}
+        >
+          <p className="font-mono text-center">{coords[hoveredDot].count}</p>
+          <p className="text-[8px] text-subtext font-sans mt-0.5">{coords[hoveredDot].date}</p>
+        </div>
+      )}
+
+      <div className="relative h-32 w-full mt-2 select-none">
+        {points.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-subtext text-xs">No data available</p>
+          </div>
+        ) : (
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+            <defs>
+              <linearGradient id={`grad-${title.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={fillColor} stopOpacity="0.25" />
+                <stop offset="100%" stopColor={fillColor} stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            {yTicks.map((val, idx) => {
+              const y =
+                height - paddingBottom - (val / maxCount) * (height - paddingTop - paddingBottom);
+              return (
+                <g key={idx}>
+                  <line
+                    x1={paddingLeft}
+                    y1={y}
+                    x2={width - paddingRight}
+                    y2={y}
+                    stroke="currentColor"
+                    className="text-white/5 dark:text-white/5"
+                    strokeDasharray={idx === 0 ? '0' : '4 4'}
+                  />
+                  <text
+                    x={paddingLeft - 8}
+                    y={y + 3}
+                    textAnchor="end"
+                    className="fill-subtext/60 dark:fill-subtext/40 text-[9px] font-mono font-semibold"
+                  >
+                    {val}
+                  </text>
+                </g>
+              );
+            })}
+
+            {areaD && <path d={areaD} fill={`url(#grad-${title.replace(/\s+/g, '')})`} />}
+
+            {pathD && (
+              <path
+                d={pathD}
+                fill="none"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={colorClass}
+              />
+            )}
+
+            {coords.map((c, i) => (
+              <g
+                key={i}
+                className="cursor-pointer"
+                onMouseEnter={() => setHoveredDot(i)}
+                onMouseLeave={() => setHoveredDot(null)}
+              >
+                <circle
+                  cx={c.x}
+                  cy={c.y}
+                  r="3.5"
+                  className={`fill-white stroke-2 ${colorClass} transition-all duration-150`}
+                />
+                <circle cx={c.x} cy={c.y} r="12" className="fill-transparent" />
+              </g>
+            ))}
+          </svg>
+        )}
+      </div>
+
+      {points.length > 0 && (
+        <div className="flex justify-between text-[9px] text-subtext/75 px-1 font-bold tracking-wider uppercase border-t border-white/5 pt-2">
+          <span>{points[0]?.date?.slice(5)}</span>
+          <span>{points[Math.floor(points.length / 2)]?.date?.slice(5)}</span>
+          <span>{points[points.length - 1]?.date?.slice(5)}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChatSessionsTab = () => {
   const { t } = useLanguage();
 
@@ -293,7 +463,7 @@ const ChatSessionsTab = () => {
       handleOpenMailModal,
       formatDate,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [sessions, fetchDetail, handleOpenMailModal, formatDate]
   );
 
@@ -378,6 +548,26 @@ const ChatSessionsTab = () => {
             </p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Daily active sessions & User Signups trends */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <LineChart
+          data={stats?.sessionActivityTrend}
+          title="Daily Active Sessions"
+          icon={TrendingUp}
+          colorClass="stroke-indigo-400"
+          fillColor="#6366f1"
+          labelColor="text-indigo-400"
+        />
+        <LineChart
+          data={stats?.userSignupTrend}
+          title="Daily User Signups"
+          icon={Users}
+          colorClass="stroke-emerald-400"
+          fillColor="#10b981"
+          labelColor="text-emerald-400"
+        />
       </div>
 
       {/* Filters */}
