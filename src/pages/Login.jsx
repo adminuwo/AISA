@@ -238,7 +238,11 @@ const Login = () => {
       }
 
       setError(true);
-      const errorMessage = err.response?.data?.error || 'Google login failed';
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        'Google login failed';
       setMessage(errorMessage);
     } finally {
       setGoogleLoading(false);

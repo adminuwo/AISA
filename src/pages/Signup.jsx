@@ -117,7 +117,12 @@ const Signup = () => {
       chatStorageService.mergeGuestChats();
     } catch (err) {
       console.error('[Google Signup] Error:', err);
-      setError(err.response?.data?.error || 'Google signup failed');
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          'Google signup failed'
+      );
     } finally {
       setGoogleLoading(false);
     }
