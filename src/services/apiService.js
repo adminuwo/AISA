@@ -1682,7 +1682,22 @@ export const apiService = {
         window.__quotaCache = response.data;
         return response.data;
       } catch (error) {
-        console.error('Failed to fetch quota status:', error);
+        try {
+          const fallbackRes = await apiClient.get('/subscription/user-credits');
+          if (fallbackRes.data) {
+            window.__quotaCache = fallbackRes.data;
+            return fallbackRes.data;
+          }
+        } catch (fbErr) {
+          try {
+            const rootSubRes = await apiClient.get('/subscription');
+            if (rootSubRes.data) {
+              window.__quotaCache = rootSubRes.data;
+              return rootSubRes.data;
+            }
+          } catch (rErr) {}
+        }
+        console.warn('Quota status endpoint unavailable, using safe fallback.');
         // Return a safe default so the app doesn't crash
         return {
           success: false,
