@@ -1682,6 +1682,18 @@ export const apiService = {
         window.__quotaCache = response.data;
         return response.data;
       } catch (error) {
+        if (error?.response?.status === 429) {
+          console.warn(
+            '[Quota] Rate limited (429). Returning cached quota without cascading retries.'
+          );
+          return (
+            window.__quotaCache || {
+              success: false,
+              planKey: 'free',
+              limits: { chat: 100, chatScope: 'total', images: 0, carousels: 0, editImage: false },
+            }
+          );
+        }
         try {
           const fallbackRes = await apiClient.get('/subscription/user-credits');
           if (fallbackRes.data) {
@@ -1689,6 +1701,11 @@ export const apiService = {
             return fallbackRes.data;
           }
         } catch (fbErr) {
+          if (fbErr?.response?.status === 429) {
+            return (
+              window.__quotaCache || { success: false, planKey: 'free', limits: { chat: 100 } }
+            );
+          }
           try {
             const rootSubRes = await apiClient.get('/subscription');
             if (rootSubRes.data) {
