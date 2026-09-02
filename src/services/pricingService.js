@@ -1,23 +1,18 @@
 import axios from 'axios';
 import { API, apis } from '../types';
+import { getUserData } from '../userStore/userData';
 
 const getAuthHeaders = () => {
-  const userStr = localStorage.getItem('user');
-  let token = null;
-  if (userStr && userStr !== 'undefined' && userStr !== 'null') {
-    try {
-      const userObj = JSON.parse(userStr);
-      token = userObj?.token;
-    } catch (e) {}
-  }
-  if (!token || token === 'undefined' || token === 'null') {
-    token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-  }
-  if (!token || token === 'undefined' || token === 'null') {
-    token = '';
-  }
+  const token =
+    getUserData()?.token ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('auth_token') ||
+    localStorage.getItem('accessToken') ||
+    '';
+
+  const cleanToken = token && token !== 'undefined' && token !== 'null' ? token : '';
   return {
-    Authorization: token ? `Bearer ${token}` : '',
+    Authorization: cleanToken ? `Bearer ${cleanToken}` : '',
   };
 };
 

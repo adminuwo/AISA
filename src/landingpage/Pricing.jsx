@@ -156,21 +156,13 @@ const Pricing = () => {
   };
 
   const getActiveToken = () => {
-    const userStr = localStorage.getItem('user');
-    let token = null;
-    if (userStr && userStr !== 'undefined' && userStr !== 'null') {
-      try {
-        const userObj = JSON.parse(userStr);
-        token = userObj?.token;
-      } catch (e) {}
-    }
-    if (!token || token === 'undefined' || token === 'null') {
-      token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-    }
-    if (!token || token === 'undefined' || token === 'null') {
-      token = '';
-    }
-    return token;
+    const token =
+      getUserData()?.token ||
+      localStorage.getItem('token') ||
+      localStorage.getItem('auth_token') ||
+      localStorage.getItem('accessToken') ||
+      '';
+    return token && token !== 'undefined' && token !== 'null' ? token : '';
   };
 
   const fetchCurrentPlan = async () => {
