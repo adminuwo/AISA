@@ -70,6 +70,23 @@ const formatFeatureString = (feature, plan) => {
   return result;
 };
 
+// Map old DB plan names to new display names
+const PLAN_NAME_MAP = {
+  free: 'Free',
+  'free plan': 'Free',
+  starter: 'Starter',
+  'starter plan': 'Starter',
+  pro: 'Pro',
+  'pro plan': 'Pro',
+  business: 'Business',
+  'business plan': 'Business',
+};
+
+const getDisplayPlanName = planName => {
+  if (!planName) return '';
+  return PLAN_NAME_MAP[planName.toLowerCase()] || planName;
+};
+
 // Dynamically ensure Razorpay checkout script is loaded
 const loadRazorpaySDK = () => {
   return new Promise(resolve => {
@@ -619,28 +636,6 @@ const Pricing = () => {
       </div>
     );
   }
-
-  // Map old DB plan names to new display names
-  const PLAN_NAME_MAP = {
-    free: 'Free',
-    'free plan': 'Free',
-    starter: 'Starter',
-    'starter plan': 'Starter',
-    pro: 'Pro',
-    'pro plan': 'Pro',
-    business: 'Business',
-    'business plan': 'Business',
-  };
-
-  const getDisplayPlanName = planName => {
-    return PLAN_NAME_MAP[planName.toLowerCase()] || planName;
-  };
-
-  // Detect the "Startup Pro" (formerly Founder) plan
-  const isStartupProPlan = plan => {
-    const name = plan.planName.toLowerCase();
-    return name.includes('founder') || name.includes('startup pro') || name.includes('startup');
-  };
 
   return (
     <div className="pricing-page">
