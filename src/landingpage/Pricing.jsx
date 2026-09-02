@@ -70,6 +70,29 @@ const formatFeatureString = (feature, plan) => {
   return result;
 };
 
+// Dynamically ensure Razorpay checkout script is loaded
+const loadRazorpaySDK = () => {
+  return new Promise(resolve => {
+    if (typeof window !== 'undefined' && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const existingScript = document.querySelector('script[src*="checkout.razorpay.com"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(true));
+      existingScript.addEventListener('error', () => resolve(false));
+      setTimeout(() => resolve(!!window.Razorpay), 1500);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 const Pricing = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -118,16 +141,21 @@ const Pricing = () => {
         postalCode: details.postalCode || '',
         country: details.country || 'IN',
       });
+      if (details.billingName && details.addressLine1) {
+        setBillingSubmitted(true);
+      }
     }
-  }, [userState]);
+  }, [userState?.user]);
 
   useEffect(() => {
     fetchPricingData();
     fetchCurrentPlan();
 
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 1024);
-      setIsTabletCarousel(window.innerWidth > 768 && window.innerWidth <= 1024);
+      const mobile = window.innerWidth <= 1024;
+      const tablet = window.innerWidth > 768 && window.innerWidth <= 1024;
+      setIsMobile(mobile);
+      setIsTabletCarousel(tablet);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -173,20 +201,14 @@ const Pricing = () => {
     }
     try {
       const data = await getSubscriptionDetails();
-      if (data?.founderStatus) {
-        setCurrentPlanName('founder');
-      } else if (data?.plan?.planKey) {
-        setCurrentPlanName(data.plan.planKey.toLowerCase());
-      } else if (data?.subscription?.planId?.planId) {
-        setCurrentPlanName(data.subscription.planId.planId.toLowerCase());
-      } else if (data?.subscription?.planId?.planName) {
-        setCurrentPlanName(data.subscription.planId.planName.toLowerCase());
+      if (data.success && data.subscription) {
+        setCurrentPlanName(data.subscription.planId?.planName || '');
       } else {
-        setCurrentPlanName('plan_0');
+        setCurrentPlanName('Free');
       }
-    } catch (e) {
-      console.error('Failed to fetch current plan:', e);
-      setCurrentPlanName('');
+    } catch (err) {
+      console.error(err);
+      setCurrentPlanName('Free');
     }
   };
 
@@ -208,50 +230,18 @@ const Pricing = () => {
     setBillingCycle(prev => (prev === 'monthly' ? 'yearly' : 'monthly'));
   };
 
-  const renderQuotaSummary = plan => {
-    const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
-
-    if (isFree) {
-      return [
-        { text: `${plan.chatLimit || 100} total messages cap`, icon: <Zap size={14} /> },
-        {
-          text: `${Math.round((plan.validityDays || 90) / 30)} months validity`,
-          icon: <ShieldAlert size={14} />,
-        },
-        { text: 'Lock CashFlow & media creation', icon: <ImageIcon size={14} />, locked: true },
-      ];
-    }
-
-    const summary = [
-      {
-        text: plan.chatLimit === -1 ? 'Unlimited Chats' : `${plan.chatLimit} Messages`,
-        icon: <Zap size={14} />,
-      },
-    ];
-
-    if (plan.imageLimit > 0) {
-      summary.push({
-        text: `${plan.imageLimit} Images / Day (HD/Ultra)`,
-        icon: <ImageIcon size={14} />,
-      });
-    } else {
-      summary.push({
-        text: plan.editImageAllowed ? 'Edit Image (No Gen)' : 'No Image Gen/Edit',
-        icon: <ImageIcon size={14} />,
-        locked: !plan.editImageAllowed,
-      });
-    }
-
-    if (plan.carouselLimit > 0) {
-      summary.push({ text: `${plan.carouselLimit} Carousel / Day`, icon: <ImageIcon size={14} /> });
-    }
-
-    return summary;
-  };
-
   const executeUpgrade = async (plan, billingDetails) => {
     try {
       setProcessing(true);
+
+      const isSdkLoaded = await loadRazorpaySDK();
+      if (!isSdkLoaded && typeof window !== 'undefined' && !window.Razorpay) {
+        toast.error(
+          'Payment gateway SDK failed to load. Please check your internet connection or ad-blocker.'
+        );
+        setProcessing(false);
+        return;
+      }
 
       const totalAmount = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
       const basePrice = Math.round((totalAmount / 1.18) * 100) / 100;
@@ -282,8 +272,11 @@ const Pricing = () => {
         return;
       }
 
+      const razorpayKey =
+        orderRes.key || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_SBFlInxBiRfOGd';
+
       const options = {
-        key: orderRes.key,
+        key: razorpayKey,
         amount: orderRes.order.amount,
         currency: 'INR',
         name: 'AISA™',
@@ -308,7 +301,8 @@ const Pricing = () => {
             setUserState({ user: updatedUser });
             useCreditStore.getState().syncCredits();
           } catch (e) {
-            toast.error('Failed to complete upgrade after payment.');
+            console.error('[purchasePlan Error]', e);
+            toast.error(e.response?.data?.message || 'Failed to complete upgrade after payment.');
           }
         },
         prefill: {
@@ -320,11 +314,17 @@ const Pricing = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        toast.error('Payment failed: ' + response.error.description);
+        toast.error('Payment failed: ' + (response?.error?.description || 'Transaction cancelled'));
       });
       rzp.open();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upgrade failed. Please try again.');
+      console.error('[Pricing Upgrade Error]', err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Upgrade failed. Please try again.';
+      toast.error(errMsg);
     } finally {
       setProcessing(false);
     }
@@ -356,6 +356,16 @@ const Pricing = () => {
     }
     try {
       setProcessing(true);
+
+      const isSdkLoaded = await loadRazorpaySDK();
+      if (!isSdkLoaded && typeof window !== 'undefined' && !window.Razorpay) {
+        toast.error(
+          'Payment gateway SDK failed to load. Please check your internet connection or ad-blocker.'
+        );
+        setProcessing(false);
+        return;
+      }
+
       const orderRes = await createSubscriptionOrder({ packageId: pkg._id });
 
       if (orderRes.isFree) {
@@ -368,8 +378,11 @@ const Pricing = () => {
         return;
       }
 
+      const razorpayKey =
+        orderRes.key || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_SBFlInxBiRfOGd';
+
       const options = {
-        key: orderRes.key,
+        key: razorpayKey,
         amount: orderRes.order.amount,
         currency: 'INR',
         name: 'AISA™',
@@ -383,7 +396,8 @@ const Pricing = () => {
             setUserState({ user: updatedUser });
             setShowUpsell(false);
           } catch (e) {
-            toast.error('Failed to complete purchase after payment.');
+            console.error('[buyCredits Error]', e);
+            toast.error(e.response?.data?.message || 'Failed to complete purchase after payment.');
           }
         },
         prefill: {
@@ -395,11 +409,17 @@ const Pricing = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        toast.error('Payment failed: ' + response.error.description);
+        toast.error('Payment failed: ' + (response?.error?.description || 'Transaction cancelled'));
       });
       rzp.open();
     } catch (err) {
-      toast.error('Purchase failed.');
+      console.error('[Buy Credits Error]', err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Purchase failed. Please try again.';
+      toast.error(errMsg);
     } finally {
       setProcessing(false);
     }
