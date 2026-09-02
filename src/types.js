@@ -58,28 +58,26 @@ export const AppRoute = {
 };
 
 export const getApiBaseUrl = () => {
-  // 1. On live/production browser domains (not localhost), always route through the current origin /api
-  if (typeof window !== 'undefined' && window.location) {
-    const currentHost = window.location.hostname;
-    const protocol = window.location.protocol || 'https:';
-
-    if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-      const port = window.location.port ? `:${window.location.port}` : '';
-      return `${protocol}//${currentHost}${port}/api`;
-    }
-  }
-
-  // 2. Otherwise use explicit environment variable (local dev)
+  // 1️⃣ Prefer explicit env variable (works for both dev and prod)
   const envUrl =
     window._env_?.VITE_AISA_BACKEND_API ||
     import.meta.env.VITE_AISA_BACKEND_API ||
     import.meta.env.VITE_BACKEND_API ||
     import.meta.env.VITE_API_URL;
-
   if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
+  // 2️⃣ When running on a non‑localhost domain, assume the backend lives on the same host under /api
+  if (typeof window !== 'undefined' && window.location) {
+    const { hostname, protocol, port } = window.location;
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      const basePort = port ? `:${port}` : '';
+      return `${protocol}//${hostname}${basePort}/api`;
+    }
+  }
+
+  // 3️⃣ Fallback for local development where no env var is set
   return 'http://localhost:8080/api';
 };
 
