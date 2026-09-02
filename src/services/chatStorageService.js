@@ -87,16 +87,26 @@ const getAuthHeaders = () => {
 // --- Service ---
 
 export const chatStorageService = {
-  async getSessions(projectId) {
+  async getSessions(projectId, sessionType, caseId, paginationOptions = {}) {
     try {
       const params = {};
       if (projectId && projectId !== 'default' && projectId !== 'all') params.projectId = projectId;
+      if (sessionType) params.sessionType = sessionType;
+      if (caseId) params.caseId = caseId;
+      if (paginationOptions.limit) params.limit = paginationOptions.limit;
+      if (paginationOptions.page) params.page = paginationOptions.page;
+      if (paginationOptions.offset !== undefined) params.offset = paginationOptions.offset;
+      if (paginationOptions.before) params.before = paginationOptions.before;
+      if (paginationOptions.search) params.search = paginationOptions.search;
+
       const response = await axios.get(`${API_BASE_URL}/chat`, {
         params,
         headers: getAuthHeaders(),
         withCredentials: true,
       });
-      const dbSessions = Array.isArray(response.data) ? response.data : [];
+      const dbSessions = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || response.data?.sessions || [];
 
       // Combine IndexedDB local metadata sessions to preserve instant local history
       try {
