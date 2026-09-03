@@ -247,6 +247,70 @@ const Pricing = () => {
     setBillingCycle(prev => (prev === 'monthly' ? 'yearly' : 'monthly'));
   };
 
+  const renderQuotaSummary = plan => {
+    if (!plan) return [];
+    const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
+
+    if (isFree) {
+      const chatLabel =
+        plan.chatScope === 'unlimited' || plan.chatLimit === -1
+          ? 'Unlimited AI Chat'
+          : `${plan.chatLimit ?? 100} Total Messages`;
+
+      return [
+        {
+          text: chatLabel,
+          icon: <Zap size={14} />,
+          locked: false,
+        },
+        {
+          text: t('paidPlansOnly') || 'Paid plans only',
+          icon: <ImageIcon size={14} />,
+          locked: true,
+        },
+        {
+          text: t('paidPlansOnly') || 'Paid plans only',
+          icon: <Video size={14} />,
+          locked: true,
+        },
+      ];
+    }
+
+    const chatText =
+      plan.chatScope === 'unlimited' || plan.chatLimit === -1
+        ? 'Unlimited AI Chat'
+        : `${plan.chatLimit ?? 100} AI Messages`;
+
+    const hasImages = Boolean(plan.imageLimit && plan.imageLimit > 0);
+    const imageText = hasImages ? `${plan.imageLimit} Images / day` : 'Images (Pro+ only)';
+
+    const hasCarousels = Boolean(plan.carouselLimit && plan.carouselLimit > 0);
+    const hasVideos = Boolean(plan.videoLimit && plan.videoLimit > 0);
+    const videoText = hasCarousels
+      ? `${plan.carouselLimit} Carousel Ads / day`
+      : hasVideos
+        ? `${plan.videoLimit} Videos / day`
+        : 'AI Ads & Video (Pro+ only)';
+
+    return [
+      {
+        text: chatText,
+        icon: <Zap size={14} />,
+        locked: false,
+      },
+      {
+        text: imageText,
+        icon: <ImageIcon size={14} />,
+        locked: !hasImages,
+      },
+      {
+        text: videoText,
+        icon: <Video size={14} />,
+        locked: !hasCarousels && !hasVideos,
+      },
+    ];
+  };
+
   const executeUpgrade = async (plan, billingDetails) => {
     try {
       setProcessing(true);
@@ -281,12 +345,16 @@ const Pricing = () => {
         const updatedUser = updateUser({
           credits: res.credits,
           founderStatus:
-            plan.planName.toLowerCase() === 'founder plan' ? true : userState.user.founderStatus,
+            plan.planName.toLowerCase() === 'founder plan' ? true : userState?.user?.founderStatus,
         });
         setUserState({ user: updatedUser });
         useCreditStore.getState().syncCredits();
         setProcessing(false);
         return;
+      }
+
+      if (!orderRes.success || !orderRes.order) {
+        throw new Error(orderRes.message || 'Failed to create payment order');
       }
 
       const razorpayKey =
@@ -313,7 +381,7 @@ const Pricing = () => {
               founderStatus:
                 plan.planName.toLowerCase() === 'founder plan'
                   ? true
-                  : userState.user.founderStatus,
+                  : userState?.user?.founderStatus,
             });
             setUserState({ user: updatedUser });
             useCreditStore.getState().syncCredits();
@@ -878,9 +946,10 @@ const Pricing = () => {
                 <span>Total Amount:</span>
                 <span className="font-bold text-primary">
                   ₹
-                  {(billingCycle === 'yearly'
-                    ? selectedPlanForUpgrade.priceYearly
-                    : selectedPlanForUpgrade.priceMonthly
+                  {Number(
+                    (billingCycle === 'yearly'
+                      ? selectedPlanForUpgrade.priceYearly
+                      : selectedPlanForUpgrade.priceMonthly) || 0
                   ).toFixed(2)}
                 </span>
               </div>
