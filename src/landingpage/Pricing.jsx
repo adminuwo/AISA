@@ -404,6 +404,11 @@ const Pricing = () => {
       rzp.open();
     } catch (err) {
       console.error('[Pricing Upgrade Error]', err);
+      if (err.response?.status === 401) {
+        toast.error('Your session expired. Please log in again to complete your upgrade.');
+        setTimeout(() => navigate('/login'), 1500);
+        return;
+      }
       const errMsg =
         err.response?.data?.message ||
         err.response?.data?.error ||

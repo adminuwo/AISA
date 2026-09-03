@@ -143,6 +143,7 @@ const apis = {
   resendCode: `${API}/auth/resend-code`,
   ssoGenerate: `${API}/auth/sso/generate`,
   ssoHandoff: `${API}/auth/sso/handoff`,
+  uwoLogin: `${API}/auth/sso/uwo-login`,
   subscription: {
     status: `${API}/subscription/status`,
     credits: `${API}/subscription/user-credits`,
