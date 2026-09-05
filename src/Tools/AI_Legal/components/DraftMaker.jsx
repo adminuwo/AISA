@@ -5642,7 +5642,7 @@ CRITICAL PROMPT DIRECTIVE:
                     )}
 
                     {/* Document Header Metadata info bar */}
-                    <div className="w-[816px] bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-xl p-3 mb-4 shadow-sm flex flex-wrap justify-between items-center text-[10px] font-bold text-slate-500 gap-y-2 select-none shrink-0">
+                    <div className="w-full max-w-[816px] bg-white dark:bg-[#111726] border border-slate-205 dark:border-zinc-800 rounded-xl p-3 mb-4 shadow-sm flex flex-wrap justify-between items-center text-[10px] font-bold text-slate-500 gap-y-2 select-none">
                       <div className="flex items-center gap-3">
                         <div>
                           <span className="text-slate-400 mr-1 text-[8.5px] uppercase tracking-wider font-bold">

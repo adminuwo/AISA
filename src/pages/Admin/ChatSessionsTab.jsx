@@ -29,13 +29,17 @@ const SessionRow = React.memo(({ index, style, ariaAttributes, ...rowProps }) =>
   const { sessions, fetchDetail, handleOpenMailModal, formatDate } = rowProps;
 
   const s = sessions[index];
+  const handleRowClick = useCallback(() => {
+    if (s?.sessionId) fetchDetail(s.sessionId);
+  }, [fetchDetail, s?.sessionId]);
+
   if (!s) return null;
 
   return (
     <div
       style={style}
       {...ariaAttributes}
-      onClick={() => fetchDetail(s.sessionId)}
+      onClick={handleRowClick}
       className="flex w-full items-center text-sm border-b border-white/5 hover:bg-primary/5 cursor-pointer transition-all group h-[48px]"
     >
       <div className="w-[12%] px-4 py-3 min-w-0">

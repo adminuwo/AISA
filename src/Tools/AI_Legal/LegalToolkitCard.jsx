@@ -104,168 +104,164 @@ export const PREMIUM_TOOLS = t => [
   },
 ];
 
-const ToolCard = ({
-  tool,
-  isPrimary = false,
-  size = 'md',
-  isAdmin = false,
-  onClose,
-  onSelect,
-  t,
-}) => {
-  const isFreePlan = useIsFreePlan();
-  const isUnlocked = isAdmin || !isFreePlan;
-  const Icon = tool.icon;
-  const [showWorkflow, setShowWorkflow] = useState(false);
+const ToolCard = React.memo(
+  ({ tool, isPrimary = false, size = 'md', isAdmin = false, onClose, onSelect, t }) => {
+    const isFreePlan = useIsFreePlan();
+    const isUnlocked = isAdmin || !isFreePlan;
+    const Icon = tool.icon;
+    const [showWorkflow, setShowWorkflow] = useState(false);
 
-  return (
-    <motion.div
-      whileHover={{ y: -4, scale: 1.01 }}
-      onClick={() => {
-        if (!isAdmin && isFreePlan) {
-          triggerUpgradeModal(
-            tool.name || 'AI Legal™ Module',
-            'My Case CRM, Draft Maker, Evidence Analysis, Contract Review, Case Predictor & Strategy Engine require a paid subscription. Upgrade your plan to unlock full AI Legal™ features.'
-          );
-          return;
-        }
-        if (isUnlocked) {
-          onSelect(tool, isUnlocked);
-        }
-      }}
-      className={`group relative cursor-pointer rounded-[1rem] sm:rounded-[1.4rem] p-3 sm:p-4 transition-colors duration-300 border overflow-hidden
+    return (
+      <motion.div
+        whileHover={{ y: -4, scale: 1.01 }}
+        onClick={() => {
+          if (!isAdmin && isFreePlan) {
+            triggerUpgradeModal(
+              tool.name || 'AI Legal™ Module',
+              'My Case CRM, Draft Maker, Evidence Analysis, Contract Review, Case Predictor & Strategy Engine require a paid subscription. Upgrade your plan to unlock full AI Legal™ features.'
+            );
+            return;
+          }
+          if (isUnlocked) {
+            onSelect(tool, isUnlocked);
+          }
+        }}
+        className={`group relative cursor-pointer rounded-[1rem] sm:rounded-[1.4rem] p-3 sm:p-4 transition-colors duration-300 border overflow-hidden
         bg-white/65 border-white/75 backdrop-blur-[12px] shadow-[0_4px_16px_rgba(99,102,241,0.06)]
         dark:bg-[#1A2540]/60 dark:border-white/5 dark:shadow-none`}
-    >
-      {/* Workflow Overlay */}
-      <AnimatePresence>
-        {showWorkflow && (
-          <motion.div
-            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-            animate={{ opacity: 1, backdropFilter: 'blur(8px)' }}
-            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-            className="absolute inset-0 z-20 bg-indigo-600/95 rounded-[1.4rem] p-6 flex flex-col justify-start overflow-y-auto custom-scrollbar overscroll-contain"
-            style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h6 className="text-white font-black text-[12px] uppercase tracking-widest flex items-center gap-2">
-                  <Zap className="w-4 h-4 fill-white" /> {t('workflow')}
-                </h6>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    setShowWorkflow(false);
-                  }}
-                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+      >
+        {/* Workflow Overlay */}
+        <AnimatePresence>
+          {showWorkflow && (
+            <motion.div
+              initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              animate={{ opacity: 1, backdropFilter: 'blur(8px)' }}
+              exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              className="absolute inset-0 z-20 bg-indigo-600/95 rounded-[1.4rem] p-6 flex flex-col justify-start overflow-y-auto custom-scrollbar overscroll-contain"
+              style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h6 className="text-white font-black text-[12px] uppercase tracking-widest flex items-center gap-2">
+                    <Zap className="w-4 h-4 fill-white" /> {t('workflow')}
+                  </h6>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setShowWorkflow(false);
+                    }}
+                    className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+                <div className="space-y-2.5">
+                  {Array.isArray(tool.workflow) &&
+                    tool.workflow.map((step, i) => (
+                      <div key={i} className="flex gap-3">
+                        <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-black text-white shrink-0">
+                          {i + 1}
+                        </span>
+                        <p className="text-white/90 text-[11px] leading-snug font-medium pt-0.5">
+                          {step}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  if (isUnlocked) onSelect(tool, isUnlocked);
+                }}
+                className="w-full py-2 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-lg mt-4"
+              >
+                {t('launchNow')}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Hover shimmer */}
+        <motion.div
+          className="absolute inset-0 rounded-[1.4rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(139,92,246,0.04) 100%)',
+          }}
+        />
+
+        <div className="flex flex-col gap-2.5 sm:gap-4 relative z-10">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_8px_24px_rgba(99,102,241,0.22)]"
+                style={{
+                  backgroundColor: '#F5F4FF',
+                  color: '#5B5FEF',
+                  border: '1px solid rgba(99,102,241,0.14)',
+                  boxShadow: '0 4px 12px rgba(99,102,241,0.10)',
+                }}
+              >
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.8} />
+              </div>
+              {tool.id === 'legal_case_predictor' && (
+                <span
+                  className={`text-[6px] font-black uppercase tracking-[0.1em] transition-colors ${isUnlocked ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}
                 >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
-              <div className="space-y-2.5">
-                {Array.isArray(tool.workflow) &&
-                  tool.workflow.map((step, i) => (
-                    <div key={i} className="flex gap-3">
-                      <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-black text-white shrink-0">
-                        {i + 1}
-                      </span>
-                      <p className="text-white/90 text-[11px] leading-snug font-medium pt-0.5">
-                        {step}
-                      </p>
-                    </div>
-                  ))}
-              </div>
+                  सत्यमेव जयते
+                </span>
+              )}
             </div>
             <button
               onClick={e => {
                 e.stopPropagation();
-                if (isUnlocked) onSelect(tool, isUnlocked);
+                setShowWorkflow(true);
               }}
-              className="w-full py-2 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-lg mt-4"
+              className="p-2 transition-all text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-white/5 rounded-lg"
+              title="How it works"
             >
-              {t('launchNow')}
+              <Sparkles className="w-4 h-4" />
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
-      {/* Hover shimmer */}
-      <motion.div
-        className="absolute inset-0 rounded-[1.4rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{
-          background:
-            'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(139,92,246,0.04) 100%)',
-        }}
-      />
-
-      <div className="flex flex-col gap-2.5 sm:gap-4 relative z-10">
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col items-center gap-1">
-            <div
-              className="w-9 h-9 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_8px_24px_rgba(99,102,241,0.22)]"
-              style={{
-                backgroundColor: '#F5F4FF',
-                color: '#5B5FEF',
-                border: '1px solid rgba(99,102,241,0.14)',
-                boxShadow: '0 4px 12px rgba(99,102,241,0.10)',
-              }}
-            >
-              <Icon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.8} />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <h5 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors tracking-tight text-[12px] sm:text-[14px]">
+                {tool.name}
+              </h5>
+              {isUnlocked ? (
+                <span className="text-[7.5px] font-black text-indigo-600 bg-indigo-50/80 dark:bg-indigo-500/20 px-1.5 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30 uppercase tracking-tighter">
+                  Unlocked
+                </span>
+              ) : (
+                <span className="text-[7.5px] font-black text-slate-400 bg-white/70 dark:bg-zinc-800/70 px-1.5 py-0.5 rounded-full border border-white/80 dark:border-white/10 uppercase tracking-tighter">
+                  Pro
+                </span>
+              )}
             </div>
-            {tool.id === 'legal_case_predictor' && (
-              <span
-                className={`text-[6px] font-black uppercase tracking-[0.1em] transition-colors ${isUnlocked ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}
-              >
-                सत्यमेव जयते
-              </span>
-            )}
+            <p className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[11px] leading-relaxed font-medium line-clamp-2">
+              {tool.desc}
+            </p>
           </div>
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              setShowWorkflow(true);
-            }}
-            className="p-2 transition-all text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-white/5 rounded-lg"
-            title="How it works"
-          >
-            <Sparkles className="w-4 h-4" />
-          </button>
-        </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <h5 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors tracking-tight text-[12px] sm:text-[14px]">
-              {tool.name}
-            </h5>
-            {isUnlocked ? (
-              <span className="text-[7.5px] font-black text-indigo-600 bg-indigo-50/80 dark:bg-indigo-500/20 px-1.5 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/30 uppercase tracking-tighter">
-                Unlocked
+          {!isUnlocked && (
+            <div className="pt-2.5 border-t border-white/60 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">
+                {tool.price}
               </span>
-            ) : (
-              <span className="text-[7.5px] font-black text-slate-400 bg-white/70 dark:bg-zinc-800/70 px-1.5 py-0.5 rounded-full border border-white/80 dark:border-white/10 uppercase tracking-tighter">
-                Pro
-              </span>
-            )}
-          </div>
-          <p className="text-slate-500 dark:text-slate-400 text-[9px] sm:text-[11px] leading-relaxed font-medium line-clamp-2">
-            {tool.desc}
-          </p>
-        </div>
-
-        {!isUnlocked && (
-          <div className="pt-2.5 border-t border-white/60 flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">
-              {tool.price}
-            </span>
-            <div className="flex items-center gap-1 text-indigo-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-all">
-              Upgrade <ArrowRight className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-indigo-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-all">
+                Upgrade <ArrowRight className="w-3 h-3" />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+);
+
+ToolCard.displayName = 'ToolCard';
 
 const LegalToolkitCard = ({ isOpen, onClose, onSelect, unlockedTools = [], isAdmin = false }) => {
   const { toolkitLanguage, setToolkitLanguage, tLegal } = useLanguage();

@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+scratch/
+*.tmp
 
 # Environment variables
 .env
