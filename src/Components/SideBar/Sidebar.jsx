@@ -168,6 +168,9 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
           setPlanName('Founder');
         } else if (subDetails.subscription?.planId?.planName) {
           setPlanName(subDetails.subscription.planId.planName);
+        } else if (subDetails.plan?.planKey && subDetails.plan.planKey !== 'Plan_0') {
+          const planKeyMap = { Plan_1: 'Creator', Plan_2: 'Startup', Plan_3: 'Enterprise' };
+          setPlanName(planKeyMap[subDetails.plan.planKey] || subDetails.plan.planKey);
         } else {
           setPlanName('Free Plan');
         }

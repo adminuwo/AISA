@@ -218,8 +218,17 @@ const Pricing = () => {
     }
     try {
       const data = await getSubscriptionDetails();
-      if (data.success && data.subscription) {
-        setCurrentPlanName(data.subscription.planId?.planName || '');
+      if (data.success) {
+        if (data.subscription?.planId?.planName) {
+          setCurrentPlanName(data.subscription.planId.planName);
+        } else if (data.plan?.planKey && data.plan.planKey !== 'Plan_0') {
+          const keyMap = { Plan_1: 'Creator', Plan_2: 'Startup', Plan_3: 'Enterprise' };
+          setCurrentPlanName(keyMap[data.plan.planKey] || data.plan.planKey);
+        } else if (data.founderStatus) {
+          setCurrentPlanName('Founder');
+        } else {
+          setCurrentPlanName('Free');
+        }
       } else {
         setCurrentPlanName('Free');
       }
@@ -385,6 +394,7 @@ const Pricing = () => {
             });
             setUserState({ user: updatedUser });
             useCreditStore.getState().syncCredits();
+            fetchCurrentPlan();
           } catch (e) {
             console.error('[purchasePlan Error]', e);
             toast.error(e.response?.data?.message || 'Failed to complete upgrade after payment.');

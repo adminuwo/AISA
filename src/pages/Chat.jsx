@@ -234,12 +234,16 @@ const Chat = () => {
         const hasSub = data?.subscription && data.subscription?.planId;
         const hasPaidPlan =
           hasSub && (data.subscription?.planId?.priceMonthly > 0 || data.subscription?.planId?.priceYearly > 0);
+        const planKey = data?.plan?.planKey;
+        const isPaidPlanKey = planKey && planKey !== 'Plan_0' && planKey !== 'free';
         setIsPremiumUser(
-          hasPaidPlan || data?.founderStatus || data?.plan?.planKey === 'admin' || false
+          hasPaidPlan || isPaidPlanKey || data?.founderStatus || planKey === 'admin' || false
         );
+        const planKeyMap = { Plan_1: 'Creator', Plan_2: 'Startup', Plan_3: 'Enterprise', admin: 'AISA Admin' };
         setUserPlanName(
           data?.subscription?.planId?.planName ||
-            (data?.plan?.planKey === 'admin' ? 'AISA Admin' : '')
+            planKeyMap[planKey] ||
+            ''
         );
       })
       .catch(() => setIsPremiumUser(false));
