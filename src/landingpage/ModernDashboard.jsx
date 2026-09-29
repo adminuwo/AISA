@@ -379,11 +379,37 @@ const CategoryTabs = ({ categories, activeCategory, onCategoryChange, isDark }) 
 const DashboardCard = ({ tool, onSelect, isActive, isDark, isCentered }) => {
   const { icon: Icon } = tool;
 
+  const handleCardClick = () => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    let hasUserToken = false;
+    try {
+      hasUserToken = !!(userStr && JSON.parse(userStr)?.token);
+    } catch (e) {}
+
+    const isAuthed = (token && token !== 'null' && token !== 'undefined') || hasUserToken;
+
+    if (!isAuthed) {
+      window.dispatchEvent(
+        new CustomEvent('login_required', {
+          detail: {
+            toolName: tool.label || 'Image Generation',
+          },
+        })
+      );
+      return;
+    }
+
+    if (onSelect) {
+      onSelect(tool.id);
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => onSelect(tool.id)}
+      onClick={handleCardClick}
       onMouseEnter={() => {
         if (tool.id === 'legal' && typeof window.__preloadLegalModules === 'function') {
           window.__preloadLegalModules();

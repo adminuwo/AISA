@@ -121,7 +121,7 @@ const AiCashFlowContent = lazy(() => import('../Tools/AI_Cashflow/components/AiC
 
 
 import axios from 'axios';
-import { apis, API } from '../types';
+import { apis, API, resolveMediaUrl } from '../types';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
 import { copyText } from '../utils/clipboard';
 import { getUserData, clearUser } from '../userStore/userData';
@@ -258,11 +258,17 @@ const Chat = () => {
 
   const checkPremiumTool = useCallback(
     (toolName) => {
-      if (!user?.token) {
+      const currentToken = localStorage.getItem('token');
+      const currentUser = getUserData();
+      const hasAuth =
+        !!(currentToken && currentToken !== 'null' && currentToken !== 'undefined') ||
+        !!currentUser?.token;
+      if (!hasAuth) {
         window.dispatchEvent(new CustomEvent('login_required', { detail: { toolName } }));
         return false;
       }
-      if (user.email === 'admin@uwo24.com' || isAdminUser) return true;
+      if (currentUser?.email === 'admin@uwo24.com' || currentUser?.role === 'admin' || isAdminUser)
+        return true;
       if (isFreePlan || isPremiumUser === false) {
         triggerUpgradeModal(
           toolName,
@@ -272,7 +278,7 @@ const Chat = () => {
       }
       return true;
     },
-    [user, isAdminUser, isFreePlan, isPremiumUser]
+    [isAdminUser, isFreePlan, isPremiumUser]
   );
 
   const handleCopyImage = useCallback(async (imageUrl) => {
@@ -284,7 +290,7 @@ const Chat = () => {
       window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1';
 
-    const proxiedUrl = `${apis.imageProxy}?url=${encodeURIComponent(imageUrl)}`;
+    const proxiedUrl = resolveMediaUrl(imageUrl);
 
     if (isSecureContext && navigator.clipboard?.write) {
       const t = toast.loading('Copying image...');
@@ -347,6 +353,7 @@ const Chat = () => {
   const currentProjectId = useUserStore((state) => state.activeProjectId);
   const setCurrentProjectId = useUserStore((state) => state.setActiveProjectId);
   const inputRef = useRef(null);
+  const [editRefImage, setEditRefImage] = useState(null);
   const [showGmailModal, setShowGmailModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [longTextPreview, setLongTextPreview] = useState(null);
@@ -428,6 +435,92 @@ const Chat = () => {
       if (!messageText && filePreviews.length === 0) return;
 
       const normalizedMode = (currentMode || '').toUpperCase();
+
+      // Guest Mode Requirements:
+      // 1. No login = no access to AI features (Image gen, edit, video, doc conversion, search, code writer, legal, cashflow, etc.)
+      // 2. Maximum 5 chat sessions only
+      if (!user?.token) {
+        const GUEST_RESTRICTED_MODES = [
+          'IMAGE_GENERATION',
+          'IMAGE_GEN',
+          'IMAGE_EDIT',
+          'EDIT_IMAGE',
+          'VIDEO_GEN',
+          'VIDEO_GENERATION',
+          'DOCUMENT_CONVERT',
+          'FILE_CONVERSION',
+          'AUDIO_CONVERT',
+          'DEEP_SEARCH',
+          'WEB_SEARCH',
+          'SEARCH',
+          'CODE_WRITER',
+          'CODING_HELP',
+          'LEGAL_TOOLKIT',
+          'CASHFLOW',
+          'FILE_ANALYSIS',
+          'aiad_agent',
+        ];
+
+        if (GUEST_RESTRICTED_MODES.includes(normalizedMode)) {
+          const displayNames = {
+            IMAGE_GENERATION: 'Image Generation',
+            IMAGE_GEN: 'Image Generation',
+            IMAGE_EDIT: 'Image Editing',
+            EDIT_IMAGE: 'Image Editing',
+            VIDEO_GEN: 'Video Generation',
+            VIDEO_GENERATION: 'Video Generation',
+            DOCUMENT_CONVERT: 'Document Conversion',
+            FILE_CONVERSION: 'Document Conversion',
+            AUDIO_CONVERT: 'Audio Conversion',
+            DEEP_SEARCH: 'Deep Search',
+            WEB_SEARCH: 'Web Search',
+            SEARCH: 'Web Search',
+            CODE_WRITER: 'Code Writer',
+            CODING_HELP: 'Code Writer',
+            LEGAL_TOOLKIT: 'AI Legal™',
+            CASHFLOW: 'AI CashFlow',
+            FILE_ANALYSIS: 'File Analysis',
+            aiad_agent: 'AI ADS™',
+          };
+          window.dispatchEvent(
+            new CustomEvent('login_required', {
+              detail: {
+                toolName: displayNames[normalizedMode] || 'AI Magic Tools',
+              },
+            })
+          );
+          return;
+        }
+
+        if (filePreviews && filePreviews.length > 0) {
+          window.dispatchEvent(
+            new CustomEvent('login_required', {
+              detail: {
+                toolName: 'File & Document Analysis',
+                customMessage:
+                  'Sign in to your AISA™ account to upload files and use document analysis tools.',
+              },
+            })
+          );
+          return;
+        }
+
+        // Guest session count limit check: Max 5 chat sessions
+        const existingSessions = useUserStore.getState().sessions || [];
+        if (activeSessionId === 'new' && existingSessions.length >= 5) {
+          window.dispatchEvent(
+            new CustomEvent('login_required', {
+              detail: {
+                toolName: 'Chat Sessions',
+                customMessage:
+                  'You have reached the 5-chat limit for Guest Mode. Please log in or create an account to continue using the chat functionality.',
+              },
+            })
+          );
+          return;
+        }
+      }
+
       const isRestrictedMode = [
         'DEEP_SEARCH',
         'WEB_SEARCH',
@@ -446,6 +539,18 @@ const Chat = () => {
       }
 
 
+      const effectiveAttachments = [...filePreviews];
+      if (editRefImage && currentMode === MODES.IMAGE_EDIT) {
+        if (!effectiveAttachments.some((a) => a.url === editRefImage.url)) {
+          effectiveAttachments.push({
+            url: editRefImage.url,
+            name: editRefImage.name || 'reference_image.png',
+            type: 'image',
+            mimeType: editRefImage.type || 'image/png',
+          });
+        }
+      }
+
       setIsLoading(true);
       setInputValue('');
       setLongTextPreview(null);
@@ -457,16 +562,19 @@ const Chat = () => {
         content: messageText,
         timestamp: new Date(),
         projectId: currentProjectId,
-        attachments: filePreviews.map((fp) => ({
+        attachments: effectiveAttachments.map((fp) => ({
           url: fp.url,
           name: fp.name,
-          type: fp.type,
+          type: fp.type || 'image',
         })),
         mode: currentMode,
       };
 
       setMessages((prev) => [...prev, userMsg]);
       handleRemoveFile();
+      if (currentMode === MODES.IMAGE_EDIT) {
+        setEditRefImage(null);
+      }
 
       let currentSid = activeSessionId;
       try {
@@ -545,7 +653,7 @@ const Chat = () => {
           cleanHistory,
           messageText,
           '',
-          filePreviews,
+          effectiveAttachments,
           currentLang,
           null,
           currentMode,
@@ -610,7 +718,14 @@ const Chat = () => {
       } catch (err) {
         console.error('[Chat] Send message failed:', err);
         useGenerationStore.getState().failGeneration(currentSid, err);
-        toast.error('Failed to send message');
+        if (
+          err.response?.status !== 401 &&
+          err.response?.data?.code !== 'LOGIN_REQUIRED' &&
+          err.response?.data?.code !== 'GUEST_LIMIT_REACHED' &&
+          err.message !== 'Login required'
+        ) {
+          toast.error('Failed to send message');
+        }
       } finally {
         useGenerationStore.getState().completeGeneration(currentSid);
         useGenerationStore.getState().completeGeneration('new');
@@ -631,6 +746,8 @@ const Chat = () => {
       navigate,
       setMessages,
       handleRemoveFile,
+      editRefImage,
+      setEditRefImage,
     ]
   );
 
@@ -701,7 +818,6 @@ const Chat = () => {
     }
   }, [gen.isGenerating, gen.partialResponse, gen.typingMessageId, setMessages]);
 
-  const [editRefImage, setEditRefImage] = useState(null);
   const [isSocialMediaDashboardOpen, setIsSocialMediaDashboardOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -714,6 +830,7 @@ const Chat = () => {
     (toolId) => {
       switch (toolId) {
         case 'legal':
+          if (!checkPremiumTool('AI Legal™')) break;
           activateMode(MODES.LEGAL_TOOLKIT);
           setSelectedLegalTool({ id: 'legal_my_case', name: 'AI Legal' });
           setLegalView('DASHBOARD');
@@ -721,15 +838,18 @@ const Chat = () => {
           toast.success('AI Legal Enabled ⚖️');
           break;
         case 'ai_cashflow':
+          if (!checkPremiumTool('AI CashFlow')) break;
           activateMode(MODES.CASHFLOW);
           setIsStockModalOpen(true);
           toast.success('AI CashFlow Explorer Active');
           break;
         case 'aiad_agent':
+          if (!checkPremiumTool('AI ADS™')) break;
           setIsSocialMediaDashboardOpen(true);
           toast.success('AI ADS™ Active');
           break;
         case 'image':
+          if (!checkPremiumTool('Image Generation')) break;
           activateMode(MODES.IMAGE_GENERATION);
           toast.success('Image Generation Mode Enabled');
           break;
@@ -739,6 +859,7 @@ const Chat = () => {
           toast.success('Image Editing Enabled');
           break;
         case 'audio':
+          if (!checkPremiumTool('Audio Conversion')) break;
           activateMode(MODES.AUDIO_CONVERT);
           toast.success('Convert to Audio Mode Active');
           break;
@@ -758,12 +879,12 @@ const Chat = () => {
           toast.success('Code Writer Mode Enabled');
           break;
         case 'document':
-          activateMode(MODES.DOCUMENT_CONVERT);
+          if (!checkPremiumTool('Document Conversion')) break;
           uploadInputRef.current?.click();
           toast.success('Document Converter Mode Active');
           break;
         case 'file_analysis':
-          activateMode(MODES.FILE_ANALYSIS);
+          if (!checkPremiumTool('File Analysis')) break;
           uploadInputRef.current?.click();
           toast.success('File Analysis Mode Active');
           break;
@@ -1212,14 +1333,29 @@ const Chat = () => {
     setDownloadedMessages((prev) => ({ ...prev, [msg.id]: true }));
   }, []);
 
-  const handleDownload = useCallback((url, filename = 'AISA-download') => {
+  const handleDownload = useCallback(async (url, filename = 'AISA-download.png') => {
     if (!url) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      const resolved = resolveMediaUrl(url);
+      const res = await fetch(resolved);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (_) {
+      const a = document.createElement('a');
+      a.href = resolveMediaUrl(url);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   }, []);
 
   const handleDownloadCodeProject = useCallback((msg) => {
@@ -1267,11 +1403,13 @@ const Chat = () => {
       isDownloadingUrl,
       navigate,
       setCurrentMode: activateMode,
+      setIsMagicEditing: (val) => activateMode(val ? MODES.IMAGE_EDIT : MODES.NORMAL_CHAT),
+      setEditRefImage,
       viewingDoc,
       setViewingDoc,
       suggestions,
       scrollToBottom,
-      inputRef: null,
+      inputRef,
       handleCopyImage,
     };
   }, [
@@ -1298,6 +1436,8 @@ const Chat = () => {
     isDownloadingUrl,
     navigate,
     activateMode,
+    setEditRefImage,
+    inputRef,
     viewingDoc,
     suggestions,
     scrollToBottom,
@@ -1382,6 +1522,12 @@ const Chat = () => {
             {/* Bottom Input Section */}
             <ChatInput
               {...modeState}
+              inputRef={inputRef}
+              editRefImage={editRefImage}
+              setEditRefImage={setEditRefImage}
+              editRefImageState={editRefImage}
+              setIsMagicEditing={(val) => activateMode(val ? MODES.IMAGE_EDIT : MODES.NORMAL_CHAT)}
+              checkPremiumTool={checkPremiumTool}
               gen={gen}
               inputValue={inputValue}
               setInputValue={setInputValue}
@@ -1512,7 +1658,6 @@ const Chat = () => {
             sessionId={activeSessionId}
           />
         )}
-        <LoginRequiredModal />
 
         {/* Document/Image Viewer Lightbox Modal */}
         {viewingDoc && (

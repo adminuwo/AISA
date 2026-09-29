@@ -44,6 +44,25 @@ const MagicToolSettingsCard = ({
 
   useEffect(() => {
     if (isOpen) {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      let hasUserToken = false;
+      try {
+        hasUserToken = !!(userStr && JSON.parse(userStr)?.token);
+      } catch (e) {}
+
+      const isAuthed = (token && token !== 'null' && token !== 'undefined') || hasUserToken;
+      if (!isAuthed) {
+        if (onClose) onClose();
+        window.dispatchEvent(
+          new CustomEvent('login_required', {
+            detail: {
+              toolName: toolType === 'edit_image' ? 'Image Editing' : 'Image Generation',
+            },
+          })
+        );
+        return;
+      }
       document.body.style.overflow = 'hidden';
     }
     return () => {

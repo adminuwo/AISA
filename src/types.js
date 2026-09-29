@@ -58,6 +58,18 @@ export const AppRoute = {
 };
 
 export const getApiBaseUrl = () => {
+  // If running locally in browser on localhost or 127.0.0.1, prioritize local backend
+  if (typeof window !== 'undefined' && window.location) {
+    const { hostname } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      const envUrl = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API;
+      if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+        return envUrl.trim().replace(/\/+$/, '');
+      }
+      return 'http://localhost:8080/api';
+    }
+  }
+
   // 1️⃣ Prefer explicit env variable (works for both dev and prod)
   const envUrl =
     window._env_?.VITE_AISA_BACKEND_API ||
@@ -178,6 +190,26 @@ const apis = {
   imageProxy: `${API}/image/proxy`,
   precedents: `${API}/precedents`,
   baseUrl: API,
+};
+
+/**
+ * Resolves media URLs (GCS, etc.) ensuring private or unsigned URLs
+ * are routed through the backend media proxy to prevent 403 Forbidden errors.
+ */
+export const resolveMediaUrl = url => {
+  if (!url || typeof url !== 'string') return url;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  if (url.includes('/api/media/proxy') || url.includes('/api/image/proxy')) return url;
+
+  // Unsigned GCS URLs are private and must be routed through the backend proxy
+  if (url.includes('storage.googleapis.com') && !url.includes('X-Goog-Signature')) {
+    const isLocalBrowser =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const proxyPath = isLocalBrowser ? '/api/media/proxy' : `${API}/media/proxy`;
+    return `${proxyPath}?url=${encodeURIComponent(url)}`;
+  }
+  return url;
 };
 
 export { API, apis };

@@ -80,6 +80,11 @@ const getAuthHeaders = () => {
   };
   if (token && token !== 'undefined' && token !== 'null') {
     headers.Authorization = `Bearer ${token}`;
+  } else {
+    const guestToken = localStorage.getItem('aisa_guest_token');
+    const guestId = localStorage.getItem('aisa_guest_id');
+    if (guestToken) headers['X-Guest-Token'] = guestToken;
+    if (guestId) headers['X-Guest-Id'] = guestId;
   }
   return headers;
 };
@@ -104,6 +109,13 @@ export const chatStorageService = {
         headers: getAuthHeaders(),
         withCredentials: true,
       });
+
+      const resGuestToken =
+        response.headers?.['x-guest-token'] || response.headers?.['X-Guest-Token'];
+      const resGuestId = response.headers?.['x-guest-id'] || response.headers?.['X-Guest-Id'];
+      if (resGuestToken) localStorage.setItem('aisa_guest_token', resGuestToken);
+      if (resGuestId) localStorage.setItem('aisa_guest_id', resGuestId);
+
       const dbSessions = Array.isArray(response.data)
         ? response.data
         : response.data?.data || response.data?.sessions || [];

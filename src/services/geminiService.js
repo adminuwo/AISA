@@ -26,6 +26,11 @@ export const generateChatResponse = async (
     };
     if (token && token !== 'undefined' && token !== 'null') {
       headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestToken = localStorage.getItem('aisa_guest_token');
+      const guestId = localStorage.getItem('aisa_guest_id');
+      if (guestToken) headers['X-Guest-Token'] = guestToken;
+      if (guestId) headers['X-Guest-Id'] = guestId;
     }
 
     // Language handling is now performed centrally in the backend ai.service.js
@@ -144,6 +149,11 @@ export const generateChatResponse = async (
       timeout: requestTimeout,
     });
 
+    const resGuestToken = result.headers?.['x-guest-token'] || result.headers?.['X-Guest-Token'];
+    const resGuestId = result.headers?.['x-guest-id'] || result.headers?.['X-Guest-Id'];
+    if (resGuestToken) localStorage.setItem('aisa_guest_token', resGuestToken);
+    if (resGuestId) localStorage.setItem('aisa_guest_id', resGuestId);
+
     // Return full response data (includes reply and potentially conversion data)
     return result.data;
   } catch (error) {
@@ -155,6 +165,30 @@ export const generateChatResponse = async (
       return null;
     }
     console.error('Gemini API Error:', error);
+
+    // Intercept Login Required / Guest Limit Reached
+    if (
+      error.response?.status === 401 ||
+      error.response?.data?.code === 'LOGIN_REQUIRED' ||
+      error.response?.data?.code === 'GUEST_LIMIT_REACHED' ||
+      error.response?.data?.error === 'LIMIT_REACHED'
+    ) {
+      const toolName = error.response?.data?.toolName || 'AISA™ Magic Tools';
+      const customMessage =
+        error.response?.data?.message ||
+        (error.response?.data?.code === 'GUEST_LIMIT_REACHED'
+          ? 'You have reached the 5-chat limit for Guest Mode. Please log in or create an account to continue.'
+          : '');
+      window.dispatchEvent(
+        new CustomEvent('login_required', {
+          detail: {
+            toolName,
+            customMessage,
+          },
+        })
+      );
+      throw error;
+    }
 
     // Handle credit / plan errors
     if (error.response?.status === 403) {
@@ -232,6 +266,11 @@ export const generateChatResponseStream = async (
   };
   if (token && token !== 'undefined' && token !== 'null') {
     headers.Authorization = `Bearer ${token}`;
+  } else {
+    const guestToken = localStorage.getItem('aisa_guest_token');
+    const guestId = localStorage.getItem('aisa_guest_id');
+    if (guestToken) headers['X-Guest-Token'] = guestToken;
+    if (guestId) headers['X-Guest-Id'] = guestId;
   }
 
   let finalMessage = currentMessage;
@@ -309,20 +348,48 @@ export const generateChatResponseStream = async (
     signal: abortSignal,
   });
 
+  const resGuestToken = response.headers?.get?.('x-guest-token');
+  const resGuestId = response.headers?.get?.('x-guest-id');
+  if (resGuestToken) localStorage.setItem('aisa_guest_token', resGuestToken);
+  if (resGuestId) localStorage.setItem('aisa_guest_id', resGuestId);
+
   if (!response.ok || !response.body) {
+    let errorData = null;
+    try {
+      errorData = await response.json();
+    } catch (e) {}
+
+    if (
+      response.status === 401 ||
+      errorData?.code === 'LOGIN_REQUIRED' ||
+      errorData?.code === 'GUEST_LIMIT_REACHED' ||
+      errorData?.error === 'LIMIT_REACHED'
+    ) {
+      window.dispatchEvent(
+        new CustomEvent('login_required', {
+          detail: {
+            toolName: errorData?.toolName || 'AISA™ Magic Tools',
+            customMessage:
+              errorData?.message ||
+              (errorData?.code === 'GUEST_LIMIT_REACHED'
+                ? 'You have reached the 5-chat limit for Guest Mode. Please log in or create an account to continue.'
+                : ''),
+          },
+        })
+      );
+      throw new Error(errorData?.message || 'Login required');
+    }
+
     if (response.status === 403) {
-      try {
-        const errorData = await response.json();
-        window.dispatchEvent(
-          new CustomEvent('quota_exceeded', {
-            detail: {
-              code: errorData.code || 'PLAN_RESTRICTED',
-              toolName: errorData.toolName || mode || 'Deep Search',
-              customMessage: errorData.message || errorData.error,
-            },
-          })
-        );
-      } catch (e) {}
+      window.dispatchEvent(
+        new CustomEvent('quota_exceeded', {
+          detail: {
+            code: errorData?.code || 'PLAN_RESTRICTED',
+            toolName: errorData?.toolName || mode || 'Deep Search',
+            customMessage: errorData?.message || errorData?.error,
+          },
+        })
+      );
     }
     throw new Error(`SSE stream HTTP error: ${response.status}`);
   }
@@ -351,11 +418,33 @@ export const generateChatResponseStream = async (
 
         try {
           const parsed = JSON.parse(dataStr);
+          if (
+            parsed.error === 'LOGIN_REQUIRED' ||
+            parsed.code === 'LOGIN_REQUIRED' ||
+            parsed.error === 'LIMIT_REACHED' ||
+            parsed.code === 'GUEST_LIMIT_REACHED'
+          ) {
+            window.dispatchEvent(
+              new CustomEvent('login_required', {
+                detail: {
+                  toolName: parsed.toolName || 'AISA™ Magic Tools',
+                  customMessage:
+                    parsed.message ||
+                    (parsed.code === 'GUEST_LIMIT_REACHED'
+                      ? 'You have reached the 5-chat limit for Guest Mode. Please log in or create an account to continue.'
+                      : ''),
+                },
+              })
+            );
+            reader.cancel().catch(() => {});
+            throw new Error(parsed.message || 'Login required');
+          }
           if (parsed.text) {
             accumulatedText += parsed.text;
             if (onTokenChunk) onTokenChunk(accumulatedText);
           }
         } catch (e) {
+          if (e.message === 'Login required') throw e;
           // Raw text chunk fallback
         }
       }

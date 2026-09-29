@@ -307,6 +307,24 @@ const ToolCard = ({ tool, onToolSelect, index, isFlipped, onFlip, onUnflip }) =>
 
   const handleCardClick = () => {
     if (tool.comingSoon) return;
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    let hasUserToken = false;
+    try {
+      hasUserToken = !!(userStr && JSON.parse(userStr)?.token);
+    } catch (e) {}
+
+    const isAuthed = (token && token !== 'null' && token !== 'undefined') || hasUserToken;
+    if (!isAuthed) {
+      window.dispatchEvent(
+        new CustomEvent('login_required', {
+          detail: {
+            toolName: tool.label || 'Image Generation',
+          },
+        })
+      );
+      return;
+    }
     // Call onToolSelect immediately to ensure 1-click activation on all devices
     onToolSelect(tool.id);
   };

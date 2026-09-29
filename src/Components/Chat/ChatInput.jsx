@@ -540,6 +540,8 @@ export const ChatInput = ({
                       onClick={() => {
                         if (setCurrentMode) setCurrentMode(MODES.NORMAL_CHAT);
                         if (setActiveTool) setActiveTool(null);
+                        if (setEditRefImage) setEditRefImage(null);
+                        if (setIsMagicEditing) setIsMagicEditing(false);
                       }}
                       className="w-5 h-5 ml-1 rounded-full flex items-center justify-center text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-800 hover:text-rose-900 dark:hover:text-white transition-all"
                     >
@@ -1189,6 +1191,7 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
+                          if (!checkPremiumTool('AI CashFlow')) return;
                           setIsToolsMenuOpen(false);
                           const newMode = !isCashFlowMode;
                           if (setCurrentMode)
@@ -1223,6 +1226,7 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
+                          if (!checkPremiumTool('AI Legal™')) return;
                           setIsToolsMenuOpen(false);
 
                           const isCurrentlyLegal = currentMode === MODES.LEGAL_TOOLKIT;
@@ -1272,6 +1276,7 @@ export const ChatInput = ({
                       <button
                         type="button"
                         onClick={() => {
+                          if (!checkPremiumTool('AI ADS™')) return;
                           setIsToolsMenuOpen(false);
                           setIsSocialMediaDashboardOpen(true);
                           setActiveTool('aiad_agent');

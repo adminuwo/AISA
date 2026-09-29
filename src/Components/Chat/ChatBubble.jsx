@@ -39,6 +39,7 @@ import { copyText } from '../../utils/clipboard';
 import ActionCard from '../ActionCard';
 import AISnapshot from '../../landingpage/AISnapshot';
 import toast from 'react-hot-toast';
+import { resolveMediaUrl } from '../../types';
 
 const CashFlowChartWidget = React.lazy(() =>
   import('../../Tools/AI_Cashflow/CashFlowChartWidget').catch(() => ({ default: () => null }))
@@ -1147,7 +1148,7 @@ const ChatBubble = React.memo(
                   {msg.videoUrl && (
                     <div className="relative mt-4 mb-2 w-fit max-w-full">
                       <video
-                        src={msg.videoUrl}
+                        src={resolveMediaUrl(msg.videoUrl)}
                         controls
                         className="w-full max-w-sm rounded-xl border border-white/10"
                       />
@@ -1160,27 +1161,39 @@ const ChatBubble = React.memo(
                       onClick={() => {
                         if (!viewingDoc)
                           setViewingDoc({
-                            url: msg.imageUrl,
+                            url: resolveMediaUrl(msg.imageUrl),
                             type: 'image',
                             name: 'Generated Image',
                           });
                       }}
                     >
                       <img
-                        src={msg.imageUrl}
+                        src={resolveMediaUrl(msg.imageUrl)}
                         alt="Generated Content"
                         className="w-full h-auto max-h-[420px] object-contain transition-all duration-500"
                         loading="eager"
                         onLoad={() => scrollToBottom(true)}
                         onError={e => {
+                          const originalUrl = msg.imageUrl;
+                          const currentSrc = e.target.src;
+                          // If direct load failed and we haven't tried proxying yet, try the proxy!
+                          if (
+                            originalUrl &&
+                            !currentSrc.includes('/api/media/proxy') &&
+                            !currentSrc.includes('/api/image/proxy')
+                          ) {
+                            e.target.src = resolveMediaUrl(originalUrl);
+                            return;
+                          }
+
                           if (!e.target.dataset.retried) {
                             e.target.dataset.retried = 'true';
                             setTimeout(() => {
                               const isSignedUrl = msg.imageUrl?.includes('X-Goog-Signature');
                               e.target.src = isSignedUrl
                                 ? msg.imageUrl
-                                : msg.imageUrl +
-                                  (msg.imageUrl.includes('?') ? '&' : '?') +
+                                : resolveMediaUrl(msg.imageUrl) +
+                                  (resolveMediaUrl(msg.imageUrl).includes('?') ? '&' : '?') +
                                   'retry=' +
                                   Date.now();
                             }, 2000);
@@ -1192,11 +1205,12 @@ const ChatBubble = React.memo(
                             e.target.style.cursor = 'pointer';
                             e.target.onclick = event => {
                               event.stopPropagation();
+                              delete e.target.dataset.retried;
                               const isSignedUrl = msg.imageUrl?.includes('X-Goog-Signature');
                               e.target.src = isSignedUrl
                                 ? msg.imageUrl
-                                : msg.imageUrl +
-                                  (msg.imageUrl.includes('?') ? '&' : '?') +
+                                : resolveMediaUrl(msg.imageUrl) +
+                                  (resolveMediaUrl(msg.imageUrl).includes('?') ? '&' : '?') +
                                   'manual=' +
                                   Date.now();
                             };
@@ -1207,14 +1221,17 @@ const ChatBubble = React.memo(
                         <button
                           onClick={e => {
                             e.stopPropagation();
+                            if (setCurrentMode) {
+                              setCurrentMode(MODES.IMAGE_EDIT);
+                            }
                             setIsMagicEditing(true);
                             setEditRefImage({
-                              url: msg.imageUrl,
+                              url: resolveMediaUrl(msg.imageUrl),
                               name: 'Generated Asset',
                               type: 'image/png',
                             });
                             toast.success('Magic Edit mode active! Type your request.');
-                            inputRef.current?.focus();
+                            inputRef?.current?.focus();
                           }}
                           className="p-2.5 bg-white/20 backdrop-blur-sm text-primary rounded-xl hover:bg-white/30 shadow-lg border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
                           title="Edit this Image"
@@ -1224,7 +1241,7 @@ const ChatBubble = React.memo(
                         <button
                           onClick={e => {
                             e.stopPropagation();
-                            handleCopyImage(msg.imageUrl);
+                            handleCopyImage(resolveMediaUrl(msg.imageUrl));
                           }}
                           className="p-2.5 bg-white/20 backdrop-blur-sm text-primary rounded-xl hover:bg-white/30 shadow-lg border border-white/20 transition-all duration-300 hover:scale-105 active:scale-95"
                           title="Copy Image"
@@ -1235,7 +1252,7 @@ const ChatBubble = React.memo(
                           disabled={isDownloadingUrl === msg.imageUrl}
                           onClick={e => {
                             e.stopPropagation();
-                            handleDownload(msg.imageUrl, 'AISA-generated.png');
+                            handleDownload(resolveMediaUrl(msg.imageUrl), 'AISA-generated.png');
                           }}
                           className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${isDownloadingUrl === msg.imageUrl ? 'bg-zinc-600 cursor-wait' : 'bg-primary text-white hover:bg-primary/90'}`}
                           title="Download High-Res"

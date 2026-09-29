@@ -201,13 +201,26 @@ const ChatSidebar = ({ onClose, token, isAdmin }) => {
   };
 
   const handleNewChat = useCallback(() => {
+    const token = localStorage.getItem('token');
+    if (!token && sessions.length >= 5) {
+      window.dispatchEvent(
+        new CustomEvent('login_required', {
+          detail: {
+            toolName: 'Chat Sessions',
+            customMessage:
+              'You have reached the 5-chat limit for Guest Mode. Please log in or create an account to start new chats.',
+          },
+        })
+      );
+      return;
+    }
     useGenerationStore.getState().clearMessagesForChat('new');
     setCurrentProjectId('default');
     setMode('NORMAL_CHAT');
     setLegalTool(null);
     navigate('/dashboard/chat/new', { state: { forceGlobal: true } });
     if (onClose) onClose();
-  }, [setCurrentProjectId, setMode, setLegalTool, navigate, onClose]);
+  }, [sessions, setCurrentProjectId, setMode, setLegalTool, navigate, onClose]);
 
   const handleDeleteSession = useCallback(
     (e, sessionIdToDelete) => {

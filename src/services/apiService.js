@@ -33,6 +33,11 @@ apiClient.interceptors.request.use(
     }
     if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      const guestToken = localStorage.getItem('aisa_guest_token');
+      const guestId = localStorage.getItem('aisa_guest_id');
+      if (guestToken) config.headers['X-Guest-Token'] = guestToken;
+      if (guestId) config.headers['X-Guest-Id'] = guestId;
     }
     return config;
   },
@@ -48,6 +53,11 @@ apiClient.interceptors.response.use(
     console.log(
       `[API RESPONSE SUCCESS] ${response.config?.method?.toUpperCase()} ${response.config?.url} - Status: ${response.status}`
     );
+    const resGuestToken =
+      response.headers?.['x-guest-token'] || response.headers?.['X-Guest-Token'];
+    const resGuestId = response.headers?.['x-guest-id'] || response.headers?.['X-Guest-Id'];
+    if (resGuestToken) localStorage.setItem('aisa_guest_token', resGuestToken);
+    if (resGuestId) localStorage.setItem('aisa_guest_id', resGuestId);
     return response;
   },
   error => {
@@ -56,6 +66,16 @@ apiClient.interceptors.response.use(
       error.response?.data || error.message
     );
     if (error.response?.status === 401) {
+      if (error.response?.data?.code === 'LOGIN_REQUIRED') {
+        window.dispatchEvent(
+          new CustomEvent('login_required', {
+            detail: {
+              toolName: error.response?.data?.toolName || 'AISA™ Magic Tools',
+              customMessage: error.response?.data?.message,
+            },
+          })
+        );
+      }
       const isMock = localStorage.getItem('token') === 'mock_token';
       if (!isMock) {
         // Do not redirect if we are on a public dashboard, chat, pricing, or payment page

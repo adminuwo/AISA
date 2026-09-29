@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { getApiBaseUrl } from '../../types';
+import { getApiBaseUrl, resolveMediaUrl } from '../../types';
 
 const baseURL = getApiBaseUrl();
 
@@ -27,6 +27,25 @@ const MagicImageEditModal = ({ isOpen, onClose, onCreditDeduction }) => {
 
   useEffect(() => {
     if (isOpen) {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      let hasUserToken = false;
+      try {
+        hasUserToken = !!(userStr && JSON.parse(userStr)?.token);
+      } catch (e) {}
+
+      const isAuthed = (token && token !== 'null' && token !== 'undefined') || hasUserToken;
+      if (!isAuthed) {
+        if (onClose) onClose();
+        window.dispatchEvent(
+          new CustomEvent('login_required', {
+            detail: {
+              toolName: 'Image Editing',
+            },
+          })
+        );
+        return;
+      }
       document.body.style.overflow = 'hidden';
     }
     return () => {
@@ -104,7 +123,7 @@ const MagicImageEditModal = ({ isOpen, onClose, onCreditDeduction }) => {
   const handleDownload = async () => {
     if (!resultImage) return;
     try {
-      const response = await fetch(resultImage);
+      const response = await fetch(resolveMediaUrl(resultImage));
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -217,7 +236,7 @@ const MagicImageEditModal = ({ isOpen, onClose, onCreditDeduction }) => {
                       </div>
                     ) : resultImage ? (
                       <img
-                        src={resultImage}
+                        src={resolveMediaUrl(resultImage)}
                         alt="Edited Result"
                         className="w-full h-full object-contain animate-in zoom-in-95 duration-500"
                       />

@@ -81,6 +81,7 @@ import Pricing from './landingpage/Pricing';
 import SocialAgentPage from './Tools/AI_Social_Media/SocialAgentPage.jsx';
 import CreditUpsellPopup from './Components/CreditUpsellPopup';
 import SharedChat from './pages/SharedChat';
+import LoginRequiredModal from './Components/LoginRequiredModal';
 
 import { AppRoute, apis } from './types';
 import { Menu, Bell, Sun, Moon, LogIn, User, Gavel } from 'lucide-react';
@@ -616,6 +617,7 @@ const NavigateProvider = () => {
         }}
       />
       <CreditUpsellPopup />
+      <LoginRequiredModal />
       <Routes>
         {/* Public Routes */}
         <Route path={AppRoute.LANDING} element={<HomeRedirect />} />

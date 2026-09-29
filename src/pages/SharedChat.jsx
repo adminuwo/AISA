@@ -41,7 +41,7 @@ import toast from 'react-hot-toast';
 import { useUserStore } from '../userStore/useUserStore';
 import { motion } from 'framer-motion';
 import { logo } from '../constants';
-import { apis } from '../types';
+import { apis, resolveMediaUrl } from '../types';
 import { copyText } from '../utils/clipboard';
 import ActionCard from '../Components/ActionCard';
 import { useTheme } from '../context/ThemeContext';
@@ -311,7 +311,7 @@ const SharedChat = () => {
       window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1';
 
-    const proxiedUrl = `${apis.imageProxy}?url=${encodeURIComponent(imageUrl)}`;
+    const proxiedUrl = resolveMediaUrl(imageUrl);
 
     if (isSecureContext && navigator.clipboard?.write) {
       const t = toast.loading('Copying image...');
@@ -398,7 +398,7 @@ const SharedChat = () => {
     if (isDownloadingUrl === url) return;
     setIsDownloadingUrl(url);
     const downloadToast = toast.loading('Preparing download...');
-    const downloadUrl = `${apis.imageProxy}?url=${encodeURIComponent(url)}`;
+    const downloadUrl = resolveMediaUrl(url);
 
     try {
       const response = await fetch(downloadUrl);
@@ -1000,14 +1000,14 @@ const SharedChat = () => {
                       onClick={() => {
                         if (!viewingDoc)
                           setViewingDoc({
-                            url: msg.imageUrl,
+                            url: resolveMediaUrl(msg.imageUrl),
                             type: 'image',
                             name: 'Generated Image',
                           });
                       }}
                     >
                       <img
-                        src={msg.imageUrl}
+                        src={resolveMediaUrl(msg.imageUrl)}
                         alt="Generated Content"
                         className="w-full h-auto max-h-[420px] object-contain transition-all duration-500"
                         loading="eager"
@@ -1016,7 +1016,7 @@ const SharedChat = () => {
                         <button
                           onClick={e => {
                             e.stopPropagation();
-                            handleCopyImage(msg.imageUrl);
+                            handleCopyImage(resolveMediaUrl(msg.imageUrl));
                           }}
                           className="p-2.5 bg-white/20 backdrop-blur-sm text-primary rounded-xl hover:bg-white/30 shadow-lg border border-white/20 transition-all duration-300 ease-in-out hover:scale-105 active:scale-95"
                           title="Copy Image"
@@ -1027,7 +1027,7 @@ const SharedChat = () => {
                           disabled={isDownloadingUrl === msg.imageUrl}
                           onClick={e => {
                             e.stopPropagation();
-                            handleDownload(msg.imageUrl, 'AISA-generated.png');
+                            handleDownload(resolveMediaUrl(msg.imageUrl), 'AISA-generated.png');
                           }}
                           className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center justify-center transition-all duration-300 ease-in-out hover:scale-105 active:scale-95 ${isDownloadingUrl === msg.imageUrl ? 'bg-zinc-600 cursor-wait' : 'bg-primary text-white hover:bg-primary/90'}`}
                           title="Download High-Res"
