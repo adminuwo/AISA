@@ -369,10 +369,12 @@ const Chat = () => {
   const gen = useChatGeneration(activeSessionId);
   const { updateWorkspace, getWorkspace } = useCaseWorkspaceStore();
 
+  const justCreatedSessionIdRef = useRef(null);
   const prevSessionIdRef = useRef(sessionId);
   if (prevSessionIdRef.current !== sessionId) {
+    const isJustCreated = justCreatedSessionIdRef.current === sessionId;
     prevSessionIdRef.current = sessionId;
-    if (sessionId && sessionId !== 'new') {
+    if (sessionId && sessionId !== 'new' && !isJustCreated) {
       setIsHydrating(true);
     }
   }
@@ -386,14 +388,36 @@ const Chat = () => {
       return;
     }
 
+    // Skip history fetch if this session was just created by sending a message in this tab.
+    // In-memory store already has userMsg (and AI generation may be active).
+    if (justCreatedSessionIdRef.current === sessionId) {
+      hydratedSessionRef.current = sessionId;
+      setIsHydrating(false);
+      return;
+    }
+
     hydratedSessionRef.current = sessionId;
     setIsHydrating(true);
 
     chatStorageService
       .getHistory(sessionId)
       .then((data) => {
-        const msgs = Array.isArray(data?.messages) ? data.messages : Array.isArray(data) ? data : [];
-        setMessages(msgs, sessionId);
+        const serverMsgs = Array.isArray(data?.messages) ? data.messages : Array.isArray(data) ? data : [];
+        setMessages((currentMsgs) => {
+          // If server returned messages, merge them, preserving any in-flight local messages
+          if (serverMsgs.length > 0) {
+            const serverIds = new Set(serverMsgs.map((m) => m.id || m._id));
+            const unsavedLocalMsgs = (currentMsgs || []).filter(
+              (m) => !serverIds.has(m.id) && !serverIds.has(m._id)
+            );
+            return [...serverMsgs, ...unsavedLocalMsgs];
+          }
+          // If server returned empty, but we already have in-memory messages, KEEP local messages!
+          if (currentMsgs && currentMsgs.length > 0) {
+            return currentMsgs;
+          }
+          return serverMsgs;
+        }, sessionId);
 
         const rawProjId = data?.projectId || data?.caseId;
         const projId = rawProjId && rawProjId !== 'null' && rawProjId !== 'undefined' ? rawProjId : 'default';
@@ -580,10 +604,12 @@ const Chat = () => {
       try {
         if (currentSid === 'new') {
           currentSid = await chatStorageService.createSession(currentProjectId);
+          justCreatedSessionIdRef.current = currentSid;
           useGenerationStore.getState().transitionChatId('new', currentSid);
+          useGenerationStore.getState().setMessagesForChat(currentSid, [userMsg]);
           navigate(`/dashboard/chat/${currentSid}`, { replace: true });
         }
-        chatStorageService.saveMessage(currentSid, userMsg, null, currentProjectId).catch((err) => {
+        await chatStorageService.saveMessage(currentSid, userMsg, null, currentProjectId).catch((err) => {
           console.error('[Chat] Background save userMsg error:', err);
         });
 
@@ -694,6 +720,10 @@ const Chat = () => {
             };
             setMessages((prev) => {
               const filtered = prev.filter((m) => m.id !== aiMsgId);
+              const hasUserMsg = filtered.some((m) => m.id === userMsgId);
+              if (!hasUserMsg) {
+                return [...filtered, userMsg, aiMsg];
+              }
               return [...filtered, aiMsg];
             }, currentSid);
 
