@@ -3,9 +3,42 @@
 
 <head>
   <!-- Unified Analytics Platform Auto-Tracker -->
-  <script defer src="https://admin.uwo24.com/api/web-stats/tracker.js" data-site="aisa" data-endpoint="https://admin.uwo24.com/api/web-stats/collect"></script>
+  <script defer src="https://uwo24.com/api/web-stats/tracker.js" data-site="aisa" data-endpoint="https://uwo24.com/api/web-stats/collect"></script>
   <!-- UWO Affiliate Tracking System -->
   <script src="https://uwo24.com/affiliate-tracker.js"></script>
+  <!-- Smart App Router for Mobile Referral Links -->
+  <script>
+    (function () {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var ref = params.get('ref') || params.get('slug');
+        var utmSource = params.get('utm_source');
+        var utmCampaign = params.get('utm_campaign');
+        var utmContent = params.get('utm_content');
+
+        // Only redirect on mobile devices when arriving via referral / campaign link
+        if (ref || utmSource || utmCampaign) {
+          var ua = (navigator.userAgent || navigator.vendor || window.opera || '').toLowerCase();
+          var isAndroid = /android/i.test(ua);
+          var isIOS = /iphone|ipad|ipod/i.test(ua);
+
+          if (isAndroid) {
+            var playStoreUrl = 'https://play.google.com/store/apps/details?id=com.uwo.aisa';
+            var slug = ref || '';
+            var source = utmSource || 'referral';
+            var referrer = 'utm_source=' + encodeURIComponent(source) +
+              (utmCampaign ? '&utm_campaign=' + encodeURIComponent(utmCampaign) : '') +
+              (utmContent ? '&utm_content=' + encodeURIComponent(utmContent) : '') +
+              (slug ? '&slug=' + encodeURIComponent(slug) + '&ref=' + encodeURIComponent(slug) : '');
+            playStoreUrl += '&referrer=' + encodeURIComponent(referrer);
+            window.location.replace(playStoreUrl);
+          } else if (isIOS) {
+            window.location.replace('https://apps.apple.com/app/id6779135418');
+          }
+        }
+      } catch (e) { }
+    })();
+  </script>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/logo/Logo.svg?v=2" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />

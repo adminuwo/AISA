@@ -98,12 +98,12 @@ export const getUnifiedApiBaseUrl = () => {
 
   if (typeof window !== 'undefined' && window.location) {
     const currentHost = window.location.hostname;
-    // On production/live domains, default to the live Unified Platform Cloud Run backend
+    // On production/live domains, default to uwo24.com/api
     if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
       if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
         return envUrl.trim().replace(/\/+$/, '');
       }
-      return 'https://unified-dashboard-977864306871.asia-south1.run.app/api';
+      return 'https://uwo24.com/api';
     }
   }
 
@@ -111,7 +111,7 @@ export const getUnifiedApiBaseUrl = () => {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
-  return 'http://localhost:8000/api';
+  return 'https://uwo24.com/api';
 };
 
 const API = getApiBaseUrl();
@@ -119,11 +119,18 @@ const UNIFIED_API = getUnifiedApiBaseUrl();
 
 console.info('[API Base URL]:', API);
 
+const isUwoLive = UNIFIED_API.includes('uwo24.com');
+const authBase = isUwoLive ? `${UNIFIED_API}/unified-auth` : `${UNIFIED_API}/auth`;
+
 const apis = {
   unifiedAuth: {
-    register: `${UNIFIED_API}/auth/register`,
-    login: `${UNIFIED_API}/auth/login`,
+    register: `${authBase}/register`,
+    login: `${authBase}/login`,
+    forgotPassword: `${authBase}/forgot-password`,
+    resetPassword: `${authBase}/reset-password`,
+    me: `${authBase}/me`,
   },
+
   resetPassword: `${API}/auth/reset-password-otp`,
   user: `${API}/user`,
   profile: `${API}/user/profile`,
