@@ -61,7 +61,7 @@ import { apiService } from '../../services/apiService';
 import useCreditStore from '../../userStore/useCreditStore';
 import ChatSidebar from './ChatSidebar.jsx';
 
-const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
+const Sidebar = ({ isOpen, onClose, onOpenSettings, onOpenWallet }) => {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const isDark = useIsDark();
@@ -388,7 +388,7 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
             </button>
           )}
 
-          <div className={`grid ${token ? 'grid-cols-3' : 'grid-cols-2'} gap-1 px-1`}>
+          <div className={`grid ${token ? 'grid-cols-4' : 'grid-cols-2'} gap-1 px-1`}>
             {token ? (
               <>
                 <button
@@ -418,6 +418,19 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings }) => {
                   </div>
                   <span className="text-[10px] whitespace-nowrap break-normal font-black text-primary/70 uppercase tracking-tighter group-hover/fbtn:text-primary transition-colors">
                     Plan
+                  </span>
+                </button>
+
+                <button
+                  onClick={onOpenWallet}
+                  className="flex flex-col items-center gap-2 transition-all active:scale-95 group/fbtn"
+                  title="UWO Central Wallet"
+                >
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/20 transition-all hover:bg-emerald-500/30 hover:scale-110 active:scale-90 shadow-sm">
+                    <span className="text-sm">🪙</span>
+                  </div>
+                  <span className="text-[10px] whitespace-nowrap break-normal font-black text-emerald-500 uppercase tracking-tighter group-hover/fbtn:text-emerald-400 transition-colors">
+                    Wallet
                   </span>
                 </button>
               </>

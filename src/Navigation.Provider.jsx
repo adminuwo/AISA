@@ -92,6 +92,8 @@ import axios from 'axios';
 import { usePersonalization } from './context/PersonalizationContext';
 import NotificationCenter from './Components/NotificationBar/NotificationCenter.jsx';
 import ProfileSettingsDropdown from './Components/ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
+import AisaWalletModal from './Components/AisaWalletModal.jsx';
+import { walletService } from './services/walletService.js';
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
@@ -338,6 +340,23 @@ const DashboardLayout = () => {
   const { theme, setTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
+
+  useEffect(() => {
+    if (token) {
+      walletService
+        .getWallet()
+        .then(w => {
+          if (w?.balances?.total_available_inr !== undefined) {
+            setWalletBalance(w.balances.total_available_inr);
+          }
+        })
+        .catch(err => {
+          console.debug('[Dashboard] Wallet balance deferred:', err.message);
+        });
+    }
+  }, [token]);
   const isLegalWorkspace =
     currentMode === 'LEGAL_TOOLKIT' ||
     currentMode === 'CASHFLOW' ||
@@ -412,6 +431,7 @@ const DashboardLayout = () => {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           onOpenSettings={() => setIsProfileMenuOpen(true)}
+          onOpenWallet={() => setIsWalletOpen(true)}
         />
       )}
 
@@ -440,6 +460,20 @@ const DashboardLayout = () => {
                   >
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                   </motion.button>
+
+                  {/* 🪙 UWO Central Wallet Balance Chip */}
+                  {token && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setIsWalletOpen(true)}
+                      className="h-10 px-3.5 flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 font-bold text-xs shadow-sm transition-all cursor-pointer pointer-events-auto"
+                      title="UWO Central Wallet"
+                    >
+                      <span className="text-sm">🪙</span>
+                      <span>{walletBalance !== null ? `₹${walletBalance}` : 'Wallet'}</span>
+                    </motion.button>
+                  )}
 
                   {token ? (
                     <div className="relative profile-menu-container">
@@ -499,6 +533,11 @@ const DashboardLayout = () => {
           />
         )}
       </AnimatePresence>
+      <AisaWalletModal
+        isOpen={isWalletOpen}
+        onClose={() => setIsWalletOpen(false)}
+        onBalanceUpdate={newBal => setWalletBalance(newBal)}
+      />
       <CookieConsentBanner />
     </div>
   );

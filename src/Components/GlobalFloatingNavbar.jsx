@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../userStore/useUserStore';
 import { getUserData, clearUser } from '../userStore/userData';
 import ProfileSettingsDropdown from './ProfileSettingsDropdown/ProfileSettingsDropdown.jsx';
+import AisaWalletModal from './AisaWalletModal.jsx';
+import { walletService } from '../services/walletService';
 
 /**
  * GlobalFloatingNavbar Component
@@ -34,6 +36,19 @@ const GlobalFloatingNavbar = () => {
 
   const user = getUserData() || { name: 'Guest' };
   const token = user?.token;
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(null);
+
+  useEffect(() => {
+    if (token) {
+      walletService
+        .getWallet()
+        .then(w => {
+          if (w?.balances) setWalletBalance(w.balances.total_available_inr);
+        })
+        .catch(() => {});
+    }
+  }, [token]);
 
   // Scroll detection logic
   useEffect(() => {
@@ -129,6 +144,20 @@ const GlobalFloatingNavbar = () => {
               </motion.button>
             )}
 
+            {/* UWO Central Wallet Chip */}
+            {token && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsWalletOpen(true)}
+                className="h-9 sm:h-10 px-3 flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 rounded-xl text-emerald-400 font-bold text-xs shadow-md transition-all cursor-pointer pointer-events-auto"
+                title="UWO Central Wallet"
+              >
+                <span className="text-sm">🪙</span>
+                <span>{walletBalance !== null ? `₹${walletBalance}` : 'Wallet'}</span>
+              </motion.button>
+            )}
+
             {/* Profile Avatar Button */}
             {token ? (
               <div className="relative">
@@ -181,6 +210,12 @@ const GlobalFloatingNavbar = () => {
           />
         )}
       </AnimatePresence>
+
+      <AisaWalletModal
+        isOpen={isWalletOpen}
+        onClose={() => setIsWalletOpen(false)}
+        onBalanceUpdate={newBal => setWalletBalance(newBal)}
+      />
     </>
   );
 };

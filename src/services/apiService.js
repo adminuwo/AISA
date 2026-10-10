@@ -3,7 +3,7 @@ import axios from 'axios';
 import { API } from '../types.js';
 
 // Create axios instance with default config
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API,
   headers: {
     'Content-Type': 'application/json',
