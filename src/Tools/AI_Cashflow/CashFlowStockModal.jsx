@@ -379,7 +379,7 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
     const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
     const headers = { Authorization: `Bearer ${token}` };
 
-    const params = { symbol: selectedStock.symbol };
+    const params = { symbol: selectedStock.symbol, name: selectedStock.name };
     const hasLoadedSession = sessionStorage.getItem('aisa_has_cashflow_loaded');
     if (!hasLoadedSession) {
       params.isInitialLoad = 'true';
@@ -471,7 +471,13 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
       }
     } else {
       // Other tabs via traditional HTTP
-      if (tabData[activeTab]) return; // Already cached
+      if (tabData[activeTab]) {
+        if (activeTab === 'News') {
+          if (Array.isArray(tabData['News']?.news) && tabData['News'].news.length > 0) return;
+        } else {
+          return; // Already cached
+        }
+      }
       setIsLoadingTab(true);
       setTabError(null);
 
