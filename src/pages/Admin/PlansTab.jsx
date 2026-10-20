@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Edit2, Trash2, Clock, CreditCard } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Clock,
+  CreditCard,
+  Tag,
+  Flame,
+  Sparkles,
+  Percent,
+} from 'lucide-react';
 import { apiService } from '../../services/apiService';
 import toast from 'react-hot-toast';
 import DeleteConfirmModal from '../../Components/DeleteConfirmModal';
@@ -61,6 +71,11 @@ const PlansTab = () => {
     priceYearly: '',
     validityDays: '',
     features: '',
+    isOfferActive: false,
+    offerBadge: '',
+    offerPriceMonthly: '',
+    offerPriceYearly: '',
+    offerSubtitle: '',
   });
 
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, planId: null });
@@ -95,6 +110,17 @@ const PlansTab = () => {
           .split(',')
           .map(f => f.trim())
           .filter(Boolean),
+        isOfferActive: Boolean(form.isOfferActive),
+        offerBadge: (form.offerBadge || '').trim(),
+        offerPriceMonthly:
+          form.offerPriceMonthly !== '' && !isNaN(Number(form.offerPriceMonthly))
+            ? Number(form.offerPriceMonthly)
+            : null,
+        offerPriceYearly:
+          form.offerPriceYearly !== '' && !isNaN(Number(form.offerPriceYearly))
+            ? Number(form.offerPriceYearly)
+            : null,
+        offerSubtitle: (form.offerSubtitle || '').trim(),
       };
 
       let data;
@@ -131,7 +157,7 @@ const PlansTab = () => {
     }
   };
 
-  const startEdit = plan => {
+  const startEdit = (plan, focusOffer = false) => {
     setEditingPlan(plan);
     setForm({
       planId: plan.planId || '',
@@ -140,6 +166,11 @@ const PlansTab = () => {
       priceYearly: plan.priceYearly?.toString() || '',
       validityDays: plan.validityDays?.toString() ?? '90',
       features: (plan.features || []).map(f => formatFeatureString(f, plan)).join(', '),
+      isOfferActive: focusOffer ? true : Boolean(plan.isOfferActive),
+      offerBadge: plan.offerBadge || '',
+      offerPriceMonthly: plan.offerPriceMonthly != null ? plan.offerPriceMonthly.toString() : '',
+      offerPriceYearly: plan.offerPriceYearly != null ? plan.offerPriceYearly.toString() : '',
+      offerSubtitle: plan.offerSubtitle || '',
     });
     setShowForm(true);
   };
@@ -152,6 +183,11 @@ const PlansTab = () => {
       priceYearly: '',
       validityDays: '',
       features: '',
+      isOfferActive: false,
+      offerBadge: '',
+      offerPriceMonthly: '',
+      offerPriceYearly: '',
+      offerSubtitle: '',
     });
     setEditingPlan(null);
     setShowForm(false);
@@ -257,7 +293,141 @@ const PlansTab = () => {
                   className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext"
                 />
               </div>
-              <div className="flex gap-3 justify-end">
+
+              {/* ── Promotional Offer & Discount Section ── */}
+              <div className="mt-4 pt-4 border-t border-white/20 dark:border-white/10 space-y-4">
+                <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-primary/10 border border-amber-500/20 dark:border-amber-500/30 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center text-white shadow-md shadow-rose-500/20">
+                      <Flame className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-maintext flex items-center gap-2">
+                        Promotional Offer & Discount
+                        {form.isOfferActive && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/30">
+                            ACTIVE
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-subtext">
+                        Give special discounts, festive tags, or flash sale prices on this plan
+                      </p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.isOfferActive}
+                      onChange={e => setForm(p => ({ ...p, isOfferActive: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-rose-500"></div>
+                  </label>
+                </div>
+
+                <AnimatePresence>
+                  {form.isOfferActive && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-4 pt-1"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold uppercase tracking-wider text-subtext flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5 text-amber-500" /> Offer Badge / Tag
+                          </label>
+                          <input
+                            placeholder="e.g. 50% OFF, Diwali Deal, Save ₹200"
+                            value={form.offerBadge}
+                            onChange={e => setForm(p => ({ ...p, offerBadge: e.target.value }))}
+                            className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-amber-500/50 text-maintext"
+                          />
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {[
+                              '50% OFF',
+                              'Special Offer',
+                              'Diwali Deal',
+                              'Limited Time',
+                              'Save ₹200',
+                            ].map(tag => (
+                              <button
+                                type="button"
+                                key={tag}
+                                onClick={() => setForm(p => ({ ...p, offerBadge: tag }))}
+                                className="text-[10px] px-2 py-0.5 rounded-md bg-white/40 dark:bg-white/10 hover:bg-amber-500/20 hover:text-amber-500 text-subtext transition-all border border-white/10"
+                              >
+                                +{tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold uppercase tracking-wider text-subtext flex items-center gap-1.5">
+                            <Percent className="w-3.5 h-3.5 text-rose-500" /> Offer Monthly Price
+                            (₹)
+                          </label>
+                          <input
+                            placeholder="e.g. 299 (Discounted price)"
+                            type="number"
+                            value={form.offerPriceMonthly}
+                            onChange={e =>
+                              setForm(p => ({ ...p, offerPriceMonthly: e.target.value }))
+                            }
+                            className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-rose-500/50 text-maintext no-spinner font-bold text-rose-500"
+                          />
+                          {form.priceMonthly &&
+                            form.offerPriceMonthly &&
+                            Number(form.offerPriceMonthly) < Number(form.priceMonthly) && (
+                              <p className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1">
+                                ✓ Customers save ₹
+                                {Number(form.priceMonthly) - Number(form.offerPriceMonthly)} (
+                                {Math.round(
+                                  ((Number(form.priceMonthly) - Number(form.offerPriceMonthly)) /
+                                    Number(form.priceMonthly)) *
+                                    100
+                                )}
+                                % off)
+                              </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold uppercase tracking-wider text-subtext flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-primary" /> Offer Yearly Price (₹)
+                          </label>
+                          <input
+                            placeholder="e.g. 2990 (Discounted yearly)"
+                            type="number"
+                            value={form.offerPriceYearly}
+                            onChange={e =>
+                              setForm(p => ({ ...p, offerPriceYearly: e.target.value }))
+                            }
+                            className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext no-spinner"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-wider text-subtext">
+                          Offer Tagline / Note (Optional)
+                        </label>
+                        <input
+                          placeholder="e.g. Limited time promotional discount — grab it before it expires"
+                          value={form.offerSubtitle}
+                          onChange={e => setForm(p => ({ ...p, offerSubtitle: e.target.value }))}
+                          className="w-full bg-white/20 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-primary/50 text-maintext"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2">
                 <button
                   onClick={resetForm}
                   className="px-4 py-2 rounded-xl text-sm font-bold text-subtext hover:text-maintext hover:bg-white/20 transition-all"
@@ -281,30 +451,89 @@ const PlansTab = () => {
         {plans.map(plan => (
           <div
             key={plan._id}
-            className="bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl p-5 hover:border-primary/20 transition-all"
+            className={`bg-white/30 dark:bg-white/5 backdrop-blur-xl border ${
+              plan.isOfferActive
+                ? 'border-amber-500/40 shadow-lg shadow-amber-500/5'
+                : 'border-white/20 dark:border-white/10'
+            } rounded-2xl p-5 hover:border-primary/30 transition-all relative overflow-hidden`}
           >
+            {/* Active Offer Banner on Card */}
+            {plan.isOfferActive && (
+              <div className="mb-2 flex items-center justify-between">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-rose-500 border border-rose-500/30">
+                  <Flame className="w-3 h-3 animate-pulse" />
+                  {plan.offerBadge || 'OFFER ACTIVE'}
+                </span>
+                {plan.offerPriceMonthly != null && plan.priceMonthly > plan.offerPriceMonthly && (
+                  <span className="text-[10px] text-emerald-500 font-bold">
+                    Save ₹{plan.priceMonthly - plan.offerPriceMonthly}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h4 className="font-bold text-maintext">{plan.planName}</h4>
                 <div className="mt-1 space-y-0.5">
-                  <p className="text-lg font-black text-primary leading-none">
-                    ₹{plan.priceMonthly}
-                    <span className="text-[10px] text-subtext font-normal ml-1">/mo</span>
-                  </p>
+                  {plan.isOfferActive && plan.offerPriceMonthly != null ? (
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xl font-black text-rose-500 leading-none">
+                        ₹{plan.offerPriceMonthly}
+                        <span className="text-[10px] text-subtext font-normal ml-1">/mo</span>
+                      </p>
+                      <span className="text-xs text-subtext line-through opacity-70">
+                        ₹{plan.priceMonthly}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-black text-primary leading-none">
+                      ₹{plan.priceMonthly}
+                      <span className="text-[10px] text-subtext font-normal ml-1">/mo</span>
+                    </p>
+                  )}
                   <p className="text-[10px] text-subtext">
-                    Yearly: ₹{plan.priceYearly} (₹{Math.round(plan.priceYearly / 12)}/mo)
+                    {plan.isOfferActive && plan.offerPriceYearly != null ? (
+                      <>
+                        Yearly:{' '}
+                        <span className="text-emerald-500 font-bold">₹{plan.offerPriceYearly}</span>{' '}
+                        <span className="line-through opacity-60">₹{plan.priceYearly}</span>
+                      </>
+                    ) : (
+                      <>
+                        Yearly: ₹{plan.priceYearly} (₹{Math.round(plan.priceYearly / 12)}/mo)
+                      </>
+                    )}
                   </p>
+                  {plan.isOfferActive && plan.offerSubtitle && (
+                    <p className="text-[10px] text-amber-500/90 font-medium italic pt-0.5">
+                      "{plan.offerSubtitle}"
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-1">
                 <button
+                  onClick={() => startEdit(plan, true)}
+                  title="Manage Promotional Offer"
+                  className={`p-2 rounded-lg transition-all ${
+                    plan.isOfferActive
+                      ? 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30'
+                      : 'hover:bg-amber-500/10 text-subtext hover:text-amber-500'
+                  }`}
+                >
+                  <Tag className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => startEdit(plan)}
+                  title="Edit Plan"
                   className="p-2 rounded-lg hover:bg-primary/10 text-subtext hover:text-primary transition-all"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setDeleteModal({ isOpen: true, planId: plan._id })}
+                  title="Delete Plan"
                   className="p-2 rounded-lg hover:bg-red-500/10 text-subtext hover:text-red-500 transition-all"
                 >
                   <Trash2 className="w-4 h-4" />

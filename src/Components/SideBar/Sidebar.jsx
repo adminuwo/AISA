@@ -108,8 +108,13 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings, onOpenWallet }) => {
   // Check if current user is admin
   const token =
     getUserData()?.token || localStorage.getItem('token') || localStorage.getItem('auth_token');
-  const userEmail = user?.email || getUserData()?.email;
-  const isAdmin = token && userEmail === 'admin@uwo24.com';
+  const userEmail = (user?.email || getUserData()?.email || '').toLowerCase().trim();
+  const isAdmin =
+    Boolean(token) &&
+    (userEmail === 'admin@uwo24.com' ||
+      userEmail === 'sanskar@uwo24.com' ||
+      user?.role === 'admin' ||
+      getUserData()?.role === 'admin');
 
   const issueCategories = t('issueCategories') || {};
   const issueOptions = [

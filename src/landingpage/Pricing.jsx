@@ -333,14 +333,30 @@ const Pricing = () => {
         return;
       }
 
-      const totalAmount = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+      const hasOffer =
+        Boolean(plan.isOfferActive) &&
+        ((billingCycle === 'yearly' &&
+          plan.offerPriceYearly != null &&
+          plan.offerPriceYearly >= 0) ||
+          (billingCycle === 'monthly' &&
+            plan.offerPriceMonthly != null &&
+            plan.offerPriceMonthly >= 0));
+
+      const totalAmount = hasOffer
+        ? billingCycle === 'yearly'
+          ? (plan.offerPriceYearly ?? plan.priceYearly)
+          : plan.offerPriceMonthly
+        : billingCycle === 'yearly'
+          ? plan.priceYearly
+          : plan.priceMonthly;
+
       const basePrice = Math.round((totalAmount / 1.18) * 100) / 100;
       const gstAmount = Math.round((totalAmount - basePrice) * 100) / 100;
 
       // Print breakdown in console as requested
       console.log('========================================');
       console.log('[CHECKOUT] GST INVOICE CALCULATION (GST INCLUSIVE)');
-      console.log(`Plan Name:   ${plan.planName}`);
+      console.log(`Plan Name:   ${plan.planName} ${hasOffer ? '(Offer Active)' : ''}`);
       console.log(`Base Price (excl. GST):  ₹${basePrice}`);
       console.log(`GST (18% inclusive):     ₹${gstAmount}`);
       console.log(`Total (Inclusive):       ₹${totalAmount}`);
@@ -438,7 +454,21 @@ const Pricing = () => {
       return;
     }
 
-    const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+    const hasOffer =
+      Boolean(plan.isOfferActive) &&
+      ((billingCycle === 'yearly' && plan.offerPriceYearly != null && plan.offerPriceYearly >= 0) ||
+        (billingCycle === 'monthly' &&
+          plan.offerPriceMonthly != null &&
+          plan.offerPriceMonthly >= 0));
+
+    const price = hasOffer
+      ? billingCycle === 'yearly'
+        ? (plan.offerPriceYearly ?? plan.priceYearly)
+        : plan.offerPriceMonthly
+      : billingCycle === 'yearly'
+        ? plan.priceYearly
+        : plan.priceMonthly;
+
     if (price === 0) {
       executeUpgrade(plan, null);
     } else {
@@ -777,14 +807,36 @@ const Pricing = () => {
             return pid === cName || pn.includes(cName) || cName.includes(pn.split(' ')[0]);
           })();
 
-          // Fetch ALL values directly from the Database (no frontend math)
-          const displayPrice =
-            billingCycle === 'yearly'
+          // Check if an active promotional offer is configured
+          const hasOffer =
+            Boolean(plan.isOfferActive) &&
+            !isFree &&
+            ((billingCycle === 'monthly' &&
+              plan.offerPriceMonthly != null &&
+              plan.offerPriceMonthly >= 0) ||
+              (billingCycle === 'yearly' &&
+                plan.offerPriceYearly != null &&
+                plan.offerPriceYearly >= 0));
+
+          const regularMonthly = plan.priceMonthly;
+          const regularYearly = plan.priceYearly || 0;
+
+          // Calculate effective prices with offer support
+          const displayPrice = hasOffer
+            ? billingCycle === 'yearly'
+              ? Math.round((plan.offerPriceYearly ?? regularYearly) / 12)
+              : plan.offerPriceMonthly
+            : billingCycle === 'yearly'
               ? plan.priceYearlyPerMonth || plan.priceMonthly
               : plan.priceMonthly;
+
+          const totalYearlyAmount =
+            hasOffer && plan.offerPriceYearly != null
+              ? plan.offerPriceYearly
+              : plan.priceYearly || 0;
+
           const displayCredits =
             billingCycle === 'yearly' ? plan.creditsYearly || plan.credits : plan.credits;
-          const totalYearlyAmount = plan.priceYearly || 0;
           const displayValidity =
             billingCycle === 'yearly'
               ? (plan.validityYearly || 12) + ' Months'
@@ -793,10 +845,13 @@ const Pricing = () => {
           return (
             <div
               key={plan._id}
-              className={`pricing-card ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''}`}
+              className={`pricing-card ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
             >
               {isCurrentPlan && <div className="current-plan-badge">✓ {t('currentPlan')}</div>}
-              {!isCurrentPlan && plan.badge && (
+              {!isCurrentPlan && hasOffer && (
+                <div className="offer-badge-pill">🔥 {plan.offerBadge || 'SPECIAL OFFER'}</div>
+              )}
+              {!isCurrentPlan && !hasOffer && plan.badge && (
                 <div className={`popular-badge ${isFounder ? 'launch-badge' : ''}`}>
                   {plan.badge}
                 </div>
@@ -806,10 +861,21 @@ const Pricing = () => {
               <h3 className="plan-name">{getDisplayPlanName(plan.planName)}</h3>
 
               <div className="plan-price">
-                {billingCycle === 'yearly' && !isFree && (
+                {!isFree && (hasOffer || billingCycle === 'yearly') && (
                   <div className="original-price-container">
-                    <span className="original-price">₹{plan.priceMonthly}</span>
-                    <span className="discount-tag">30% OFF</span>
+                    <span className="original-price">
+                      ₹{billingCycle === 'yearly' ? Math.round(regularYearly / 12) : regularMonthly}
+                    </span>
+                    <span className="discount-tag">
+                      {hasOffer
+                        ? plan.offerBadge ||
+                          `${Math.round(
+                            ((regularMonthly - (plan.offerPriceMonthly ?? regularMonthly)) /
+                              regularMonthly) *
+                              100
+                          )}% OFF`
+                        : '30% OFF'}
+                    </span>
                   </div>
                 )}
                 <div className="current-price">
@@ -825,6 +891,12 @@ const Pricing = () => {
                         : '/mo'}
                   </span>
                 </div>
+
+                {hasOffer && plan.offerSubtitle && (
+                  <div className="text-xs font-semibold text-rose-500/90 mt-1">
+                    {plan.offerSubtitle}
+                  </div>
+                )}
 
                 {!isFree && (
                   <div className="validity-badge">
@@ -951,22 +1023,65 @@ const Pricing = () => {
 
             {/* Plan Price Summary */}
             <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-4 font-medium text-sm space-y-2">
-              <div className="flex justify-between text-white/60">
+              <div className="flex justify-between items-center text-white/60">
                 <span>Plan:</span>
-                <span className="font-bold text-white">
+                <span className="font-bold text-white flex items-center gap-2">
                   {selectedPlanForUpgrade.planName} ({billingCycle})
+                  {(() => {
+                    const hasOffer =
+                      Boolean(selectedPlanForUpgrade.isOfferActive) &&
+                      ((billingCycle === 'monthly' &&
+                        selectedPlanForUpgrade.offerPriceMonthly != null &&
+                        selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
+                        (billingCycle === 'yearly' &&
+                          selectedPlanForUpgrade.offerPriceYearly != null &&
+                          selectedPlanForUpgrade.offerPriceYearly >= 0));
+                    return hasOffer && selectedPlanForUpgrade.offerBadge ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
+                        🔥 {selectedPlanForUpgrade.offerBadge}
+                      </span>
+                    ) : null;
+                  })()}
                 </span>
               </div>
-              <div className="flex justify-between text-white/60 pt-1">
+              <div className="flex justify-between items-center text-white/60 pt-1">
                 <span>Total Amount:</span>
-                <span className="font-bold text-primary">
-                  ₹
-                  {Number(
-                    (billingCycle === 'yearly'
-                      ? selectedPlanForUpgrade.priceYearly
-                      : selectedPlanForUpgrade.priceMonthly) || 0
-                  ).toFixed(2)}
-                </span>
+                <div>
+                  {(() => {
+                    const hasOffer =
+                      Boolean(selectedPlanForUpgrade.isOfferActive) &&
+                      ((billingCycle === 'monthly' &&
+                        selectedPlanForUpgrade.offerPriceMonthly != null &&
+                        selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
+                        (billingCycle === 'yearly' &&
+                          selectedPlanForUpgrade.offerPriceYearly != null &&
+                          selectedPlanForUpgrade.offerPriceYearly >= 0));
+
+                    const regularPrice =
+                      billingCycle === 'yearly'
+                        ? selectedPlanForUpgrade.priceYearly
+                        : selectedPlanForUpgrade.priceMonthly;
+
+                    const effectivePrice = hasOffer
+                      ? billingCycle === 'yearly'
+                        ? (selectedPlanForUpgrade.offerPriceYearly ?? regularPrice)
+                        : selectedPlanForUpgrade.offerPriceMonthly
+                      : regularPrice;
+
+                    return (
+                      <div className="flex items-baseline gap-2 justify-end">
+                        {hasOffer && (
+                          <span className="text-xs text-white/40 line-through">
+                            ₹{Number(regularPrice || 0).toFixed(2)}
+                          </span>
+                        )}
+                        <span className="font-bold text-lg text-emerald-400">
+                          ₹{Number(effectivePrice || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
 

@@ -261,6 +261,39 @@
   background: linear-gradient(90deg, #2563eb, #4f46e5);
 }
 
+.offer-badge-pill {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
+  color: white;
+  padding: 4px 14px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: pulse-offer 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-offer {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    box-shadow: 0 6px 22px rgba(249, 115, 22, 0.7);
+    transform: translateX(-50%) scale(1.03);
+  }
+}
+
 /* ── Current Plan Highlight ── */
 .pricing-card.current-plan-card {
   border-color: #10b981;
