@@ -17,7 +17,9 @@ const getAuthHeaders = () => {
 };
 
 export const getPlans = async () => {
-  const response = await axios.get(`${API}/pricing/plans`);
+  const response = await axios.get(`${API}/pricing/plans`, {
+    headers: getAuthHeaders(),
+  });
   return response.data;
 };
 

@@ -11,6 +11,7 @@ import {
   Flame,
   Sparkles,
   Percent,
+  Users,
 } from 'lucide-react';
 import { apiService } from '../../services/apiService';
 import toast from 'react-hot-toast';
@@ -76,6 +77,8 @@ const PlansTab = () => {
     offerPriceMonthly: '',
     offerPriceYearly: '',
     offerSubtitle: '',
+    offerValidityType: 'first_time',
+    offerForFirstTimeOnly: true,
   });
 
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, planId: null });
@@ -121,6 +124,8 @@ const PlansTab = () => {
             ? Number(form.offerPriceYearly)
             : null,
         offerSubtitle: (form.offerSubtitle || '').trim(),
+        offerValidityType: form.offerValidityType || 'first_time',
+        offerForFirstTimeOnly: (form.offerValidityType || 'first_time') === 'first_time',
       };
 
       let data;
@@ -171,6 +176,10 @@ const PlansTab = () => {
       offerPriceMonthly: plan.offerPriceMonthly != null ? plan.offerPriceMonthly.toString() : '',
       offerPriceYearly: plan.offerPriceYearly != null ? plan.offerPriceYearly.toString() : '',
       offerSubtitle: plan.offerSubtitle || '',
+      offerValidityType:
+        plan.offerValidityType ||
+        (plan.offerForFirstTimeOnly === false ? 'all_users' : 'first_time'),
+      offerForFirstTimeOnly: plan.offerForFirstTimeOnly ?? true,
     });
     setShowForm(true);
   };
@@ -188,6 +197,8 @@ const PlansTab = () => {
       offerPriceMonthly: '',
       offerPriceYearly: '',
       offerSubtitle: '',
+      offerValidityType: 'first_time',
+      offerForFirstTimeOnly: true,
     });
     setEditingPlan(null);
     setShowForm(false);
@@ -411,6 +422,83 @@ const PlansTab = () => {
                         </div>
                       </div>
 
+                      {/* Offer Validity & Target Audience */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-wider text-subtext flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-primary" /> Offer Validity & Target
+                          Audience
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div
+                            onClick={() =>
+                              setForm(p => ({
+                                ...p,
+                                offerValidityType: 'first_time',
+                                offerForFirstTimeOnly: true,
+                              }))
+                            }
+                            className={`cursor-pointer p-3 rounded-xl border transition-all flex items-start gap-3 ${
+                              form.offerValidityType === 'first_time'
+                                ? 'bg-primary/10 border-primary text-maintext shadow-sm'
+                                : 'bg-white/10 dark:bg-white/5 border-white/10 text-subtext hover:border-white/20'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="offerValidityType"
+                              checked={form.offerValidityType === 'first_time'}
+                              onChange={() => {}}
+                              className="mt-1"
+                            />
+                            <div>
+                              <p className="text-xs font-bold text-maintext flex items-center gap-1.5">
+                                First-Time Usage Only
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-primary/20 text-primary font-bold">
+                                  Default
+                                </span>
+                              </p>
+                              <p className="text-[11px] text-subtext leading-tight mt-0.5">
+                                Discount applies strictly to the 1st billing cycle for users who
+                                haven't bought any paid plan before. Subsequent renewals at regular
+                                price.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div
+                            onClick={() =>
+                              setForm(p => ({
+                                ...p,
+                                offerValidityType: 'all_users',
+                                offerForFirstTimeOnly: false,
+                              }))
+                            }
+                            className={`cursor-pointer p-3 rounded-xl border transition-all flex items-start gap-3 ${
+                              form.offerValidityType === 'all_users'
+                                ? 'bg-amber-500/10 border-amber-500 text-maintext shadow-sm'
+                                : 'bg-white/10 dark:bg-white/5 border-white/10 text-subtext hover:border-white/20'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="offerValidityType"
+                              checked={form.offerValidityType === 'all_users'}
+                              onChange={() => {}}
+                              className="mt-1"
+                            />
+                            <div>
+                              <p className="text-xs font-bold text-maintext">
+                                All Users (Flash Sale)
+                              </p>
+                              <p className="text-[11px] text-subtext leading-tight mt-0.5">
+                                Open to everyone, including existing paying subscribers who are
+                                renewing or upgrading.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold uppercase tracking-wider text-subtext">
                           Offer Tagline / Note (Optional)
@@ -459,11 +547,19 @@ const PlansTab = () => {
           >
             {/* Active Offer Banner on Card */}
             {plan.isOfferActive && (
-              <div className="mb-2 flex items-center justify-between">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-rose-500 border border-rose-500/30">
-                  <Flame className="w-3 h-3 animate-pulse" />
-                  {plan.offerBadge || 'OFFER ACTIVE'}
-                </span>
+              <div className="mb-2 flex items-center justify-between flex-wrap gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-rose-500 border border-rose-500/30">
+                    <Flame className="w-3 h-3 animate-pulse" />
+                    {plan.offerBadge || 'OFFER ACTIVE'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    <Users className="w-3 h-3" />
+                    {plan.offerValidityType === 'all_users' || plan.offerForFirstTimeOnly === false
+                      ? 'All Users'
+                      : '1st Purchase Only'}
+                  </span>
+                </div>
                 {plan.offerPriceMonthly != null && plan.priceMonthly > plan.offerPriceMonthly && (
                   <span className="text-[10px] text-emerald-500 font-bold">
                     Save ₹{plan.priceMonthly - plan.offerPriceMonthly}
