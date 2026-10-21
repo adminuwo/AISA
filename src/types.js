@@ -58,19 +58,32 @@ export const AppRoute = {
 };
 
 export const getApiBaseUrl = () => {
-  // If running locally in browser on localhost or 127.0.0.1, prioritize local backend
+  // 1️⃣ When running on a live/production domain (not localhost and not 127.0.0.1)
   if (typeof window !== 'undefined' && window.location) {
-    const { hostname } = window.location;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      const envUrl = window._env_?.VITE_AISA_BACKEND_API || import.meta.env.VITE_AISA_BACKEND_API;
-      if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+    const { hostname, protocol, port } = window.location;
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      const envUrl =
+        window._env_?.VITE_AISA_BACKEND_API ||
+        import.meta.env.VITE_AISA_BACKEND_API ||
+        import.meta.env.VITE_BACKEND_API ||
+        import.meta.env.VITE_API_URL;
+      // Only use envUrl on production if it is NOT pointing to localhost
+      if (
+        envUrl &&
+        typeof envUrl === 'string' &&
+        envUrl.trim() !== '' &&
+        !envUrl.includes('localhost') &&
+        !envUrl.includes('127.0.0.1')
+      ) {
         return envUrl.trim().replace(/\/+$/, '');
       }
-      return 'http://localhost:8080/api';
+      // On live production domain (e.g. aisa24.com), route through current origin /api
+      const basePort = port ? `:${port}` : '';
+      return `${protocol}//${hostname}${basePort}/api`;
     }
   }
 
-  // 1️⃣ Prefer explicit env variable (works for both dev and prod)
+  // 2️⃣ Local development: prefer explicit env variable if set
   const envUrl =
     window._env_?.VITE_AISA_BACKEND_API ||
     import.meta.env.VITE_AISA_BACKEND_API ||
@@ -80,16 +93,7 @@ export const getApiBaseUrl = () => {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
-  // 2️⃣ When running on a non‑localhost domain, assume the backend lives on the same host under /api
-  if (typeof window !== 'undefined' && window.location) {
-    const { hostname, protocol, port } = window.location;
-    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      const basePort = port ? `:${port}` : '';
-      return `${protocol}//${hostname}${basePort}/api`;
-    }
-  }
-
-  // 3️⃣ Fallback for local development where no env var is set
+  // 3️⃣ Fallback for local development
   return 'http://localhost:8080/api';
 };
 

@@ -39,6 +39,22 @@ import AiCashflowChatAssistant from './components/AiCashflowChatAssistant';
 import { useIsFreePlan, triggerUpgradeModal } from '../../hooks/useIsFreePlan';
 import { getApiBaseUrl } from '../../types';
 
+const getAuthToken = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+      const u = JSON.parse(userStr);
+      if (u?.token && u.token !== 'undefined' && u.token !== 'null') return u.token;
+    }
+  } catch (e) {}
+  const fallback =
+    localStorage.getItem('token') ||
+    localStorage.getItem('auth_token') ||
+    localStorage.getItem('uwo_access_token') ||
+    '';
+  return fallback && fallback !== 'undefined' && fallback !== 'null' ? fallback : '';
+};
+
 const baseURL = getApiBaseUrl();
 
 const PRESET_STOCKS = [
@@ -210,10 +226,13 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
 
   useEffect(() => {
     if (isOpen && !socket) {
-      const wsUrl = baseURL.replace('/api', '');
+      const currentApi = getApiBaseUrl();
+      const wsUrl = currentApi.replace('/api', '');
+      const token = getAuthToken();
       const newSocket = io(wsUrl, {
         path: '/api/socket.io',
         transports: ['websocket', 'polling'],
+        auth: { token },
       });
       setSocket(newSocket);
     }
@@ -250,10 +269,11 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
 
   const fetchUnlockedTabs = async symbol => {
     try {
-      const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
-      const res = await axios.get(`${baseURL}/stock/unlocked-tabs`, {
+      const token = getAuthToken();
+      const currentApi = getApiBaseUrl();
+      const res = await axios.get(`${currentApi}/stock/unlocked-tabs`, {
         params: { symbol },
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.data && Array.isArray(res.data.unlockedTabs)) {
         setUnlockedTabs(prev => {
@@ -348,10 +368,11 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
   const handleSearch = async () => {
     setIsSearching(true);
     try {
-      const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
-      const res = await axios.get(`${baseURL}/cashflow/search`, {
+      const token = getAuthToken();
+      const currentApi = getApiBaseUrl();
+      const res = await axios.get(`${currentApi}/cashflow/search`, {
         params: { keywords: searchTerm, country: selectedCountry },
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (Array.isArray(res.data)) {
         setSearchResults(res.data);
@@ -376,8 +397,9 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
       return;
     }
 
-    const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
-    const headers = { Authorization: `Bearer ${token}` };
+    const token = getAuthToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const currentApi = getApiBaseUrl();
 
     const params = { symbol: selectedStock.symbol, name: selectedStock.name };
     const hasLoadedSession = sessionStorage.getItem('aisa_has_cashflow_loaded');
@@ -412,7 +434,7 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
 
       // HTTP for Intraday (Chart Area)
       axios
-        .get(`${baseURL}/stock/intraday`, { params, headers })
+        .get(`${currentApi}/stock/intraday`, { params, headers })
         .then(res => {
           setTabData(prev => ({
             ...prev,
@@ -453,7 +475,7 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
       if (socket) {
         setIsLoadingTab(true);
         setTabError(null);
-        const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
+        const token = getAuthToken();
         socket.emit('request_historical', { symbol: selectedStock.symbol, token });
 
         const handleHistorical = data => {
@@ -484,15 +506,18 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
       let promise = null;
       if (activeTab === 'News')
         promise = axios
-          .get(`${baseURL}/stock/news`, { params, headers })
+          .get(`${currentApi}/stock/news`, { params, headers })
           .then(r => ({ news: r.data.news }));
       else if (activeTab === 'Advisory')
         promise = axios
-          .get(`${baseURL}/stock/advisory`, { params, headers })
+          .get(`${currentApi}/stock/advisory`, { params, headers })
           .then(r => ({ advisory: r.data.advisory }));
       else if (activeTab === 'Research and recommendation')
         promise = axios
-          .get(`${baseURL}/stock/research`, { params: { symbol: selectedStock.symbol }, headers })
+          .get(`${currentApi}/stock/research`, {
+            params: { symbol: selectedStock.symbol },
+            headers,
+          })
           .then(r => ({ research: r.data.research }));
 
       if (promise) {
@@ -529,11 +554,12 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
     setIsGrahamLoading(true);
     setShowGrahamPanel(true);
     try {
-      const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
+      const token = getAuthToken();
+      const currentApi = getApiBaseUrl();
       const price = tabData['Realtime chart']?.quote?.price || '';
-      const res = await axios.get(`${baseURL}/stock/graham-analysis`, {
+      const res = await axios.get(`${currentApi}/stock/graham-analysis`, {
         params: { symbol: selectedStock.symbol, name: selectedStock.name, price },
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setGrahamData(res.data.graham);
       setUnlockedTabs(prev =>
@@ -555,11 +581,12 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
     setIsKiyosakiLoading(true);
     setShowKiyosakiPanel(true);
     try {
-      const token = JSON.parse(localStorage.getItem('user') || '{}')?.token;
+      const token = getAuthToken();
+      const currentApi = getApiBaseUrl();
       const price = tabData['Realtime chart']?.quote?.price || '';
-      const res = await axios.get(`${baseURL}/stock/kiyosaki-analysis`, {
+      const res = await axios.get(`${currentApi}/stock/kiyosaki-analysis`, {
         params: { symbol: selectedStock.symbol, name: selectedStock.name, price },
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setKiyosakiData(res.data.kiyosaki);
       setUnlockedTabs(prev =>
@@ -933,13 +960,29 @@ const CashFlowStockModal = ({ isOpen, onClose, onSelect, isDarkMode, initialStoc
                   </p>
                 </div>
               ) : tabError ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 text-rose-500">
-                  <AlertCircle className="w-12 h-12 opacity-80" />
-                  <p className="text-[14px] font-black uppercase tracking-wider">{tabError}</p>
-                  <p className="text-[12px] text-[#888] dark:text-zinc-500 font-bold text-center max-w-sm mt-2">
-                    If using AngelOne SmartAPI, ensure your API_KEY and AUTHORIZATION_TOKEN are
-                    correctly configured in your Backend .env file.
+                <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-4">
+                  <AlertCircle className="w-12 h-12 text-rose-500 opacity-90" />
+                  <p className="text-[14px] font-black uppercase tracking-wider text-rose-500 max-w-md">
+                    {tabError}
                   </p>
+                  {/free plan|upgrade|starter|plan_restricted/i.test(tabError) ? (
+                    <button
+                      onClick={() =>
+                        triggerUpgradeModal(
+                          'AI CashFlow™ Explorer',
+                          'Upgrade to Starter (₹499/mo) or higher to unlock real-time and historical stock insights, advisory, and financial research.'
+                        )
+                      }
+                      className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs font-black uppercase tracking-wider hover:shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                    >
+                      <Crown className="w-4 h-4" /> Upgrade Plan
+                    </button>
+                  ) : /angelone|smartapi|api_key/i.test(tabError) ? (
+                    <p className="text-[12px] text-[#888] dark:text-zinc-500 font-bold text-center max-w-sm mt-1">
+                      If using AngelOne SmartAPI, ensure your API_KEY and AUTHORIZATION_TOKEN are
+                      correctly configured in your Backend .env file.
+                    </p>
+                  ) : null}
                 </div>
               ) : !tabData[activeTab] ? (
                 <div className="h-full flex flex-col items-center justify-center gap-4 text-[#999] dark:text-zinc-500">

@@ -29,7 +29,10 @@ apiClient.interceptors.request.use(
       }
     }
     if (!token || token === 'undefined' || token === 'null') {
-      token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      token =
+        localStorage.getItem('auth_token') ||
+        localStorage.getItem('token') ||
+        localStorage.getItem('uwo_access_token');
     }
     if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
@@ -1232,6 +1235,32 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Failed to send email to user:', error);
+      throw error;
+    }
+  },
+
+  async getSupportTickets() {
+    try {
+      const response = await apiClient.get('/support/tickets');
+      return response.data?.tickets || [];
+    } catch (error) {
+      console.error(
+        '[apiService] Failed to fetch support tickets:',
+        error?.response?.data || error.message
+      );
+      throw error;
+    }
+  },
+
+  async updateSupportTicketStatus(ticketId, status) {
+    try {
+      const response = await apiClient.patch(`/support/tickets/${ticketId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error(
+        '[apiService] Failed to update support ticket status:',
+        error?.response?.data || error.message
+      );
       throw error;
     }
   },

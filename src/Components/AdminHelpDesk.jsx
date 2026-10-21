@@ -20,19 +20,19 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const ticketsRes = await axios.get(`${apis.support}/tickets`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log('[ADMIN HELPDESK] Tickets fetched:', ticketsRes.data.tickets);
-      setTickets(ticketsRes.data.tickets || []);
+      const fetchedTickets = await apiService.getSupportTickets();
+      console.log('[ADMIN HELPDESK] Tickets fetched:', fetchedTickets);
+      setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
     } catch (error) {
       console.error('[ADMIN] Error fetching tickets:', error);
       if (error.response) {
         console.error('[ADMIN] Error details:', error.response.data);
       }
-      toast.error('Failed to fetch support tickets');
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Failed to fetch support tickets'
+      );
       setTickets([]);
     } finally {
       setLoading(false);
@@ -55,22 +55,15 @@ const AdminHelpDesk = ({ isOpen, onClose, isEmbedded = false }) => {
   const handleStatusChange = async (ticketId, newStatus) => {
     setUpdatingStatus(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.patch(
-        `${apis.support}/tickets/${ticketId}/status`,
-        { status: newStatus },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await apiService.updateSupportTicketStatus(ticketId, newStatus);
       toast.success('Status updated successfully');
-      setSelectedTicket(response.data.ticket);
-      setTickets(prevTickets =>
-        prevTickets.map(t => (t._id === ticketId ? response.data.ticket : t))
-      );
+      setSelectedTicket(response.ticket);
+      setTickets(prevTickets => prevTickets.map(t => (t._id === ticketId ? response.ticket : t)));
     } catch (error) {
       console.error('[ADMIN] Failed to update status:', error);
-      toast.error(error.response?.data?.error || 'Failed to update status');
+      toast.error(
+        error.response?.data?.error || error.response?.data?.message || 'Failed to update status'
+      );
     } finally {
       setUpdatingStatus(false);
     }
