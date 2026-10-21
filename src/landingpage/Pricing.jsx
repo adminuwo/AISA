@@ -855,10 +855,12 @@ const Pricing = () => {
               ? (plan.validityYearly || 12) + ' Months'
               : (plan.validityMonthly || 1) + ' Month';
 
+          const hasTopBadge = Boolean(isCurrentPlan || hasOffer || isOfferClaimed || plan.badge);
+
           return (
             <div
               key={plan._id}
-              className={`pricing-card ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
+              className={`pricing-card ${hasTopBadge ? 'has-top-badge' : ''} ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
             >
               {isCurrentPlan && <div className="current-plan-badge">✓ {t('currentPlan')}</div>}
               {!isCurrentPlan && hasOffer && (
@@ -866,15 +868,10 @@ const Pricing = () => {
               )}
               {!isCurrentPlan && !hasOffer && isOfferClaimed && (
                 <div
-                  className="offer-badge-pill"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: '#94a3b8',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                  }}
-                  title="Promotional offer was valid for your 1st purchase only"
+                  className="offer-badge-pill claimed-badge"
+                  title="First-time promotional offer has already been claimed on this account"
                 >
-                  Offer Claimed (1st Purchase Only)
+                  Offer Claimed
                 </div>
               )}
               {!isCurrentPlan && !hasOffer && !isOfferClaimed && plan.badge && (
@@ -882,7 +879,9 @@ const Pricing = () => {
                   {plan.badge}
                 </div>
               )}
-              {isFree && <div className="free-tier-badge">💬 {t('chatOnly')}</div>}
+              {isFree && !isCurrentPlan && (
+                <div className="free-tier-badge">💬 {t('chatOnly')}</div>
+              )}
 
               <h3 className="plan-name">{getDisplayPlanName(plan.planName)}</h3>
 
