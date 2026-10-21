@@ -12,8 +12,8 @@ import {
   RotateCw,
 } from 'lucide-react';
 import axios from 'axios';
-import toast from 'react-hot-toast';
 import { getApiBaseUrl, resolveMediaUrl } from '../../types';
+import { downloadMediaAsset } from '../../utils/downloadHelper';
 
 const baseURL = getApiBaseUrl();
 
@@ -122,20 +122,7 @@ const MagicImageEditModal = ({ isOpen, onClose, onCreditDeduction }) => {
 
   const handleDownload = async () => {
     if (!resultImage) return;
-    try {
-      const response = await fetch(resolveMediaUrl(resultImage));
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `aisa-edited-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      toast.error('Failed to download image');
-    }
+    await downloadMediaAsset(resultImage, `aisa-edited-${Date.now()}.png`);
   };
 
   const handleReset = () => {

@@ -122,6 +122,7 @@ const AiCashFlowContent = lazy(() => import('../Tools/AI_Cashflow/components/AiC
 
 import axios from 'axios';
 import { apis, API, resolveMediaUrl } from '../types';
+import { downloadMediaAsset } from '../utils/downloadHelper';
 import { detectMode, getModeName, getModeIcon, getModeColor, MODES } from '../utils/modeDetection';
 import { copyText } from '../utils/clipboard';
 import { getUserData, clearUser } from '../userStore/userData';
@@ -1365,26 +1366,11 @@ const Chat = () => {
 
   const handleDownload = useCallback(async (url, filename = 'AISA-download.png') => {
     if (!url) return;
+    setIsDownloadingUrl(url);
     try {
-      const resolved = resolveMediaUrl(url);
-      const res = await fetch(resolved);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (_) {
-      const a = document.createElement('a');
-      a.href = resolveMediaUrl(url);
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      await downloadMediaAsset(url, filename);
+    } finally {
+      setIsDownloadingUrl(null);
     }
   }, []);
 

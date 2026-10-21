@@ -1000,7 +1000,9 @@ const ChatBubble = React.memo(
                                   );
                                 },
                                 img: ({ node, ...props }) => {
-                                  const isDownloading = isDownloadingUrl === props.src;
+                                  const isDownloading =
+                                    isDownloadingUrl === props.src ||
+                                    isDownloadingUrl === resolveMediaUrl(props.src);
                                   return (
                                     <div className="relative my-4 group/img-container max-w-full">
                                       <div
@@ -1249,15 +1251,24 @@ const ChatBubble = React.memo(
                           <Copy className="w-4 h-4" />
                         </button>
                         <button
-                          disabled={isDownloadingUrl === msg.imageUrl}
+                          disabled={
+                            isDownloadingUrl === msg.imageUrl ||
+                            isDownloadingUrl === resolveMediaUrl(msg.imageUrl)
+                          }
                           onClick={e => {
                             e.stopPropagation();
-                            handleDownload(resolveMediaUrl(msg.imageUrl), 'AISA-generated.png');
+                            handleDownload(msg.imageUrl, 'AISA-generated.png');
                           }}
-                          className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${isDownloadingUrl === msg.imageUrl ? 'bg-zinc-600 cursor-wait' : 'bg-primary text-white hover:bg-primary/90'}`}
+                          className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${
+                            isDownloadingUrl === msg.imageUrl ||
+                            isDownloadingUrl === resolveMediaUrl(msg.imageUrl)
+                              ? 'bg-zinc-600 cursor-wait'
+                              : 'bg-primary text-white hover:bg-primary/90'
+                          }`}
                           title="Download High-Res"
                         >
-                          {isDownloadingUrl === msg.imageUrl ? (
+                          {isDownloadingUrl === msg.imageUrl ||
+                          isDownloadingUrl === resolveMediaUrl(msg.imageUrl) ? (
                             <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                           ) : (
                             <Download className="w-4 h-4" />

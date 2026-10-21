@@ -223,4 +223,21 @@ export const resolveMediaUrl = url => {
   return url;
 };
 
+/**
+ * Constructs a proxied media URL with optional download flag and custom filename
+ */
+export const getMediaProxyUrl = (url, options = {}) => {
+  if (!url || typeof url !== 'string') return '';
+  const { download = false, filename = '' } = options;
+  const isLocalBrowser =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const proxyPath = isLocalBrowser ? '/api/media/proxy' : `${API}/media/proxy`;
+  const params = new URLSearchParams();
+  params.set('url', url);
+  if (download) params.set('download', '1');
+  if (filename) params.set('filename', filename);
+  return `${proxyPath}?${params.toString()}`;
+};
+
 export { API, apis };

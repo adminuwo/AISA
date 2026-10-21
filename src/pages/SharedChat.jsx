@@ -42,6 +42,7 @@ import { useUserStore } from '../userStore/useUserStore';
 import { motion } from 'framer-motion';
 import { logo } from '../constants';
 import { apis, resolveMediaUrl } from '../types';
+import { downloadMediaAsset } from '../utils/downloadHelper';
 import { copyText } from '../utils/clipboard';
 import ActionCard from '../Components/ActionCard';
 import { useTheme } from '../context/ThemeContext';
@@ -395,28 +396,10 @@ const SharedChat = () => {
   };
 
   const handleDownload = async (url, filename) => {
-    if (isDownloadingUrl === url) return;
+    if (!url || isDownloadingUrl === url) return;
     setIsDownloadingUrl(url);
-    const downloadToast = toast.loading('Preparing download...');
-    const downloadUrl = resolveMediaUrl(url);
-
     try {
-      const response = await fetch(downloadUrl);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename || 'AISA-download.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-      toast.success('Download started!', { id: downloadToast });
-    } catch (error) {
-      console.error('Download failed even with proxy:', error);
-      toast.error('Download failed', { id: downloadToast });
-      window.open(url, '_blank');
+      await downloadMediaAsset(url, filename || 'AISA-download.png');
     } finally {
       setIsDownloadingUrl(null);
     }
@@ -1024,15 +1007,24 @@ const SharedChat = () => {
                           <Copy className="w-4 h-4" />
                         </button>
                         <button
-                          disabled={isDownloadingUrl === msg.imageUrl}
+                          disabled={
+                            isDownloadingUrl === msg.imageUrl ||
+                            isDownloadingUrl === resolveMediaUrl(msg.imageUrl)
+                          }
                           onClick={e => {
                             e.stopPropagation();
-                            handleDownload(resolveMediaUrl(msg.imageUrl), 'AISA-generated.png');
+                            handleDownload(msg.imageUrl, 'AISA-generated.png');
                           }}
-                          className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center justify-center transition-all duration-300 ease-in-out hover:scale-105 active:scale-95 ${isDownloadingUrl === msg.imageUrl ? 'bg-zinc-600 cursor-wait' : 'bg-primary text-white hover:bg-primary/90'}`}
+                          className={`p-2.5 rounded-xl shadow-lg border border-white/20 flex items-center justify-center transition-all duration-300 ease-in-out hover:scale-105 active:scale-95 ${
+                            isDownloadingUrl === msg.imageUrl ||
+                            isDownloadingUrl === resolveMediaUrl(msg.imageUrl)
+                              ? 'bg-zinc-600 cursor-wait'
+                              : 'bg-primary text-white hover:bg-primary/90'
+                          }`}
                           title="Download High-Res"
                         >
-                          {isDownloadingUrl === msg.imageUrl ? (
+                          {isDownloadingUrl === msg.imageUrl ||
+                          isDownloadingUrl === resolveMediaUrl(msg.imageUrl) ? (
                             <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                           ) : (
                             <Download className="w-4 h-4" />
