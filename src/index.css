@@ -1758,7 +1758,18 @@ html.lenis body {
     padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* Clear floating buttons — 76px padding inside scrollable viewport so messages clear floating header buttons at scroll-to-top */
+  /* Clear floating buttons — 76px padding inside scrollable viewport on mobile */
+  .chatgpt-container:not(.no-top-padding) {
+    padding-top: 76px !important;
+  }
+}
+
+/* Clear floating header buttons across all screens (desktop & tablet) so messages never collide with navbar */
+.chatgpt-container:not(.no-top-padding) {
+  padding-top: 84px !important;
+}
+
+@media (max-width: 640px) {
   .chatgpt-container:not(.no-top-padding) {
     padding-top: 76px !important;
   }

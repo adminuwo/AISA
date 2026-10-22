@@ -62,7 +62,7 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
   const isTypingIndicatorActive =
     (isLoading || Boolean(typingMessageId)) && !hasCurrentModelResponseStarted;
 
-  // Scroll to align the latest user prompt at the top of the chat area
+  // Scroll to align the latest user prompt cleanly below the floating navbar (~72-84px)
   const scrollToLatestUserPrompt = useCallback(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
@@ -74,9 +74,12 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
     const elementRect = latestUserMsg.getBoundingClientRect();
     const relativeTop = elementRect.top - containerRect.top + container.scrollTop;
 
-    // Position top of user prompt bubble near the top of the viewport
+    // Offset by navbar height + breathing room so prompt isn't hidden under floating header buttons
+    const topNavbarOffset = window.innerWidth >= 640 ? 84 : 76;
+
+    // Position top of user prompt bubble safely below the navbar
     container.scrollTo({
-      top: Math.max(0, relativeTop - 16),
+      top: Math.max(0, relativeTop - topNavbarOffset),
       behavior: 'smooth',
     });
   }, []);
@@ -108,7 +111,7 @@ export const ChatMessages = React.memo(({ messages = [], listProps = {} }) => {
   return (
     <div
       ref={containerRef}
-      className="flex-1 w-full h-full min-h-0 overflow-y-auto custom-scrollbar px-3 sm:px-6 py-4 relative"
+      className="flex-1 w-full h-full min-h-0 overflow-y-auto custom-scrollbar chatgpt-container px-3 sm:px-6 pt-20 sm:pt-[84px] pb-4 relative"
     >
       {messages.map((msg, index) => (
         <ChatBubble

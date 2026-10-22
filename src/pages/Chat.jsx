@@ -633,7 +633,22 @@ const Chat = () => {
 
           setMessages((prev) => [...prev, audioMsg]);
           await chatStorageService.saveMessage(currentSid, audioMsg, null, currentProjectId);
-          speakResponse(messageText, null, aiMsgId, [], null, null, null, audioBlob => {
+          speakResponse(messageText, null, aiMsgId, [], null, null, null, (audioBlob, errorMsg) => {
+            if (!audioBlob) {
+              const failedAudioMsg = {
+                ...audioMsg,
+                content: errorMsg || 'Voice playback failed. Please try again.',
+                isFailed: true,
+              };
+              setMessages(prev =>
+                prev.map(message => (message.id === aiMsgId ? failedAudioMsg : message))
+              );
+              chatStorageService
+                .saveMessage(currentSid, failedAudioMsg, null, currentProjectId)
+                .catch(err => console.error('[Chat] Failed to save failed audio state:', err));
+              return;
+            }
+
             const reader = new FileReader();
             reader.onloadend = () => {
               const encodedAudio = String(reader.result || '').split(',')[1];

@@ -170,6 +170,12 @@ export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) 
               }
 
               const token = getUserData()?.token || localStorage.getItem('token');
+              if (!token) {
+                const authErr = new Error('No authentication token');
+                authErr.isAuthError = true;
+                throw authErr;
+              }
+
               const response = await axios.post(
                 apis.synthesize,
                 {
@@ -181,7 +187,7 @@ export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) 
                 },
                 {
                   responseType: 'arraybuffer',
-                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  headers: { Authorization: `Bearer ${token}` },
                 }
               );
 
@@ -196,6 +202,9 @@ export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) 
           }
 
           if (!audioBlob) {
+            if (typeof onAudioReady === 'function') {
+              onAudioReady(null, 'No audio data received');
+            }
             resolve();
             return;
           }
@@ -238,7 +247,29 @@ export const useTTS = ({ currentLang, voiceName, speed = 1.0, pitch = 0 } = {}) 
         } catch (err) {
           console.error('[useTTS] Synthesis error:', err);
           toast.dismiss('voice-loading');
-          toast.error('Voice playback failed');
+          const is401 = err.isAuthError || err.response?.status === 401;
+          if (is401) {
+            window.dispatchEvent(
+              new CustomEvent('login_required', {
+                detail: {
+                  toolName: 'Audio Convert',
+                  customMessage: 'Please log in to generate audio.',
+                },
+              })
+            );
+            toast.error('Please log in to generate audio');
+          } else {
+            toast.error('Voice playback failed');
+          }
+
+          if (typeof onAudioReady === 'function') {
+            onAudioReady(
+              null,
+              is401
+                ? 'Please log in to generate audio.'
+                : 'Voice playback failed. Please try again.'
+            );
+          }
           currentSpeechResolverRef.current = null;
           resolve();
         }
