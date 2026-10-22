@@ -333,8 +333,10 @@ const Pricing = () => {
         return;
       }
 
+      const isOfferEligible = plan.isEligibleForOffer !== false;
       const hasOffer =
         Boolean(plan.isOfferActive) &&
+        isOfferEligible &&
         ((billingCycle === 'yearly' &&
           plan.offerPriceYearly != null &&
           plan.offerPriceYearly >= 0) ||
@@ -454,8 +456,10 @@ const Pricing = () => {
       return;
     }
 
+    const isOfferEligible = plan.isEligibleForOffer !== false;
     const hasOffer =
       Boolean(plan.isOfferActive) &&
+      isOfferEligible &&
       ((billingCycle === 'yearly' && plan.offerPriceYearly != null && plan.offerPriceYearly >= 0) ||
         (billingCycle === 'monthly' &&
           plan.offerPriceMonthly != null &&
@@ -807,9 +811,14 @@ const Pricing = () => {
             return pid === cName || pn.includes(cName) || cName.includes(pn.split(' ')[0]);
           })();
 
-          // Check if an active promotional offer is configured
+          // Check if an active promotional offer is configured AND user is eligible
+          const isOfferEligible = plan.isEligibleForOffer !== false;
+          const isFirstTimeOfferOnly =
+            plan.offerForFirstTimeOnly !== false && plan.offerValidityType !== 'all_users';
+
           const hasOffer =
             Boolean(plan.isOfferActive) &&
+            isOfferEligible &&
             !isFree &&
             ((billingCycle === 'monthly' &&
               plan.offerPriceMonthly != null &&
@@ -817,6 +826,10 @@ const Pricing = () => {
               (billingCycle === 'yearly' &&
                 plan.offerPriceYearly != null &&
                 plan.offerPriceYearly >= 0));
+
+          // If plan has an active offer but user already claimed first-time offer
+          const isOfferClaimed =
+            Boolean(plan.isOfferActive) && !isOfferEligible && isFirstTimeOfferOnly && !isFree;
 
           const regularMonthly = plan.priceMonthly;
           const regularYearly = plan.priceYearly || 0;
@@ -842,21 +855,33 @@ const Pricing = () => {
               ? (plan.validityYearly || 12) + ' Months'
               : (plan.validityMonthly || 1) + ' Month';
 
+          const hasTopBadge = Boolean(isCurrentPlan || hasOffer || isOfferClaimed || plan.badge);
+
           return (
             <div
               key={plan._id}
-              className={`pricing-card ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
+              className={`pricing-card ${hasTopBadge ? 'has-top-badge' : ''} ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
             >
               {isCurrentPlan && <div className="current-plan-badge">✓ {t('currentPlan')}</div>}
               {!isCurrentPlan && hasOffer && (
                 <div className="offer-badge-pill">🔥 {plan.offerBadge || 'SPECIAL OFFER'}</div>
               )}
-              {!isCurrentPlan && !hasOffer && plan.badge && (
+              {!isCurrentPlan && !hasOffer && isOfferClaimed && (
+                <div
+                  className="offer-badge-pill claimed-badge"
+                  title="First-time promotional offer has already been claimed on this account"
+                >
+                  Offer Claimed
+                </div>
+              )}
+              {!isCurrentPlan && !hasOffer && !isOfferClaimed && plan.badge && (
                 <div className={`popular-badge ${isFounder ? 'launch-badge' : ''}`}>
                   {plan.badge}
                 </div>
               )}
-              {isFree && <div className="free-tier-badge">💬 {t('chatOnly')}</div>}
+              {isFree && !isCurrentPlan && (
+                <div className="free-tier-badge">💬 {t('chatOnly')}</div>
+              )}
 
               <h3 className="plan-name">{getDisplayPlanName(plan.planName)}</h3>
 
@@ -895,6 +920,11 @@ const Pricing = () => {
                 {hasOffer && plan.offerSubtitle && (
                   <div className="text-xs font-semibold text-rose-500/90 mt-1">
                     {plan.offerSubtitle}
+                  </div>
+                )}
+                {isOfferClaimed && (
+                  <div className="text-[11px] text-white/50 font-medium mt-1">
+                    First-purchase offer already claimed • Standard renewal price
                   </div>
                 )}
 
@@ -1028,8 +1058,10 @@ const Pricing = () => {
                 <span className="font-bold text-white flex items-center gap-2">
                   {selectedPlanForUpgrade.planName} ({billingCycle})
                   {(() => {
+                    const isOfferEligible = selectedPlanForUpgrade.isEligibleForOffer !== false;
                     const hasOffer =
                       Boolean(selectedPlanForUpgrade.isOfferActive) &&
+                      isOfferEligible &&
                       ((billingCycle === 'monthly' &&
                         selectedPlanForUpgrade.offerPriceMonthly != null &&
                         selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
@@ -1048,8 +1080,10 @@ const Pricing = () => {
                 <span>Total Amount:</span>
                 <div>
                   {(() => {
+                    const isOfferEligible = selectedPlanForUpgrade.isEligibleForOffer !== false;
                     const hasOffer =
                       Boolean(selectedPlanForUpgrade.isOfferActive) &&
+                      isOfferEligible &&
                       ((billingCycle === 'monthly' &&
                         selectedPlanForUpgrade.offerPriceMonthly != null &&
                         selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
