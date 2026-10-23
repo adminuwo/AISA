@@ -21,6 +21,7 @@ import {
   Users,
   ChevronRight,
   ArrowLeft,
+  MoreHorizontal,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUserStore } from '../userStore/useUserStore';
@@ -85,6 +86,56 @@ const PLAN_NAME_MAP = {
 const getDisplayPlanName = planName => {
   if (!planName) return '';
   return PLAN_NAME_MAP[planName.toLowerCase()] || planName;
+};
+
+// Category / Scope label matching reference UI (e.g. "= Design Subscription", "= Retainer", "= 0 -> MVP")
+const getPlanCategoryLabel = plan => {
+  const name = (plan.planName || '').toLowerCase();
+  if (name.includes('free')) return '= Free Access';
+  if (name.includes('creator') || name.includes('starter')) return '= Design Subscription';
+  if (name.includes('startup')) return '= Retainer';
+  if (name.includes('enterprise') || name.includes('business')) return '= 0 → MVP';
+  return `= ${getDisplayPlanName(plan.planName)}`;
+};
+
+// Subtitle tagline matching reference UI
+const getPlanSubtitle = plan => {
+  const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
+  if (isFree) return 'One request at a time';
+  const name = (plan.planName || '').toLowerCase();
+  if (name.includes('creator') || name.includes('starter'))
+    return 'Essential tools for solo creators';
+  if (name.includes('startup')) return 'Double your delivery 2x';
+  if (name.includes('enterprise') || name.includes('business'))
+    return 'Fitting your individual project needs';
+  return 'Tailored for your AI workflow';
+};
+
+// Typography helper matching reference UI (e.g. "Nano" in bold sans, "dose" in elegant italic serif)
+const renderPlanDisplayName = planName => {
+  const displayName = getDisplayPlanName(planName);
+  const parts = displayName.trim().split(' ');
+  if (parts.length > 1) {
+    return (
+      <span className="plan-name-combo">
+        <span className="plan-name-bold">{parts[0]}</span>
+        <span className="plan-name-italic">{parts.slice(1).join(' ')}</span>
+      </span>
+    );
+  }
+  const suffixMap = {
+    free: 'tier',
+    creator: 'dose',
+    startup: 'dose',
+    enterprise: 'dose',
+  };
+  const suffix = suffixMap[displayName.toLowerCase()] || 'dose';
+  return (
+    <span className="plan-name-combo">
+      <span className="plan-name-bold">{displayName}</span>
+      <span className="plan-name-italic">{suffix}</span>
+    </span>
+  );
 };
 
 // Dynamically ensure Razorpay checkout script is loaded
@@ -570,40 +621,32 @@ const Pricing = () => {
         case 'chat':
           if (isFree) {
             return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
+              <span className="matrix-check">
+                <Check size={16} />
               </span>
             );
           }
-          return <span className="feature-badge">✓ {t('priority')}</span>;
+          return <span className="matrix-badge emerald">✓ {t('priority')}</span>;
 
         case 'generate_image':
           if (plan.imageLimit > 0) {
             return (
-              <span className="feature-badge">
+              <span className="matrix-badge indigo">
                 ✓ {t('ultraHD')} ({plan.imageLimit}/day)
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         case 'edit_image':
           if (plan.editImageAllowed) {
             return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
+              <span className="matrix-check">
+                <Check size={16} />
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         case 'web_search':
         case 'deep_search':
@@ -611,88 +654,58 @@ const Pricing = () => {
         case 'convert_audio':
           if (planKey !== 'plan_0' && !isFree) {
             return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
+              <span className="matrix-check">
+                <Check size={16} />
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         case 'convert_docs':
           if (planKey === 'plan_1') {
-            return <span className="feature-badge">{t('advanced')}</span>;
+            return <span className="matrix-badge slate">{t('advanced')}</span>;
           }
           if (planKey === 'plan_2') {
-            return (
-              <span
-                className="feature-badge"
-                style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
-              >
-                {t('expert')}
-              </span>
-            );
+            return <span className="matrix-badge violet">{t('expert')}</span>;
           }
           if (planKey === 'plan_3') {
             return (
-              <span
-                className="feature-badge"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}
-              >
+              <span className="matrix-badge blue">
                 {t('pro')} + {t('team')}
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         case 'ai_legal':
           if (!isFree) {
             return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
+              <span className="matrix-check">
+                <Check size={16} />
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         case 'ai_cashflow':
           if (plan.cashflowAllowed) {
             return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
+              <span className="matrix-check">
+                <Check size={16} />
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         case 'ai_ads':
           if (plan.carouselLimit > 0) {
             return (
-              <span className="flex items-center justify-center">
-                <Check size={20} className="check-icon" />
+              <span className="matrix-check">
+                <Check size={16} />
               </span>
             );
           }
-          return (
-            <span className="flex items-center justify-center">
-              <X size={20} className="cross-icon" />
-            </span>
-          );
+          return <span className="matrix-dash">—</span>;
 
         default:
           return null;
@@ -700,48 +713,100 @@ const Pricing = () => {
     };
 
     const comparisonData = [
-      { feature: 'AISA Chat', key: 'chat' },
-      { feature: 'AISA Generate Image', key: 'generate_image' },
-      { feature: 'AISA Edit Image', key: 'edit_image' },
-      { feature: 'AISA Web Search', key: 'web_search' },
-      { feature: 'AISA Deep Search', key: 'deep_search' },
-      { feature: 'AISA Code Writer', key: 'code_writer' },
-      { feature: 'AISA Convert to Audio', key: 'convert_audio' },
-      { feature: 'AISA Convert Documents', key: 'convert_docs' },
-      { feature: 'AISA AI Legal™', key: 'ai_legal' },
-      { feature: 'AISA AI Cashflow™', key: 'ai_cashflow' },
-      { feature: 'AISA AI Ads', key: 'ai_ads' },
+      { feature: 'AI Chat Engine', key: 'chat' },
+      { feature: 'Ultra HD Image Generation', key: 'generate_image' },
+      { feature: 'AI Canvas & Image Editing', key: 'edit_image' },
+      { feature: 'Live Web Search', key: 'web_search' },
+      { feature: 'Deep Research Agent', key: 'deep_search' },
+      { feature: 'Code Writer & Debugger', key: 'code_writer' },
+      { feature: 'Audio & Speech Synthesizer', key: 'convert_audio' },
+      { feature: 'Document Parsing & OCR', key: 'convert_docs' },
+      { feature: 'AI Legal™ Contract Review', key: 'ai_legal' },
+      { feature: 'AI Cashflow™ Financial Analysis', key: 'ai_cashflow' },
+      { feature: 'AI Ads & Carousel Generator', key: 'ai_ads' },
     ];
 
     return (
       <div className="comparison-section">
-        <h2>Compare Plans Details</h2>
-        <div className="comparison-table-wrapper">
-          <table className="comparison-table">
-            <thead>
-              <tr>
-                <th>{t('feature')}</th>
-                {plans.map(p => (
-                  <th key={p._id}>{getDisplayPlanName(p.planName).toUpperCase()}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonData.map(row => (
-                <tr key={`comp-row-${row.key}`}>
-                  <td className="font-bold flex items-center gap-2">
-                    <span className="aisa-badge-small">AISA™</span>
-                    {row.feature.replace('AISA ', '')}
-                  </td>
-                  {plans.map(plan => (
-                    <td key={`${plan._id}-${row.feature}`}>{getFeatureValue(row.key, plan)}</td>
-                  ))}
+        <div className="comparison-card">
+          {/* Card Header matching reference style */}
+          <div className="comparison-card-header">
+            <div className="comparison-top-badge">
+              <span className="comparison-pill-dot" />
+              <span>Full Capabilities Breakdown</span>
+            </div>
+            <h2 className="comparison-card-title">Compare Plans Details</h2>
+            <p className="comparison-card-subtitle">
+              A transparent, side-by-side comparison of tools, daily limits, and advanced features
+              across every tier.
+            </p>
+          </div>
+
+          <div className="comparison-table-wrapper">
+            <table className="comparison-table">
+              <thead>
+                <tr>
+                  <th className="feature-col-th">
+                    <span className="feature-th-title">Features & Capabilities</span>
+                  </th>
+                  {plans.map(p => {
+                    const isFree = p.priceMonthly === 0 && p.priceYearly === 0;
+                    const priceVal = isFree
+                      ? 0
+                      : billingCycle === 'yearly'
+                        ? p.priceYearlyPerMonth || p.priceMonthly
+                        : p.priceMonthly;
+
+                    return (
+                      <th key={p._id} className={`plan-col-th ${p.isPopular ? 'popular-col' : ''}`}>
+                        {p.isPopular && <div className="col-popular-ribbon">Most Value</div>}
+                        <div className="col-plan-title">{renderPlanDisplayName(p.planName)}</div>
+                        <div className="col-price-row">
+                          <span className="col-curr">₹</span>
+                          <span className="col-amount">{priceVal.toLocaleString('en-IN')}</span>
+                          <span className="col-cycle">/mo</span>
+                        </div>
+                        <button
+                          className={`col-action-pill ${p.isPopular ? 'popular-btn' : 'standard-btn'}`}
+                          onClick={() => handleUpgrade(p)}
+                          disabled={processing}
+                        >
+                          {isFree ? 'Start Free' : p.isPopular ? 'Get Started' : 'Choose Plan'}
+                        </button>
+                      </th>
+                    );
+                  })}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {comparisonData.map(row => (
+                  <tr key={`comp-row-${row.key}`}>
+                    <td className="feature-name-cell">
+                      <div className="feature-name-group">
+                        <span className="feature-dot" />
+                        <span className="feature-title">{row.feature}</span>
+                      </div>
+                    </td>
+                    {plans.map(plan => (
+                      <td
+                        key={`${plan._id}-${row.key}`}
+                        className={`value-cell ${plan.isPopular ? 'popular-col' : ''}`}
+                      >
+                        {getFeatureValue(row.key, plan)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="comparison-card-footer">
+            <span className="swipe-hint-text">
+              💡 Swipe horizontally on smaller screens to compare all 4 plans
+            </span>
+          </div>
         </div>
-        <div className="comparison-swipe-hint">← Swipe to explore plans details →</div>
       </div>
     );
   };
@@ -762,6 +827,10 @@ const Pricing = () => {
       </button>
 
       <div className="pricing-header">
+        <div className="pricing-top-pill">
+          <span className="pricing-top-pill-dot" />
+          <span>Transparent pricing, with top tier AI partner</span>
+        </div>
         <h1>{t('unlockAIPotential')}</h1>
         <p>{t('choosePerfectPlan')}</p>
 
@@ -855,163 +924,167 @@ const Pricing = () => {
               ? (plan.validityYearly || 12) + ' Months'
               : (plan.validityMonthly || 1) + ' Month';
 
-          const hasTopBadge = Boolean(isCurrentPlan || hasOffer || isOfferClaimed || plan.badge);
+          const hasTopBadge = Boolean(
+            isCurrentPlan || hasOffer || isOfferClaimed || plan.badge || plan.isPopular
+          );
 
           return (
             <div
               key={plan._id}
               className={`pricing-card ${hasTopBadge ? 'has-top-badge' : ''} ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
             >
-              {isCurrentPlan && <div className="current-plan-badge">✓ {t('currentPlan')}</div>}
+              {/* Top Floating Badge */}
+              {isCurrentPlan && (
+                <div className="card-top-pill-badge current-plan">✓ {t('currentPlan')}</div>
+              )}
               {!isCurrentPlan && hasOffer && (
-                <div className="offer-badge-pill">🔥 {plan.offerBadge || 'SPECIAL OFFER'}</div>
+                <div className="card-top-pill-badge offer-pill">
+                  🔥 {plan.offerBadge || 'SPECIAL OFFER'}
+                </div>
               )}
               {!isCurrentPlan && !hasOffer && isOfferClaimed && (
                 <div
-                  className="offer-badge-pill claimed-badge"
+                  className="card-top-pill-badge claimed-pill"
                   title="First-time promotional offer has already been claimed on this account"
                 >
                   Offer Claimed
                 </div>
               )}
-              {!isCurrentPlan && !hasOffer && !isOfferClaimed && plan.badge && (
-                <div className={`popular-badge ${isFounder ? 'launch-badge' : ''}`}>
-                  {plan.badge}
-                </div>
+              {!isCurrentPlan && !hasOffer && !isOfferClaimed && plan.isPopular && (
+                <div className="card-top-pill-badge popular-pill">MOST VALUE TO PRICE</div>
               )}
-              {isFree && !isCurrentPlan && (
-                <div className="free-tier-badge">💬 {t('chatOnly')}</div>
-              )}
-
-              <h3 className="plan-name">{getDisplayPlanName(plan.planName)}</h3>
-
-              <div className="plan-price">
-                {!isFree && (hasOffer || billingCycle === 'yearly') && (
-                  <div className="original-price-container">
-                    <span className="original-price">
-                      ₹{billingCycle === 'yearly' ? Math.round(regularYearly / 12) : regularMonthly}
-                    </span>
-                    <span className="discount-tag">
-                      {hasOffer
-                        ? plan.offerBadge ||
-                          `${Math.round(
-                            ((regularMonthly - (plan.offerPriceMonthly ?? regularMonthly)) /
-                              regularMonthly) *
-                              100
-                          )}% OFF`
-                        : '30% OFF'}
-                    </span>
+              {!isCurrentPlan &&
+                !hasOffer &&
+                !isOfferClaimed &&
+                !plan.isPopular &&
+                plan.badge &&
+                plan.badge.toLowerCase() !== plan.planName.toLowerCase() && (
+                  <div className={`card-top-pill-badge ${isFounder ? 'launch-pill' : ''}`}>
+                    {plan.badge}
                   </div>
                 )}
-                <div className="current-price">
-                  <span className="currency">₹</span>
-                  {displayPrice}
-                  <span className="billing-period">
-                    {billingCycle === 'yearly'
-                      ? isFounder
-                        ? '/mo (lifetime)'
-                        : '/mo'
-                      : isFounder
-                        ? '/mo (lifetime)'
-                        : '/mo'}
-                  </span>
+
+              {/* Card Header Top Row: Category Label + More Options */}
+              <div className="card-header-top-row">
+                <span className="card-category-tag">{getPlanCategoryLabel(plan)}</span>
+                <span className="card-options-dots" title="Plan tier details">
+                  <MoreHorizontal size={15} />
+                </span>
+              </div>
+
+              {/* Plan Title & Tagline */}
+              <div className="card-title-block">
+                <h3 className="card-main-title">{renderPlanDisplayName(plan.planName)}</h3>
+                <p className="card-subtitle-text">{getPlanSubtitle(plan)}</p>
+              </div>
+
+              {/* Signature Action + Price Row (Side by Side) */}
+              <div className="card-action-price-row">
+                {/* Left side: Pill CTA Button */}
+                <div className="card-btn-col">
+                  {isCurrentPlan ? (
+                    <button className="card-pill-btn current-plan-btn" disabled>
+                      ✓ {t('currentPlan')}
+                    </button>
+                  ) : (
+                    <button
+                      className={`card-pill-btn ${plan.isPopular ? 'popular-action-btn' : 'standard-action-btn'}`}
+                      onClick={() => handleUpgrade(plan)}
+                      disabled={processing}
+                    >
+                      {displayPrice === 0
+                        ? t('startForFree') || 'Start Free'
+                        : plan.isPopular
+                          ? 'Get Started'
+                          : getDisplayPlanName(plan.planName).toLowerCase().includes('enterprise')
+                            ? 'Book a call'
+                            : 'Get Started'}
+                    </button>
+                  )}
                 </div>
 
-                {hasOffer && plan.offerSubtitle && (
-                  <div className="text-xs font-semibold text-rose-500/90 mt-1">
-                    {plan.offerSubtitle}
+                {/* Right side: Price */}
+                <div className="card-price-col">
+                  {!isFree && (hasOffer || billingCycle === 'yearly') && (
+                    <div className="price-struck-row">
+                      <span className="strike-amount">
+                        ₹
+                        {billingCycle === 'yearly'
+                          ? Math.round(regularYearly / 12)
+                          : regularMonthly}
+                      </span>
+                      <span className="discount-tag-pill">
+                        {hasOffer
+                          ? plan.offerBadge ||
+                            `${Math.round(
+                              ((regularMonthly - (plan.offerPriceMonthly ?? regularMonthly)) /
+                                regularMonthly) *
+                                100
+                            )}% OFF`
+                          : '30% OFF'}
+                      </span>
+                    </div>
+                  )}
+                  <div className="price-figure-row">
+                    <span className="price-curr">₹</span>
+                    <span className="price-num">{displayPrice.toLocaleString('en-IN')}</span>
+                    <span className="price-cycle">/mo</span>
                   </div>
-                )}
-                {isOfferClaimed && (
-                  <div className="text-[11px] text-white/50 font-medium mt-1">
-                    First-purchase offer already claimed • Standard renewal price
+                  <div className="price-sub-note">
+                    {displayPrice === 0
+                      ? 'Free forever'
+                      : billingCycle === 'yearly'
+                        ? `Billed ₹${totalYearlyAmount.toLocaleString('en-IN')}/yr`
+                        : 'Pause or cancel anytime'}
                   </div>
-                )}
+                  {hasOffer && plan.offerSubtitle && (
+                    <div className="card-offer-subtitle">{plan.offerSubtitle}</div>
+                  )}
+                  {isOfferClaimed && (
+                    <div className="card-offer-claimed-text">Offer claimed • Standard renewal</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Lower Tray: Clean Features Checklist matching reference UI */}
+              <div className="card-features-tray">
+                <ul className="card-features-checklist">
+                  {(plan.features || [])
+                    .filter(feature => !/video/i.test(feature))
+                    .map((feature, i) => {
+                      const formattedFeature = formatFeatureString(feature, plan);
+                      return (
+                        <li key={`feat-${plan._id || plan.planId || 'p'}-${feature}-${i}`}>
+                          <Check size={14} className="feature-check" />
+                          <span className="feature-text">
+                            {formattedFeature.replace(/^AISA\s+/i, '')}
+                          </span>
+                        </li>
+                      );
+                    })}
+                </ul>
 
                 {!isFree && (
-                  <div className="validity-badge">
-                    <ShieldAlert size={12} /> {t('validityLabel')} {displayValidity}
-                  </div>
-                )}
-
-                {billingCycle === 'yearly' && !isFree && (
-                  <div className="billed-yearly-label">
-                    {t('billedYearlyLabel')} ₹{totalYearlyAmount}
-                    {t('billedYearlySuffix')}
+                  <div className="card-validity-tag">
+                    <ShieldAlert size={12} />
+                    <span>
+                      {t('validityLabel')} {displayValidity}
+                    </span>
                   </div>
                 )}
               </div>
-
-              <div className="plan-credits">
-                <Sparkles size={18} />
-                {(() => {
-                  const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
-                  if (isFree) return <span>Free Access Tier</span>;
-                  if (plan.imageLimit === 0) {
-                    return <span>Starter Package</span>;
-                  }
-                  if (plan.imageLimit >= 10) {
-                    return <span>Business Pack</span>;
-                  }
-                  return <span>Pro Creator Pack</span>;
-                })()}
-              </div>
-
-              <div className="credit-details">
-                {renderQuotaSummary(plan).map((est, i) => (
-                  <p
-                    key={`summary-${plan._id || plan.planId || 'p'}-${i}`}
-                    className={est.locked ? 'locked-estimation' : ''}
-                  >
-                    <span style={{ opacity: est.locked ? 0.4 : 1 }}>{est.icon}</span>
-                    <span style={{ opacity: est.locked ? 0.4 : 1 }}>{est.text}</span>
-                    {est.locked && <span className="lock-icon">🔒</span>}
-                  </p>
-                ))}
-              </div>
-
-              <ul className="feature-list">
-                {(plan.features || [])
-                  .filter(feature => !/video/i.test(feature))
-                  .map((feature, i) => {
-                    const formattedFeature = formatFeatureString(feature, plan);
-                    return (
-                      <li key={`feat-${plan._id || plan.planId || 'p'}-${feature}-${i}`}>
-                        <Check size={16} />
-                        <span className="flex items-center gap-1.5">
-                          <span
-                            className="aisa-badge-small"
-                            style={{ fontSize: '0.6rem', padding: '1px 4px', minWidth: '30px' }}
-                          >
-                            AISA™
-                          </span>
-                          {formattedFeature.replace(/^AISA\s+/i, '')}
-                        </span>
-                      </li>
-                    );
-                  })}
-              </ul>
-
-              {isCurrentPlan ? (
-                <button className="cta-button current-plan-btn" disabled>
-                  ✓ {t('currentPlan')}
-                </button>
-              ) : (
-                <button
-                  className="cta-button"
-                  onClick={() => handleUpgrade(plan)}
-                  disabled={processing}
-                >
-                  {displayPrice === 0
-                    ? t('startForFree')
-                    : billingCycle === 'yearly'
-                      ? `${t('upgradeFor')} ₹${totalYearlyAmount}${t('billedYearlySuffix')}`
-                      : t('upgradeTo') + getDisplayPlanName(plan.planName)}
-                </button>
-              )}
             </div>
           );
         })}
+      </div>
+
+      {/* ── Climate & Green AI Sustainability Banner (Matching Reference UI) ── */}
+      <div className="pricing-climate-banner">
+        <span className="pricing-climate-leaf">🌱</span>
+        <span>
+          AISA™ contributes 1% of your subscription to green AI & carbon removal through Stripe
+          Climate
+        </span>
       </div>
 
       {/* ── Mobile dot indicators ── */}

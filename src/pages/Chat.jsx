@@ -872,6 +872,34 @@ const Chat = () => {
   const setSelectedLegalTool = useUserStore((state) => state.setActiveLegalToolData);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
 
+  const activeDashboardToolId = useMemo(() => {
+    if (isSocialMediaDashboardOpen) return 'aiad_agent';
+    switch (modeState?.activeMode) {
+      case MODES.DOCUMENT_CONVERT:
+        return 'document';
+      case MODES.FILE_ANALYSIS:
+        return 'document';
+      case MODES.DEEP_SEARCH:
+        return 'deep_search';
+      case MODES.WEB_SEARCH:
+        return 'web_search';
+      case MODES.CODING_HELP:
+        return 'code';
+      case MODES.IMAGE_GENERATION:
+        return 'image';
+      case MODES.IMAGE_EDIT:
+        return 'edit_image';
+      case MODES.AUDIO_CONVERT:
+        return 'audio';
+      case MODES.CASHFLOW:
+        return 'ai_cashflow';
+      case MODES.LEGAL_TOOLKIT:
+        return 'legal';
+      default:
+        return null;
+    }
+  }, [isSocialMediaDashboardOpen, modeState?.activeMode]);
+
   const handleDashboardToolSelect = useCallback(
     (toolId) => {
       switch (toolId) {
@@ -926,11 +954,13 @@ const Chat = () => {
           break;
         case 'document':
           if (!checkPremiumTool('Document Conversion')) break;
+          activateMode(MODES.DOCUMENT_CONVERT);
           uploadInputRef.current?.click();
           toast.success('Document Converter Mode Active');
           break;
         case 'file_analysis':
           if (!checkPremiumTool('File Analysis')) break;
+          activateMode(MODES.FILE_ANALYSIS);
           uploadInputRef.current?.click();
           toast.success('File Analysis Mode Active');
           break;
@@ -1542,6 +1572,7 @@ const Chat = () => {
                 activeLegalToolkit={modeState.activeLegalToolkit}
                 selectedLegalTool={modeState.selectedLegalTool}
                 typedPlaceholder={typedPlaceholder}
+                activeToolId={activeDashboardToolId}
                 onToolSelect={handleDashboardToolSelect}
                 onSelectPrompt={(p) => {
                   setInputValue(p);
