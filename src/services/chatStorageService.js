@@ -78,13 +78,13 @@ const getAuthHeaders = () => {
   const headers = {
     'X-Device-Fingerprint': getDeviceFingerprint(),
   };
+  const guestToken = localStorage.getItem('aisa_guest_token');
+  const guestId = localStorage.getItem('aisa_guest_id');
+  if (guestToken) headers['X-Guest-Token'] = guestToken;
+  if (guestId) headers['X-Guest-Id'] = guestId;
+
   if (token && token !== 'undefined' && token !== 'null') {
     headers.Authorization = `Bearer ${token}`;
-  } else {
-    const guestToken = localStorage.getItem('aisa_guest_token');
-    const guestId = localStorage.getItem('aisa_guest_id');
-    if (guestToken) headers['X-Guest-Token'] = guestToken;
-    if (guestId) headers['X-Guest-Id'] = guestId;
   }
   return headers;
 };
@@ -667,9 +667,13 @@ export const chatStorageService = {
 
       const response = await axios.post(
         `${API_BASE_URL}/chat/merge-chats`,
-        { guestChatIds },
+        {
+          guestChatIds,
+          guestId: localStorage.getItem('aisa_guest_id') || undefined,
+        },
         {
           headers: getAuthHeaders(),
+          withCredentials: true,
         }
       );
 
