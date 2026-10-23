@@ -242,19 +242,56 @@
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
+.pricing-card:not(.current-plan-card) {
+  cursor: pointer;
+  user-select: none;
+}
+
+.pricing-card.current-plan-card {
+  cursor: default;
+}
+
 .dark .pricing-card {
   background: #0d131f;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
 }
 
-.pricing-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+.pricing-card:not(.current-plan-card):hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 42px -12px rgba(0, 0, 0, 0.09), 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-.dark .pricing-card:hover {
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+.pricing-card:not(.current-plan-card):active {
+  transform: translateY(-2px) scale(0.995);
+  transition-duration: 0.1s;
+}
+
+.dark .pricing-card:not(.current-plan-card):hover {
+  box-shadow: 0 20px 42px -10px rgba(0, 0, 0, 0.65);
+}
+
+/* Card hover CTA button micro-interactions */
+.pricing-card:not(.current-plan-card):hover .card-pill-btn.standard-action-btn {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  transform: scale(1.02);
+}
+
+.dark .pricing-card:not(.current-plan-card):hover .card-pill-btn.standard-action-btn {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #ffffff;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.22);
+  transform: scale(1.02);
+}
+
+.pricing-card:not(.current-plan-card):hover .card-pill-btn.popular-action-btn {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.55);
+  transform: scale(1.03);
 }
 
 /* ── Middle / Featured Card with Gradient Border (Exact Reference Match) ── */
@@ -1740,4 +1777,299 @@
 .dark .aisa-badge-small {
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+/* ═══════════════════════════════════════════
+   BILLING / CHECKOUT MODAL (Matching Plan Card UI)
+   ═══════════════════════════════════════════ */
+.billing-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: modalFadeIn 0.22s ease-out forwards;
+}
+
+.dark .billing-modal-backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.billing-modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  padding: 26px 24px 22px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.03);
+  animation: modalPopIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dark .billing-modal-card {
+  background: #0d131f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+}
+
+/* Featured / Popular Plan Gradient Border for Modal */
+.billing-modal-card.popular-modal {
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 45%, #6366f1 75%, #f97316 100%) border-box !important;
+  box-shadow: 0 25px 65px -15px rgba(168, 85, 247, 0.3), 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.dark .billing-modal-card.popular-modal {
+  background:
+    linear-gradient(#0e1526, #0e1526) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 45%, #6366f1 75%, #f97316 100%) border-box !important;
+  box-shadow: 0 25px 70px -15px rgba(168, 85, 247, 0.45);
+}
+
+.card-top-pill-badge.checkout-pill {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
+
+.modal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  transform: scale(1.06);
+}
+
+.dark .modal-close-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.dark .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.modal-summary-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin: 10px 0 16px;
+}
+
+.dark .modal-summary-box {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.modal-summary-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.modal-cycle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.09);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.dark .modal-cycle-badge {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.modal-validity-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.modal-gst-tag {
+  font-size: 0.64rem;
+  color: #10b981;
+  font-weight: 600;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.modal-perks-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-perks-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: #334155;
+}
+
+.dark .modal-perks-list li {
+  color: #cbd5e1;
+}
+
+.modal-perks-list .feature-check {
+  color: #10b981;
+}
+
+.modal-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-pay-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-pay-btn:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.5);
+  transform: scale(1.02);
+}
+
+.modal-pay-btn:active {
+  transform: scale(0.99);
+}
+
+.modal-cancel-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  background: transparent;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-cancel-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.dark .modal-cancel-btn {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.dark .modal-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+}
+
+.modal-trust-footer {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-methods-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark .modal-methods-note {
+  color: #94a3b8;
+}
+
+.modal-climate-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.66rem;
+  color: #94a3b8;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

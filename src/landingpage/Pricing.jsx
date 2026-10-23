@@ -22,6 +22,8 @@ import {
   ChevronRight,
   ArrowLeft,
   MoreHorizontal,
+  Lock,
+  ShieldCheck,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUserStore } from '../userStore/useUserStore';
@@ -174,6 +176,25 @@ const Pricing = () => {
   const user = useUserStore(state => state.user);
   const userState = { user };
   const setUserState = useUserStore(state => state.setUser);
+
+  // Identify admin user to prevent free tier default
+  const localUser = getUserData();
+  const currentUser = user || localUser || {};
+  const userEmail = String(currentUser?.email || localUser?.email || '')
+    .toLowerCase()
+    .trim();
+  const userRole = String(currentUser?.role || localUser?.role || '')
+    .toLowerCase()
+    .trim();
+  const isAdmin =
+    userRole === 'admin' ||
+    userRole === 'super_admin' ||
+    userRole === 'superadmin' ||
+    userEmail === 'admin@uwo24.com' ||
+    userEmail === 'sanskar@uwo24.com' ||
+    userEmail === 'sakshi@uwo24.com' ||
+    userEmail.endsWith('@uwo24.com');
+
   const [activeCard, setActiveCard] = useState(0);
   const gridRef = useRef(null);
   const [isMobile, setIsMobile] = useState(
@@ -267,25 +288,34 @@ const Pricing = () => {
       setCurrentPlanName('');
       return;
     }
+    if (isAdmin) {
+      setCurrentPlanName('Admin');
+      return;
+    }
     try {
       const data = await getSubscriptionDetails();
       if (data.success) {
         if (data.subscription?.planId?.planName) {
           setCurrentPlanName(data.subscription.planId.planName);
         } else if (data.plan?.planKey && data.plan.planKey !== 'Plan_0') {
-          const keyMap = { Plan_1: 'Creator', Plan_2: 'Startup', Plan_3: 'Enterprise' };
+          const keyMap = {
+            Plan_1: 'Creator',
+            Plan_2: 'Startup',
+            Plan_3: 'Enterprise',
+            admin: 'Admin',
+          };
           setCurrentPlanName(keyMap[data.plan.planKey] || data.plan.planKey);
         } else if (data.founderStatus) {
           setCurrentPlanName('Founder');
         } else {
-          setCurrentPlanName('Free');
+          setCurrentPlanName(isAdmin ? 'Admin' : 'Free');
         }
       } else {
-        setCurrentPlanName('Free');
+        setCurrentPlanName(isAdmin ? 'Admin' : 'Free');
       }
     } catch (err) {
       console.error(err);
-      setCurrentPlanName('Free');
+      setCurrentPlanName(isAdmin ? 'Admin' : 'Free');
     }
   };
 
@@ -866,17 +896,27 @@ const Pricing = () => {
             plan.planName.toLowerCase().includes('startup');
           const isFree = plan.priceMonthly === 0 && plan.priceYearly === 0;
           const isCurrentPlan = (() => {
-            if (!currentPlanName) return false;
             const pn = plan.planName.toLowerCase().trim();
             const pid = (plan.planId || '').toLowerCase().trim();
+            const isEnterprise =
+              pid === 'plan_3' || pn.includes('enterprise') || pn.includes('business');
+
+            if (isAdmin) {
+              return isEnterprise;
+            }
+
+            if (!currentPlanName) return false;
             const cName = currentPlanName.toLowerCase().trim();
+            if (cName.includes('admin') || cName.includes('unlimited')) {
+              return isEnterprise;
+            }
             if (cName === 'startup pro' || cName === 'startup' || cName === 'plan_2')
               return pn.includes('startup') || pid === 'plan_2' || pn.includes('pro');
             if (cName === 'free' || cName === 'free tier' || cName === 'plan_0') return isFree;
             if (cName === 'plan_1' || cName === 'creator' || cName === 'starter')
               return pid === 'plan_1' || pn.includes('starter') || pn.includes('creator');
             if (cName === 'plan_3' || cName === 'business' || cName === 'enterprise')
-              return pid === 'plan_3' || pn.includes('business') || pn.includes('enterprise');
+              return isEnterprise;
             return pid === cName || pn.includes(cName) || cName.includes(pn.split(' ')[0]);
           })();
 
@@ -932,10 +972,25 @@ const Pricing = () => {
             <div
               key={plan._id}
               className={`pricing-card ${hasTopBadge ? 'has-top-badge' : ''} ${plan.isPopular ? 'popular' : ''} ${isFree ? 'free-tier-card' : ''} ${isCurrentPlan ? 'current-plan-card' : ''} ${hasOffer ? 'has-offer-card' : ''}`}
+              onClick={() => {
+                if (!isCurrentPlan && !processing) {
+                  handleUpgrade(plan);
+                }
+              }}
+              role={!isCurrentPlan ? 'button' : undefined}
+              tabIndex={!isCurrentPlan ? 0 : undefined}
+              onKeyDown={e => {
+                if (!isCurrentPlan && !processing && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleUpgrade(plan);
+                }
+              }}
             >
               {/* Top Floating Badge */}
               {isCurrentPlan && (
-                <div className="card-top-pill-badge current-plan">✓ {t('currentPlan')}</div>
+                <div className="card-top-pill-badge current-plan">
+                  {isAdmin ? '⚡ ADMIN UNLIMITED ACCESS' : `✓ ${t('currentPlan')}`}
+                </div>
               )}
               {!isCurrentPlan && hasOffer && (
                 <div className="card-top-pill-badge offer-pill">
@@ -984,12 +1039,15 @@ const Pricing = () => {
                 <div className="card-btn-col">
                   {isCurrentPlan ? (
                     <button className="card-pill-btn current-plan-btn" disabled>
-                      ✓ {t('currentPlan')}
+                      {isAdmin ? '✓ Admin Access' : `✓ ${t('currentPlan')}`}
                     </button>
                   ) : (
                     <button
                       className={`card-pill-btn ${plan.isPopular ? 'popular-action-btn' : 'standard-action-btn'}`}
-                      onClick={() => handleUpgrade(plan)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleUpgrade(plan);
+                      }}
                       disabled={processing}
                     >
                       {displayPrice === 0
@@ -997,7 +1055,7 @@ const Pricing = () => {
                         : plan.isPopular
                           ? 'Get Started'
                           : getDisplayPlanName(plan.planName).toLowerCase().includes('enterprise')
-                            ? 'Book a call'
+                            ? 'Get Started'
                             : 'Get Started'}
                     </button>
                   )}
@@ -1105,119 +1163,204 @@ const Pricing = () => {
 
       {renderComparisonTable()}
 
-      {/* ── Billing Information Modal ── */}
-      {billingModalOpen && selectedPlanForUpgrade && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="w-full max-w-lg bg-[#0e1726] border border-white/10 rounded-2xl p-6 shadow-2xl text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
-            <button
-              onClick={() => setBillingModalOpen(false)}
-              className="absolute top-4 right-4 text-white/50 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-all"
+      {/* ── Billing Information Modal (Matching Plan Card UI) ── */}
+      {billingModalOpen &&
+        selectedPlanForUpgrade &&
+        (() => {
+          const isOfferEligible = selectedPlanForUpgrade.isEligibleForOffer !== false;
+          const hasOffer =
+            Boolean(selectedPlanForUpgrade.isOfferActive) &&
+            isOfferEligible &&
+            ((billingCycle === 'monthly' &&
+              selectedPlanForUpgrade.offerPriceMonthly != null &&
+              selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
+              (billingCycle === 'yearly' &&
+                selectedPlanForUpgrade.offerPriceYearly != null &&
+                selectedPlanForUpgrade.offerPriceYearly >= 0));
+
+          const regularPrice =
+            billingCycle === 'yearly'
+              ? selectedPlanForUpgrade.priceYearly
+              : selectedPlanForUpgrade.priceMonthly;
+
+          const effectivePrice = hasOffer
+            ? billingCycle === 'yearly'
+              ? (selectedPlanForUpgrade.offerPriceYearly ?? regularPrice)
+              : selectedPlanForUpgrade.offerPriceMonthly
+            : regularPrice;
+
+          const displayPrice = hasOffer
+            ? billingCycle === 'yearly'
+              ? Math.round((selectedPlanForUpgrade.offerPriceYearly ?? regularPrice) / 12)
+              : selectedPlanForUpgrade.offerPriceMonthly
+            : billingCycle === 'yearly'
+              ? selectedPlanForUpgrade.priceYearlyPerMonth || selectedPlanForUpgrade.priceMonthly
+              : selectedPlanForUpgrade.priceMonthly;
+
+          const discountPercent =
+            hasOffer && regularPrice > 0
+              ? Math.round(
+                  ((regularPrice - (selectedPlanForUpgrade.offerPriceMonthly ?? regularPrice)) /
+                    regularPrice) *
+                    100
+                )
+              : billingCycle === 'yearly'
+                ? 30
+                : 0;
+
+          const displayValidity =
+            billingCycle === 'yearly'
+              ? (selectedPlanForUpgrade.validityYearly || 12) + ' Months'
+              : (selectedPlanForUpgrade.validityMonthly || 1) + ' Month';
+
+          const isPopular = selectedPlanForUpgrade.isPopular;
+
+          return (
+            <div
+              className="billing-modal-backdrop"
+              onClick={e => {
+                if (e.target === e.currentTarget) setBillingModalOpen(false);
+              }}
             >
-              <X size={18} />
-            </button>
+              <div
+                className={`billing-modal-card ${isPopular ? 'popular-modal' : ''}`}
+                role="dialog"
+                aria-modal="true"
+              >
+                {/* Top Floating Pill Badge matching plan card aesthetic */}
+                {hasOffer && (
+                  <div className="card-top-pill-badge offer-pill">
+                    🔥 {selectedPlanForUpgrade.offerBadge || `${discountPercent}% OFF`}
+                  </div>
+                )}
+                {!hasOffer && isPopular && (
+                  <div className="card-top-pill-badge popular-pill">MOST VALUE TO PRICE</div>
+                )}
+                {!hasOffer && !isPopular && (
+                  <div className="card-top-pill-badge checkout-pill">✓ Secure Checkout</div>
+                )}
 
-            <h3 className="text-xl font-black text-white tracking-tight mb-2">
-              Choose Payment Method
-            </h3>
-            <p className="text-xs text-white/70 mb-4">
-              Select your preferred gateway to complete the transaction.
-            </p>
+                {/* Card Header Top Row: Category Label + Close Button */}
+                <div className="card-header-top-row">
+                  <span className="card-category-tag">
+                    {getPlanCategoryLabel(selectedPlanForUpgrade)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBillingModalOpen(false)}
+                    className="modal-close-btn"
+                    aria-label="Close checkout modal"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
 
-            {/* Plan Price Summary */}
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-4 font-medium text-sm space-y-2">
-              <div className="flex justify-between items-center text-white/60">
-                <span>Plan:</span>
-                <span className="font-bold text-white flex items-center gap-2">
-                  {selectedPlanForUpgrade.planName} ({billingCycle})
-                  {(() => {
-                    const isOfferEligible = selectedPlanForUpgrade.isEligibleForOffer !== false;
-                    const hasOffer =
-                      Boolean(selectedPlanForUpgrade.isOfferActive) &&
-                      isOfferEligible &&
-                      ((billingCycle === 'monthly' &&
-                        selectedPlanForUpgrade.offerPriceMonthly != null &&
-                        selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
-                        (billingCycle === 'yearly' &&
-                          selectedPlanForUpgrade.offerPriceYearly != null &&
-                          selectedPlanForUpgrade.offerPriceYearly >= 0));
-                    return hasOffer && selectedPlanForUpgrade.offerBadge ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-rose-400 font-bold border border-rose-500/30">
-                        🔥 {selectedPlanForUpgrade.offerBadge}
+                {/* Plan Title & Subtitle matching reference typography */}
+                <div className="card-title-block">
+                  <h3 className="card-main-title">
+                    {renderPlanDisplayName(selectedPlanForUpgrade.planName)}
+                  </h3>
+                  <p className="card-subtitle-text">{getPlanSubtitle(selectedPlanForUpgrade)}</p>
+                </div>
+
+                {/* Signature Action + Price Row Container */}
+                <div className="modal-summary-box">
+                  <div className="modal-summary-left">
+                    <div className="modal-cycle-badge">
+                      <Zap size={13} />
+                      <span>{billingCycle === 'yearly' ? 'Annual Plan' : 'Monthly Plan'}</span>
+                    </div>
+                    <div className="modal-validity-tag">
+                      <ShieldAlert size={12} />
+                      <span>
+                        {t('validityLabel')} {displayValidity}
                       </span>
-                    ) : null;
-                  })()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-white/60 pt-1">
-                <span>Total Amount:</span>
-                <div>
-                  {(() => {
-                    const isOfferEligible = selectedPlanForUpgrade.isEligibleForOffer !== false;
-                    const hasOffer =
-                      Boolean(selectedPlanForUpgrade.isOfferActive) &&
-                      isOfferEligible &&
-                      ((billingCycle === 'monthly' &&
-                        selectedPlanForUpgrade.offerPriceMonthly != null &&
-                        selectedPlanForUpgrade.offerPriceMonthly >= 0) ||
-                        (billingCycle === 'yearly' &&
-                          selectedPlanForUpgrade.offerPriceYearly != null &&
-                          selectedPlanForUpgrade.offerPriceYearly >= 0));
+                    </div>
+                  </div>
 
-                    const regularPrice =
-                      billingCycle === 'yearly'
-                        ? selectedPlanForUpgrade.priceYearly
-                        : selectedPlanForUpgrade.priceMonthly;
-
-                    const effectivePrice = hasOffer
-                      ? billingCycle === 'yearly'
-                        ? (selectedPlanForUpgrade.offerPriceYearly ?? regularPrice)
-                        : selectedPlanForUpgrade.offerPriceMonthly
-                      : regularPrice;
-
-                    return (
-                      <div className="flex items-baseline gap-2 justify-end">
-                        {hasOffer && (
-                          <span className="text-xs text-white/40 line-through">
-                            ₹{Number(regularPrice || 0).toFixed(2)}
-                          </span>
-                        )}
-                        <span className="font-bold text-lg text-emerald-400">
-                          ₹{Number(effectivePrice || 0).toFixed(2)}
+                  <div className="modal-summary-right card-price-col">
+                    {(hasOffer || billingCycle === 'yearly') && (
+                      <div className="price-struck-row">
+                        <span className="strike-amount">
+                          ₹
+                          {billingCycle === 'yearly' ? Math.round(regularPrice / 12) : regularPrice}
+                        </span>
+                        <span className="discount-tag-pill">
+                          {hasOffer
+                            ? selectedPlanForUpgrade.offerBadge || `${discountPercent}% OFF`
+                            : '30% OFF'}
                         </span>
                       </div>
-                    );
-                  })()}
+                    )}
+                    <div className="price-figure-row">
+                      <span className="price-curr">₹</span>
+                      <span className="price-num">{displayPrice.toLocaleString('en-IN')}</span>
+                      <span className="price-cycle">/mo</span>
+                    </div>
+                    <div className="price-sub-note">
+                      {billingCycle === 'yearly'
+                        ? `Billed ₹${Number(effectivePrice).toLocaleString('en-IN')}/yr`
+                        : 'Pause or cancel anytime'}
+                    </div>
+                    <div className="modal-gst-tag">Includes 18% GST (Tax inclusive)</div>
+                  </div>
+                </div>
+
+                {/* Quick Perks Checklist */}
+                <ul className="modal-perks-list">
+                  <li>
+                    <Check size={14} className="feature-check" />
+                    <span>Instant plan activation directly to your account</span>
+                  </li>
+                  <li>
+                    <Check size={14} className="feature-check" />
+                    <span>Unlimited priority access to AI models & features</span>
+                  </li>
+                  <li>
+                    <Check size={14} className="feature-check" />
+                    <span>Pause, upgrade or cancel anytime with one click</span>
+                  </li>
+                </ul>
+
+                {/* Primary & Secondary Action Buttons */}
+                <div className="modal-actions-stack">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBillingModalOpen(false);
+                      executeUpgrade(selectedPlanForUpgrade, billingForm);
+                    }}
+                    className="modal-pay-btn"
+                    disabled={processing}
+                  >
+                    <Lock size={15} />
+                    <span>Proceed to Payment (Card / UPI / NetBanking)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBillingModalOpen(false)}
+                    className="modal-cancel-btn"
+                  >
+                    Cancel Order
+                  </button>
+                </div>
+
+                {/* Trust & Sustainability Footer */}
+                <div className="modal-trust-footer">
+                  <div className="modal-methods-note">
+                    <ShieldCheck size={13} className="text-emerald-500" />
+                    <span>256-bit encrypted checkout via Razorpay</span>
+                  </div>
+                  <div className="modal-climate-note">
+                    <span className="pricing-climate-leaf">🌱</span>
+                    <span>1% contributes to carbon removal through Stripe Climate</span>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Payment Gateways Stack */}
-            <div className="space-y-4">
-              {/* Gateway 1: Razorpay */}
-              <button
-                type="button"
-                onClick={() => {
-                  setBillingModalOpen(false);
-                  executeUpgrade(selectedPlanForUpgrade, billingForm);
-                }}
-                className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.99] transition-all uppercase tracking-wider"
-                disabled={processing}
-              >
-                Proceed to Payment (Card / UPI / NetBanking)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setBillingModalOpen(false)}
-                className="w-full py-2.5 border border-white/10 rounded-xl text-xs font-bold text-white/50 hover:text-white/80 hover:bg-white/5 transition-all uppercase tracking-wider"
-              >
-                Cancel Order
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
 
       {/* Upsell modal removed since credits packages are deprecated */}
     </div>
