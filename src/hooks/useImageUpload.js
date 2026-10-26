@@ -81,6 +81,7 @@ export const useImageUpload = () => {
     if (uploadInputRef.current) uploadInputRef.current.value = '';
     if (driveInputRef.current) driveInputRef.current.value = '';
     if (photosInputRef.current) photosInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   }, []);
 
   const handlePaste = useCallback(

@@ -1614,6 +1614,9 @@ const Chat = () => {
               handleFileSelect={handleFileSelect}
               onFileSelect={handleFileSelect}
               uploadInputRef={uploadInputRef}
+              cameraInputRef={cameraInputRef}
+              driveInputRef={driveInputRef}
+              photosInputRef={photosInputRef}
               placeholder={TOOL_PLACEHOLDERS[currentMode] || 'Ask AISA anything...'}
               currentMode={currentMode}
               setCurrentMode={activateMode}

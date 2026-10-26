@@ -214,7 +214,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     if (activeTab === 'credits' && user?.token) {
       fetchCreditLogs();
     }
-    if (activeTab === 'account' && user?.token) {
+    if (activeTab === 'account' && (user?.token || localStorage.getItem('token'))) {
       fetchSessions();
     }
   }, [activeTab, user?.token]);
@@ -222,12 +222,18 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
   const fetchSessions = async () => {
     try {
       setLoadingSessions(true);
-      const res = await axios.get(apis.sessions, {
-        headers: { Authorization: `Bearer ${user.token}` },
+      const token = user?.token || localStorage.getItem('token');
+      if (!token) {
+        setSessions([]);
+        return;
+      }
+      const res = await axios.get(apis.sessions || `${API}/user/sessions`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setSessions(res.data);
     } catch (error) {
       console.error('Failed to fetch sessions', error);
+      setSessions([]);
     } finally {
       setLoadingSessions(false);
     }
@@ -617,7 +623,8 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
 
   const handleSupportSubmit = async () => {
     if (!issueText.trim()) return;
-    if (!user?.token) {
+    const token = user?.token || localStorage.getItem('token');
+    if (!token) {
       toast.error('Please log in to submit a support request.');
       return;
     }
@@ -625,22 +632,26 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
     setSendStatus(null);
     try {
       await axios.post(
-        apis.support,
+        apis.support || `${API}/support`,
         {
+          name: user?.name || user?.email?.split('@')[0] || 'AISA User',
           email: user?.email,
-          issueType: issueType,
-          message: issueText,
+          issueType: issueType || 'General Inquiry',
+          message: issueText.trim(),
+          userId: user?.id || user?._id,
         },
         {
-          headers: { Authorization: `Bearer ${user?.token}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setSendStatus('success');
-      toast.success('Feedback submitted!');
+      toast.success('Support request submitted successfully!');
       setIssueText('');
       setTimeout(() => setSendStatus(null), 3000);
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Submission failed');
+      toast.error(
+        error.response?.data?.error || error.response?.data?.message || 'Submission failed'
+      );
     } finally {
       setIsSending(false);
     }
@@ -810,7 +821,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
       description: 'Change your display name',
       keywords: 'name profile',
       component: (
-        <div className="flex flex-col gap-2 py-4 border-b border-gray-100 dark:border-white/5">
+        <div className="flex flex-col gap-1.5 pt-0.5 pb-2 border-b border-gray-100 dark:border-white/5">
           <label className="text-xs font-bold text-gray-500 uppercase">{t('displayName')}</label>
           <div className="relative">
             <input
@@ -1110,7 +1121,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
           );
         }
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Profile Header Card */}
             <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl p-3.5 sm:p-6 border border-primary/20 shadow-xl shadow-primary/5 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -1198,7 +1209,7 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             </div>
 
             {/* Security & Sessions Section */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500 border border-green-500/20">
@@ -1303,11 +1314,9 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
                     </motion.div>
                   ))
                 ) : (
-                  <div className="py-12 text-center border-2 border-dashed border-border/40 rounded-3xl bg-gray-50/50 dark:bg-white/[0.01]">
-                    <div className="w-12 h-12 bg-gray-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3 text-subtext/40">
-                      <MonitorOff className="w-6 h-6" />
-                    </div>
-                    <p className="text-xs font-bold text-subtext/60 uppercase tracking-widest">
+                  <div className="py-3 px-4 text-center border border-dashed border-border/40 rounded-2xl bg-gray-50/50 dark:bg-white/[0.01] flex items-center justify-center gap-2.5">
+                    <MonitorOff className="w-4 h-4 text-subtext/40 shrink-0" />
+                    <p className="text-[11px] font-bold text-subtext/60 uppercase tracking-wider">
                       No other active sessions
                     </p>
                   </div>
@@ -1316,13 +1325,11 @@ const ProfileSettingsDropdown = ({ onClose, onLogout }) => {
             </div>
 
             {/* Existing Account Settings */}
-            <div className="pt-4 space-y-4">
+            <div className="space-y-2">
               {allSettings
                 .filter(s => s.tab === 'account')
                 .map(s => (
-                  <div key={s.id} className="p-1">
-                    {s.component}
-                  </div>
+                  <div key={s.id}>{s.component}</div>
                 ))}
             </div>
 

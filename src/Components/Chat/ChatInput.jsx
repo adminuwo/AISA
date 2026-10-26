@@ -42,6 +42,7 @@ import {
   Brain,
   Scale,
 } from 'lucide-react';
+import CameraScanModal from './CameraScanModal';
 
 const SendRipple = ({ onComplete }) => {
   return (
@@ -184,6 +185,9 @@ export const ChatInput = ({
 }) => {
   const handleFileSelect = propHandleFileSelect || onFileSelect || (() => {});
   const handleRemoveFile = propHandleRemoveFile || onRemoveFile || (() => {});
+  const localCameraInputRef = React.useRef(null);
+  const effectiveCameraRef = cameraInputRef || localCameraInputRef;
+  const [isCameraModalOpen, setIsCameraModalOpen] = React.useState(false);
   const [internalAttachMenuOpen, setInternalAttachMenuOpen] = React.useState(false);
   const [internalToolsMenuOpen, setInternalToolsMenuOpen] = React.useState(false);
 
@@ -784,7 +788,7 @@ export const ChatInput = ({
             <input
               id="camera-upload"
               type="file"
-              ref={cameraInputRef}
+              ref={effectiveCameraRef}
               onChange={handleFileSelect}
               className="hidden"
               accept="image/*"
@@ -873,8 +877,12 @@ export const ChatInput = ({
                         <button
                           type="button"
                           onClick={() => {
-                            cameraInputRef.current?.click();
                             setIsAttachMenuOpen(false);
+                            if (navigator.mediaDevices?.getUserMedia) {
+                              setIsCameraModalOpen(true);
+                            } else {
+                              effectiveCameraRef.current?.click();
+                            }
                           }}
                           className="w-full text-left px-3.5 py-2.5 flex items-center gap-3.5 hover:bg-primary/10 rounded-xl transition-all group cursor-pointer"
                         >
@@ -1606,6 +1614,18 @@ export const ChatInput = ({
           </form>
         </div>
       </div>
+
+      {/* Live Camera & Document Scan Modal */}
+      <CameraScanModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onCapture={file => {
+          handleFileSelect({ target: { files: [file] } });
+        }}
+        onFallbackUpload={() => {
+          effectiveCameraRef.current?.click();
+        }}
+      />
     </div>
   );
 };
