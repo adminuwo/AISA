@@ -496,31 +496,31 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings, onOpenWallet }) => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 p-8 text-left align-middle shadow-2xl transition-all border border-zinc-200 dark:border-zinc-800">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-maintext">Plan & Quotas</h3>
+                <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6 text-left align-middle shadow-2xl transition-all border border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-black text-maintext">Plan & Quotas</h3>
                     <button
                       onClick={() => setIsCreditsOpen(false)}
                       className="text-subtext hover:text-maintext p-1 rounded-lg hover:bg-black/5 transition-all"
                     >
-                      <X size={20} />
+                      <X size={18} />
                     </button>
                   </div>
-                  <div className="space-y-6">
-                    <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-                      <h4 className="text-xs font-bold text-primary uppercase tracking-widest mb-1">
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+                      <h4 className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
                         {t('currentPlan')}
                       </h4>
-                      <h2 className="text-3xl font-black mb-4">{planName.replace(' Plan', '')}</h2>
+                      <h2 className="text-2xl font-black mb-3">{planName.replace(' Plan', '')}</h2>
 
                       {renewalDate && (
-                        <p className="text-xs text-subtext mb-4 font-semibold">
+                        <p className="text-[11px] text-subtext mb-3 font-semibold">
                           Renewal/Expiry: {new Date(renewalDate).toLocaleDateString()}
                         </p>
                       )}
 
-                      <div className="bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 border border-white/20 space-y-3">
-                        <h4 className="text-[10px] font-bold text-subtext uppercase tracking-widest border-b border-white/10 pb-1.5">
+                      <div className="bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-lg p-3 border border-white/20 space-y-2">
+                        <h4 className="text-[9px] font-bold text-subtext uppercase tracking-widest border-b border-white/10 pb-1">
                           Usage & Quotas
                         </h4>
 
@@ -570,7 +570,7 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings, onOpenWallet }) => {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex justify-center">
+                      <div className="mt-3 flex justify-center">
                         <button
                           onClick={() => {
                             window.location.href = '/pricing';
@@ -582,11 +582,11 @@ const Sidebar = ({ isOpen, onClose, onOpenSettings, onOpenWallet }) => {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                    <div className="space-y-2">
+                      <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
                         Plan Rules & Reset
                       </h4>
-                      <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-border/50 text-xs text-subtext space-y-2">
+                      <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-border/50 text-[11px] text-subtext space-y-1.5 leading-relaxed">
                         <p>• Daily quotas (images, carousels) reset every day at midnight IST.</p>
                         <p>
                           • Free tier chat limit of 100 messages is a lifetime total cap across all
