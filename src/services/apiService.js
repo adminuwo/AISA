@@ -14,10 +14,20 @@ export const apiClient = axios.create({
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   config => {
-    console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.url}`, {
-      params: config.params,
-      data: config.data,
-    });
+    if (import.meta.env.DEV) {
+      let safeData = config.data;
+      if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
+        safeData = { ...config.data };
+        if ('password' in safeData) safeData.password = '[REDACTED]';
+        if ('newPassword' in safeData) safeData.newPassword = '[REDACTED]';
+        if ('currentPassword' in safeData) safeData.currentPassword = '[REDACTED]';
+        if ('otp' in safeData) safeData.otp = '[REDACTED]';
+      }
+      console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.url}`, {
+        params: config.params,
+        data: safeData,
+      });
+    }
     let token = null;
     const user = localStorage.getItem('user');
     if (user && user !== 'undefined' && user !== 'null') {

@@ -425,82 +425,39 @@ const DashboardCard = ({ tool, onSelect, isActive, isDark, isCentered }) => {
           window.__preloadLegalModules();
         }
       }}
-      className={`group relative cursor-pointer h-full ${isCentered ? 'w-[calc(50vw-20px)] sm:w-auto max-w-[185px]' : 'w-full sm:w-auto'}`}
+      className={`group relative cursor-pointer h-full ${isCentered ? 'w-[calc(50vw-20px)] max-w-[185px] sm:w-auto sm:max-w-none' : 'w-full sm:w-auto'}`}
     >
-      {/* Ambient Glow on Hover or Active */}
+      {/* Ambient Glow on Hover */}
       <div
-        className={`absolute -inset-1.5 rounded-[28px] sm:rounded-[36px] blur-md transition-all duration-300 pointer-events-none ${
-          isActive ? 'opacity-100 scale-[1.03]' : 'opacity-0 group-hover:opacity-100'
-        }`}
+        className="absolute -inset-1.5 rounded-[28px] sm:rounded-[36px] blur-md transition-all duration-300 pointer-events-none opacity-0 group-hover:opacity-100"
         style={{
-          background: isActive
-            ? `radial-gradient(circle, ${tool.color}75 0%, ${tool.color}25 65%, transparent 100%)`
-            : 'linear-gradient(to right, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25))',
+          background:
+            'linear-gradient(to right, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.25))',
         }}
       />
 
       {/* Border Wrapper */}
       <div
         className={`h-full rounded-2xl sm:rounded-[26px] p-[2px] transition-all duration-300 ${
-          isActive
-            ? 'scale-[1.02]'
-            : isDark
-              ? 'bg-white/10 group-hover:scale-[1.01]'
-              : 'bg-slate-200/60 group-hover:scale-[1.01]'
+          isDark
+            ? 'bg-white/10 group-hover:scale-[1.01]'
+            : 'bg-slate-200/60 group-hover:scale-[1.01]'
         }`}
         style={{
-          background: isActive
-            ? `linear-gradient(135deg, ${tool.color}, #8b5cf6, ${tool.color})`
-            : isDark
-              ? 'linear-gradient(145deg, rgba(167, 139, 250, 0.3), rgba(124, 58, 237, 0.05), rgba(99, 102, 241, 0.2))'
-              : 'linear-gradient(145deg, rgba(255,255,255,0.9), rgba(224, 231, 255, 0.4), rgba(129, 140, 248, 0.2))',
-          boxShadow: isActive
-            ? `0 0 22px -2px ${tool.color}85, 0 8px 24px -4px rgba(0,0,0,0.12)`
-            : undefined,
+          background: isDark
+            ? 'linear-gradient(145deg, rgba(167, 139, 250, 0.3), rgba(124, 58, 237, 0.05), rgba(99, 102, 241, 0.2))'
+            : 'linear-gradient(145deg, rgba(255,255,255,0.9), rgba(224, 231, 255, 0.4), rgba(129, 140, 248, 0.2))',
         }}
       >
         <div
-          className={`group relative flex flex-col items-center justify-center p-2.5 sm:p-5 rounded-[16px] sm:rounded-[24px] cursor-pointer transition-all duration-300 overflow-hidden h-full min-h-[95px] sm:min-h-[155px] w-full sm:w-[185px] lg:w-[200px] shrink-0 ${
-            isActive
-              ? 'shadow-xl'
-              : 'bg-white/60 dark:bg-black/20 hover:bg-white dark:hover:bg-black/40 shadow-sm border border-white/50 dark:border-white/5'
-          }`}
+          className="group relative flex flex-col items-center justify-center p-2.5 sm:p-5 rounded-[16px] sm:rounded-[24px] cursor-pointer transition-all duration-300 overflow-hidden h-full min-h-[95px] sm:min-h-[155px] w-full sm:w-[185px] lg:w-[200px] shrink-0 bg-white/60 dark:bg-black/20 hover:bg-white dark:hover:bg-black/40 shadow-sm border border-white/50 dark:border-white/5"
           style={{
-            backgroundColor: isActive
-              ? isDark
-                ? 'rgba(22, 24, 46, 0.96)'
-                : 'rgba(242, 247, 255, 0.98)'
-              : isDark
-                ? 'rgba(15, 12, 41, 0.8)'
-                : 'rgba(255, 255, 255, 0.7)',
-            border: isActive ? `2px solid ${tool.color}` : undefined,
+            backgroundColor: isDark ? 'rgba(15, 12, 41, 0.8)' : 'rgba(255, 255, 255, 0.7)',
           }}
         >
-          {/* Active Status Badge */}
-          {isActive && (
-            <motion.div
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-20 flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider uppercase text-white shadow-md pointer-events-none"
-              style={{
-                backgroundColor: tool.color,
-                boxShadow: `0 2px 8px ${tool.color}90`,
-              }}
-            >
-              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-white"></span>
-              </span>
-              <span>Active</span>
-            </motion.div>
-          )}
-
           {/* Internal Glow */}
           <div
-            className={`absolute -right-2 -top-2 w-24 h-24 rounded-full blur-2xl transition-opacity duration-500 pointer-events-none ${
-              isActive ? 'opacity-35' : 'opacity-10 group-hover:opacity-30'
-            }`}
+            className="absolute -right-2 -top-2 w-24 h-24 rounded-full blur-2xl transition-opacity duration-500 pointer-events-none opacity-10 group-hover:opacity-30"
             style={{ background: tool.color }}
           />
 
@@ -523,23 +480,14 @@ const DashboardCard = ({ tool, onSelect, isActive, isDark, isCentered }) => {
               whileHover={{ rotate: 12, scale: 1.1 }}
               className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-all duration-300 backdrop-blur-md relative"
               style={{
-                backgroundColor: isActive
-                  ? `${tool.color}18`
-                  : isDark
-                    ? 'rgba(0, 0, 0, 0.2)'
-                    : 'rgba(255, 255, 255, 0.4)',
-                border: isActive
-                  ? `2px solid ${tool.color}`
-                  : isDark
-                    ? '1px solid rgba(139, 92, 246, 0.2)'
-                    : '1px solid rgba(139, 92, 246, 0.1)',
-                boxShadow: isActive ? `0 0 12px ${tool.color}50` : undefined,
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+                border: isDark
+                  ? '1px solid rgba(139, 92, 246, 0.2)'
+                  : '1px solid rgba(139, 92, 246, 0.1)',
               }}
             >
               <div
-                className={`absolute inset-0 rounded-xl sm:rounded-2xl transition-opacity ${
-                  isActive ? 'opacity-40' : 'opacity-20 group-hover:opacity-40'
-                }`}
+                className="absolute inset-0 rounded-xl sm:rounded-2xl transition-opacity opacity-20 group-hover:opacity-40"
                 style={{
                   background: `radial-gradient(circle at center, ${tool.color}, transparent)`,
                 }}
@@ -548,16 +496,7 @@ const DashboardCard = ({ tool, onSelect, isActive, isDark, isCentered }) => {
             </motion.div>
 
             <div className="flex flex-col items-center gap-0.5 min-w-0 px-1">
-              <h4
-                className={`text-[10px] sm:text-[13px] leading-tight line-clamp-2 text-center transition-colors ${
-                  isActive
-                    ? 'font-black'
-                    : 'font-extrabold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400'
-                }`}
-                style={{
-                  color: isActive ? tool.color : undefined,
-                }}
-              >
+              <h4 className="text-[10px] sm:text-[13px] leading-tight line-clamp-2 text-center transition-colors font-extrabold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
                 {tool.label}
               </h4>
             </div>
