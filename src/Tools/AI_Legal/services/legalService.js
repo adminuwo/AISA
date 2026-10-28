@@ -602,16 +602,19 @@ export const legalService = {
   async getHearingReminder(hearingId) {
     try {
       const userStr = localStorage.getItem('user');
+      let token = localStorage.getItem('token');
       if (userStr) {
-        const user = JSON.parse(userStr);
-        const token = user?.token;
-        if (token) {
-          const response = await axios.get(`${API}/legal/reminders/${hearingId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (response.data && response.data.success) {
-            return response.data.reminder;
-          }
+        try {
+          const user = JSON.parse(userStr);
+          token = user?.token || token;
+        } catch (e) {}
+      }
+      if (token) {
+        const response = await axios.get(`${API}/legal/reminders/${hearingId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data && response.data.success && response.data.reminder) {
+          return response.data.reminder;
         }
       }
     } catch (error) {
@@ -642,10 +645,12 @@ export const legalService = {
 
     try {
       const userStr = localStorage.getItem('user');
-      let token = null;
+      let token = localStorage.getItem('token');
       if (userStr) {
-        const user = JSON.parse(userStr);
-        token = user?.token;
+        try {
+          const user = JSON.parse(userStr);
+          token = user?.token || token;
+        } catch (e) {}
       }
 
       if (token) {
@@ -687,12 +692,13 @@ export const legalService = {
           ...targetCase,
           hearingReminders: updated,
         });
+        isOnlineSuccess = true;
       }
     } catch (e) {
       console.error('[LegalService] Error syncing hearing reminder to project', e);
     }
 
-    if (authError) {
+    if (authError && !isOnlineSuccess) {
       throw new Error('Authentication error. Saved to case database. Please log in again to sync.');
     }
 
@@ -707,16 +713,19 @@ export const legalService = {
     let isOnlineSuccess = false;
     try {
       const userStr = localStorage.getItem('user');
+      let token = localStorage.getItem('token');
       if (userStr) {
-        const user = JSON.parse(userStr);
-        const token = user?.token;
-        if (token) {
-          const response = await axios.delete(`${API}/legal/reminders/${hearingId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (response.data && response.data.success) {
-            isOnlineSuccess = true;
-          }
+        try {
+          const user = JSON.parse(userStr);
+          token = user?.token || token;
+        } catch (e) {}
+      }
+      if (token) {
+        const response = await axios.delete(`${API}/legal/reminders/${hearingId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data && response.data.success) {
+          isOnlineSuccess = true;
         }
       }
     } catch (error) {
@@ -738,6 +747,7 @@ export const legalService = {
             ...c,
             hearingReminders: updated,
           });
+          isOnlineSuccess = true;
         }
       }
     } catch (e) {

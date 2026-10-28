@@ -760,19 +760,11 @@ export const apiService = {
       const response = await apiClient.post('/auth/login', credentials);
       return response.data;
     } catch (error) {
-      console.warn('Backend login failed, falling back to mock auth for demo:', error.message);
-
-      // Mock fallback for demo purposes
-      if (credentials.email && credentials.password) {
-        return {
-          id: 'demo-user-123',
-          name: 'Demo User',
-          email: credentials.email,
-          avatar: '',
-        };
-      }
       throw new Error(
-        error.response?.data?.error || error.message || 'Failed to connect to server'
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          'Failed to connect to server'
       );
     }
   },
@@ -782,15 +774,12 @@ export const apiService = {
       const response = await apiClient.post('/auth/signup', userData);
       return response.data;
     } catch (error) {
-      console.warn('Backend signup failed, falling back to mock auth for demo:', error.message);
-
-      // Mock fallback for demo purposes
-      return {
-        id: 'demo-user-' + Date.now(),
-        name: userData.name,
-        email: userData.email,
-        avatar: '',
-      };
+      throw new Error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          'Failed to sign up'
+      );
     }
   },
 

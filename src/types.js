@@ -171,8 +171,8 @@ const apis = {
     status: `${API}/subscription/status`,
     credits: `${API}/subscription/user-credits`,
     history: `${API}/subscription/credit-history`,
-    purchase: `${API}/subscription/purchase-plan`,
-    verify: `${API}/subscription/verify-payment`,
+    purchase: `${API}/subscription/purchase`,
+    verify: `${API}/payment/verify-payment`,
   },
   aibase: {
     chat: `${API}/aibase/chat`,
