@@ -1201,6 +1201,7 @@ export const apiService = {
   async updateAdminSettings(settings) {
     try {
       const response = await apiClient.post('/admin/settings', settings);
+      localStorage.setItem('mock_admin_settings', JSON.stringify(settings));
       return response.data;
     } catch (error) {
       localStorage.setItem('mock_admin_settings', JSON.stringify(settings));

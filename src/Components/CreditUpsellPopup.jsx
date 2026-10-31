@@ -5,119 +5,171 @@ import {
   Sparkles,
   X,
   Zap,
-  AlertTriangle,
+  Crown,
   Clock,
   ImageIcon,
   Video,
   MessageSquare,
+  ArrowRight,
+  CheckCircle2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserData } from '../userStore/userData';
+import { useIsDark } from '../context/ThemeContext';
 
 // Map quota actions to user-friendly feature bullets
 const PLAN_FEATURES_MAP = {
   PLAN_EXPIRED: [
-    'Restore access to all AISA features',
-    'Unlimited AI Chat',
-    'Image & Video Generation',
-    'AI Ads Agent',
+    'Restore full access to AISA™ Workspace',
+    'Unlimited AI Chat & Reasoning',
+    'AI Image & Magic Edit Studio',
+    'AI Legal™, AI CashFlow™ & AI ADS™',
   ],
   chat: [
-    'Unlimited AI Conversations',
-    'Image Generation (Pro+)',
-    'AI Ads Agent',
-    'CashFlow Explorer',
+    'Unlimited AI Chat & Deep Reasoning',
+    'AI Image Generation & Magic Edit',
+    'AI Legal™ & AI CashFlow™ Suite',
+    'AI ADS™ Agent & Live Web Search',
   ],
   generate_image: [
-    '5–10 Images per day (HD & Ultra)',
-    'Edit & Transform Images',
-    'AI Carousel Generation',
-    'AI Video Generation',
+    'Daily HD & Ultra AI Image Generation',
+    'Magic Image Editing & Transformations',
+    'AI Carousel & Creative Generation',
+    'Unlimited AI Chat & Research Tools',
   ],
   edit_image: [
-    'Image Editing & Transformations',
-    'Unlimited AI Chat',
-    'Image Generation',
-    'AI Ads Agent',
+    'Magic Image Editing & Transformations',
+    'Unlimited AI Chat & Reasoning',
+    'HD AI Image Generation',
+    'AI ADS™ & Creative Studio',
   ],
-  generate_carousel: ['1–5 AI Carousels per day', '5–10 Images per day', 'AI Ads Agent'],
-  cashflow: ['CashFlow Explorer', 'Unlimited AI Chat', 'Image Generation', 'AI Ads Agent'],
-  default: ['Unlimited AI Chat', 'Image Generation', 'AI Ads Agent', 'CashFlow Explorer'],
+  generate_carousel: [
+    'Daily AI Carousel Ad Generation',
+    'HD & Ultra AI Image Generation',
+    'Full AI ADS™ Marketing Agent',
+    'Unlimited AI Chat & Deep Search',
+  ],
+  cashflow: [
+    'Full AI CashFlow™ Stock & Market Suite',
+    'Unlimited AI Chat & Deep Research',
+    'AI Legal™ Advisor & Document Tools',
+    'HD AI Image & Creative Generation',
+  ],
+  default: [
+    'Unlimited AI Chat & Deep Reasoning',
+    'AI Image Generation & Magic Edit',
+    'AI Legal™ & AI CashFlow™ Suite',
+    'AI ADS™ Agent & Live Web Search',
+  ],
 };
 
 const ICON_MAP = {
-  chat: MessageSquare,
+  chat: Crown,
   generate_image: ImageIcon,
   generate_video: Video,
   PLAN_EXPIRED: Clock,
+  default: Crown,
 };
 
 const CreditUpsellPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [popupData, setPopupData] = useState(null);
   const navigate = useNavigate();
+  const isDark = useIsDark();
 
   useEffect(() => {
-    const isAdmin = () => {
+    const isAdminUser = () => {
       const user = getUserData();
-      return user && user.email && user.email.toLowerCase() === 'admin@uwo24.com';
+      if (!user) return false;
+      const email = String(user.email || '')
+        .toLowerCase()
+        .trim();
+      const role = String(user.role || '')
+        .toLowerCase()
+        .trim();
+      return (
+        role === 'admin' ||
+        role === 'super_admin' ||
+        role === 'superadmin' ||
+        email === 'admin@uwo24.com' ||
+        email.endsWith('@uwo24.com')
+      );
     };
 
-    // ── NEW: quota_exceeded event (from new quota system) ─────────────────
+    // ── Quota / Chat Milestone / Plan Limit Event ─────────────────────────
     const handleQuotaExceeded = e => {
-      if (isAdmin()) return;
-      const { code, toolName, customMessage, used, limit } = e.detail || {};
+      if (isAdminUser()) return;
+      const { code, toolName, title: customTitle, customMessage, limit } = e.detail || {};
 
-      let title = 'Plan Limit Reached';
+      let title = customTitle || 'Upgrade Your Plan';
       let description =
-        customMessage || 'You have reached your plan limit. Upgrade to continue using AISA.';
+        customMessage || 'Please upgrade your plan and use unlimited features of AISA™.';
 
-      if (code === 'PLAN_EXPIRED') {
+      if (code === 'CHAT_MILESTONE_UPGRADE') {
+        title = customTitle || 'Upgrade Your Plan';
+        description =
+          customMessage ||
+          'You have completed 5 chats! Please upgrade your plan and use unlimited features of AISA™.';
+      } else if (code === 'PLAN_EXPIRED') {
         title = 'Your Free Plan Has Expired';
         description =
-          'Your 3-month free period has ended. Upgrade to continue using AISA services.';
-      } else if (code === 'QUOTA_EXCEEDED' && limit) {
-        title = 'Daily Limit Reached';
-        description =
-          customMessage || `You've used all ${limit} allowed today. Upgrade for higher limits.`;
+          customMessage ||
+          'Your free period has ended. Please upgrade your plan and use unlimited features of AISA™.';
+      } else if (code === 'QUOTA_EXCEEDED') {
+        const isChatTool = !toolName || /chat/i.test(toolName);
+        title = isChatTool ? 'Upgrade Your Plan' : 'Daily Limit Reached';
+        description = isChatTool
+          ? 'Please upgrade your plan and use unlimited features of AISA™.'
+          : customMessage ||
+            (limit
+              ? `You've used all ${limit} allowed today. Please upgrade your plan and use unlimited features of AISA™.`
+              : 'Please upgrade your plan and use unlimited features of AISA™.');
       } else if (code === 'PLAN_RESTRICTED') {
-        title = 'Feature Not Available';
+        title = 'Upgrade Your Plan';
       }
 
-      // Determine feature key from toolName/code
-      const action = toolName?.includes('video')
-        ? 'generate_video'
-        : toolName?.includes('image')
-          ? 'generate_image'
-          : toolName?.includes('carousel')
-            ? 'generate_carousel'
-            : code === 'PLAN_EXPIRED'
-              ? 'PLAN_EXPIRED'
-              : 'default';
+      const lowerTool = String(toolName || '').toLowerCase();
+      const action =
+        code === 'PLAN_EXPIRED'
+          ? 'PLAN_EXPIRED'
+          : code === 'CHAT_MILESTONE_UPGRADE' || lowerTool.includes('chat')
+            ? 'chat'
+            : lowerTool.includes('video')
+              ? 'generate_video'
+              : lowerTool.includes('edit')
+                ? 'edit_image'
+                : lowerTool.includes('image')
+                  ? 'generate_image'
+                  : lowerTool.includes('carousel')
+                    ? 'generate_carousel'
+                    : lowerTool.includes('cashflow') || lowerTool.includes('stock')
+                      ? 'cashflow'
+                      : 'default';
 
       setPopupData({ title, description, action, code });
       setIsOpen(true);
     };
 
-    // ── LEGACY: out_of_credits event (backward compat) ────────────────────
+    // ── Legacy out_of_credits event ───────────────────────────────────────
     const handleOutOfCredits = () => {
-      if (isAdmin()) return;
+      if (isAdminUser()) return;
       setPopupData({
-        title: 'Plan Limit Reached',
-        description: 'You have reached your plan limit. Upgrade to continue using AISA.',
+        title: 'Upgrade Your Plan',
+        description: 'Please upgrade your plan and use unlimited features of AISA™.',
         action: 'default',
         code: 'OUT_OF_CREDITS',
       });
       setIsOpen(true);
     };
 
-    // ── LEGACY: premium_required event ────────────────────────────────────
+    // ── Premium tool required event ───────────────────────────────────────
     const handlePremiumRequired = e => {
-      if (isAdmin()) return;
-      const { customMessage } = e.detail || {};
+      if (isAdminUser()) return;
+      const { title: customTitle, customMessage } = e.detail || {};
       setPopupData({
-        title: 'Upgrade Required',
-        description: customMessage || 'This feature requires a paid plan. Upgrade to continue.',
+        title: customTitle || 'Upgrade Your Plan',
+        description:
+          customMessage || 'Please upgrade your plan and use unlimited features of AISA™.',
         action: 'default',
         code: 'PREMIUM_ONLY',
       });
@@ -135,13 +187,11 @@ const CreditUpsellPopup = () => {
     };
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const features = PLAN_FEATURES_MAP[popupData?.action] || PLAN_FEATURES_MAP.default;
-  const IconComponent = ICON_MAP[popupData?.action] || AlertTriangle;
+  const IconComponent = ICON_MAP[popupData?.action] || ICON_MAP.default;
   const isExpired = popupData?.code === 'PLAN_EXPIRED';
-
-  if (typeof document === 'undefined') return null;
 
   return createPortal(
     <AnimatePresence>
@@ -150,77 +200,156 @@ const CreditUpsellPopup = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm flex justify-center items-center p-4"
+          className={`fixed inset-0 z-[100000] backdrop-blur-sm sm:backdrop-blur-md flex justify-center items-center p-4 ${
+            isDark ? 'bg-black/80' : 'bg-slate-900/45'
+          }`}
           onClick={() => setIsOpen(false)}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative bg-[#0f0f0f] border border-white/10 rounded-3xl p-8 max-w-sm w-full shadow-2xl overflow-hidden"
+            className={`relative rounded-[36px] sm:rounded-[40px] p-7 sm:p-10 max-w-[440px] w-full overflow-hidden ${
+              isDark
+                ? 'bg-[#111218] border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.9)]'
+                : 'bg-white border border-slate-200 shadow-[0_40px_120px_rgba(15,23,42,0.16)]'
+            }`}
             onClick={e => e.stopPropagation()}
           >
-            {/* Glow BG */}
-            <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-amber-500/20 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
-
-            {/* Close Button */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="absolute top-4 right-4 p-1.5 text-white/40 hover:text-white/80 hover:bg-white/10 rounded-full transition-all"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Icon */}
+            {/* Ambient Background Glows */}
             <div
-              className={`flex items-center justify-center w-14 h-14 rounded-2xl shadow-lg mb-5 relative ${isExpired ? 'bg-gradient-to-br from-red-400 to-red-600 shadow-red-500/30' : 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-500/30'}`}
-            >
-              <IconComponent className="w-7 h-7 text-white" />
+              className={`absolute -top-28 -right-28 w-64 h-64 rounded-full blur-[110px] pointer-events-none ${
+                isExpired ? 'bg-rose-500/20' : isDark ? 'bg-primary/25' : 'bg-primary/15'
+              }`}
+            />
+            <div
+              className={`absolute -bottom-28 -left-28 w-64 h-64 rounded-full blur-[120px] pointer-events-none ${
+                isDark ? 'bg-indigo-600/15' : 'bg-indigo-400/15'
+              }`}
+            />
+
+            {/* Header with Squircle Icon & Close Button */}
+            <div className="relative flex justify-between items-start mb-7">
+              <div className="flex items-center gap-3.5">
+                <div
+                  className={`w-[64px] h-[64px] rounded-[22px] flex items-center justify-center ${
+                    isDark
+                      ? 'bg-white/[0.05] border border-white/10 shadow-[inset_0_1px_2px_rgba(255,255,255,0.12)]'
+                      : 'bg-primary/10 border border-primary/20 shadow-inner'
+                  }`}
+                >
+                  <IconComponent
+                    className={`w-8 h-8 ${
+                      isExpired ? 'text-rose-500' : isDark ? 'text-primary' : 'text-primary'
+                    }`}
+                    strokeWidth={1.6}
+                  />
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider ${
+                    isDark
+                      ? 'bg-primary/15 text-primary border border-primary/25'
+                      : 'bg-primary/10 text-primary border border-primary/20'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  AISA™ Unlimited
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className={`p-2 rounded-full transition-all duration-300 group ${
+                  isDark
+                    ? 'text-white/35 hover:text-white hover:bg-white/10'
+                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <X
+                  className="w-6 h-6 transition-transform group-hover:rotate-90"
+                  strokeWidth={1.7}
+                />
+              </button>
             </div>
 
-            {/* Text */}
-            <h3 className="text-xl font-black text-white mb-2">
-              {popupData?.title || 'Plan Limit Reached'}
+            {/* Title & Description */}
+            <h3
+              className={`relative text-[26px] sm:text-[30px] font-black mb-3 tracking-tight leading-tight ${
+                isDark ? 'text-white' : 'text-slate-900'
+              }`}
+            >
+              {popupData?.title || 'Upgrade Your Plan'}
             </h3>
-            <p className="text-white/50 text-sm mb-6 leading-relaxed">
-              {popupData?.description}
-              {!popupData?.description?.includes('Upgrade your plan') && (
-                <>
-                  {' '}
-                  <span className="text-amber-400 font-bold">Upgrade your plan</span> to get higher
-                  limits and unlock all premium AISA features instantly.
-                </>
-              )}
+
+            <p
+              className={`relative text-[15px] mb-6 leading-relaxed font-medium ${
+                isDark ? 'text-white/55' : 'text-slate-600'
+              }`}
+            >
+              {popupData?.description ||
+                'Please upgrade your plan and use unlimited features of AISA™.'}
             </p>
 
-            {/* Feature bullets */}
-            <div className="flex flex-col gap-2 mb-6">
-              {features.map(f => (
-                <div key={f} className="flex items-center gap-2.5 text-sm text-white/60">
-                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                    <Zap className="w-2.5 h-2.5 text-amber-400" />
+            {/* Unlimited Feature Highlights */}
+            <div
+              className={`relative rounded-[22px] p-4 mb-7 space-y-2.5 border ${
+                isDark
+                  ? 'bg-white/[0.03] border-white/[0.08]'
+                  : 'bg-slate-50/90 border-slate-200/80'
+              }`}
+            >
+              {features.map(feature => (
+                <div key={feature} className="flex items-center gap-3">
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                      isDark ? 'bg-primary/20 text-primary' : 'bg-primary/15 text-primary'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} />
                   </div>
-                  {f}
+                  <span
+                    className={`text-[13.5px] font-semibold ${
+                      isDark ? 'text-white/85' : 'text-slate-700'
+                    }`}
+                  >
+                    {feature}
+                  </span>
                 </div>
               ))}
             </div>
 
-            {/* CTA */}
-            <button
+            {/* Primary Upgrade CTA */}
+            <motion.button
+              whileHover={{ scale: 1.015, y: -1 }}
+              whileTap={{ scale: 0.985 }}
+              type="button"
               onClick={() => {
                 setIsOpen(false);
                 navigate('/pricing');
               }}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-600 text-black font-black text-sm hover:shadow-lg hover:shadow-amber-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+              className={`relative w-full py-4.5 sm:py-5 rounded-[22px] font-black text-[15px] sm:text-[16px] transition-all flex items-center justify-center gap-3 group overflow-hidden ${
+                isDark
+                  ? 'bg-white text-black shadow-[0_20px_50px_rgba(255,255,255,0.14)] hover:bg-white/95'
+                  : 'bg-primary text-white shadow-[0_20px_50px_rgba(99,102,241,0.32)] hover:opacity-95'
+              }`}
             >
-              <Sparkles className="w-4 h-4" />
-              Upgrade Plan
-            </button>
+              <Zap className="w-5 h-5 fill-current" strokeWidth={2.2} />
+              <span>Upgrade Your Plan</span>
+              <ArrowRight
+                className="w-4.5 h-4.5 transition-transform group-hover:translate-x-1"
+                strokeWidth={2.5}
+              />
+            </motion.button>
+
+            {/* Dismiss CTA */}
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
-              className="w-full mt-3 py-2.5 text-xs font-semibold text-white/30 hover:text-white/60 transition-colors"
+              className={`relative w-full mt-6 py-1.5 text-[11px] font-black transition-all uppercase tracking-[0.28em] ${
+                isDark ? 'text-white/25 hover:text-white/65' : 'text-slate-400 hover:text-slate-600'
+              }`}
             >
               Maybe Later
             </button>

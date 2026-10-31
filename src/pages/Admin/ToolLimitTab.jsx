@@ -33,6 +33,11 @@ const ToolLimitTab = () => {
     setEditedPlans(prev =>
       prev.map(p => {
         if (p._id === planId) {
+          if (field === 'chatScope') {
+            const updatedLimit =
+              value === 'unlimited' ? -1 : Number(p.chatLimit) === -1 ? 50 : p.chatLimit;
+            return { ...p, chatScope: value, chatLimit: updatedLimit };
+          }
           return { ...p, [field]: value };
         }
         return p;
@@ -125,12 +130,13 @@ const ToolLimitTab = () => {
           type: 'select',
           options: [
             { value: 'total', label: 'Lifetime Cap' },
+            { value: 'daily', label: 'Per Day' },
             { value: 'unlimited', label: 'Unlimited' },
           ],
         },
         {
           name: 'AI Chat Limit',
-          description: 'Max messages count (-1 for unlimited)',
+          description: 'Max messages per day / lifetime (-1 for unlimited)',
           field: 'chatLimit',
           type: 'number',
         },

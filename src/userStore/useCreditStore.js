@@ -83,11 +83,14 @@ const useCreditStore = create(
 
         switch (action) {
           case 'chat':
-            if (limits.chatScope === 'unlimited') return { allowed: true };
+            if (limits.chatScope === 'unlimited' || limits.chat === -1) return { allowed: true };
             if (limits.chat !== -1 && usage.chat >= limits.chat) {
               return {
                 allowed: false,
-                reason: `You've used all ${limits.chat} messages on the Free plan. Upgrade for unlimited conversations.`,
+                reason:
+                  limits.chatScope === 'daily'
+                    ? `You've used your ${limits.chat} chat message${limits.chat > 1 ? 's' : ''} for today. Your daily limit resets tomorrow.`
+                    : `You've used all ${limits.chat} messages on your current plan. Upgrade for unlimited conversations.`,
               };
             }
             return { allowed: true };

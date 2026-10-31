@@ -32,6 +32,7 @@ const formatFeatureString = (feature, plan) => {
     if (plan.chatLimit === -1 || plan.chatScope === 'unlimited') {
       return 'Unlimited AI Chat';
     } else {
+      if (plan.chatScope === 'daily') return `${plan.chatLimit ?? 50} AI Messages / day`;
       result = result.replace(/\d+/, plan.chatLimit ?? 100);
     }
   }

@@ -46,6 +46,7 @@ const formatFeatureString = (feature, plan) => {
     if (plan.chatLimit === -1 || plan.chatScope === 'unlimited') {
       return 'Unlimited AI Chat';
     } else {
+      if (plan.chatScope === 'daily') return `${plan.chatLimit ?? 50} AI Messages / day`;
       result = result.replace(/\d+/, plan.chatLimit ?? 100);
     }
   }
@@ -345,7 +346,9 @@ const Pricing = () => {
       const chatLabel =
         plan.chatScope === 'unlimited' || plan.chatLimit === -1
           ? 'Unlimited AI Chat'
-          : `${plan.chatLimit ?? 100} Total Messages`;
+          : plan.chatScope === 'daily'
+            ? `${plan.chatLimit ?? 50} Messages / day`
+            : `${plan.chatLimit ?? 100} Total Messages`;
 
       return [
         {
@@ -369,7 +372,9 @@ const Pricing = () => {
     const chatText =
       plan.chatScope === 'unlimited' || plan.chatLimit === -1
         ? 'Unlimited AI Chat'
-        : `${plan.chatLimit ?? 100} AI Messages`;
+        : plan.chatScope === 'daily'
+          ? `${plan.chatLimit ?? 50} AI Messages / day`
+          : `${plan.chatLimit ?? 100} AI Messages`;
 
     const hasImages = Boolean(plan.imageLimit && plan.imageLimit > 0);
     const imageText = hasImages ? `${plan.imageLimit} Images / day` : 'Images (Pro+ only)';
@@ -494,6 +499,20 @@ const Pricing = () => {
             setUserState({ user: updatedUser });
             useCreditStore.getState().syncCredits();
             fetchCurrentPlan();
+            const is99Purchase =
+              Boolean(res?.requiresProfessionOnboarding) ||
+              Boolean(res?.is99Plan) ||
+              Math.round(Number(totalAmount)) === 99;
+            if (is99Purchase) {
+              window.dispatchEvent(
+                new CustomEvent('aisa_99_plan_activated', {
+                  detail: {
+                    planName: plan.planName || '₹99 Plan',
+                    amount: totalAmount,
+                  },
+                })
+              );
+            }
           } catch (e) {
             console.error('[purchasePlan Error]', e);
             toast.error(e.response?.data?.message || 'Failed to complete upgrade after payment.');

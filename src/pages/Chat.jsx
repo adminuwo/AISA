@@ -241,6 +241,28 @@ const Chat = () => {
           hasPaidPlan || isPaidPlanKey || data?.founderStatus || planKey === 'admin' || false
         );
         const planKeyMap = { Plan_1: 'Creator', Plan_2: 'Startup', Plan_3: 'Enterprise', admin: 'AISA Admin' };
+        const userIdent = user?.id || user?._id || user?.email || 'user';
+        if (data?.professionProfile?.completed) {
+          localStorage.setItem(
+            `aisa_profession_profile_${userIdent}`,
+            JSON.stringify(data.professionProfile)
+          );
+          window.dispatchEvent(
+            new CustomEvent('aisa_profession_saved', { detail: data.professionProfile })
+          );
+        } else if (data?.requiresProfessionOnboarding) {
+          const sessionDismissKey = `aisa_99_prof_prompted_${userIdent}`;
+          if (sessionStorage.getItem(sessionDismissKey) !== 'true') {
+            sessionStorage.setItem(sessionDismissKey, 'true');
+            window.dispatchEvent(
+              new CustomEvent('aisa_99_plan_activated', {
+                detail: {
+                  planName: data?.subscription?.planId?.planName || '₹99 Plan',
+                },
+              })
+            );
+          }
+        }
         setUserPlanName(
           data?.subscription?.planId?.planName ||
             planKeyMap[planKey] ||
@@ -751,6 +773,49 @@ const Chat = () => {
             setTypingMessageId(null);
 
             useCreditStore.getState().incrementLocal('chat');
+            try {
+              const activeUser = getUserData();
+              const activeEmail = String(activeUser?.email || '').toLowerCase().trim();
+              const activeRole = String(activeUser?.role || '').toLowerCase().trim();
+              const isExemptAdmin =
+                activeRole === 'admin' ||
+                activeRole === 'super_admin' ||
+                activeRole === 'superadmin' ||
+                activeEmail === 'admin@uwo24.com' ||
+                activeEmail.endsWith('@uwo24.com');
+              const storePlan = String(useCreditStore.getState().planKey || 'free').toLowerCase();
+              const isPaidSubscriber =
+                isPremiumUser === true ||
+                (storePlan !== 'free' &&
+                  storePlan !== 'plan_0' &&
+                  storePlan !== 'guest' &&
+                  storePlan !== 'basic');
+
+              if (!isExemptAdmin && !isPaidSubscriber) {
+                const userIdent = activeUser?.id || activeUser?._id || activeEmail || 'guest';
+                const upsellKey = `aisa_chat_upsell_count_${userIdent}`;
+                const nextCount = (parseInt(localStorage.getItem(upsellKey) || '0', 10) || 0) + 1;
+                localStorage.setItem(upsellKey, String(nextCount));
+
+                if (nextCount >= 5 && nextCount % 5 === 0) {
+                  setTimeout(() => {
+                    window.dispatchEvent(
+                      new CustomEvent('quota_exceeded', {
+                        detail: {
+                          code: 'CHAT_MILESTONE_UPGRADE',
+                          toolName: 'AISA™ Unlimited',
+                          title: 'Upgrade Your Plan',
+                          customMessage:
+                            'Please upgrade your plan and use unlimited features of AISA™.',
+                        },
+                      })
+                    );
+                  }, 450);
+                }
+              }
+            } catch (upsellErr) {
+              console.warn('[Chat] Upsell counter check skipped:', upsellErr);
+            }
             await chatStorageService.saveMessage(currentSid, aiMsg, null, currentProjectId);
 
             // Auto-trigger voice audio playback in AUDIO CONVERT or VOICE mode
@@ -768,6 +833,8 @@ const Chat = () => {
           err.response?.status !== 401 &&
           err.response?.data?.code !== 'LOGIN_REQUIRED' &&
           err.response?.data?.code !== 'GUEST_LIMIT_REACHED' &&
+          err.response?.status !== 403 &&
+          !String(err.message || '').includes('403') &&
           err.message !== 'Login required'
         ) {
           toast.error('Failed to send message');
@@ -794,6 +861,7 @@ const Chat = () => {
       handleRemoveFile,
       editRefImage,
       setEditRefImage,
+      isPremiumUser,
     ]
   );
 
@@ -1466,6 +1534,7 @@ const Chat = () => {
       setCurrentMode: activateMode,
       setIsMagicEditing: (val) => activateMode(val ? MODES.IMAGE_EDIT : MODES.NORMAL_CHAT),
       setEditRefImage,
+      isPremiumUser,
       viewingDoc,
       setViewingDoc,
       suggestions,
